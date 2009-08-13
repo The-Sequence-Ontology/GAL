@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-use lib '../lib/';
+use GAL::Parser;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -12,12 +12,11 @@ my $usage = "
 
 Synopsis:
 
-feature2gff3 --format celera feature_file
+feature2gff3 --format gigabayes gigabayes_output.gff
 
 Description:
 
 Convert various sequence feature formats to GFF3.
-
 
 Options:
 
@@ -33,14 +32,13 @@ my $opt_success = GetOptions('help'         => \$help,
 			    );
 
 die $usage if $help || ! $opt_success;
-die $usage unless grep {$format eq $_} qw(gigabayes maq clcbio soap celera);
 
 my @files = @ARGV;
 die $usage unless @files;
 
 for my $file (@files) {
 
-	my $class = "Parser::$format";
+	my $class = "GAL::Parser::$format";
 	eval "require $class";
 	die $@ if $@;
 
