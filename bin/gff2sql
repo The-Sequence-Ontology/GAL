@@ -1,0 +1,134 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use DBI;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+gff2sql --create --dsn 'dbi:mysql:gff_db' file.gff3
+
+Description:
+
+Load a GFF3 file into a MySQL database.
+
+Options:
+
+  --dsn     The DBD::MySQL formatted database source name (i.e. dbi:mysql:db_name).
+  --create  Create or empty the database first.
+  --user    DB user.
+  --pass    DB password.
+
+";
+
+
+my ($help, $dsn, $create, $user, $password);
+my $opt_success = GetOptions('help'     => \$help,
+			     'dsn=s'    => \$dsn,
+			     'create'   => \$create,
+			     'user=s'   => \$user,
+			     'pass=s'   => \$password,
+			    );
+
+die $usage if $help || ! $opt_success;
+
+my @files = @ARGV;
+die $usage unless @files;
+
+create_db($dsn) if $create;
+
+my $dbh      = DBI->connect($dsn, $user, $password);
+my $sth_feat = $dbh->prepare('INSERT INTO feature   (feature_id, seqid, source, type, start, end, score, strand, phase, name) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+my $sth_attr = $dbh->prepare('INSERT INTO attribute (feature_id, att_key, att_value) VALUES(?, ?, ?)');
+
+for my $file (@files) {
+
+	open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
+
+	while (my $line = <$IN>) {
+
+		next if $line =~ /^\s*\#/;
+		next if $line =~ /^\s*$/;
+
+		chomp $line;
+
+		my ($feature, $attributes) = parse_line($line);
+
+		$sth_feat->execute(@{$feature}) or die $sth_feat->errstr;
+
+		for my $attribute (@{$attributes}) {
+			$sth_attr->execute(@{$attribute}) or
+			  die $sth_attr->errstr;
+		}
+
+	}
+}
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+sub parse_line {
+
+	my $line = shift;
+
+	my ($seqid, $source, $type, $start, $end, $score, $strand,
+	    $phase, $attrb_text) = split /\t/, $line;
+
+	$attrb_text .= ';' unless $attrb_text =~ /;$/;
+
+	my @attributes;
+	my ($feature_id)   = $attrb_text =~ /ID=(.*?);/;
+	my ($name) = $attrb_text =~ /Name=(.*?);/;
+
+	$feature_id   ||= "$seqid:$source:$type:$start:$end";
+	$name ||= $feature_id;
+
+	my @attrb_array = split /\s*;\s*/, $attrb_text;
+	my %attrb_hash;
+	for my $attrb_pair (@attrb_array) {
+		my ($key, $value_text) = split /\s*=\s*/, $attrb_pair;
+		my @values = split /\s*,\s*/, $value_text;
+		for my $value (@values) {
+			#(feature_id, key, value
+			push @attributes, [$feature_id, $key, $value];
+		}
+		push @{$attrb_hash{$key}}, @values;
+	}
+
+	# id, seqid, source, type, start, end, score, strand, phase, name
+	my @feature = ($feature_id, $seqid, $source, $type, $start, $end, $score,
+		       $strand, $phase, $name);
+	return (\@feature, \@attributes);
+}
+#-----------------------------------------------------------------------------
+sub create_db {
+
+	my $dsn = shift;
+
+	my ($db_name) = $dsn =~ /([^:]+)$/;
+
+	my $drh = DBI->install_driver("mysql");
+
+	if (grep {$_ eq "DBI:mysql:$db_name"} DBI->data_sources("mysql")) {
+		$drh->func("dropdb"  , $db_name, 'admin') or die "Can't drop database $db_name\n";
+		$drh->func("createdb", $db_name, 'admin') or die "Can't create database $db_name\n";
+	}
+	else {
+		$drh->func("createdb", $db_name, 'admin') or die "Can't create database $db_name\n";
+	}
+
+	my $dbh = DBI->connect($dsn, $user, $password);
+
+	$dbh->do("DROP TABLE IF EXISTS feature");
+	$dbh->do("DROP TABLE IF EXISTS attribute");
+	$dbh->do("CREATE TABLE feature (feature_id VARCHAR(100), seqid VARCHAR(100), source VARCHAR(100), type VARCHAR(100), start INT, end INT, score varchar(20)\
+, strand VARCHAR(1), phase VARCHAR(1), name VARCHAR(100))");
+	$dbh->do("CREATE TABLE attribute (attribute_id INT NOT NULL AUTO_INCREMENT, feature_id VARCHAR(100), att_key VARCHAR(100), att_value TEXT, PRIMARY KEY (attribute_id))");
+#	$dbh->do("CREATE INDEX xx USING BTREE ON feature (xx)");
+#	$dbh->do("CREATE INDEX xx USING BTREE ON attributes (xx)");
+}
