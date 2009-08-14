@@ -288,6 +288,44 @@ sub set_attributes {
 
 #-----------------------------------------------------------------------------
 
+=head2 expand_nucleotide_ambiguity
+
+ Title   : expand_nucleotide_ambiguity
+ Usage   : @nucleotides = $self->expand_nucleotide_ambiguity('W');
+ Function: Expands and IUPAC ambiguity codes to an array of nucleotides
+ Returns : An array or array ref of nucleotides
+ Args    : An IUPAC Nucleotide ambiguity code
+
+=cut
+
+sub expand_iupac_nt_codes {
+	my ($self, $code) = @_;
+
+	my %iupac_code_map = (A => ['A'],
+			      C => ['C'],
+			      G => ['G'],
+			      T => ['T'],
+			      U => ['T'],
+			      M => ['A', 'C'],
+			      R => ['A', 'G'],
+			      W => ['A', 'T'],
+			      S => ['C', 'G'],
+			      Y => ['C', 'T'],
+			      K => ['G', 'T'],
+			      V => ['A', 'C', 'G'],
+			      H => ['A', 'C', 'T'],
+			      D => ['A', 'G', 'T'],
+			      B => ['C', 'G', 'T'],
+			      N => ['G', 'A', 'T', 'C'],
+			     );
+
+	my $nts = $iupac_code_map{$code};
+
+	return wantarray ? @{$nts} : $nts;
+}
+
+#-----------------------------------------------------------------------------
+
 =head1 DIAGNOSTICS
 
 =for author to fill in:

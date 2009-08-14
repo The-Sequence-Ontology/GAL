@@ -14,6 +14,22 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
+# throw
+# warn
+# wrap_text
+# trim_whitespace
+# first_word
+# prepare_args
+# set_attributes
+
+my $base = GAL::Base->new();
+
+for my $code (qw(A C G T U M R W S Y K V H D B N)) {
+	my @nts = $base->expand_iupac_nt_codes($code);
+	print "$code\t";
+	print join ',', @nts;
+	print "\n";
+}
 
 =head3
 # Various other ways to say "ok"
