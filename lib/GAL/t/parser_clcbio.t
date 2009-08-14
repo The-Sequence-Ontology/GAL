@@ -20,7 +20,7 @@ my $parser = GAL::Parser::clcbio->new(file => 'data/clcbio.txt');
 isa_ok($parser, 'GAL::Parser::clcbio');
 
 # TEST 3
-ok($parser->get_features, $test_name);
+ok($parser->get_features, 'parser->get_features');
 
 ################################################################################
 ################################# Ways to Test #################################

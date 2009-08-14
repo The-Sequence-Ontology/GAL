@@ -165,7 +165,7 @@ sub parse_record {
 	# my $variant_reads=G:8
 
 	# Assign the total number of reads covering this position:
-	# my $read_total=16
+	# my $total_reads=16
 
 	# Assign the genotype:
 	# my $genotype=homozygous
@@ -206,7 +206,7 @@ sub parse_record {
 	# Features.pm and it's subclasses.
 	# For sequence_alteration features the suggested keys include:
 	# reference_allele, variant_allele, reference_reads, variant_reads
-	# read_total, genotype, genotype_probability and score type
+	# total_reads, genotype, genotype_probability and score type
 	my $attributes = {reference_allele => [$reference_allele],
 			  variant_allele   => \@variant_alleles,
 			  genotype         => [$genotype],

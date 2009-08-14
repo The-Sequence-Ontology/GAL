@@ -15,49 +15,53 @@ my $usage = "
 
 Synopsis:
 
-snp2gene_leppert --datastore datastore.index --format gff3
-                 --dsn dbi:mysql:db_name --user user_name
-                 --passwd password
+snp2gene --datastore datastore.index --cgl_format gff3 --type SNP
+	 --dsn dbi:mysql:db_name --user user_name --passwd password
+         --subject 123456
 
 Description:
 
-This script will list all snps associated with a give gene.
+This script will locate all snps associated with a give gene in a CGL datastore
+and write a .snp file in the same directory.
 
 Options:
 
   datastore  The datastore index file for the gene datastore.
-  format     The format of the GFF3 file.
+  cgl_format The format of the gene annotation GFF3 file.
+  type       The variant type to analyze (i.e. SNP MNP nucleotide_insertion)
+  subject    An ID for the individual being analyzed.
   dsn        The DBI connection string [dbi:mysql:database=pcode]
   user       The user to connect to the database as [bmoore]
   password   The password to connect to the database with ['']
   continue   Will not rewrite existing .snp files.  This allow you
-             to continue a previously aborted run.  No validation is
-             done to ensure that previous files were not corrupted in
-             any previous run failure.
+	     to continue a previously aborted run.  No validation is
+	     done to ensure that previous files were not corrupted in
+	     any previous run failure.
 
 ";
 
-my ($help, $ds_index_file, $format, $dsn, $user, $psswd, $continue);
-my $opt_success = GetOptions('help'        => \$help,
-			     'datastore=s' => \$ds_index_file,
-			     'format=s'    => \$format,
-			     'dsn=s'       => \$dsn,
-			     'user=s'      => \$user,
-			     'psswd=s'     => \$psswd,
-			     'continue'    => \$continue,
+my ($help, $ds_index_file, $cgl_format, $type, $subject, $dsn, $user,
+    $psswd, $continue);
+my $opt_success = GetOptions('help'         => \$help,
+			     'datastore=s'  => \$ds_index_file,
+			     'cgl_format=s' => \$cgl_format,
+			     'type=s'       => \$type,
+			     'subject=s'    => \$subject,
+			     'dsn=s'        => \$dsn,
+			     'user=s'       => \$user,
+			     'psswd=s'      => \$psswd,
+			     'continue'     => \$continue,
 			      );
 
 die $usage if ( $help          ||
 		! $opt_success ||
-		! $format
+		! $cgl_format
 	      );
 
-$dsn    ||= 'dbi:mysql:database=leppert_snp';
-$user   ||= 'bmoore';
-$psswd  ||= '';
+die $usage unless $dsn;
 
 my $dbh     = DBI->connect($dsn, $user, $psswd);
-my $sth_snp = $dbh->prepare('SELECT subj_id, snp_id, start, allele FROM snp WHERE contig_id = ? AND start >= ? AND start <= ?');
+my $sth_snp = $dbh->prepare("SELECT f.feature_id, f.start, a.att_value as variant_allele FROM feature f, attribute a WHERE a.att_key = 'variant_allele' AND type = '$type' AND f.feature_id = a.feature_id AND f.seqid = ? AND f.start >= ? AND f.start <= ?");
 
 my $ds = parse_datastore($ds_index_file);
 
@@ -66,18 +70,26 @@ for my $gene_id (keys %{$ds}) {
 	my ($gff_file, $fasta_file);
 	$gff_file = $ds->{$gene_id};
 
+	my $snp_file;
+	($snp_file   = $gff_file)   =~ s/\.gff3?$/_$subject.snp/;
+
+	if ($continue && -e $snp_file) {
+		print STDERR "Continue\t$subject\t$gene_id\n";
+		next;
+	}
+
 	($fasta_file = $gff_file)   =~ s/\.gff3?$/.fasta/;
 
-	my $cgl  = CGL::Annotation->new(format     => $format,
+	my $cgl  = CGL::Annotation->new(format     => $cgl_format,
 					gff_file   => $gff_file,
 					fasta_file => $fasta_file,
 				       );
 
 	my $contig = $cgl->contig(0);
-        my $genes  = $cgl->genes();
+	my $genes  = $cgl->genes();
 	my $gene   = shift @{$genes};
 
-	my $ctg_name 	= $contig->id;
+	my $ctg_name	= $contig->id;
 	my ($ctg_id, $ctg_begin, $ctg_end) = split /:/, $ctg_name;
 	($ctg_begin, $ctg_end) = ($ctg_end, $ctg_begin) if $ctg_begin > $ctg_end;
 
@@ -100,40 +112,28 @@ for my $gene_id (keys %{$ds}) {
 		die "Bad gene strand: $gene_strand\n";
 	}
 
-	my $subjects = $dbh->selectall_hashref($sth_snp, [qw(subj_id snp_id)], {}, ($ctg_id, $ctg_begin + 499, $ctg_end - 499));
+	my $snps = $dbh->selectall_hashref($sth_snp, [qw(feature_id)], {}, ($ctg_id, $ctg_begin + 499, $ctg_end - 499));
 
-	for my $subj_id (keys %{$subjects}) {
+	open (my $SNP, '>', $snp_file) or
+	  die "Can't open $snp_file for writing\n";
+	print STDERR "Wrote\t$gene_id\t$subject\t\n" if keys %{$snps};
 
-		my $snp_file;
-		($snp_file   = $gff_file)   =~ s/\.gff3?$/_$subj_id.snp/;
+	for my $snp_id (keys %{$snps}) {
 
-		if ($continue && -e $snp_file) {
-			print STDERR "Continue\t$gene_id\t$subj_id\t\n";
-			next;
-		}
+		my $snp = $snps->{$snp_id};
 
-		open (my $SNP, '>', $snp_file) or
-		  die "Can't open $snp_file for writing\n";
-		print STDERR "Wrote\t$gene_id\t$subj_id\t\n";
-
-		my $subject = $subjects->{$subj_id};
-		for my $snp_id (keys %{$subject}) {
-
-			my $snp = $subject->{$snp_id};
-
-			print $SNP join "\t", ($subj_id,
-					       $ctg_id,
-					       $gene_id,
-					       $snp->{snp_id},
-					       $snp->{start},
-					       $snp->{allele},
-					       '.',
-					       '+',
-					      );
-			print $SNP "\n";
-		}
-		close $SNP;
+		print  join "\t", ($subject,
+				   $ctg_id,
+				   $gene_id,
+				   $snp->{feature_id},
+				   $snp->{start},
+				   $snp->{variant_allele},
+				   '.',
+				   '+',
+				  );
+		print "\n";
 	}
+	close $SNP;
 }
 
 #-----------------------------------------------------------------------------

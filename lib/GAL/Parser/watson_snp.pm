@@ -1,4 +1,4 @@
-package GAL::Parser::template;
+package GAL::Parser::watson_snp;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::template - <One line description of module's purpose here>
+GAL::Parser::watson_snp - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::template version 0.01
+This document describes GAL::Parser::watson_snp version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::template;
+     use GAL::Parser::watson_snp;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::template version 0.01
 =head2
 
      Title   : new
-     Usage   : GAL::Parser::template->new();
-     Function: Creates a template object;
-     Returns : A template object
+     Usage   : GAL::Parser::watson_snp->new();
+     Function: Creates a watson_snp object;
+     Returns : A watson_snp object
      Args    :
 
 =cut
@@ -63,7 +63,54 @@ sub _initialize_args {
 
 	my @valid_attributes = qw();
 
-	$self->fields([qw(these are the header names for your record hash)]);
+# The columns are:
+#
+# BCM_local_SNP_ID -- unique ID for referring to the SNPs ahead of
+# submission to dbSNP (we can talk about what and when to submit to
+# dbSNP).
+#
+# chromosome --  (self explanatory)
+#
+# coordinate -- (self explanatory)
+#
+# reference_allele -- plus strand reference base
+#
+# variant_allele -- plus strand variant base
+#
+# match_status -- a Y, N or "." if a dbSNP allele, Y if the variant
+# matches the dbSNP allele, or N if it doesn't; a "." if it's a novel
+# SNP.
+#
+# rs# -- the rsid if dbSNP, "novel" otherwise.
+#
+# alternate_allele -- usually a "." (surrogate for null). A, C, T or G
+# if a third allele is seen in the reads at the given position, it's
+# listed here.  I'm don't expect you to dis play 3d allele
+# information.
+#
+# variant_count -- number of reads in which variant allele was
+# seen. Can be 1 variants matching dbSNP alleles ("Y" in match_status
+# column), must be 2 for novel alleles, for dbSNP positions that don't
+# match the dbSNP alleles ("N" in match_status column) or for dbSNP
+# positions where there is an alternate allele.
+#
+# alternate_allele_count -- number of reads in which an
+# alternate_allele is seen. Generally these are seen in only one read
+# and are probably errors, and should not be mentioned. I n some rare
+# instances (134 times), both the variant allele and the alternate
+# allele are seen multiple times.
+#
+# total_coverage -- the total number of reads at a given SNP position.
+#
+# "genotype" -- "het" if the reference allele is seen at least
+# once. "." (null) if not. These are the sites that are confidently
+# heterozygotes. The others provisionally homozygote s, and in cases
+# where the coverage is deep enough probably they are.
+
+	$self->fields([qw(id chromosome coordinate reference_allele
+			  variant_allele match_status rsid alternate_allele
+			  variant_count alternate_allele_count
+			  total_coverage genotype)]);
 
 	$self->set_attributes($args, @valid_attributes);
 
@@ -84,48 +131,64 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# $record is a hash reference that contains the keys assigned
-	# in the $self->fields call in _initialize_args above
+	# $record is a hash reference keyed to the fields of the
+	# incoming data These key names are set in the $self->fields
+	# call in _initialize_args above
 
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
+
+	# id chromosome coordinate reference_allele variant_allele
+	# match_status rsid alternate_allele variant_count
+	# alternate_allele_count total_coverage genotype
+
 	my $id         = $record->{id};
 	my $seqid      = $record->{chromosome};
-	my $source     = 'Template';
-	my $type       = 'gene';
-	my $start      = $record->{start};
-	my $end        = $record->{end};
+	my $source     = 'Solid';
+
+	my $type       = 'SNP';
+	my $start      = $record->{coordinate};
+	my $end        = $record->{coordinate};
 	my $score      = '.';
-	my $strand     = $record->{strand};
+	my $strand     = '.';
 	my $phase      = '.';
 
 	# Create the attributes hash
 
 	# Assign the reference and variant allele sequences:
-	# reference_allele=A
-	# variant_allele=G
-	my ($reference_allele, @variant_alleles) = split m|/|, $record->{alleles};
+	# reference_allele=A;
+	# variant_allele=G;
+	my $reference_allele = $record->{reference_allele};
+	my @variant_allele;
+	push @variant_allele, $record->{variant_allele};
+	push @variant_allele, $record->{alternate_allele};
 
 	# Assign the reference and variant allele read counts:
-	# my $reference_reads=A:7
-	# my $variant_reads=G:8
+	# reference_reads=A:7;
+	# variant_reads=G:8;
+	my $reference_reads = $reference_allele . ":" . ($record->{total_coverage} -
+							 $record->{variant_count}  -
+							 $record->{alternate_count});
+	my @variant_reads;
+	push @variant_reads, ($record->{variant_allele}   . ":" . $record->{variant_count});
+	push @variant_reads, ($record->{alternate_allele} . ":" . $record->{alternate_count});
 
 	# Assign the total number of reads covering this position:
-	# my $read_total=16
+	# total_reads=16;
+	my $total_reads = $record->{total_coverage};
 
 	# Assign the genotype:
-	# my $genotype=homozygous
+	# genotype=homozygous;
+	my $genotype = $record->{genotype} eq 'het' ? 'heterozygous' : undef;
 
 	# Assign the probability that the genotype call is correct:
-	# my $genotype_probability=0.667
-
-	my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
+	# genotype_probability=0.667;
 
 	# Any quality score given for this variant should be assigned
 	# to $score above (column 6 in GFF3).  Here you can assign a
 	# name for the type of score or algorithm used to calculate
 	# the sscore (e.g. phred_like, clcbio, illumina).
-	my $score_type = 'template';
+	# score_type=watson_snp;
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -141,12 +204,15 @@ sub parse_record {
 
 	# For sequence_alteration features the suggested keys include:
 	# reference_allele, variant_allele, reference_reads, variant_reads
-	# read_total, genotype, genotype_probability and score type.
+	# total_reads, genotype, genotype_probability and score type.
 	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => \@variant_alleles,
+			  variant_allele   => \@variant_allele,
 			  genotype         => [$genotype],
-			  score_type       => [$score_type],
 			  ID               => [$id],
+			  reference_reads  => [$reference_reads],
+			  variant_reads    => \@variant_reads,
+			  total_reads      => [$total_reads],
+			  genotype         => [$genotype],
 			 };
 
 	my $feature_data = {id         => $id,
@@ -208,7 +274,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::template> requires no configuration files or environment variables.
+<GAL::Parser::watson_snp> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

@@ -6,7 +6,7 @@ use Test::More 'no_plan'; # tests => 10;
 BEGIN {
 	use lib '../../';
 	#TEST 1
-	use_ok('GAL::Parser::celera');
+	use_ok('GAL::Parser::watson_snp');
 }
 
 my $path = $0;
@@ -14,13 +14,13 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $parser = GAL::Parser::celera->new(file => 'data/celera.gff');
+my $parser = GAL::Parser::watson_snp->new(file => 'data/watson_snp.tsv');
 
 # TEST 2
-isa_ok($parser, 'GAL::Parser::celera');
+isa_ok($parser, 'GAL::Parser::watson_snp');
 
 # TEST 3
-ok($parser->get_features, '$parser->get_features');
+ok($parser->get_features, 'parser->get_features');
 
 ################################################################################
 ################################# Ways to Test #################################
