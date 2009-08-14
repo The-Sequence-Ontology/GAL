@@ -3,8 +3,9 @@ use strict;
 
 use Test::More 'no_plan'; # tests => 10;
 
+
 BEGIN {
-	use lib '../../../';
+	use lib '../../';
 	#TEST 1
 	use_ok('GAL::Parser::solid');
 }
