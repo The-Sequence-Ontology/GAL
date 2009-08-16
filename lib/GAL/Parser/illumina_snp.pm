@@ -1,4 +1,4 @@
-package GAL::Parser::template;
+package GAL::Parser::illumina_snp;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::template - <One line description of module's purpose here>
+GAL::Parser::illumina_snp - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::template version 0.01
+This document describes GAL::Parser::illumina_snp version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::template;
+     use GAL::Parser::illumina_snp;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::template version 0.01
 =head2
 
      Title   : new
-     Usage   : GAL::Parser::template->new();
-     Function: Creates a template object;
-     Returns : A template object
+     Usage   : GAL::Parser::illumina_snp->new();
+     Function: Creates a illumina_snp object;
+     Returns : A illumina_snp object
      Args    :
 
 =cut
@@ -63,7 +63,7 @@ sub _initialize_args {
 
 	my @valid_attributes = qw();
 
-	$self->fields([qw(these are the header names for your record hash)]);
+	$self->fields([qw(chromosome location ref_allele var_alleles id total_reads count_alleles ref_count var_count)]);
 
 	$self->set_attributes($args, @valid_attributes);
 
@@ -91,24 +91,54 @@ sub parse_record {
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
 	my $id         = $record->{id};
 	my $seqid      = $record->{chromosome};
-	my $source     = 'Template';
-	my $type       = 'gene';
-	my $start      = $record->{start};
-	my $end        = $record->{end};
+	my $source     = 'Illumina_SNP';
+	my $type       = 'SNP';
+	my $start      = $record->{location};
+	my $end        = $record->{location};
 	my $score      = '.';
-	my $strand     = $record->{strand};
+	my $strand     = '.';
 	my $phase      = '.';
 
 	# Create the attributes hash
 
+# Het with ref: get var_alleles and remove ref.  ref_count and var_count OK
+# chr10   56397   C       CT      rs12262442      28      C/T     17      11
+# chr10   61776   T       CT      rs61838967      15      T/C     7       8
+# chr10   65803   T       CT      KOREFSNP1       27      T/C     19      8
+# chr10   68106   C       AC      KOREFSNP2       43      C/A     22      21
+# chr10   84136   C       CT      rs4607995       24      C/T     10      13
+# chr10   84238   A       AT      rs10904041      22      A/T     5       16
+
+# Het but not ref: get var_alleles.  assign var_count to correct var and calculate alter_var_count from total - var_count
+# chr10   12625631        A       GT      rs2815636       42      A/G     0       21
+# chr10   13864035        A       CT      rs5025431       27      A/T     0       15
+# chr10   14292681        G       AC      rs11528656      29      G/A     0       18
+# chr10   14771944        C       AG      rs3107794       29      C/G     0       15
+# chr10   15075637        A       CG      rs9731518       29      A/G     4       16
+
+# Homozygous get var_alleles and use only one.  ref_count and var_count OK
+# chr10   168434  T       GG      rs7089889       20      T/G     0       20
+# chr10   173151  T       CC      rs7476951       19      T/C     0       19
+# chr10   175171  G       TT      rs7898275       25      G/T     0       25
+# chr10   175358  C       TT      rs7910845       26      C/T     0       26
+
+	# $self->fields([qw(chromosome location ref_allele var_alleles id total_reads count_alleles ref_count var_count)]);
+
 	# Assign the reference and variant allele sequences:
 	# reference_allele=A
 	# variant_allele=G
-	my ($reference_allele, @variant_alleles) = split m|/|, $record->{alleles};
+	my $reference_allele = $record->{ref_allele};
+	my @variant_alleles  = split //, $record->{var_alleles};
+	@variant_alleles = grep {$_ ne $reference_allele} @variant_alleles;
+
+######## Stopped Here!!!
 
 	# Assign the reference and variant allele read counts:
 	# my $reference_reads=A:7
 	# my $variant_reads=G:8
+
+	my $reference_reads = $record->{ref_count};
+
 
 	# Assign the total number of reads covering this position:
 	# my $total_reads=16
@@ -125,7 +155,7 @@ sub parse_record {
 	# to $score above (column 6 in GFF3).  Here you can assign a
 	# name for the type of score or algorithm used to calculate
 	# the sscore (e.g. phred_like, clcbio, illumina).
-	my $score_type = 'template';
+	my $score_type = 'illumina_snp';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -208,7 +238,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::template> requires no configuration files or environment variables.
+<GAL::Parser::illumina_snp> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

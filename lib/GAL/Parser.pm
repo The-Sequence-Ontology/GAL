@@ -160,6 +160,7 @@ sub parse {
 	while (my $record = $parser->fetchrow_hashref) {
 
 		my $feature_hash = $self->parse_record($record);
+		next unless defined $feature_hash;
 		my $type = $feature_hash->{type};
 		$factory->type($type);
 		my $feature = $factory->create($feature_hash);

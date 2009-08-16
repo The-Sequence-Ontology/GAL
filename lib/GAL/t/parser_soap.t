@@ -20,7 +20,7 @@ my $parser = GAL::Parser::soap->new(file => 'data/soap.gff');
 isa_ok($parser, 'GAL::Parser::soap');
 
 # TEST 3
-ok($parser->get_features, $test_name);
+ok($parser->get_features, '$parser->get_features');
 
 ################################################################################
 ################################# Ways to Test #################################
