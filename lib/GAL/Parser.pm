@@ -8,7 +8,7 @@ $VERSION = '0.01';
 use base qw(GAL::Base);
 use GAL::FeatureFactory;
 use Text::RecordParser;
-use Devel::Size qw(size total_size);;
+#use Devel::Size qw(size total_size);;
 
 =head1 NAME
 
@@ -233,7 +233,7 @@ sub parse {
 		push @{$self->{features}}, $feature;
 
 	}
-	print STDERR "Memory:\t" . (total_size($self) / 1000000) . " MB\n";
+#	print STDERR "Memory:\t" . (total_size($self) / 1000000) . " MB\n";
 	return $self;
 }
 
