@@ -254,6 +254,7 @@ sub parse_next_feature {
 	my $self = shift;
 
 	my $record = $self->next_record;
+	return undef unless $record;
 
 	my $feature_hash = $self->parse_record($record);
 	return undef unless defined $feature_hash;
