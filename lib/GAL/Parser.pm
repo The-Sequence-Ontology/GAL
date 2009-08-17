@@ -8,6 +8,7 @@ $VERSION = '0.01';
 use base qw(GAL::Base);
 use GAL::FeatureFactory;
 use Text::RecordParser;
+use Devel::Size qw(size total_size);;
 
 =head1 NAME
 
@@ -32,6 +33,19 @@ This document describes GAL::Parser version 0.01
      Write a full description of the module and its features here.
      Use subsections (=head2, =head3) as appropriate.
 
+
+################################################################################
+################################  TO DO ########################################
+################################################################################
+
+Maybe allow using using any file iterator
+Maybe remove Text::RecordParser
+Maybe allow using any feature_factory
+
+################################################################################
+################################################################################
+################################################################################
+
 =head1 METHODS
 
 =cut
@@ -51,7 +65,6 @@ This document describes GAL::Parser version 0.01
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
-	$self->parse;
 	return $self;
 }
 
@@ -114,6 +127,71 @@ sub format {
 
 #-----------------------------------------------------------------------------
 
+=head2 feature_factory
+
+ Title   : feature_factory
+ Usage   : $a = $self->feature_factory();
+ Function: Get/Set the value of feature_factory.
+ Returns : The value of feature_factory.
+ Args    : A value to set feature_factory to.
+
+=cut
+
+sub feature_factory {
+	my ($self, $value) = @_;
+	$self->{feature_factory} = $value if defined $value;
+	$self->{feature_factory} ||= GAL::FeatureFactory->new();
+	return $self->{feature_factory};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 parser
+
+ Title   : parser
+ Usage   : $a = $self->parser();
+ Function: Get/Set the value of parser.
+ Returns : The value of parser.
+ Args    : A value to set parser to.
+
+=cut
+
+sub parser {
+	my ($self, $value) = @_;
+	$self->{parser} = $value if defined $value;
+	if (! $self->{parser}) {
+		my $parser = Text::RecordParser->new({filename         => $self->file,
+						      record_separator => $self->record_separator,
+						      field_separator  => $self->field_separator,
+						      comment          => $self->comment_delimiter,
+						     });
+		$parser->bind_fields($self->fields);
+		$self->{parser} = $parser;
+	}
+
+	return $self->{parser};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 next_record
+
+ Title   : next_record
+ Usage   : $a = $self->next_record();
+ Function: Return the next record from the parser
+ Returns : The next record from the parser.
+ Args    : Optionally set the method the parser will use to get the next
+           record.  Default is fetchrow_hashref for Text::RecordParser.
+
+=cut
+
+sub next_record {
+	my ($self, $method) = @_;
+	return $self->parser->fetchrow_hashref;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 get_features
 
  Title   : get_features
@@ -136,9 +214,9 @@ sub get_features {
 
  Title   : parse
  Usage   : $a = $self->parse();
- Function: Get/Set the value of parse.
- Returns : The value of parse.
- Args    : A value to set parse to.
+ Function: Parse and store all of the features in a file
+ Returns : N/A
+ Args    : N/A
 
 =cut
 
@@ -146,29 +224,43 @@ sub parse {
 
 	my $self = shift;
 
-	my $factory = GAL::FeatureFactory->new();
-
-	my $parser = Text::RecordParser->new({
-					      filename         => $self->file,
-					      record_separator => $self->record_separator,
-					      field_separator  => $self->field_separator,
-					      comment          => $self->comment_delimiter,
-					     });
-
-
-	$parser->bind_fields($self->fields);
-	while (my $record = $parser->fetchrow_hashref) {
+	while (my $record = $self->next_record) {
 
 		my $feature_hash = $self->parse_record($record);
 		next unless defined $feature_hash;
 		my $type = $feature_hash->{type};
-		$factory->type($type);
-		my $feature = $factory->create($feature_hash);
+		my $feature = $self->feature_factory->create($feature_hash);
 		push @{$self->{features}}, $feature;
 
 	}
+	print STDERR "Memory:\t" . (total_size($self) / 1000000) . " MB\n";
+	return $self;
+}
 
-	return undef;
+#-----------------------------------------------------------------------------
+
+=head2 parse_next_feature
+
+ Title   : parse_next_feature
+ Usage   : $a = $self->parse_next_feature();
+ Function: Get/Set the value of parse.
+ Returns : The value of parse.
+ Args    : A value to set parse to.
+
+=cut
+
+sub parse_next_feature {
+
+	my $self = shift;
+
+	my $record = $self->next_record;
+
+	my $feature_hash = $self->parse_record($record);
+	return undef unless defined $feature_hash;
+	my $type = $feature_hash->{type};
+	my $feature = $self->feature_factory->create($feature_hash);
+
+	return $feature;
 }
 
 #-----------------------------------------------------------------------------

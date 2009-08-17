@@ -21,7 +21,7 @@ snp2gene --datastore datastore.index --cgl_format gff3 --type SNP
 
 Description:
 
-This script will locate all snps associated with a give gene in a CGL datastore
+This script will locate all snps associated with a given gene in a CGL datastore
 and write a .snp file in the same directory.
 
 Options:

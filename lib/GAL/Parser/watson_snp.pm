@@ -161,7 +161,6 @@ sub parse_record {
 	my $reference_allele = $record->{reference_allele};
 	my @variant_allele;
 	push @variant_allele, $record->{variant_allele};
-	push @variant_allele, $record->{alternate_allele};
 
 	# Assign the reference and variant allele read counts:
 	# reference_reads=A:7;
@@ -171,7 +170,11 @@ sub parse_record {
 							 $record->{alternate_count});
 	my @variant_reads;
 	push @variant_reads, ($record->{variant_allele}   . ":" . $record->{variant_count});
-	push @variant_reads, ($record->{alternate_allele} . ":" . $record->{alternate_count});
+
+	if ($record->{alternate_allele} ne '.') {
+		push @variant_reads, ($record->{alternate_allele} . ":" . $record->{alternate_count});
+		push @variant_allele, $record->{alternate_allele};
+	}
 
 	# Assign the total number of reads covering this position:
 	# total_reads=16;

@@ -43,9 +43,10 @@ for my $file (@files) {
 	die $@ if $@;
 
 	my $parser = $class->new(file => $file);
-	my @features = $parser->get_features;
+	#my @features = $parser->get_features;
 
-	for my $feature (@features) {
+	#for my $feature (@features) {
+	while (my $feature = $parser->parse_next_feature) {
 		print $feature->to_gff3;
 		print "\n";
 	}

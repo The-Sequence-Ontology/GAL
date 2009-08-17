@@ -23,7 +23,6 @@ isa_ok($parser, 'GAL::Parser::illumina_snp');
 # TEST 3
 ok($parser->get_features, 'parser->get_features');
 
-
 for my $feature ($parser->get_features) {
 
 	print $feature->to_gff3;
