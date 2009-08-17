@@ -49,6 +49,7 @@ This document describes GAL::Parser::illumina_snp version 0.01
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
+
 	return $self;
 }
 
@@ -63,7 +64,7 @@ sub _initialize_args {
 
 	my @valid_attributes = qw();
 
-	$self->fields([qw(chromosome location ref_allele var_alleles id total_reads count_alleles ref_count var_count)]);
+	$self->fields([qw(chromosome location ref_allele var_alleles id total_reads read_alleles ref_reads var_reads)]);
 
 	$self->set_attributes($args, @valid_attributes);
 
@@ -91,7 +92,7 @@ sub parse_record {
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
 	my $id         = $record->{id};
 	my $seqid      = $record->{chromosome};
-	my $source     = 'Illumina_SNP';
+	my $source     = 'Illumina';
 	my $type       = 'SNP';
 	my $start      = $record->{location};
 	my $end        = $record->{location};
@@ -101,44 +102,61 @@ sub parse_record {
 
 	# Create the attributes hash
 
-# Het with ref: get var_alleles and remove ref.  ref_count and var_count OK
-# chr10   56397   C       CT      rs12262442      28      C/T     17      11
-# chr10   61776   T       CT      rs61838967      15      T/C     7       8
-# chr10   65803   T       CT      KOREFSNP1       27      T/C     19      8
-# chr10   68106   C       AC      KOREFSNP2       43      C/A     22      21
-# chr10   84136   C       CT      rs4607995       24      C/T     10      13
-# chr10   84238   A       AT      rs10904041      22      A/T     5       16
+	# Het with ref: get var_alleles and remove ref.  ref_reads and var_reads OK
+	# chr10   56397   C       CT      rs12262442      28      C/T     17      11
+	# chr10   61776   T       CT      rs61838967      15      T/C     7       8
+	# chr10   65803   T       CT      KOREFSNP1       27      T/C     19      8
+	# chr10   68106   C       AC      KOREFSNP2       43      C/A     22      21
+	# chr10   84136   C       CT      rs4607995       24      C/T     10      13
+	# chr10   84238   A       AT      rs10904041      22      A/T     5       16
 
-# Het but not ref: get var_alleles.  assign var_count to correct var and calculate alter_var_count from total - var_count
-# chr10   12625631        A       GT      rs2815636       42      A/G     0       21
-# chr10   13864035        A       CT      rs5025431       27      A/T     0       15
-# chr10   14292681        G       AC      rs11528656      29      G/A     0       18
-# chr10   14771944        C       AG      rs3107794       29      C/G     0       15
-# chr10   15075637        A       CG      rs9731518       29      A/G     4       16
+	# Het but not ref: get var_alleles.  assign var_reads to correct var and calculate alter_var_reads from total - var_reads
+	# chr10   12625631        A       GT      rs2815636       42      A/G     0       21
+	# chr10   13864035        A       CT      rs5025431       27      A/T     0       15
+	# chr10   14292681        G       AC      rs11528656      29      G/A     0       18
+	# chr10   14771944        C       AG      rs3107794       29      C/G     0       15
+	# chr10   15075637        A       CG      rs9731518       29      A/G     4       16
 
-# Homozygous get var_alleles and use only one.  ref_count and var_count OK
-# chr10   168434  T       GG      rs7089889       20      T/G     0       20
-# chr10   173151  T       CC      rs7476951       19      T/C     0       19
-# chr10   175171  G       TT      rs7898275       25      G/T     0       25
-# chr10   175358  C       TT      rs7910845       26      C/T     0       26
+	# Homozygous get var_alleles and use only one.  ref_reads and var_reads OK
+	# chr10   168434  T       GG      rs7089889       20      T/G     0       20
+	# chr10   173151  T       CC      rs7476951       19      T/C     0       19
+	# chr10   175171  G       TT      rs7898275       25      G/T     0       25
+	# chr10   175358  C       TT      rs7910845       26      C/T     0       26
 
-	# $self->fields([qw(chromosome location ref_allele var_alleles id total_reads count_alleles ref_count var_count)]);
+	# $self->fields([qw(chromosome location ref_allele var_alleles id total_reads read_alleles ref_reads var_reads)]);
 
 	# Assign the reference and variant allele sequences:
 	# reference_allele=A
 	# variant_allele=G
 	my $reference_allele = $record->{ref_allele};
-	my @variant_alleles  = split //, $record->{var_alleles};
-	@variant_alleles = grep {$_ ne $reference_allele} @variant_alleles;
+	my %variant_alleles  = map {$_, 1} split //, $record->{var_alleles};
+	my @variant_alleles = grep {$_ ne $reference_allele} keys %variant_alleles;
 
-######## Stopped Here!!!
-
-	# Assign the reference and variant allele read counts:
+	# Assign the reference and variant allele read counts;
 	# my $reference_reads=A:7
 	# my $variant_reads=G:8
 
-	my $reference_reads = $record->{ref_count};
+	my $total_reads = $record->{total_reads};
+	my $reference_reads = "$reference_allele:" . $record->{ref_reads};
 
+	my @variant_reads;
+
+	if (scalar @variant_alleles > 1) {
+		my @read_alleles = split m|/|, $record->{read_alleles};
+		my $alt_allele;
+		for my $this_allele (@variant_alleles) {
+			next if grep {$_ eq $this_allele} @read_alleles;
+			$alt_allele = $this_allele;
+		}
+		my $var_allele = $variant_alleles[0] ne $alt_allele ? $variant_alleles[0] : $variant_alleles[1];
+		my $var_reads = $record->{var_reads};
+		my $alt_reads  = $total_reads - $record->{ref_reads} - $record->{var_reads};
+		push @variant_reads, "$var_allele:$var_reads";
+		push @variant_reads, "$alt_allele:$alt_reads";
+	}
+	else {
+		push @variant_reads, ($variant_alleles[0] . ':' . $record->{var_reads});
+	}
 
 	# Assign the total number of reads covering this position:
 	# my $total_reads=16
@@ -149,13 +167,13 @@ sub parse_record {
 	# Assign the probability that the genotype call is correct:
 	# my $genotype_probability=0.667
 
-	my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
+	# my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
 
 	# Any quality score given for this variant should be assigned
 	# to $score above (column 6 in GFF3).  Here you can assign a
 	# name for the type of score or algorithm used to calculate
 	# the sscore (e.g. phred_like, clcbio, illumina).
-	my $score_type = 'illumina_snp';
+	# my $score_type = 'illumina_snp';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -174,8 +192,9 @@ sub parse_record {
 	# total_reads, genotype, genotype_probability and score type.
 	my $attributes = {reference_allele => [$reference_allele],
 			  variant_allele   => \@variant_alleles,
-			  genotype         => [$genotype],
-			  score_type       => [$score_type],
+			  reference_reads  => [$reference_reads],
+			  variant_reads    => \@variant_reads,
+			  total_reads      => [$total_reads],
 			  ID               => [$id],
 			 };
 
