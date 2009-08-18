@@ -172,7 +172,7 @@ sub parse_record {
 	push @variant_reads, ($record->{variant_allele}   . ":" . $record->{variant_count});
 
 	if ($record->{alternate_allele} ne '.') {
-		push @variant_reads, ($record->{alternate_allele} . ":" . $record->{alternate_count});
+		push @variant_reads, ($record->{alternate_allele} . ":" . $record->{alternate_allele_count});
 		push @variant_allele, $record->{alternate_allele};
 	}
 

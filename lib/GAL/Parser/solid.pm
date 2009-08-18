@@ -65,7 +65,7 @@ sub _initialize_args {
 
 	# give lalbes for the fields in your file.
 	# note parser will automatically ignore lines begining with #
-	
+
 	$self->fields([qw(chr pos ref_base con_base coverage)]);
 
 	$self->set_attributes($args, @valid_attributes);
@@ -116,45 +116,41 @@ sub parse_record {
 
 	# $self->fields([qw(chr pos ref_base con_base coverage)]);
 
-        # Assign the reference and variant allele sequences:
-        # reference_allele=A;
-        # variant_allele=G;
-        my $reference_allele = $record->{ref_base};
-	my $variant_allele   = $record->{con_base};
+	# Assign the reference and variant allele sequences:
+	# reference_allele=A;
+	# variant_allele=G;
+	my $reference_allele = $record->{ref_base};
+	my @variant_allele   = $self->expand_iupac_nt_codes($record->{con_base});
 
-        # Assign the reference and variant allele read counts:
-        # reference_reads=A:7;
-        # variant_reads=G:8;
+	# Assign the reference and variant allele read counts:
+	# reference_reads=A:7;
+	# variant_reads=G:8;
 
-        # Assign the total number of reads covering this position:
-        # total_reads=16;
-        my $total_reads = $record->{coverage};
+	# Assign the total number of reads covering this position:
+	# total_reads=16;
+	my $total_reads = $record->{coverage};
 
-        # Assign the genotype:
-        # genotype=homozygous;
-        my $genotype = $reference_allele eq $variant_allele ? 'homozygous' : 'heterozygous';
+	# Assign the genotype:
+	# genotype=homozygous;
 
+	# Assign the probability that the genotype call is correct:
+	# genotype_probability=0.667;
 
-        # Assign the probability that the genotype call is correct:
-        # genotype_probability=0.667;
-
-        # Any quality score given for this variant should be assigned
-        # to $score above (column 6 in GFF3).  Here you can assign a
-        # name for the type of score or algorithm used to calculate
-        # the sscore (e.g. phred_like, clcbio, illumina).
-        # score_type=watson_snp;
+	# Any quality score given for this variant should be assigned
+	# to $score above (column 6 in GFF3).  Here you can assign a
+	# name for the type of score or algorithm used to calculate
+	# the sscore (e.g. phred_like, clcbio, illumina).
+	# score_type=watson_snp;
 
 
-        # For sequence_alteration features the suggested keys include:
-        # reference_allele, variant_allele, reference_reads, variant_reads
-        # total_reads, genotype, genotype_probability and score type.
-        my $attributes = {reference_allele => [$reference_allele],
-                          variant_allele   => [$variant_allele],
-                          genotype         => [$genotype],
-                          ID               => [$id],
-                          total_reads      => [$total_reads],
-                          genotype         => [$genotype],
-                         };
+	# For sequence_alteration features the suggested keys include:
+	# reference_allele, variant_allele, reference_reads, variant_reads
+	# total_reads, genotype, genotype_probability and score type.
+	my $attributes = {reference_allele => [$reference_allele],
+			  variant_allele   => \@variant_allele,
+			  ID               => [$id],
+			  total_reads      => [$total_reads],
+			 };
 
 	my $feature_data = {id         => $id,
 			    seqid      => $seqid,

@@ -1,23 +1,22 @@
-package GAL::Parser::template;
+package GAL::Parser::complete_genomics;
 
 use strict;
 use vars qw($VERSION);
-
 
 $VERSION = '0.01';
 use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::template - <One line description of module's purpose here>
+GAL::Parser::complete_genomics - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::template version 0.01
+This document describes GAL::Parser::complete_genomics version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::template;
+     use GAL::Parser::complete_genomics;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +38,9 @@ This document describes GAL::Parser::template version 0.01
 =head2
 
      Title   : new
-     Usage   : GAL::Parser::template->new();
-     Function: Creates a template object;
-     Returns : A template object
+     Usage   : GAL::Parser::complete_genomics->new();
+     Function: Creates a GAL::Parser::complete_genomics object;
+     Returns : A GAL::Parser::complete_genomics object
      Args    :
 
 =cut
@@ -63,10 +62,116 @@ sub _initialize_args {
 
 	my @valid_attributes = qw();
 
-	$self->fields([qw(these are the header names for your record hash)]);
+	$self->fields([qw(locus haplotype contig begin end vartype reference alleleSeq totalScore hapLink)]);
 
 	$self->set_attributes($args, @valid_attributes);
 
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 _parse_all_features
+
+ Title   : _parse_all_features
+ Usage   : $a = $self->_parse_all_features();
+ Function: Parse and store all of the features in a file
+ Returns : N/A
+ Args    : N/A
+
+=cut
+
+sub _parse_all_features {
+
+	my $self = shift;
+
+	while (my $record = $self->_read_next_record) {
+
+		my $feature_hash = $self->parse_record($record);
+		next unless defined $feature_hash;
+		my $type = $feature_hash->{type};
+		my $feature = $self->feature_factory->create($feature_hash);
+		push @{$self->{features}}, $feature;
+
+		}
+	return $self;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 parse_next_feature
+
+ Title   : parse_next_feature
+ Usage   : $a = $self->parse_next_feature();
+ Function: Get/Set the value of parse.
+ Returns : The value of parse.
+ Args    : A value to set parse to.
+
+=cut
+
+sub parse_next_feature {
+
+	my $self = shift;
+
+
+	my (@records, @stack);
+      OUTER:
+	while (my $record1 = pop @stack || $self->_read_next_record) {
+
+		# A hack to skip over junk we don't want like this:
+		# contig,begin,end,ploidy
+		# chr1,44045,44254,2
+		next unless $record1->{vartype};
+
+		# Skip over headers (vartype), non-variants (=), and 
+		# ambiguous data (no-call).
+		next if $record1->{vartype} =~ /=|no-call|vartype/;
+
+		push @records, $record1;
+
+		my $locus1 = $record1->{locus};
+	      INNER:
+		while (my $record_add = $self->_read_next_record) {
+			$self->throw() unless $record_add->{vartype};
+			my $locus_add = $record_add->{locus};
+			if ($locus1 ne $locus_add) {
+				push @stack, $record_add;
+				last INNER;
+			}
+			next if $record_add->{vartype} =~ /=|no-call|vartype/;
+			push @records, $record_add;
+		}
+		# Ignore variants that have more than two alleles
+		if (scalar @records > 2) {
+			@records = ();
+			next OUTER;
+		}
+	}
+
+	return undef unless scalar @records;
+
+	# Detect inconsistant data
+	for my $record (@records) {
+		if (grep {$record->{locus}     ne $_->{locus}}     @records ||
+		    grep {$record->{contig}    ne $_->{contig}}    @records ||
+		    grep {$record->{begin}     ne $_->{begin}}     @records ||
+		    grep {$record->{end}       ne $_->{end}}       @records ||
+		    grep {$record->{reference} ne $_->{reference}} @records
+		   ) {
+			$self->throw(message => ("Inconsistant data in a " .
+						 "record group.  You may " .
+						 "have found a bug in "    .
+						 "GAL::Parser::complete_genomics"
+						)
+				    );
+		}
+	}
+
+	my $feature_hash = $self->parse_record(@records);
+	return undef unless defined $feature_hash;
+	my $type = $feature_hash->{type};
+	my $feature = $self->feature_factory->create($feature_hash);
+
+	return $feature;
 }
 
 #-----------------------------------------------------------------------------
@@ -82,22 +187,38 @@ sub _initialize_args {
 =cut
 
 sub parse_record {
-	my ($self, $record) = @_;
+	my ($self, @records) = @_;
 
 	# $record is a hash reference that contains the keys assigned
 	# in the $self->fields call in _initialize_args above
 
+	my $var_record = shift @records;
+	my $alt_record = shift @records;
+
+	# locus,haplotype,contig,begin,end,vartype,reference,alleleSeq,totalScore,hapLink
+	# 1,1,chr1,485,496,=,GCCCGCCCGCC,GCCCGCCCGCC,27,
+
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
-	my $id         = $record->{id};
-	my $seqid      = $record->{chromosome};
-	my $source     = 'Template';
-	my $type       = 'gene';
+	my $id         = sprintf ('CG_%.6x', $var_record->{locus});
+	my $seqid      = $var_record->{contig};
+	my $source     = 'Complete_Genomics';
+
+	my %type_map = (snp => 'SNP',
+			inv => 'inversion',
+			ins => 'nucleotide_insertion',
+			del => 'nucleotide_deletion',
+		       );
+
+	my $type       = $type_map{$var_record}
 	my $start      = $record->{start};
 	my $end        = $record->{end};
 	my $score      = '.';
 	my $strand     = $record->{strand};
 	my $phase      = '.';
+
+	$seqid = ($seqid eq 'PAR1' || $seqid eq 'chrXnonPAR') ? 'chrX' : $seqid;
+	$seqid = ($seqid eq 'PAR2' || $seqid eq 'chrYnonPAR') ? 'chrY' : $seqid;
 
 	# Create the attributes hash
 
@@ -125,7 +246,7 @@ sub parse_record {
 	# to $score above (column 6 in GFF3).  Here you can assign a
 	# name for the type of score or algorithm used to calculate
 	# the sscore (e.g. phred_like, clcbio, illumina).
-	my $score_type = 'template';
+	my $score_type = 'complete_genomics';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -208,7 +329,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::template> requires no configuration files or environment variables.
+<GAL::Parser::complete_genomics> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
