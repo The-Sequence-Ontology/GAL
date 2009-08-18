@@ -185,13 +185,12 @@ sub parser {
  Usage   : $a = $self->_read_next_record();
  Function: Return the next record from the parser
  Returns : The next record from the parser.
- Args    : Optionally set the method the parser will use to get the next
-           record.  Default is fetchrow_hashref for Text::RecordParser.
+ Args    : N/A
 
 =cut
 
 sub _read_next_record {
-	my ($self, $method) = @_;
+	my $self = shift;
 	return $self->parser->fetchrow_hashref;
 }
 

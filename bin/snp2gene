@@ -17,7 +17,7 @@ Synopsis:
 
 snp2gene --datastore datastore.index --cgl_format gff3 --type SNP
 	 --dsn dbi:mysql:db_name --user user_name --passwd password
-         --subject 123456
+         --subject 123456 --test
 
 Description:
 
@@ -37,11 +37,12 @@ Options:
 	     to continue a previously aborted run.  No validation is
 	     done to ensure that previous files were not corrupted in
 	     any previous run failure.
+  test       Just print to STDOUT not to .snp files.
 
 ";
 
 my ($help, $ds_index_file, $cgl_format, $type, $subject, $dsn, $user,
-    $psswd, $continue);
+    $psswd, $continue, $test);
 my $opt_success = GetOptions('help'         => \$help,
 			     'datastore=s'  => \$ds_index_file,
 			     'cgl_format=s' => \$cgl_format,
@@ -51,6 +52,7 @@ my $opt_success = GetOptions('help'         => \$help,
 			     'user=s'       => \$user,
 			     'psswd=s'      => \$psswd,
 			     'continue'     => \$continue,
+			     'test'         => \$test,
 			      );
 
 die $usage if ( $help          ||
@@ -61,7 +63,7 @@ die $usage if ( $help          ||
 die $usage unless $dsn;
 
 my $dbh     = DBI->connect($dsn, $user, $psswd);
-my $sth_snp = $dbh->prepare("SELECT f.feature_id, f.start, a.att_value as variant_allele FROM feature f, attribute a WHERE a.att_key = 'variant_allele' AND type = '$type' AND f.feature_id = a.feature_id AND f.seqid = ? AND f.start >= ? AND f.start <= ?");
+my $sth_snp = $dbh->prepare("SELECT f.feature_id, f.start, f.end, a.att_value as variant_allele FROM feature f, attribute a WHERE a.att_key = 'variant_allele' AND type = '$type' AND f.feature_id = a.feature_id AND f.seqid = ? AND ((f.start >= ? AND f.start <= ?) OR (f.end >= ? AND f.end <= ?))");
 
 my $ds = parse_datastore($ds_index_file);
 
@@ -112,26 +114,33 @@ for my $gene_id (keys %{$ds}) {
 		die "Bad gene strand: $gene_strand\n";
 	}
 
-	my $snps = $dbh->selectall_hashref($sth_snp, [qw(feature_id)], {}, ($ctg_id, $ctg_begin + 499, $ctg_end - 499));
+	my $snps = $dbh->selectall_hashref($sth_snp, [qw(feature_id)], {}, ($ctg_id, $ctg_begin + 499, $ctg_end - 499, $ctg_begin + 499, $ctg_end - 499));
 
-	open (my $SNP, '>', $snp_file) or
-	  die "Can't open $snp_file for writing\n";
+	my $SNP;
+	if ($test) {
+		open ($SNP, ">&=STDOUT") or die "Can't open STDOUT\n";
+	}
+	else {
+		open ($SNP, '>', $snp_file) or
+		  die "Can't open $snp_file for writing\n";
+	}
+
 	print STDERR "Wrote\t$gene_id\t$subject\t\n" if keys %{$snps};
 
 	for my $snp_id (keys %{$snps}) {
 
 		my $snp = $snps->{$snp_id};
 
-		print  join "\t", ($subject,
-				   $ctg_id,
-				   $gene_id,
-				   $snp->{feature_id},
-				   $snp->{start},
-				   $snp->{variant_allele},
-				   '.',
-				   '+',
-				  );
-		print "\n";
+		print  $SNP join "\t", ($subject,
+					$ctg_id,
+					$gene_id,
+					$snp->{feature_id},
+					$snp->{start},
+					$snp->{variant_allele},
+					'.',
+					'+',
+				       );
+		print $SNP "\n";
 	}
 	close $SNP;
 }
