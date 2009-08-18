@@ -20,13 +20,13 @@ Convert various sequence feature formats to GFF3.
 
 Options:
 
-  --format   The format fo the feature file (a subclass of Parser e.g.
+  --format   The format for the feature file (a subclass of Parser e.g.
              gigabayes, maq, clcbio, soap, celera);
 
 ";
 
 
-my ($help, $format);
+my ($help, $format, $coverage);
 my $opt_success = GetOptions('help'         => \$help,
 			     'format=s'     => \$format,
 			    );
@@ -42,7 +42,7 @@ for my $file (@files) {
 	eval "require $class";
 	die $@ if $@;
 
-	my $parser = $class->new(file => $file);
+	my $parser = $class->new(file => $file, coverage => $coverage);
 	#my @features = $parser->get_features;
 
 	#for my $feature (@features) {
