@@ -20,10 +20,7 @@ my $parser = GAL::Parser::celera->new(file => 'data/celera.gff');
 isa_ok($parser, 'GAL::Parser::celera');
 
 # TEST 3
-ok($parser->parse, '$parser->parse');
-
-# TEST 3
-ok($parser->get_features, '$parser->get_features');
+ok($parser->get_all_features, '$parser->get_features');
 
 ################################################################################
 ################################# Ways to Test #################################
