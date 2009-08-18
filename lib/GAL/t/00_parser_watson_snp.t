@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More 'no_plan'; # tests => 10;
+use Test::More tests => 3;
 
 BEGIN {
 	use lib '../../';

@@ -8,7 +8,6 @@ $VERSION = '0.01';
 use base qw(GAL::Base);
 use GAL::FeatureFactory;
 use Text::RecordParser;
-#use Devel::Size qw(size total_size);;
 
 =head1 NAME
 
@@ -209,7 +208,7 @@ sub _read_next_record {
 
 =cut
 
-sub get_features {shift->get_all_feature(@_)}
+sub get_features {shift->get_all_features(@_)}
 
 sub get_all_features {
 	my $self = shift;
@@ -235,7 +234,7 @@ sub parse {
 	$self->warn(message => ("The method GAL::Parser::parse is " .
 				"depricated.  Please use " .
 				"GAL::Parser::_parse_all_features " .
-				"instead\n\n")
+				"instead.")
 		   );
 	return $self->_parse_all_features(@_);
 }

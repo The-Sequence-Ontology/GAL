@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More 'no_plan'; # tests => 10;
+use Test::More tests => 15;
 
 BEGIN {
 	use lib '../../';
@@ -65,7 +65,7 @@ ok($parser->feature_factory, '$parser->feature_factory');
 # TEST 15
 ok($parser->parser, '$parser->parser');
 
-BAIL_OUT('Tests below here have not been written');
+#BAIL_OUT('Tests below here have not been written');
 
 # TEST 16
 #ok($parser->_read_next_record, '$parser->_read_next_record');

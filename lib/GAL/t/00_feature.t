@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More 'no_plan'; # tests => 10;
+use Test::More tests => 12;
 
 BEGIN {
 	use lib '../../';
@@ -36,33 +36,36 @@ my $obj = GAL::Feature->new(seqid   => 'chr1',
 		      );
 
 #TEST 2
-ok($obj->seqid eq 'chr1', '$obj->seqid');
+isa_ok($obj, 'GAL::Feature');
 
 #TEST 3
-ok($obj->source eq 'SOAP', '$obj->source');
+ok($obj->seqid eq 'chr1', '$obj->seqid');
 
 #TEST 4
-ok($obj->type eq 'SNP', '$obj->type');
+ok($obj->source eq 'SOAP', '$obj->source');
 
 #TEST 5
-ok($obj->start == 1234, '$obj->start');
+ok($obj->type eq 'SNP', '$obj->type');
 
 #TEST 6
-ok($obj->end == 5678, '$obj->end');
+ok($obj->start == 1234, '$obj->start');
 
 #TEST 7
-ok($obj->score eq '.', '$obj->score');
+ok($obj->end == 5678, '$obj->end');
 
 #TEST 8
-ok($obj->strand eq '+', '$obj->strand');
+ok($obj->score eq '.', '$obj->score');
 
 #TEST 9
+ok($obj->strand eq '+', '$obj->strand');
+
+#TEST 10
 ok($obj->phase eq '.', '$obj->phase');
 
-#TEST 10
+#TEST 11
 ok(ref($obj->attributes) eq 'HASH', '$obj->attributes');
 
-#TEST 10
+#TEST 12
 ok($obj->to_gff3, '$obj->to_gff3');
 
 ################################################################################

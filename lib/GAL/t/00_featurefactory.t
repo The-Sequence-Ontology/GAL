@@ -14,8 +14,11 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
+# TEST 2
 my $factory = GAL::FeatureFactory->new();
+isa_ok($factory, 'GAL::FeatureFactory');
 
+# TEST 3
 my $obj = $factory->create(seqid   => 'chr1',
 			   source  => 'SOAP',
 			   type    => 'SNP',
@@ -36,62 +39,63 @@ my $obj = $factory->create(seqid   => 'chr1',
 					  variant_effect   	  => ['sequence_variant_affecting_splice_acceptor'],
 					 }
 			  );
-
-#TEST 2
-ok($obj->seqid eq 'chr1', '$obj->seqid');
-
-#TEST 3
-ok($obj->source eq 'SOAP', '$obj->source');
+isa_ok($obj, 'GAL::Feature::sequence_alteration');
 
 #TEST 4
-ok($obj->type eq 'SNP', '$obj->type');
+ok($obj->seqid eq 'chr1', '$obj->seqid');
 
 #TEST 5
-ok($obj->start == 1234, '$obj->start');
+ok($obj->source eq 'SOAP', '$obj->source');
 
 #TEST 6
-ok($obj->end == 5678, '$obj->end');
+ok($obj->type eq 'SNP', '$obj->type');
 
 #TEST 7
-ok($obj->score eq '.', '$obj->score');
+ok($obj->start == 1234, '$obj->start');
 
 #TEST 8
-ok($obj->strand eq '+', '$obj->strand');
+ok($obj->end == 5678, '$obj->end');
 
 #TEST 9
-ok($obj->phase eq '.', '$obj->phase');
+ok($obj->score eq '.', '$obj->score');
 
 #TEST 10
-ok(ref($obj->attributes) eq 'HASH', '$obj->attributes');
+ok($obj->strand eq '+', '$obj->strand');
 
 #TEST 11
-ok($obj->variant_allele eq 'A', '$obj->variant_allele');
+ok($obj->phase eq '.', '$obj->phase');
 
 #TEST 12
-ok($obj->reference_allele eq 'G', '$obj->reference_allele');
+ok(ref($obj->attributes) eq 'HASH', '$obj->attributes');
 
 #TEST 13
-ok($obj->variant_reads == 7, '$obj->variant_reads');
+ok($obj->variant_allele eq 'A', '$obj->variant_allele');
 
 #TEST 14
-ok($obj->reference_reads == 8, '$obj->reference_reads');
+ok($obj->reference_allele eq 'G', '$obj->reference_allele');
 
 #TEST 15
-ok($obj->total_reads == 15, '$obj->total_reads');
+ok($obj->variant_reads == 7, '$obj->variant_reads');
 
 #TEST 16
-ok($obj->genotype eq 'heterozygous', '$obj->genotype');
+ok($obj->reference_reads == 8, '$obj->reference_reads');
 
 #TEST 17
-ok($obj->genotype_probability eq '0.667', '$obj->genotype_prob');
+ok($obj->total_reads == 15, '$obj->total_reads');
 
 #TEST 18
-ok(ref($obj->intersected_types) eq 'ARRAY', '$obj->intersected_types');
+ok($obj->genotype eq 'heterozygous', '$obj->genotype');
 
 #TEST 19
-ok(ref($obj->intersected_xrefs) eq 'ARRAY', '$obj->intersected_xrefs');
+ok($obj->genotype_probability eq '0.667', '$obj->genotype_prob');
 
 #TEST 20
+ok(ref($obj->intersected_types) eq 'ARRAY', '$obj->intersected_types');
+
+#TEST 21
+ok(ref($obj->intersected_xrefs) eq 'ARRAY', '$obj->intersected_xrefs');
+
+#TEST 22
 ok(ref($obj->variant_effects) eq 'ARRAY', '$obj->variant_effects');
 
 ################################################################################

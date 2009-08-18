@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 
-use Test::More 'no_plan'; # tests => 10;
+use Test::More tests => 3;
 
 
 BEGIN {
@@ -22,13 +22,6 @@ isa_ok($parser, 'GAL::Parser::illumina_snp');
 
 # TEST 3
 ok($parser->get_features, 'parser->get_features');
-
-for my $feature ($parser->get_features) {
-
-	print $feature->to_gff3;
-	print "\n";
-
-}
 
 ################################################################################
 ################################# Ways to Test #################################
