@@ -131,7 +131,10 @@ sub format {
 
  Title   : feature_factory
  Usage   : $a = $self->feature_factory();
- Function: Get/Set the value of feature_factory.
+ Function: Get/Set the Feature_Factory.  This is left as a public
+           method to support future use of alternate factories, but
+           this is currently not implimented so this method should be
+           considered for internal use only.
  Returns : The value of feature_factory.
  Args    : A value to set feature_factory to.
 
@@ -150,7 +153,10 @@ sub feature_factory {
 
  Title   : parser
  Usage   : $a = $self->parser();
- Function: Get/Set the value of parser.
+ Function: Get/Set the parser.  This is left as a public
+           method to support future use of alternate parsers, but
+           this is currently not implimented so this method should be
+           considered for internal use only.
  Returns : The value of parser.
  Args    : A value to set parser to.
 
@@ -174,10 +180,10 @@ sub parser {
 
 #-----------------------------------------------------------------------------
 
-=head2 next_record
+=head2 _read_next_record
 
- Title   : next_record
- Usage   : $a = $self->next_record();
+ Title   : _read_next_record
+ Usage   : $a = $self->_read_next_record();
  Function: Return the next record from the parser
  Returns : The next record from the parser.
  Args    : Optionally set the method the parser will use to get the next
@@ -185,35 +191,39 @@ sub parser {
 
 =cut
 
-sub next_record {
+sub _read_next_record {
 	my ($self, $method) = @_;
 	return $self->parser->fetchrow_hashref;
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 get_features
+=head2 get_all_features
 
- Title   : get_features
- Usage   : $features = $self->get_features();
+ Title   : get_all_features
+ Alias   : get_features
+ Usage   : $features = $self->get_all_features();
  Function: Get all the features objects created by this parser.
  Returns : A list of Feature objects.
- Args    :
+ Args    : N/A
 
 =cut
 
-sub get_features {
-	my ($self, $value) = @_;
-	$self->{features} = $value if defined $value;
+sub get_features {shift->get_all_feature(@_)}
+
+sub get_all_features {
+	my $self = shift;
+	$self->_parse_all_features unless $self->{features};
 	return wantarray ? @{$self->{features}} : $self->{features};
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 parse
+=head2 _parse_all_features
 
- Title   : parse
- Usage   : $a = $self->parse();
+ Title   : _parse_all_features
+ Alias   : parse # Depricated but kept for backwards compatibility
+ Usage   : $a = $self->_parse_all_features();
  Function: Parse and store all of the features in a file
  Returns : N/A
  Args    : N/A
@@ -221,10 +231,20 @@ sub get_features {
 =cut
 
 sub parse {
+	my $self = shift;
+	$self->warn(message => ("The method GAL::Parser::parse is " .
+				"depricated.  Please use " .
+				"GAL::Parser::_parse_all_features " .
+				"instead\n\n")
+		   );
+	return $self->_parse_all_features(@_);
+}
+
+sub _parse_all_features {
 
 	my $self = shift;
 
-	while (my $record = $self->next_record) {
+	while (my $record = $self->_read_next_record) {
 
 		my $feature_hash = $self->parse_record($record);
 		next unless defined $feature_hash;
@@ -233,7 +253,6 @@ sub parse {
 		push @{$self->{features}}, $feature;
 
 	}
-#	print STDERR "Memory:\t" . (total_size($self) / 1000000) . " MB\n";
 	return $self;
 }
 
@@ -242,6 +261,8 @@ sub parse {
 =head2 parse_next_feature
 
  Title   : parse_next_feature
+ Alias   : next_feature
+ Alias   : get_next_feature
  Usage   : $a = $self->parse_next_feature();
  Function: Get/Set the value of parse.
  Returns : The value of parse.
@@ -249,11 +270,14 @@ sub parse {
 
 =cut
 
+sub next_feature     {shift->parse_next_feature(@_)}
+sub get_next_feature {shift->parse_next_feature(@_)}
+
 sub parse_next_feature {
 
 	my $self = shift;
 
-	my $record = $self->next_record;
+	my $record = $self->_read_next_record;
 	return undef unless $record;
 
 	my $feature_hash = $self->parse_record($record);
