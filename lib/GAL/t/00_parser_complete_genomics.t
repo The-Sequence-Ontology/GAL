@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More 'no_plan'; # tests => 10;
+use Test::More tests => 3;
 
 BEGIN {
 	use lib '../../';
@@ -18,10 +18,6 @@ my $parser = GAL::Parser::complete_genomics->new(file => 'data/complete_genomics
 
 # TEST 2
 isa_ok($parser, 'GAL::Parser::complete_genomics');
-
-while (my $feature = $parser->parse_next_feature) {
-	print $feature->to_gff3 . "\n";
-}
 
 # TEST 3
 ok($parser->get_features, '$parser->get_features');
