@@ -144,7 +144,7 @@ sub parse_record {
 
 	my $id         = $record->{id};
 	my $seqid      = $record->{chromosome};
-	my $source     = 'Solid';
+	my $source     = 'Baylor';
 
 	my $type       = 'SNP';
 	my $start      = $record->{coordinate};
