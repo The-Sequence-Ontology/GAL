@@ -170,37 +170,6 @@ sub parse_record {
 
 	return $feature_data;
 }
-#-----------------------------------------------------------------------------
-
-=head2 foo
-
- Title   : get_genotype
- Usage   : $a = $self->get_genotype($reference_allele, \@variant_alleles);
- Function: Determine the genotype.
- Returns : A genotype name
- Args    : The reference allele and an array reference of variant alleles.
-
-=cut
-
-sub get_genotype {
-	my ($self, $ref, $vars) = @_;
-
-	my $num_var = @{$vars};
-
-	if ($num_var == 1) {
-		return 'homozygous_reference' if ($vars->[0] eq $ref);
-		return 'homozygous_variant'   if ($vars->[0] ne $ref);
-	}
-	elsif ($num_var == 2) {
-		return 'heterozygous'            if ($vars->[0] eq $ref ||
-						     $vars->[1] eq $ref);
-		return 'trans_heterozygous' 	 if ($vars->[0] ne $ref &&
-						     $vars->[1] ne $ref);
-	}
-
-	$self->throw(message => ("Uncaught combination ref:$ref vars:" .
-				 join(q{,}, @{$vars}) . ' in get_genotype!'));
-}
 
 #-----------------------------------------------------------------------------
 

@@ -64,7 +64,7 @@ sub _initialize_args {
 
 	# give lalbes for the fields in your file.
 	# note parser will automatically ignore lines begining with #
-	
+
 	$self->fields([qw(chr pos ref_base con_base con_qual read_depth ave_hits_elsewhere)]);
 
 	$self->set_attributes($args, @valid_attributes);
@@ -117,50 +117,49 @@ sub parse_record {
 
 	# $self->fields([qw(chr pos ref_base con_base con_qual read_depth ave_hits_elsewhere)]);
 
-        # Assign the reference and variant allele sequences:
-        # reference_allele=A;
-        # variant_allele=G;
-        my $reference_allele = $record->{ref_base};
+	# Assign the reference and variant allele sequences:
+	# reference_allele=A;
+	# variant_allele=G;
+	my $reference_allele = $record->{ref_base};
 
 	my $variant_allele   = $record->{con_base};
 
 	my $vars = $self->expand_iupac_nt_codes($variant_allele);
 
-        # Assign the reference and variant allele read counts:
-        # reference_reads=A:7;
-        # variant_reads=G:8;
+	# Assign the reference and variant allele read counts:
+	# reference_reads=A:7;
+	# variant_reads=G:8;
 
-        # Assign the total number of reads covering this position:
-        # total_reads=16;
-        my $total_reads = $record->{read_depth};
+	# Assign the total number of reads covering this position:
+	# total_reads=16;
+	my $total_reads = $record->{read_depth};
 
-        # Assign the genotype:
-        # genotype=homozygous;
-        my $genotype = get_genotype($reference_allele, $vars); 
+	# Assign the genotype:
+	# genotype=homozygous;
+	my $genotype = $self->get_genotype($reference_allele, $vars);
 
 
-        # Assign the probability that the genotype call is correct:
-        # genotype_probability=0.667;
+	# Assign the probability that the genotype call is correct:
+	# genotype_probability=0.667;
 
-        # Any quality score given for this variant should be assigned
-        # to $score above (column 6 in GFF3).  Here you can assign a
-        # name for the type of score or algorithm used to calculate
-        # the sscore (e.g. phred_like, clcbio, illumina).
-        # score_type=watson_snp;
+	# Any quality score given for this variant should be assigned
+	# to $score above (column 6 in GFF3).  Here you can assign a
+	# name for the type of score or algorithm used to calculate
+	# the sscore (e.g. phred_like, clcbio, illumina).
+	# score_type=watson_snp;
 
 	my $score_type = 'illumina';
 
-        # For sequence_alteration features the suggested keys include:
-        # reference_allele, variant_allele, reference_reads, variant_reads
-        # total_reads, genotype, genotype_probability and score type.
-        my $attributes = {reference_allele => [$reference_allele],
-                          variant_allele   => $vars,
-                          genotype         => [$genotype],
-                          ID               => [$id],
-                          total_reads      => [$total_reads],
-                          genotype         => [$genotype],
+	# For sequence_alteration features the suggested keys include:
+	# reference_allele, variant_allele, reference_reads, variant_reads
+	# total_reads, genotype, genotype_probability and score type.
+	my $attributes = {reference_allele => [$reference_allele],
+			  variant_allele   => $vars,
+			  genotype         => [$genotype],
+			  ID               => [$id],
+			  total_reads      => [$total_reads],
 			  score_type       => [$score_type],
-                         };
+			 };
 
 	my $feature_data = {id         => $id,
 			    seqid      => $seqid,
@@ -175,24 +174,6 @@ sub parse_record {
 			   };
 
 	return $feature_data;
-}
-#-----------------------------------------------------------------------------
-sub get_genotype {
-	my $ref  = shift;
-	my $vars = shift;
-
-	my $num_var = @{$vars};
-
-	return 'homozygous_reference'    if ($num_var == 1 && $vars->[0] eq $ref);
-
-	return 'heterozygous' if ($num_var == 2 && ($vars->[0] eq $ref || $vars->[1] eq $ref));
-
-	return 'homozygous_variant' if ($num_var == 1 && $vars->[0] ne $ref);
-
-	return 'trans_heterozygous' if ($num_var == 2 && ($vars->[0] ne $ref && $vars->[1] ne $ref));
-	
-
-	die "uncaught combination ref:$ref".join(/,/, @{$vars})." in sub get_genotype!\n";
 }
 #-----------------------------------------------------------------------------
 

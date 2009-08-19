@@ -131,9 +131,9 @@ sub format {
  Title   : feature_factory
  Usage   : $a = $self->feature_factory();
  Function: Get/Set the Feature_Factory.  This is left as a public
-           method to support future use of alternate factories, but
-           this is currently not implimented so this method should be
-           considered for internal use only.
+	   method to support future use of alternate factories, but
+	   this is currently not implimented so this method should be
+	   considered for internal use only.
  Returns : The value of feature_factory.
  Args    : A value to set feature_factory to.
 
@@ -153,9 +153,9 @@ sub feature_factory {
  Title   : parser
  Usage   : $a = $self->parser();
  Function: Get/Set the parser.  This is left as a public
-           method to support future use of alternate parsers, but
-           this is currently not implimented so this method should be
-           considered for internal use only.
+	   method to support future use of alternate parsers, but
+	   this is currently not implimented so this method should be
+	   considered for internal use only.
  Returns : The value of parser.
  Args    : A value to set parser to.
 
@@ -405,6 +405,39 @@ sub parse_attributes {
 		push @{$attrb_hash{$key}}, @values;
 	}
 	return \%attrb_hash;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 get_genotype
+
+ Title   : get_genotype
+ Usage   : $a = $self->get_genotype($reference_allele, \@variant_alleles);
+ Function: Determine the genotype.
+ Returns : A genotype name
+ Args    : The reference allele and an array reference of variant alleles.
+
+=cut
+
+sub get_genotype {
+	my ($self, $ref, $vars) = @_;
+
+	my $num_var = @{$vars};
+
+	if ($num_var == 1) {
+		return 'homozygous:reference' if ($vars->[0] eq $ref);
+		return 'homozygous:variant'   if ($vars->[0] ne $ref);
+			}
+	elsif ($num_var == 2) {
+		return 'heterozygous:reference' if ($vars->[0] eq $ref ||
+						    $vars->[1] eq $ref);
+		return 'heterozygous:variant'   if ($vars->[0] ne $ref &&
+						    $vars->[1] ne $ref);
+	}
+
+	$self->throw(message => ("Uncaught combination ref:$ref vars:" .
+				 join(q{,}, @{$vars}) .
+				 ' in GAL::Parser::get_genotype!'));
 }
 
 #-----------------------------------------------------------------------------

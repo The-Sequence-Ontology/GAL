@@ -19,10 +19,6 @@ my $parser = GAL::Parser::soap->new(file => 'data/soap.gff');
 # TEST 2
 isa_ok($parser, 'GAL::Parser::soap');
 
-while (my $feature = $parser->parse_next_feature) {
-	print $feature->to_gff3 . "\n";
-}
-
 # TEST 3
 ok($parser->get_features, '$parser->get_features');
 

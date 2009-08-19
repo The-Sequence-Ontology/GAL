@@ -1,4 +1,4 @@
-package GAL::Parser::watson_snp;
+package GAL::Parser::baylor;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::watson_snp - <One line description of module's purpose here>
+GAL::Parser::baylor - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::watson_snp version 0.01
+This document describes GAL::Parser::baylor version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::watson_snp;
+     use GAL::Parser::baylor;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::watson_snp version 0.01
 =head2
 
      Title   : new
-     Usage   : GAL::Parser::watson_snp->new();
-     Function: Creates a watson_snp object;
-     Returns : A watson_snp object
+     Usage   : GAL::Parser::baylor->new();
+     Function: Creates a GAL::Parser::baylor object;
+     Returns : A GAL::Parser::baylor object
      Args    :
 
 =cut
@@ -191,7 +191,7 @@ sub parse_record {
 	# to $score above (column 6 in GFF3).  Here you can assign a
 	# name for the type of score or algorithm used to calculate
 	# the sscore (e.g. phred_like, clcbio, illumina).
-	# score_type=watson_snp;
+	# score_type=baylor;
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -277,7 +277,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::watson_snp> requires no configuration files or environment variables.
+<GAL::Parser::baylor> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

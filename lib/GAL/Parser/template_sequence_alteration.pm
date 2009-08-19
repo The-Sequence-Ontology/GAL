@@ -40,8 +40,8 @@ This document describes GAL::Parser::template version 0.01
 
      Title   : new
      Usage   : GAL::Parser::template->new();
-     Function: Creates a template object;
-     Returns : A template object
+     Function: Creates a GAL::Parser::template object;
+     Returns : A GAL::Parser::template object
      Args    :
 
 =cut
@@ -63,10 +63,11 @@ sub _initialize_args {
 
 	my @valid_attributes = qw();
 
-	$self->fields([qw(these are the header names for your record hash)]);
-
 	$self->set_attributes($args, @valid_attributes);
 
+	# Set the column headers from your incoming data file here
+	# These will become the keys in your $record hash reference below.
+	$self->fields([qw(these are the header names for your record hash)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -92,7 +93,7 @@ sub parse_record {
 	my $id         = $record->{id};
 	my $seqid      = $record->{chromosome};
 	my $source     = 'Template';
-	my $type       = 'gene';
+	my $type       = 'SNP';
 	my $start      = $record->{start};
 	my $end        = $record->{end};
 	my $score      = '.';

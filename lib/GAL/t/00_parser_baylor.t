@@ -1,12 +1,12 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More 'no_plan'; # tests => 10;
+use Test::More tests => 3;
 
 BEGIN {
 	use lib '../../';
 	#TEST 1
-	use_ok('GAL::Parser::soap');
+	use_ok('GAL::Parser::baylor');
 }
 
 my $path = $0;
@@ -14,19 +14,13 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $parser = GAL::Parser::soap->new(file => 'data/soap.gff');
+my $parser = GAL::Parser::baylor->new(file => 'data/baylor.tsv');
 
 # TEST 2
-isa_ok($parser, 'GAL::Parser::soap');
-
-while (my $feature = $parser->parse_next_feature) {
-	print $feature->to_gff3 . "\n";
-}
+isa_ok($parser, 'GAL::Parser::baylor');
 
 # TEST 3
-ok($parser->get_features, '$parser->get_features');
-
-
+ok($parser->get_features, 'parser->get_features');
 
 ################################################################################
 ################################# Ways to Test #################################
