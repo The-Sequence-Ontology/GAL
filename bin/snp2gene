@@ -63,7 +63,9 @@ die $usage if ( $help          ||
 die $usage unless $dsn;
 
 my $dbh     = DBI->connect($dsn, $user, $psswd);
-my $sth_snp = $dbh->prepare("SELECT f.feature_id, f.start, f.end, a.att_value as variant_allele FROM feature f, attribute a WHERE a.att_key = 'variant_allele' AND type = '$type' AND f.feature_id = a.feature_id AND f.seqid = ? AND ((f.start >= ? AND f.start <= ?) OR (f.end >= ? AND f.end <= ?))");
+my $sth_snp = $dbh->prepare("SELECT feature_id, start, end FROM feature WHERE type = '$type' AND seqid = ? AND ((start >= ? AND start <= ?) OR (end >= ? AND end <= ?))");
+my $sth_ref = $dbh->prepare("SELECT a.att_value as reference_allele FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'reference_allele'");
+my $sth_var = $dbh->prepare("SELECT a.att_value as reference_allele FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'variant_allele'");
 
 my $ds = parse_datastore($ds_index_file);
 
@@ -131,12 +133,22 @@ for my $gene_id (keys %{$ds}) {
 
 		my $snp = $snps->{$snp_id};
 
+
+		my $ref_allele = $dbh->selectall_arrayref($sth_ref, {}, ($snp_id));
+		$ref_allele = $ref_allele->[0][0];
+
+		my $var_reference = $dbh->selectall_arrayref($sth_var, {}, ($snp_id));;
+		my @var_alleles;
+		map {push @var_alleles, @{$_}} @{$var_reference};
+
+		my $alleles = join '/', ($ref_allele, @var_alleles);
+
 		print  $SNP join "\t", ($subject,
 					$ctg_id,
 					$gene_id,
 					$snp->{feature_id},
 					$snp->{start},
-					$snp->{variant_allele},
+					$alleles,
 					'.',
 					'+',
 				       );
@@ -151,7 +163,8 @@ for my $gene_id (keys %{$ds}) {
 sub parse_datastore {
 	my $ds_index = shift;
 
-	open (my $IN, '<', $ds_index);
+	open (my $IN, '<', $ds_index) or
+	  die "Can't open file $ds_index for reading\n$!\n";
 
 	my %index;
 	while (<$IN>) {
