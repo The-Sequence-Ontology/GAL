@@ -248,7 +248,7 @@ sub do_it_illumina_sanger {
 
         my $p_het;
         my $p_homo;
-        if ($geno eq 'heterozygous'){
+        if ($geno eq 'heterozygous:reference'){
                 $c_y = int $tot_reads/2;
                 $b_y = $vars->[1];
                 $b_x = $vars->[0];
@@ -257,7 +257,7 @@ sub do_it_illumina_sanger {
                 ($c_x, $b_x, $c_y, $b_y) =
                 GAL::het_homo_or_repeat::prep_and_scale($c_x, $b_x, $c_y, $b_y);
         }
-        elsif ($geno eq 'homozygous_variant'){
+        elsif ($geno eq 'homozygous:variant'){
                 $c_y = $tot_reads;
                 $b_y = $vars->[0];
                 $b_x = $refs->[0];
@@ -266,7 +266,7 @@ sub do_it_illumina_sanger {
                 ($c_x, $b_x, $c_y, $b_y) =
                 GAL::het_homo_or_repeat::prep_and_scale($c_x, $b_x, $c_y, $b_y);
         }
-        elsif ($geno eq 'trans_heterozygous'){
+        elsif ($geno eq 'heterozygous:variant'){
                 $c_y = $tot_reads;
                 $b_y = $vars->[0];
                 $b_x = $refs->[0];
@@ -277,7 +277,7 @@ sub do_it_illumina_sanger {
         }
 
         else {
-                die "unknown genotype:$geno  in sub do_it_watson_snp!\n";
+                die "unknown genotype:$geno  in sub do_it_illumina_sanger!\n";
         }
 
         $p_het  = GAL::het_homo_or_repeat::het($c_x, $c_y, $error_rate);
@@ -307,7 +307,7 @@ sub do_it_solid {
 
 	my $p_het;
 	my $p_homo;
-	if ($geno eq 'heterozygous'){
+	if ($geno eq 'heterozygous:reference'){
 		$c_y = int $tot_reads/2;
 		$b_y = $vars->[1];
 		$b_x = $vars->[0];
@@ -316,7 +316,7 @@ sub do_it_solid {
 		($c_x, $b_x, $c_y, $b_y) =
 		GAL::het_homo_or_repeat::prep_and_scale($c_x, $b_x, $c_y, $b_y);
 	}	
-	elsif ($geno eq 'homozygous_variant'){
+	elsif ($geno eq 'homozygous:variant'){
 		$c_y = $tot_reads;
 		$b_y = $vars->[0];
 		$b_x = $refs->[0];
@@ -325,7 +325,7 @@ sub do_it_solid {
                 ($c_x, $b_x, $c_y, $b_y) =
                 GAL::het_homo_or_repeat::prep_and_scale($c_x, $b_x, $c_y, $b_y);
 	}
-        elsif ($geno eq 'trans_heterozygous'){
+        elsif ($geno eq 'heterozygous:variant'){
                 $c_y = $tot_reads;
                 $b_y = $vars->[0];
                 $b_x = $refs->[0];
