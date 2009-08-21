@@ -425,13 +425,13 @@ sub get_genotype {
 	my $num_var = @{$vars};
 
 	if ($num_var == 1) {
-		return 'homozygous:reference' if ($vars->[0] eq $ref);
-		return 'homozygous:variant'   if ($vars->[0] ne $ref);
+		return 'homozygous:reference_genome' if ($vars->[0] eq $ref);
+		return 'homozygous:variant_genome'   if ($vars->[0] ne $ref);
 			}
 	elsif ($num_var == 2) {
-		return 'heterozygous:reference' if ($vars->[0] eq $ref ||
+		return 'heterozygous:reference_genome' if ($vars->[0] eq $ref ||
 						    $vars->[1] eq $ref);
-		return 'heterozygous:variant'   if ($vars->[0] ne $ref &&
+		return 'heterozygous:variant_genome'   if ($vars->[0] ne $ref &&
 						    $vars->[1] ne $ref);
 	}
 
