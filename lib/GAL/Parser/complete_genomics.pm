@@ -91,7 +91,7 @@ sub parse_record {
 	# $record is a hash reference that contains the keys assigned
 	# in the $self->fields call in _initialize_args above
 
-#	$self->fields([qw(locus contig begin end vartype1 vartype2 reference allele1 allele2 totalScore)]);
+	# $self->fields([qw(locus contig begin end vartype1 vartype2 reference allele1 allele2 totalScore)]);
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
 	my $id         = sprintf 'CG_%09d', $record->{locus};
@@ -125,8 +125,8 @@ sub parse_record {
 				($record->{allele1})                     :
 				($record->{allele1}, $record->{allele2})
 				);
-
 	map {$_ ||= '-'} @variant_alleles;
+	#@variant_alleles = grep {$_ ne $reference_allele} @variant_alleles;
 
 	# Assign the reference and variant allele read counts:
 	# my $reference_reads=A:7

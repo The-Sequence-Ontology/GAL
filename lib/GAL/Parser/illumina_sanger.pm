@@ -120,11 +120,10 @@ sub parse_record {
 	# Assign the reference and variant allele sequences:
 	# reference_allele=A;
 	# variant_allele=G;
-	my $reference_allele = $record->{ref_base};
+	my $reference_allele    = $record->{ref_base};
+	my $variant_allele_code = $record->{con_base};
 
-	my $variant_allele   = $record->{con_base};
-
-	my $vars = $self->expand_iupac_nt_codes($variant_allele);
+	my @variant_alleles = $self->expand_iupac_nt_codes($variant_allele_code); # grep {$_ ne $reference_allele}
 
 	# Assign the reference and variant allele read counts:
 	# reference_reads=A:7;
@@ -136,7 +135,7 @@ sub parse_record {
 
 	# Assign the genotype:
 	# genotype=homozygous;
-	my $genotype = $self->get_genotype($reference_allele, $vars);
+	my $genotype = $self->get_genotype($reference_allele, \@variant_alleles);
 
 
 	# Assign the probability that the genotype call is correct:
@@ -154,7 +153,7 @@ sub parse_record {
 	# reference_allele, variant_allele, reference_reads, variant_reads
 	# total_reads, genotype, genotype_probability and score type.
 	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => $vars,
+			  variant_allele   => \@variant_alleles,
 			  genotype         => [$genotype],
 			  ID               => [$id],
 			  total_reads      => [$total_reads],

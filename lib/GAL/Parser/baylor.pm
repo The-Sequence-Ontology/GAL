@@ -159,8 +159,8 @@ sub parse_record {
 	# reference_allele=A;
 	# variant_allele=G;
 	my $reference_allele = $record->{reference_allele};
-	my @variant_allele;
-	push @variant_allele, $record->{variant_allele};
+	my @variant_alleles;
+	push @variant_alleles, $record->{variant_allele};
 
 	# Assign the reference and variant allele read counts:
 	# reference_reads=A:7;
@@ -173,7 +173,7 @@ sub parse_record {
 
 	if ($record->{alternate_allele} ne '.') {
 		push @variant_reads, ($record->{alternate_allele} . ":" . $record->{alternate_allele_count});
-		push @variant_allele, $record->{alternate_allele};
+		push @variant_alleles, $record->{alternate_allele};
 	}
 
 	# Assign the total number of reads covering this position:
@@ -182,7 +182,8 @@ sub parse_record {
 
 	# Assign the genotype:
 	# genotype=homozygous;
-	my $genotype = $record->{genotype} eq 'het' ? 'heterozygous' : undef;
+	my $their_genotype = $record->{genotype} eq 'het' ? 'heterozygous' : undef;
+	my $our_genotype   = $self->get_genotype($reference_allele, \@variant_alleles);
 
 	# Assign the probability that the genotype call is correct:
 	# genotype_probability=0.667;
@@ -209,13 +210,13 @@ sub parse_record {
 	# reference_allele, variant_allele, reference_reads, variant_reads
 	# total_reads, genotype, genotype_probability and score type.
 	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => \@variant_allele,
-			  genotype         => [$genotype],
+			  variant_allele   => \@variant_alleles,
+			  genotype         => [$our_genotype],
 			  ID               => [$id],
 			  reference_reads  => [$reference_reads],
 			  variant_reads    => \@variant_reads,
 			  total_reads      => [$total_reads],
-			  genotype         => [$genotype],
+			  genotype         => [$our_genotype],
 			 };
 
 	my $feature_data = {id         => $id,

@@ -158,20 +158,23 @@ sub parse_record {
 	# variant_allele=G
 	my ($allele_text) = split /;/, $record->{alleles};
 	my ($reference_allele, @variant_alleles) = split m|/|, $allele_text;
+	#@variant_alleles = grep {$_ ne $reference_allele} @variant_alleles;
 
 	# Assign the reference and variant allele read counts:
 
-	# my $reference_reads=A:7
-	# my $variant_reads=G:8
+	# reference_reads=A:7
+	# variant_reads=G:8
 
 	# Assign the total number of reads covering this position:
-	# my $total_reads=16
+	# total_reads=16
 
 	# Assign the genotype:
-	# my $genotype=homozygous
+	# genotype=homozygous
+	my $our_genotype;
+	$our_genotype = $self->get_genotype($reference_allele, \@variant_alleles);
 
 	# Assign the probability that the genotype call is correct:
-	# my $genotype_probability=0.667
+	# genotype_probability=0.667
 
 	# 1624998 heterozygous_SNP
 	# 1450860 homozygous_SNP
@@ -185,7 +188,7 @@ sub parse_record {
 	# where their is a contiguous substiution and deletion or
 	# insertion.
 
-	my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
+	my ($their_genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
 	my %type_map = (deletion               => 'nucleotide_deletion',
 			insertion              => 'nucleotide_insertion',
 			mixed_sequence_variant => 'sequence_alteration',
@@ -209,7 +212,7 @@ sub parse_record {
 	# total_reads, genotype, genotype_probability and score type
 	my $attributes = {reference_allele => [$reference_allele],
 			  variant_allele   => \@variant_alleles,
-			  genotype         => [$genotype],
+			  genotype         => [$our_genotype],
 			  score_type       => [$score_type],
 			  ID               => [$id],
 			 };

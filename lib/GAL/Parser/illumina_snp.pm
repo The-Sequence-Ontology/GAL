@@ -64,7 +64,8 @@ sub _initialize_args {
 
 	my @valid_attributes = qw();
 
-	$self->fields([qw(chromosome location ref_allele var_alleles id total_reads read_alleles ref_reads var_reads)]);
+	$self->fields([qw(chromosome location ref_allele var_alleles id
+                          total_reads read_alleles ref_reads var_reads)]);
 
 	$self->set_attributes($args, @valid_attributes);
 
@@ -76,7 +77,7 @@ sub _initialize_args {
 
  Title   : parse_record
  Usage   : $a = $self->parse_record();
- Function: Parse the data from a record.
+grep {$_ ne $reference_allele} Function: Parse the data from a record.
  Returns : A hash ref needed by Feature.pm to create a Feature object
  Args    : A hash ref of fields that this sub can understand (In this case GFF3).
 
@@ -130,7 +131,7 @@ sub parse_record {
 	# variant_allele=G
 	my $reference_allele = $record->{ref_allele};
 	my %variant_alleles  = map {$_, 1} split //, $record->{var_alleles};
-	my @variant_alleles = grep {$_ ne $reference_allele} keys %variant_alleles;
+	my @variant_alleles = keys %variant_alleles; # grep {$_ ne $reference_allele}
 
 	# Assign the reference and variant allele read counts;
 	# my $reference_reads=A:7
@@ -163,6 +164,7 @@ sub parse_record {
 
 	# Assign the genotype:
 	# my $genotype=homozygous
+	my $genotype = $self->get_genotype($reference_allele, \@variant_alleles);
 
 	# Assign the probability that the genotype call is correct:
 	# my $genotype_probability=0.667
@@ -195,6 +197,7 @@ sub parse_record {
 			  reference_reads  => [$reference_reads],
 			  variant_reads    => \@variant_reads,
 			  total_reads      => [$total_reads],
+			  genotype         => [$genotype],
 			  ID               => [$id],
 			 };
 

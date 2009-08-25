@@ -111,7 +111,7 @@ sub parse_record {
 	# variant_allele=G
 	my $reference_allele  = $record->{reference};
 	my %variant_hash = map {$_, 1} split //, $record->{variant};
-	my @variant_alleles = keys %variant_hash;
+	my @variant_alleles = keys %variant_hash; # grep {$_ ne $reference_allele}
 
 	# Assign the reference and variant allele read counts:
 	# my $reference_reads=A:7
