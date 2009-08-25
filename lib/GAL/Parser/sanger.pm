@@ -119,7 +119,7 @@ sub parse_record {
 	# Assign the probability that the genotype call is correct:
 	# my $genotype_probability=0.667
 
-	my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
+	my ($their_genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
 
 	# Any quality score given for this variant should be assigned
 	# to $score above (column 6 in GFF3).  Here you can assign a
