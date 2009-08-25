@@ -122,14 +122,17 @@ sub parse_record {
 	my @variant_alleles  = split m|/|, $original_atts->{allele}[0];
 
 	# Assign the reference and variant allele read counts:
-	# my $reference_reads=A:7
-	# my $variant_reads=G:8
+	# reference_reads=A:7
+	# variant_reads=G:8
 
 	my @variant_reads = ($variant_alleles[0] . ':' . $original_atts->{support1}[0],
 			     $variant_alleles[1] . ':' . $original_atts->{support2}[0],
 			    );
 
-	# my $reference_reads;
+	my ($reference_reads) = grep {$_ =~ /^$reference_allele:\d+/} @variant_reads;
+	$reference_reads ||= 0;
+
+	# reference_reads;
 	# if ($reference_allele eq $variant_alleles[0]) {
 	# 	$reference_reads = $reference_allele . ':' . $original_atts->{support1}[0];
 	# 	# Remove a variant if it is equal to the reference.
@@ -155,7 +158,7 @@ sub parse_record {
 	}
 
 	# Assign the total number of reads covering this position:
-	# my $total_reads=16
+	# total_reads=16
 
 	my $total_reads;
 	map {my ($allele, $reads) = split /:/, $_;$total_reads += $reads} (@variant_reads); #, $reference_reads);
@@ -190,7 +193,7 @@ sub parse_record {
 	# reference_allele, variant_allele, reference_reads, variant_reads
 	# total_reads, genotype, genotype_probability and score type.
 	my $attributes = {reference_allele => [$reference_allele],
-			  #reference_reads  => [$reference_reads],
+			  reference_reads  => [$reference_reads],
 			  variant_allele   => \@variant_alleles,
 			  variant_reads    => \@variant_reads,
 			  total_reads      => [$total_reads],

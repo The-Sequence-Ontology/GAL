@@ -159,6 +159,7 @@ sub parse_record {
 	my ($allele_text) = split /;/, $record->{alleles};
 	my ($reference_allele, @variant_alleles) = split m|/|, $allele_text;
 	#@variant_alleles = grep {$_ ne $reference_allele} @variant_alleles;
+	push @variant_alleles, $reference_allele if $record->{variant_type} eq 'heterozygous_SNP';
 
 	# Assign the reference and variant allele read counts:
 

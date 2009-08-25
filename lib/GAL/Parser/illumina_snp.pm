@@ -134,40 +134,46 @@ sub parse_record {
 	my @variant_alleles = keys %variant_alleles; # grep {$_ ne $reference_allele}
 
 	# Assign the reference and variant allele read counts;
-	# my $reference_reads=A:7
-	# my $variant_reads=G:8
+	# reference_reads=A:7
+	# variant_reads=G:8
 
 	my $total_reads = $record->{total_reads};
 	my $reference_reads = "$reference_allele:" . $record->{ref_reads};
 
-	my @variant_reads;
+	# chr10   56397   C       CT      rs12262442      28      C/T     17      11
+	my @read_alleles = split m|/|, $record->{read_alleles};
+	my %read_counts = ($read_alleles[0] => $record->{ref_reads},
+			   $read_alleles[1] => $record->{var_reads},
+			   );
 
-	if (scalar @variant_alleles > 1) {
-		my @read_alleles = split m|/|, $record->{read_alleles};
-		my $alt_allele;
-		for my $this_allele (@variant_alleles) {
-			next if grep {$_ eq $this_allele} @read_alleles;
-			$alt_allele = $this_allele;
-		}
-		my $var_allele = $variant_alleles[0] ne $alt_allele ? $variant_alleles[0] : $variant_alleles[1];
-		my $var_reads = $record->{var_reads};
-		my $alt_reads  = $total_reads - $record->{ref_reads} - $record->{var_reads};
-		push @variant_reads, "$var_allele:$var_reads";
-		push @variant_reads, "$alt_allele:$alt_reads";
-	}
-	else {
-		push @variant_reads, ($variant_alleles[0] . ':' . $record->{var_reads});
-	}
+	my @variant_reads = map {"$_:" . ($read_counts{$_} || $total_reads - $record->{var_reads})} @variant_alleles;
+
+	# if (scalar @variant_alleles > 1) {
+	# 	my @read_alleles = split m|/|, $record->{read_alleles};
+	# 	my $alt_allele;
+	# 	for my $this_allele (@variant_alleles) {
+	# 		next if grep {$_ eq $this_allele} @read_alleles;
+	# 		$alt_allele = $this_allele;
+	# 	}
+	# 	my $var_allele = $variant_alleles[0] ne $alt_allele ? $variant_alleles[0] : $variant_alleles[1];
+	# 	my $var_reads = $record->{var_reads};
+	# 	my $alt_reads  = $total_reads - $record->{ref_reads} - $record->{var_reads};
+	# 	push @variant_reads, "$var_allele:$var_reads";
+	# 	push @variant_reads, "$alt_allele:$alt_reads";
+	# }
+	# else {
+	# 	push @variant_reads, ($variant_alleles[0] . ':' . $record->{var_reads});
+	# }
 
 	# Assign the total number of reads covering this position:
-	# my $total_reads=16
+	# total_reads=16
 
 	# Assign the genotype:
-	# my $genotype=homozygous
+	# genotype=homozygous
 	my $genotype = $self->get_genotype($reference_allele, \@variant_alleles);
 
 	# Assign the probability that the genotype call is correct:
-	# my $genotype_probability=0.667
+	# genotype_probability=0.667
 
 	# my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
 
@@ -175,7 +181,7 @@ sub parse_record {
 	# to $score above (column 6 in GFF3).  Here you can assign a
 	# name for the type of score or algorithm used to calculate
 	# the sscore (e.g. phred_like, clcbio, illumina).
-	# my $score_type = 'illumina_snp';
+	# score_type = 'illumina_snp';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have

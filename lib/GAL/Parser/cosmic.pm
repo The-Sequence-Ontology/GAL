@@ -107,17 +107,17 @@ sub parse_record {
 	my ($reference_allele, @variant_alleles) = split m|/|, $record->{alleles};
 
 	# Assign the reference and variant allele read counts:
-	# my $reference_reads=A:7
-	# my $variant_reads=G:8
+	# reference_reads=A:7
+	# variant_reads=G:8
 
 	# Assign the total number of reads covering this position:
-	# my $total_reads=16
+	# total_reads=16
 
 	# Assign the genotype:
-	# my $genotype=homozygous
+	# genotype=homozygous
 
 	# Assign the probability that the genotype call is correct:
-	# my $genotype_probability=0.667
+	# genotype_probability=0.667
 
 	my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
 

@@ -176,6 +176,12 @@ sub parse_record {
 		push @variant_alleles, $record->{alternate_allele};
 	}
 
+	# If we have reference_reads then push that allele to the variants
+	if ($record->{total_coverage} - $record->{variant_count}  - $record->{alternate_count} > 0) {
+		push @variant_reads, $reference_reads;
+		push @variant_alleles, $reference_allele;
+	}
+
 	# Assign the total number of reads covering this position:
 	# total_reads=16;
 	my $total_reads = $record->{total_coverage};

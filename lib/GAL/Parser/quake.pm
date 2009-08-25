@@ -114,24 +114,24 @@ sub parse_record {
 	my @variant_alleles = keys %variant_hash; # grep {$_ ne $reference_allele}
 
 	# Assign the reference and variant allele read counts:
-	# my $reference_reads=A:7
-	# my $variant_reads=G:8
+	# reference_reads=A:7
+	# variant_reads=G:8
 
 	# Assign the total number of reads covering this position:
-	# my $total_reads=16
+	# total_reads=16
 
 	# Assign the genotype:
 	# genotype=homozygous
 	my $genotype = $self->get_genotype($reference_allele, \@variant_alleles);
 
 	# Assign the probability that the genotype call is correct:
-	# my $genotype_probability=0.667
+	# genotype_probability=0.667
 
 	# Any quality score given for this variant should be assigned
 	# to $score above (column 6 in GFF3).  Here you can assign a
 	# name for the type of score or algorithm used to calculate
 	# the sscore (e.g. phred_like, clcbio, illumina).
-	# my $score_type = 'quake';
+	# score_type = 'quake';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
