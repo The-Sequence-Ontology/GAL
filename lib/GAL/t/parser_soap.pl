@@ -6,7 +6,7 @@ use Test::More 'no_plan'; # tests => 10;
 BEGIN {
 	use lib '../../';
 	#TEST 1
-	use_ok('GAL::Parser::soap');
+	use_ok('GAL::Parser::soap_snp');
 }
 
 my $path = $0;
@@ -14,10 +14,10 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $parser = GAL::Parser::soap->new(file => 'data/soap.gff');
+my $parser = GAL::Parser::soap_snp->new(file => 'data/soap_snp.gff');
 
 # TEST 2
-isa_ok($parser, 'GAL::Parser::soap');
+isa_ok($parser, 'GAL::Parser::soap_snp');
 
 while (my $feature = $parser->parse_next_feature) {
 	print $feature->to_gff3 . "\n";
