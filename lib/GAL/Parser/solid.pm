@@ -122,8 +122,7 @@ sub parse_record {
 	my $reference_allele      = $record->{ref_base};
 	my $variant_allele_code   = $record->{con_base};
 
-	my @variant_alleles = grep {$_ ne $reference_allele}
-	  $self->expand_iupac_nt_codes($variant_allele_code);
+	my @variant_alleles = $self->expand_iupac_nt_codes($variant_allele_code); # grep {$_ ne $reference_allele}
 
 	# Assign the reference and variant allele read counts:
 	# reference_reads=A:7;
