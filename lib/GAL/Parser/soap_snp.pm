@@ -1,4 +1,4 @@
-package GAL::Parser::soap;
+package GAL::Parser::soap_snp;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::soap - <One line description of module's purpose here>
+GAL::Parser::soap_snp - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::soap version 0.01
+This document describes GAL::Parser::soap_snp version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::soap;
+     use GAL::Parser::soap_snp;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::soap version 0.01
 =head2
 
      Title   : new
-     Usage   : GAL::Parser::soap->new();
-     Function: Creates a GAL::Parser::soap object;
-     Returns : A GAL::Parser::soap object
+     Usage   : GAL::Parser::soap_snp->new();
+     Function: Creates a GAL::Parser::soap_snp object;
+     Returns : A GAL::Parser::soap_snp object
      Args    :
 
 =cut
@@ -102,7 +102,7 @@ sub parse_record {
 	my $strand     = $record->{strand};
 	my $phase      = $record->{phase};
 
-	# chr1SoapSNPSNP4793479325+.ID=YHSNP0128643; status=novel; ref=A; allele=A/G; support1=48; support2=26;
+	# chr1SoapSnpSNPSNP4793479325+.ID=YHSNP0128643; status=novel; ref=A; allele=A/G; support1=48; support2=26;
 	# chr1SoapSNPSNP6434643448+.ID=YHSNP0128644; status=novel; ref=G; allele=A/G; support1=10; support2=11;
 	# chr1SoapSNPSNP938969389651+.ID=rs4287120; status=dbSNP; ref=T; allele=C/T; support1=5; support2=4; location=MSTB1:LTR/MaLR;
 	# chr1SoapSNPSNP22570722570743+.ID=rs6603780; status=dbSNP; ref=C; allele=C/G; support1=23; support2=12;
@@ -260,7 +260,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::soap> requires no configuration files or environment variables.
+<GAL::Parser::soap_snp> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
