@@ -420,23 +420,29 @@ sub parse_attributes {
 =cut
 
 sub get_genotype {
-	my ($self, $ref, $vars) = @_;
+	my ($self, $reference_allele, $variant_alleles) = @_;
 
-	my $num_var = @{$vars};
+	my $variant_count = scalar @{$variant_alleles};
 
-	if ($num_var == 1) {
-		return 'homozygous:reference_genome' if ($vars->[0] eq $ref);
-		return 'homozygous:variant_genome'   if ($vars->[0] ne $ref);
-			}
-	elsif ($num_var == 2) {
-		return 'heterozygous:reference_genome' if ($vars->[0] eq $ref ||
-						    $vars->[1] eq $ref);
-		return 'heterozygous:variant_genome'   if ($vars->[0] ne $ref &&
-						    $vars->[1] ne $ref);
+	if ($variant_count == 1) {
+		if ($variant_alleles->[0] ne $reference_allele) {
+			return 'homozygous:variant_genome';
+		}
+		else {
+			return 'homozygous:reference_genome';
+		}
+	}
+	elsif ($variant_count > 1) {
+		if (grep {$_ eq $reference_allele} @{$variant_alleles}) {
+			return 'heterozygous:reference_genome';
+		}
+		else {
+			return 'heterozygous:variant_genome';
+		}
 	}
 
-	$self->throw(message => ("Uncaught combination ref:$ref vars:" .
-				 join(q{,}, @{$vars}) .
+	$self->throw(message => ("Uncaught combination ref:$reference_allele vars:" .
+				 join(q{,}, @{$variant_alleles}) .
 				 ' in GAL::Parser::get_genotype!'));
 }
 
