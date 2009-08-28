@@ -12,21 +12,24 @@ my $usage = "
 
 Synopsis:
 
-cosmic_file_to_gff3  <cosmic file> 
+cosmic_file_to_gff3  <cosmic file>
 
 Description:
 
+This script will convert variant data from the Cosmic database to GFF3
+
 OPTIONS:
 
---help 
+  --help      Print this usage statement.
 
 EXAMPLE:
 
 cosmic_file_to_gff3  CosmicMutantExport_v42_250609.tsv.txt
+
 ";
 
 
-my ($help, $coverage);
+my ($help, );
 my $opt_success = GetOptions('help'       => \$help,
 			      );
 
@@ -40,7 +43,7 @@ my $fh = new FileHandle();
 
 my $header = <$fh>;
 
-print $header."\n";
+#print $header."\n";
 
 my $mystery_line = <$fh>;
 
@@ -54,7 +57,7 @@ while (defined(my $line = <$fh>)){
 	my $num_columns = @fields;
 
 	if    ($num_columns == 16){
-		print_line_16(\@fields);	
+		print_line_16(\@fields);
 	}
 	elsif ($num_columns == 15){
 		print_line_16(\@fields);
@@ -85,7 +88,7 @@ sub print_line_16 {
 	my $mutation_id          = $fields->[7];
 	my $mutation_cds         = $fields->[8];
 	my $mutation_aa          = $fields->[9];
-	my $mutation_description = $fields->[10];	
+	my $mutation_description = $fields->[10];
 	my $chromosome           = $fields->[11];
 	my $genome_start         = $fields->[12];
 	my $genome_end           = $fields->[13];
@@ -118,32 +121,32 @@ sub print_line_16 {
 		return;
 	}
 	elsif ($mutation_cds =~ /c\.\d+\S\>\S/){
-	       ($base_ref, $base_var) = $mutation_cds =~ /c\.\d+(\S)\>(\S)/; 
+	       ($base_ref, $base_var) = $mutation_cds =~ /c\.\d+(\S)\>(\S)/;
 		$nine{reference_allele} = $base_ref;
 		$nine{variant_allele}   = $base_var;
 		$type = 'SNP';
 	}
-        elsif ($mutation_cds =~ /c\.\d+[\+,\-]\d+\S>\S/){
-               ($base_ref, $base_var) = $mutation_cds =~ /c\.\d+[\+,\-]\d+(\S)>(\S)/;
-                $nine{reference_allele} = $base_ref;
-                $nine{variant_allele}   = $base_var;
-                $type = 'SNP';
-        }
-        elsif ($mutation_cds =~ /c\.\d+[\+,\-]\d+ins\S+/){
-               ($base_var) = $mutation_cds =~ /c\.\d+[\+,\-]\d+ins(\S+)/;
+	elsif ($mutation_cds =~ /c\.\d+[\+,\-]\d+\S>\S/){
+	       ($base_ref, $base_var) = $mutation_cds =~ /c\.\d+[\+,\-]\d+(\S)>(\S)/;
+		$nine{reference_allele} = $base_ref;
+		$nine{variant_allele}   = $base_var;
+		$type = 'SNP';
+	}
+	elsif ($mutation_cds =~ /c\.\d+[\+,\-]\d+ins\S+/){
+	       ($base_var) = $mutation_cds =~ /c\.\d+[\+,\-]\d+ins(\S+)/;
 		$base_ref = '-';
-                $nine{reference_allele} = $base_ref;
-                $nine{variant_allele}   = $base_var;
-                $type = 'INS';
-        }
-        elsif ($mutation_cds =~ /c\.\d+[\+,\-]\d+del\S+/){
-               ($base_ref) = $mutation_cds =~ /c\.\d+[\+,\-]\d+del(\S+)/;
-                $base_var = '-';
-                $nine{reference_allele} = $base_ref;
-                $nine{variant_allele}   = $base_var;
-                $type = 'DEL';
-        }
-        elsif ($mutation_cds =~ /c\.\d+\_\d+del\S+/){
+		$nine{reference_allele} = $base_ref;
+		$nine{variant_allele}   = $base_var;
+		$type = 'INS';
+	}
+	elsif ($mutation_cds =~ /c\.\d+[\+,\-]\d+del\S+/){
+	       ($base_ref) = $mutation_cds =~ /c\.\d+[\+,\-]\d+del(\S+)/;
+		$base_var = '-';
+		$nine{reference_allele} = $base_ref;
+		$nine{variant_allele}   = $base_var;
+		$type = 'DEL';
+	}
+	elsif ($mutation_cds =~ /c\.\d+\_\d+del\S+/){
 		my ($s, $e);
 
 		($s, $e, $base_ref) = $mutation_cds =~ /c\.(\d+)\_(\d+)del(\S+)/;
@@ -151,76 +154,76 @@ sub print_line_16 {
 		my $x = $e - $s + 1;
 		my $l = length($base_ref);
 		my $y = $genome_end - $genome_start + 1;
- 
-		$base_var  = '-'; 
-                $nine{reference_allele} = $base_ref;
-                $nine{variant_allele}   = $base_var;
+
+		$base_var  = '-';
+		$nine{reference_allele} = $base_ref;
+		$nine{variant_allele}   = $base_var;
 		$type = 'DEL';
 		return unless $x == $y;
 
-        }
-        elsif ($mutation_cds =~ /c\.\d+del\S/){
-                my ($s, $e);
+	}
+	elsif ($mutation_cds =~ /c\.\d+del\S/){
+		my ($s, $e);
 
-                ($base_ref) = $mutation_cds =~ /c\.\d+del(\S)/;
-                 $base_var  = '-';
+		($base_ref) = $mutation_cds =~ /c\.\d+del(\S)/;
+		 $base_var  = '-';
 
-                $nine{reference_allele} = $base_ref;
-                $nine{variant_allele}   = $base_var;
-                $type = 'DEL';
+		$nine{reference_allele} = $base_ref;
+		$nine{variant_allele}   = $base_var;
+		$type = 'DEL';
 
-        }
-        elsif ($mutation_cds =~ /c\.\d+\_\d+ins\S+/){
-                my ($s, $e);
+	}
+	elsif ($mutation_cds =~ /c\.\d+\_\d+ins\S+/){
+		my ($s, $e);
 
-                ($s, $e, $base_var) = $mutation_cds =~ /c\.(\d+)\_(\d+)ins(\S+)/;
+		($s, $e, $base_var) = $mutation_cds =~ /c\.(\d+)\_(\d+)ins(\S+)/;
 
-                my $x = $e - $s + 1;
-                my $l = length($base_var);
-                my $y = $genome_end - $genome_start + 1;
+		my $x = $e - $s + 1;
+		my $l = length($base_var);
+		my $y = $genome_end - $genome_start + 1;
 
-                 $base_ref  = '-';
-                $nine{reference_allele} = $base_ref;
-                $nine{variant_allele}   = $base_var;
-                $type = 'INS';
-                return unless $x == $y;
+		 $base_ref  = '-';
+		$nine{reference_allele} = $base_ref;
+		$nine{variant_allele}   = $base_var;
+		$type = 'INS';
+		return unless $x == $y;
 
-        }
-        elsif ($mutation_cds =~ /c\.\d+\_\d+\S+\>\S+/){
-                my ($s, $e); 
-                
-                ($s, $e, $base_ref, $base_var) = $mutation_cds =~ /c\.(\d+)\_(\d+)(\S+)\>(\S+)/;
-        
-                my $x = $e - $s + 1;
-                my $y = $genome_end - $genome_start + 1;
-        
-                $nine{reference_allele} = $base_ref;
-                $nine{variant_allele}   = $base_var;
-                $type = 'CMX';
-                return unless $x == $y && length($base_ref) == length($base_var);
-                
-        }       
-        elsif ($mutation_cds =~ /c\.\d+[\+\-]\d+\S+\>\S+/){
+	}
+	elsif ($mutation_cds =~ /c\.\d+\_\d+\S+\>\S+/){
+		my ($s, $e);
 
-                ($base_ref, $base_var) = $mutation_cds =~ /c\.\d+[\+\-]\d+(\S+)\>(\S+)/;
+		($s, $e, $base_ref, $base_var) = $mutation_cds =~ /c\.(\d+)\_(\d+)(\S+)\>(\S+)/;
+
+		my $x = $e - $s + 1;
+		my $y = $genome_end - $genome_start + 1;
+
+		$nine{reference_allele} = $base_ref;
+		$nine{variant_allele}   = $base_var;
+		$type = 'CMX';
+		return unless $x == $y && length($base_ref) == length($base_var);
+
+	}
+	elsif ($mutation_cds =~ /c\.\d+[\+\-]\d+\S+\>\S+/){
+
+		($base_ref, $base_var) = $mutation_cds =~ /c\.\d+[\+\-]\d+(\S+)\>(\S+)/;
 
 
-                $nine{reference_allele} = $base_ref;
-                $nine{variant_allele}   = $base_var;
-                $type = 'CMX';
-                return unless  length($base_ref) == length($base_var);
+		$nine{reference_allele} = $base_ref;
+		$nine{variant_allele}   = $base_var;
+		$type = 'CMX';
+		return unless  length($base_ref) == length($base_var);
 
-        }      
+	}
 	else {
 		warn "#---\n"."UNCAPUTRED IN print_line_16\n".join("\t", @{$fields})."\n"."#---\n";
-		
+
 		sleep 1;
 	}
 
 
 	to_gff('chr'.$chromosome,
-               'Cosmic',
-	        $type, 
+	       'Cosmic',
+		$type,
 		$genome_start,
 		$genome_end,
 		'.',
@@ -244,8 +247,3 @@ sub to_gff {
 	}
 	print "\n";
 }
-
-
-
-
-

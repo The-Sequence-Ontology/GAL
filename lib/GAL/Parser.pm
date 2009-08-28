@@ -426,18 +426,18 @@ sub get_genotype {
 
 	if ($variant_count == 1) {
 		if ($variant_alleles->[0] ne $reference_allele) {
-			return 'homozygous:variant_genome';
+			return 'homozygous:no_reference_allele';
 		}
 		else {
-			return 'homozygous:reference_genome';
+			return 'homozygous:with_reference_allele';
 		}
 	}
 	elsif ($variant_count > 1) {
 		if (grep {$_ eq $reference_allele} @{$variant_alleles}) {
-			return 'heterozygous:reference_genome';
+			return 'heterozygous:with_reference_allele';
 		}
 		else {
-			return 'heterozygous:variant_genome';
+			return 'heterozygous:no_reference_allele';
 		}
 	}
 

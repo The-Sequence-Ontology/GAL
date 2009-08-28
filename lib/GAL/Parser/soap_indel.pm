@@ -96,7 +96,7 @@ sub parse_record {
 	my $seqid      = $record->{seqid};
 	my $source     = $record->{source};
 	my $type       = $record->{type};
-	my $start      = $record->{start};
+	my $start      = ++$record->{start}; # Soap indels are space based
 	my $end        = $record->{end};
 	my $score      = $record->{score};
 	my $strand     = $record->{strand};
@@ -115,15 +115,15 @@ sub parse_record {
 	# Assign the reference and variant allele sequences:
 	# reference_allele=A
 	# variant_allele=G
-	my $indel_type = $original_atts->{Type};
+	my $indel_type = $original_atts->{Type}[0];
 	my ($reference_allele, $variant_allele);
 	if ($indel_type > 0) {
 		$reference_allele = '-';
-		$variant_allele   = $orgiginal_atts->{Base};
+		$variant_allele   = $original_atts->{Base}[0];
 		$type             = 'nucleotide_insertion';
 	}
 	elsif ($indel_type < 0) {
-		$reference_allele = $orgiginal_atts->{Base};
+		$reference_allele = $original_atts->{Base}[0];
 		$variant_allele   = '-';
 		$type             = 'nucleotide_deletion';
 	}
@@ -132,48 +132,11 @@ sub parse_record {
 	# reference_reads=A:7
 	# variant_reads=G:8
 
-	my @variant_reads = ($variant_alleles[0] . ':' . $original_atts->{support1}[0],
-			     $variant_alleles[1] . ':' . $original_atts->{support2}[0],
-			    );
-
-	my ($reference_reads) = grep {$_ =~ /^$reference_allele:\d+/} @variant_reads;
-	$reference_reads ||= 0;
-
-	# reference_reads;
-	# if ($reference_allele eq $variant_alleles[0]) {
-	# 	$reference_reads = $reference_allele . ':' . $original_atts->{support1}[0];
-	# 	# Remove a variant if it is equal to the reference.
-	# 	shift @variant_alleles;
-	# 	shift @variant_reads;
-	# }
-	# elsif ($reference_allele eq $variant_alleles[1]) {
-	# 	# Remove a variant if it is equal to the reference.
-	# 	$reference_reads = $reference_allele . ':' . $original_atts->{support2}[0];
-	# 	pop @variant_alleles;
-	# 	pop @variant_reads;
-	# }
-	# else {
-	# 	$reference_reads = 0;
-	# }
-
-	if (scalar @variant_alleles == 2 &&
-	    $variant_alleles[0] eq $variant_alleles[1]) {
-
-		# Remove a variant if it is equal to the other variant.
-		pop @variant_alleles;
-		pop @variant_reads;
-	}
-
 	# Assign the total number of reads covering this position:
 	# total_reads=16
 
-	my $total_reads;
-	map {my ($allele, $reads) = split /:/, $_;$total_reads += $reads} (@variant_reads); #, $reference_reads);
-
 	# Assign the genotype:
 	# genotype=homozygous
-
-	my $genotype = $self->get_genotype($reference_allele, \@variant_alleles);
 
 	# Assign the probability that the genotype call is correct:
 	# genotype_probability=0.667
@@ -200,11 +163,7 @@ sub parse_record {
 	# reference_allele, variant_allele, reference_reads, variant_reads
 	# total_reads, genotype, genotype_probability and score type.
 	my $attributes = {reference_allele => [$reference_allele],
-			  reference_reads  => [$reference_reads],
-			  variant_allele   => \@variant_alleles,
-			  variant_reads    => \@variant_reads,
-			  total_reads      => [$total_reads],
-			  genotype         => [$genotype],
+			  variant_allele   => [$variant_allele],
 			  ID               => [$id],
 			 };
 

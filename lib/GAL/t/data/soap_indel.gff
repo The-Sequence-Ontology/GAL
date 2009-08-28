@@ -1,0 +1,1000 @@
+chr1	soap	Indel	1409	1409	4	+	.	ID=YHIndel00001; status=novel; Type=+1; location=Transposons0034384:LINE/L1; Base=A
+chr1	soap	Indel	3824	3825	3	+	.	ID=YHIndel00002; status=novel; Type=-1; Base=C
+chr1	soap	Indel	29355	29355	3	+	.	ID=YHIndel00003; status=novel; Type=+1; location=Transposons0167541:LTR/MaLR; Base=C
+chr1	soap	Indel	39377	39378	4	+	.	ID=YHIndel00004; status=novel; Type=-1; location=Transposons0034394:LINE/L1; Base=G
+chr1	soap	Indel	53601	53604	3	+	.	ID=YHIndel00005; status=novel; Type=-3; Base=CTA
+chr1	soap	Indel	241491	241492	3	+	.	ID=YHIndel00006; status=novel; Type=-1; Base=C
+chr1	soap	Indel	429836	429838	4	+	.	ID=YHIndel00007; status=novel; Type=-2; Base=CC
+chr1	soap	Indel	713666	713668	7	+	.	ID=rs35182822; status=0; Type=-2; location=Tandem000115:Simple_repeat; Base=GA
+chr1	soap	Indel	780560	780560	9	+	.	ID=YHIndel00008; status=novel; Type=+2; location=Tandem000127:Simple_repeat; Base=TA
+chr1	soap	Indel	780622	780624	8	+	.	ID=rs3039191; status=-1; Type=-2; location=Tandem000128:Simple_repeat; Base=AT
+chr1	soap	Indel	858797	858797	4	+	.	ID=YHIndel00009; status=novel; Type=+1; Base=G
+chr1	soap	Indel	858992	858992	3	+	.	ID=YHIndel00010; status=novel; Type=+1; Base=G
+chr1	soap	Indel	874290	874290	3	+	.	ID=rs35653441; status=-2; Type=+3; location=NM_015658:intron; Base=AGA
+chr1	soap	Indel	875912	875915	7	+	.	ID=YHIndel00011; status=novel; Type=-3; location=NM_015658:intron; Base=CAG
+chr1	soap	Indel	894996	894998	8	+	.	ID=rs34160727; status=-1; Type=-2; location=NM_032129:intron; Base=GT
+chr1	soap	Indel	938295	938295	9	+	.	ID=rs35478934; status=10; Type=+3; location=Transposons0191562:SINE/Alu; Base=CAA
+chr1	soap	Indel	954953	954953	3	+	.	ID=YHIndel00012; status=novel; Type=+3; location=NM_198576:intron; Base=GCA
+chr1	soap	Indel	981521	981522	6	+	.	ID=YHIndel00013; status=novel; Type=-1; Base=C
+chr1	soap	Indel	1058711	1058712	3	+	.	ID=YHIndel00014; status=novel; Type=-1; Base=G
+chr1	soap	Indel	1118642	1118642	6	+	.	ID=YHIndel00015; status=novel; Type=+3; location=Transposons0034779:LINE/L1; Base=TAT
+chr1	soap	Indel	1133046	1133047	5	+	.	ID=YHIndel00016; status=novel; Type=-1; Base=G
+chr1	soap	Indel	1201472	1201472	3	+	.	ID=YHIndel00017; status=novel; Type=+1; location=Transposons0143492:LTR/ERV1; Base=G
+chr1	soap	Indel	1245269	1245270	8	+	.	ID=YHIndel00018; status=novel; Type=-1; Base=G
+chr1	soap	Indel	1266800	1266802	7	+	.	ID=YHIndel00019; status=novel; Type=-2; location=NM_182779:intron; Base=AC
+chr1	soap	Indel	1279230	1279232	4	+	.	ID=YHIndel00020; status=novel; Type=-2; location=NM_032348:intron; Base=TG
+chr1	soap	Indel	1286235	1286237	9	+	.	ID=YHIndel00021; status=novel; Type=-2; location=Tandem000286:Simple_repeat; Base=CA
+chr1	soap	Indel	1291069	1291070	4	+	.	ID=YHIndel00022; status=novel; Type=-1; location=Transposons0191714:SINE/Alu; Base=A
+chr1	soap	Indel	1291927	1291927	10	+	.	ID=YHIndel00023; status=novel; Type=+2; Base=AG
+chr1	soap	Indel	1292541	1292543	3	+	.	ID=YHIndel00024; status=novel; Type=-2; location=Tandem000291:Simple_repeat; Base=AT
+chr1	soap	Indel	1292575	1292575	3	+	.	ID=YHIndel00025; status=novel; Type=+2; location=Tandem000291:Simple_repeat; Base=TG
+chr1	soap	Indel	1292633	1292633	3	+	.	ID=YHIndel00026; status=novel; Type=+3; location=Tandem000291:Simple_repeat; Base=GTG
+chr1	soap	Indel	1294723	1294725	4	+	.	ID=rs34974211; status=3; Type=-2; location=Transposons0191721:SINE/Alu; Base=TT
+chr1	soap	Indel	1304336	1304337	3	+	.	ID=YHIndel00027; status=novel; Type=-1; Base=G
+chr1	soap	Indel	1309041	1309042	7	+	.	ID=YHIndel00028; status=novel; Type=-1; location=Transposons0191739:SINE/Alu; Base=G
+chr1	soap	Indel	1311169	1311169	3	+	.	ID=rs34180804; status=7; Type=+1; location=NM_001039577:3-UTR; Base=G
+chr1	soap	Indel	1326000	1326002	9	+	.	ID=rs34091023; status=0; Type=-2; ; Base=AG
+chr1	soap	Indel	1361631	1361632	4	+	.	ID=YHIndel00029; status=novel; Type=-1; location=NM_199121:intron; Base=A
+chr1	soap	Indel	1378070	1378073	4	+	.	ID=YHIndel00030; status=novel; Type=-3; location=Transposons0191815:SINE/Alu; Base=GAA
+chr1	soap	Indel	1467188	1467190	6	+	.	ID=rs3831113; status=-1; Type=-2; location=NM_014188:3-UTR; Base=CA
+chr1	soap	Indel	1483969	1483969	4	+	.	ID=rs33926904; status=-1; Type=+1; location=NM_014188:intron; Base=A
+chr1	soap	Indel	1497048	1497048	3	+	.	ID=YHIndel00031; status=novel; Type=+1; location=NM_014188:intron; Base=T
+chr1	soap	Indel	1499284	1499287	10	+	.	ID=rs33918586; status=-1; Type=-3; location=NM_014188:intron; Base=AAG
+chr1	soap	Indel	1502738	1502738	7	+	.	ID=rs35576478; status=0; Type=+1; location=Transposons0143540:LTR/ERV1; Base=C
+chr1	soap	Indel	1536495	1536497	5	+	.	ID=rs36101309; status=-1; Type=-2; location=Transposons0157992:LTR/ERVL; Base=TC
+chr1	soap	Indel	1549568	1549569	3	+	.	ID=YHIndel00032; status=novel; Type=-1; location=NM_080875:intron; Base=T
+chr1	soap	Indel	1584063	1584063	3	+	.	ID=rs5772057; status=0; Type=+1; ; Base=T
+chr1	soap	Indel	1615409	1615409	4	+	.	ID=rs34721906; status=1; Type=+3; location=Transposons0192109:SINE/Alu; Base=GC
+chr1	soap	Indel	1657176	1657176	4	+	.	ID=YHIndel00033; status=novel; Type=+1; location=NM_182838:intron; Base=A
+chr1	soap	Indel	1679989	1679989	9	+	.	ID=rs35357728; status=0; Type=+2; location=NM_023018:intron; Base=CA
+chr1	soap	Indel	1769338	1769338	8	+	.	ID=rs34011234; status=0; Type=+2; location=NM_002074:intron; Base=TA
+chr1	soap	Indel	1797145	1797146	5	+	.	ID=YHIndel00034; status=novel; Type=-1; location=NM_002074:intron; Base=C
+chr1	soap	Indel	1802226	1802227	11	+	.	ID=YHIndel00035; status=novel; Type=-1; location=NM_002074:intron; Base=A
+chr1	soap	Indel	1859354	1859356	6	+	.	ID=rs35385292; status=-1; Type=-2; location=Tandem000436:Simple_repeat; Base=TC
+chr1	soap	Indel	1859634	1859634	6	+	.	ID=rs35205487; status=0; Type=+2; location=Tandem000436:Simple_repeat; Base=TC
+chr1	soap	Indel	1859792	1859792	4	+	.	ID=rs34050188; status=0; Type=+2; location=Tandem000436:Simple_repeat; Base=AT
+chr1	soap	Indel	1870260	1870261	4	+	.	ID=YHIndel00036; status=novel; Type=-1; location=Tandem000442:Simple_repeat; Base=C
+chr1	soap	Indel	1870863	1870863	7	+	.	ID=rs35875775; status=0; Type=+1; location=Transposons0034894:LINE/L1; Base=G
+chr1	soap	Indel	1873167	1873167	3	+	.	ID=YHIndel00037; status=novel; Type=+1; location=Transposons0192435:SINE/Alu; Base=T
+chr1	soap	Indel	1886549	1886549	5	+	.	ID=rs3838974; status=0; Type=+1; location=NM_001080484:intron; Base=A
+chr1	soap	Indel	1889884	1889885	3	+	.	ID=YHIndel00038; status=novel; Type=-1; location=NM_001080484:intron; Base=G
+chr1	soap	Indel	1905191	1905191	3	+	.	ID=YHIndel00039; status=novel; Type=+1; location=NM_001080484:intron; Base=T
+chr1	soap	Indel	1948143	1948144	5	+	.	ID=YHIndel00040; status=novel; Type=-1; location=NM_000815:intron; Base=A
+chr1	soap	Indel	1978997	1978997	4	+	.	ID=YHIndel00041; status=novel; Type=+1; location=NM_002744:intron; Base=C
+chr1	soap	Indel	1999413	1999414	6	+	.	ID=YHIndel00042; status=novel; Type=-1; location=NM_002744:intron; Base=C
+chr1	soap	Indel	2010531	2010531	4	+	.	ID=rs35300904; status=0; Type=+1; location=NM_002744:intron; Base=G
+chr1	soap	Indel	2015227	2015228	4	+	.	ID=YHIndel00043; status=novel; Type=-1; location=NM_002744:intron; Base=C
+chr1	soap	Indel	2168158	2168160	4	+	.	ID=rs34184068; status=-2; Type=-2; location=NM_003036:intron; Base=GG
+chr1	soap	Indel	2282632	2282632	5	+	.	ID=YHIndel00044; status=novel; Type=+1; location=NM_024848:intron; Base=G
+chr1	soap	Indel	2305015	2305016	5	+	.	ID=YHIndel00045; status=novel; Type=-1; location=NM_024848:intron; Base=A
+chr1	soap	Indel	2323807	2323807	7	+	.	ID=YHIndel00046; status=novel; Type=+1; location=NM_007033:intron; Base=C
+chr1	soap	Indel	2355287	2355287	5	+	.	ID=rs35314501; status=0; Type=+1; ; Base=C
+chr1	soap	Indel	2358760	2358761	7	+	.	ID=YHIndel00047; status=novel; Type=-1; Base=A
+chr1	soap	Indel	2365838	2365838	3	+	.	ID=rs35499456; status=0; Type=+1; ; Base=T
+chr1	soap	Indel	2379981	2379982	7	+	.	ID=YHIndel00048; status=novel; Type=-1; Base=G
+chr1	soap	Indel	2394262	2394262	4	+	.	ID=rs34886292; status=0; Type=+1; ; Base=A
+chr1	soap	Indel	2524954	2524956	9	+	.	ID=rs35090174; status=-1; Type=-2; ; Base=CT
+chr1	soap	Indel	2529807	2529809	8	+	.	ID=YHIndel00049; status=novel; Type=-2; location=Tandem000583:Simple_repeat; Base=TA
+chr1	soap	Indel	2542088	2542088	3	+	.	ID=rs34210977; status=0; Type=+2; ; Base=AA
+chr1	soap	Indel	2542884	2542884	6	+	.	ID=YHIndel00050; status=novel; Type=+1; location=Transposons0192730:SINE/Alu; Base=T
+chr1	soap	Indel	2543407	2543410	5	+	.	ID=rs5772073; status=-1; Type=-3; location=Transposons0167723:LTR/MaLR; Base=GAG
+chr1	soap	Indel	2571098	2571098	7	+	.	ID=YHIndel00051; status=novel; Type=+1; location=Transposons0192736:SINE/Alu; Base=T
+chr1	soap	Indel	2765864	2765864	9	+	.	ID=YHIndel00052; status=novel; Type=+1; location=Tandem000615:Tandem_repeat; Base=G
+chr1	soap	Indel	2779319	2779319	6	+	.	ID=YHIndel00053; status=novel; Type=+3; Base=CTT
+chr1	soap	Indel	2810389	2810390	5	+	.	ID=YHIndel00054; status=novel; Type=-1; Base=C
+chr1	soap	Indel	2829370	2829371	4	+	.	ID=YHIndel00055; status=novel; Type=-1; location=Transposons0035110:LINE/L1; Base=A
+chr1	soap	Indel	2835706	2835707	3	+	.	ID=YHIndel00056; status=novel; Type=-1; Base=G
+chr1	soap	Indel	2836635	2836637	5	+	.	ID=YHIndel00057; status=novel; Type=-2; location=Tandem000636:Simple_repeat; Base=AT
+chr1	soap	Indel	2859271	2859271	3	+	.	ID=rs34009406; status=2; Type=+1; ; Base=C
+chr1	soap	Indel	2903121	2903122	10	+	.	ID=YHIndel00058; status=novel; Type=-1; location=Transposons0035129:LINE/L1; Base=G
+chr1	soap	Indel	2913641	2913643	4	+	.	ID=YHIndel00059; status=novel; Type=-2; location=Transposons0167770:LTR/MaLR; Base=AG
+chr1	soap	Indel	2932360	2932360	4	+	.	ID=YHIndel00060; status=novel; Type=+1; Base=G
+chr1	soap	Indel	2940612	2940612	3	+	.	ID=YHIndel00061; status=novel; Type=+1; Base=A
+chr1	soap	Indel	2946561	2946561	6	+	.	ID=YHIndel00062; status=novel; Type=+2; Base=TG
+chr1	soap	Indel	2950696	2950697	6	+	.	ID=YHIndel00063; status=novel; Type=-1; location=Transposons0192771:SINE/Alu; Base=A
+chr1	soap	Indel	2952890	2952891	3	+	.	ID=YHIndel00064; status=novel; Type=-1; location=Transposons0035145:LINE/L1; Base=A
+chr1	soap	Indel	2984463	2984464	7	+	.	ID=YHIndel00065; status=novel; Type=-1; location=NM_199454:intron; Base=C
+chr1	soap	Indel	2998923	2998925	4	+	.	ID=rs5772096; status=-1; Type=-2; location=NM_199454:intron; Base=GT
+chr1	soap	Indel	3021058	3021058	3	+	.	ID=YHIndel00066; status=novel; Type=+2; location=NM_199454:intron; Base=CA
+chr1	soap	Indel	3034723	3034724	3	+	.	ID=YHIndel00067; status=novel; Type=-1; location=NM_199454:intron; Base=C
+chr1	soap	Indel	3035612	3035612	14	+	.	ID=YHIndel00068; status=novel; Type=+2; location=NM_199454:intron; Base=TG
+chr1	soap	Indel	3037957	3037957	6	+	.	ID=rs34840011; status=8; Type=+1; location=NM_199454:intron; Base=AA
+chr1	soap	Indel	3105705	3105706	7	+	.	ID=YHIndel00069; status=novel; Type=-1; location=NM_199454:intron; Base=G
+chr1	soap	Indel	3107413	3107413	5	+	.	ID=rs33987416; status=4; Type=+1; location=NM_199454:intron; Base=G
+chr1	soap	Indel	3108536	3108538	11	+	.	ID=YHIndel00070; status=novel; Type=-2; location=NM_199454:intron; Base=GA
+chr1	soap	Indel	3131591	3131592	8	+	.	ID=YHIndel00071; status=novel; Type=-1; location=NM_199454:intron; Base=A
+chr1	soap	Indel	3135858	3135858	9	+	.	ID=rs34340862; status=2; Type=+3; location=NM_199454:intron; Base=TAA
+chr1	soap	Indel	3149812	3149813	3	+	.	ID=YHIndel00072; status=novel; Type=-1; location=NM_199454:intron; Base=A
+chr1	soap	Indel	3158812	3158813	7	+	.	ID=YHIndel00073; status=novel; Type=-1; location=NM_199454:intron; Base=G
+chr1	soap	Indel	3164020	3164021	9	+	.	ID=YHIndel00074; status=novel; Type=-1; location=NM_199454:intron; Base=A
+chr1	soap	Indel	3243075	3243075	3	+	.	ID=rs36209469; status=-1; Type=+2; location=NM_199454:intron; Base=CT
+chr1	soap	Indel	3272373	3272373	4	+	.	ID=YHIndel00075; status=novel; Type=+2; location=NM_199454:intron; Base=AC
+chr1	soap	Indel	3327181	3327182	6	+	.	ID=YHIndel00076; status=novel; Type=-1; location=NM_199454:intron; Base=A
+chr1	soap	Indel	3338144	3338145	3	+	.	ID=YHIndel00077; status=novel; Type=-1; location=NM_199454:intron; Base=C
+chr1	soap	Indel	3384086	3384086	3	+	.	ID=rs34381928; status=1; Type=+1; location=NM_014448:intron; Base=G
+chr1	soap	Indel	3385836	3385838	7	+	.	ID=rs5772106; status=2; Type=-2; location=NM_014448:intron; Base=CC
+chr1	soap	Indel	3516936	3516936	3	+	.	ID=YHIndel00078; status=novel; Type=+2; location=NM_001409:intron; Base=CA
+chr1	soap	Indel	3564335	3564335	6	+	.	ID=rs33937240; status=-1; Type=+2; location=NM_005427:intron; Base=CC
+chr1	soap	Indel	3606940	3606941	7	+	.	ID=YHIndel00079; status=novel; Type=-1; location=NM_005427:intron; Base=A
+chr1	soap	Indel	3629159	3629162	7	+	.	ID=YHIndel00080; status=novel; Type=-3; location=NM_005427:intron; Base=TTC
+chr1	soap	Indel	3630001	3630001	3	+	.	ID=rs35939665; status=6; Type=+1; location=NM_005427:intron; Base=T
+chr1	soap	Indel	3635429	3635431	7	+	.	ID=rs34064226; status=2; Type=-2; location=NM_005427:intron; Base=GA
+chr1	soap	Indel	3648958	3648958	5	+	.	ID=rs3216059; status=0; Type=+1; location=NM_207306:intron; Base=G
+chr1	soap	Indel	3691010	3691011	7	+	.	ID=YHIndel00081; status=novel; Type=-1; location=NM_020710:intron; Base=A
+chr1	soap	Indel	3697317	3697317	7	+	.	ID=rs34679063; status=1; Type=+1; location=NM_020710:intron; Base=C
+chr1	soap	Indel	3721514	3721514	5	+	.	ID=rs3838969; status=0; Type=+1; location=NM_014704:3-UTR; Base=T
+chr1	soap	Indel	3733295	3733295	3	+	.	ID=rs5772126; status=2; Type=+1; location=NM_014704:intron; Base=G
+chr1	soap	Indel	3907570	3907571	4	+	.	ID=YHIndel00082; status=novel; Type=-1; Base=C
+chr1	soap	Indel	3909923	3909924	5	+	.	ID=YHIndel00083; status=novel; Type=-1; location=Transposons0035266:LINE/L1; Base=T
+chr1	soap	Indel	3916502	3916502	4	+	.	ID=YHIndel00084; status=novel; Type=+1; location=Transposons0143626:LTR/ERV1; Base=A
+chr1	soap	Indel	3925228	3925229	6	+	.	ID=YHIndel00085; status=novel; Type=-1; location=Transposons0192991:SINE/Alu; Base=A
+chr1	soap	Indel	3925432	3925433	4	+	.	ID=YHIndel00086; status=novel; Type=-1; location=Transposons0143632:LTR/ERV1; Base=T
+chr1	soap	Indel	3934867	3934869	7	+	.	ID=YHIndel00087; status=novel; Type=-2; location=Tandem000918:Simple_repeat; Base=AC
+chr1	soap	Indel	3948726	3948727	3	+	.	ID=YHIndel00088; status=novel; Type=-1; location=Transposons0192999:SINE/Alu; Base=T
+chr1	soap	Indel	3998557	3998557	3	+	.	ID=rs35439065; status=1; Type=+1; location=Transposons0035287:LINE/L1; Base=C
+chr1	soap	Indel	4003833	4003833	4	+	.	ID=YHIndel00089; status=novel; Type=+1; location=Tandem000940:Simple_repeat; Base=T
+chr1	soap	Indel	4027404	4027404	4	+	.	ID=YHIndel00090; status=novel; Type=+2; location=Tandem000948:Simple_repeat; Base=AT
+chr1	soap	Indel	4056748	4056749	6	+	.	ID=YHIndel00091; status=novel; Type=-1; location=Transposons0035298:LINE/L1; Base=T
+chr1	soap	Indel	4097906	4097906	6	+	.	ID=rs33944265; status=3; Type=+3; ; Base=TTA
+chr1	soap	Indel	4100942	4100943	3	+	.	ID=YHIndel00092; status=novel; Type=-1; Base=C
+chr1	soap	Indel	4122612	4122612	5	+	.	ID=YHIndel00093; status=novel; Type=+1; Base=T
+chr1	soap	Indel	4154168	4154169	6	+	.	ID=YHIndel00094; status=novel; Type=-1; location=Transposons0035321:LINE/L1; Base=G
+chr1	soap	Indel	4158185	4158185	4	+	.	ID=YHIndel00095; status=novel; Type=+1; location=Transposons0035324:LINE/L1; Base=A
+chr1	soap	Indel	4165518	4165519	10	+	.	ID=YHIndel00096; status=novel; Type=-1; location=Transposons0100806:LINE/L2; Base=A
+chr1	soap	Indel	4168417	4168417	7	+	.	ID=YHIndel00097; status=novel; Type=+1; Base=G
+chr1	soap	Indel	4180359	4180359	5	+	.	ID=rs35134459; status=0; Type=+1; location=Transposons0167939:LTR/MaLR; Base=T
+chr1	soap	Indel	4236952	4236954	3	+	.	ID=YHIndel00098; status=novel; Type=-2; location=Transposons0143651:LTR/ERV1; Base=TT
+chr1	soap	Indel	4270969	4270970	12	+	.	ID=YHIndel00099; status=novel; Type=-1; Base=A
+chr1	soap	Indel	4276692	4276692	3	+	.	ID=YHIndel00100; status=novel; Type=+1; location=Transposons0100819:LINE/L2; Base=A
+chr1	soap	Indel	4372015	4372016	4	+	.	ID=YHIndel00101; status=novel; Type=-1; location=Transposons0143664:LTR/ERV1; Base=A
+chr1	soap	Indel	4386771	4386772	7	+	.	ID=YHIndel00102; status=novel; Type=-1; Base=G
+chr1	soap	Indel	4387090	4387092	9	+	.	ID=rs35106948; status=0; Type=-2; location=Tandem001039:Simple_repeat; Base=AG
+chr1	soap	Indel	4439019	4439021	7	+	.	ID=YHIndel00103; status=novel; Type=-2; location=Transposons0035414:LINE/L1; Base=TT
+chr1	soap	Indel	4448383	4448384	4	+	.	ID=YHIndel00104; status=novel; Type=-1; Base=A
+chr1	soap	Indel	4465555	4465556	6	+	.	ID=YHIndel00105; status=novel; Type=-1; Base=C
+chr1	soap	Indel	4501979	4501979	3	+	.	ID=rs34937816; status=1; Type=+1; location=Transposons0035441:LINE/L1; Base=T
+chr1	soap	Indel	4506249	4506249	7	+	.	ID=rs33933753; status=-1; Type=+1; ; Base=T
+chr1	soap	Indel	4535416	4535416	4	+	.	ID=rs34971058; status=0; Type=+1; location=Transposons0100872:LINE/L2; Base=C
+chr1	soap	Indel	4577695	4577695	3	+	.	ID=rs33988719; status=0; Type=+1; ; Base=G
+chr1	soap	Indel	4603646	4603646	9	+	.	ID=YHIndel00106; status=novel; Type=+1; Base=C
+chr1	soap	Indel	4633955	4633956	7	+	.	ID=YHIndel00107; status=novel; Type=-1; location=NM_001042478:intron; Base=C
+chr1	soap	Indel	4670095	4670095	8	+	.	ID=rs34739660; status=-9; Type=+2; location=NM_001042478:intron; Base=AC
+chr1	soap	Indel	4717874	4717875	4	+	.	ID=YHIndel00108; status=novel; Type=-1; location=NM_001042478:intron; Base=C
+chr1	soap	Indel	4735442	4735444	3	+	.	ID=YHIndel00109; status=novel; Type=-2; location=NM_001042478:intron; Base=AG
+chr1	soap	Indel	4753645	4753645	3	+	.	ID=YHIndel00110; status=novel; Type=+1; Base=G
+chr1	soap	Indel	4756656	4756658	7	+	.	ID=YHIndel00111; status=novel; Type=-2; Base=TG
+chr1	soap	Indel	4779296	4779297	3	+	.	ID=YHIndel00112; status=novel; Type=-1; location=Transposons0035483:LINE/L1; Base=A
+chr1	soap	Indel	4800834	4800834	4	+	.	ID=rs35005833; status=5; Type=+1; location=Transposons0168100:LTR/MaLR; Base=C
+chr1	soap	Indel	4808458	4808459	7	+	.	ID=YHIndel00113; status=novel; Type=-1; location=Transposons0143703:LTR/ERV1; Base=A
+chr1	soap	Indel	4833601	4833601	4	+	.	ID=rs35226825; status=5; Type=+1; ; Base=T
+chr1	soap	Indel	4846291	4846291	6	+	.	ID=rs36118323; status=7; Type=+1; location=Transposons0035496:LINE/L1; Base=T
+chr1	soap	Indel	4885471	4885471	4	+	.	ID=rs34163371; status=3; Type=+2; location=Transposons0158125:LTR/ERVL; Base=TT
+chr1	soap	Indel	4912670	4912670	4	+	.	ID=YHIndel00114; status=novel; Type=+1; Base=AA
+chr1	soap	Indel	4913248	4913248	5	+	.	ID=rs36103890; status=8; Type=+1; location=Transposons0035513:LINE/L1; Base=T
+chr1	soap	Indel	4947801	4947801	5	+	.	ID=rs33911980; status=-1; Type=+2; location=Tandem001183:Simple_repeat; Base=TT
+chr1	soap	Indel	4972560	4972561	3	+	.	ID=YHIndel00115; status=novel; Type=-1; Base=G
+chr1	soap	Indel	5050056	5050057	4	+	.	ID=YHIndel00116; status=novel; Type=-1; Base=C
+chr1	soap	Indel	5060622	5060623	3	+	.	ID=YHIndel00117; status=novel; Type=-1; Base=G
+chr1	soap	Indel	5063774	5063774	6	+	.	ID=YHIndel00118; status=novel; Type=+2; location=Tandem001220:Simple_repeat; Base=AC
+chr1	soap	Indel	5067319	5067320	3	+	.	ID=YHIndel00119; status=novel; Type=-1; Base=A
+chr1	soap	Indel	5073145	5073145	4	+	.	ID=YHIndel00120; status=novel; Type=+1; location=Transposons0100917:LINE/L2; Base=A
+chr1	soap	Indel	5082825	5082826	7	+	.	ID=YHIndel00121; status=novel; Type=-1; location=Transposons0035564:LINE/L1; Base=T
+chr1	soap	Indel	5093847	5093849	4	+	.	ID=YHIndel00122; status=novel; Type=-2; Base=CT
+chr1	soap	Indel	5099578	5099578	4	+	.	ID=rs35987571; status=1; Type=+1; ; Base=C
+chr1	soap	Indel	5123763	5123763	3	+	.	ID=YHIndel00123; status=novel; Type=+2; location=Transposons0035571:LINE/L1; Base=AT
+chr1	soap	Indel	5126262	5126262	3	+	.	ID=rs34269823; status=6; Type=+1; ; Base=A
+chr1	soap	Indel	5154458	5154460	7	+	.	ID=rs34179159; status=0; Type=-2; ; Base=TA
+chr1	soap	Indel	5244355	5244355	3	+	.	ID=YHIndel00124; status=novel; Type=+2; location=Transposons0193249:SINE/Alu; Base=AA
+chr1	soap	Indel	5250034	5250036	4	+	.	ID=YHIndel00125; status=novel; Type=-2; location=Tandem001267:Simple_repeat; Base=GG
+chr1	soap	Indel	5274100	5274100	4	+	.	ID=rs34337516; status=4; Type=+3; location=Transposons0168237:LTR/MaLR; Base=GTT
+chr1	soap	Indel	5303901	5303901	8	+	.	ID=rs33992420; status=-1; Type=+2; location=Transposons0295168:SINE/MIR; Base=CT
+chr1	soap	Indel	5396876	5396877	4	+	.	ID=YHIndel00126; status=novel; Type=-1; Base=G
+chr1	soap	Indel	5483313	5483315	5	+	.	ID=YHIndel00127; status=novel; Type=-2; location=Tandem001303:Simple_repeat; Base=TG
+chr1	soap	Indel	5486549	5486550	3	+	.	ID=YHIndel00128; status=novel; Type=-1; location=Transposons0158173:LTR/ERVL; Base=C
+chr1	soap	Indel	5502640	5502640	7	+	.	ID=YHIndel00129; status=novel; Type=+1; location=Transposons0168305:LTR/MaLR; Base=C
+chr1	soap	Indel	5545301	5545301	5	+	.	ID=YHIndel00130; status=novel; Type=+1; location=Transposons0168324:LTR/MaLR; Base=C
+chr1	soap	Indel	5576907	5576908	6	+	.	ID=YHIndel00131; status=novel; Type=-1; Base=C
+chr1	soap	Indel	5586235	5586235	6	+	.	ID=YHIndel00132; status=novel; Type=+1; location=Tandem001323:Simple_repeat; Base=ATC
+chr1	soap	Indel	5614879	5614879	5	+	.	ID=rs33956883; status=-1; Type=+1; ; Base=A
+chr1	soap	Indel	5620055	5620056	4	+	.	ID=YHIndel00133; status=novel; Type=-1; location=Transposons0168346:LTR/MaLR; Base=T
+chr1	soap	Indel	5650900	5650900	3	+	.	ID=rs34853556; status=1; Type=+1; ; Base=G
+chr1	soap	Indel	5671455	5671455	8	+	.	ID=rs33992997; status=-1; Type=+2; location=Tandem001341:Simple_repeat; Base=TG
+chr1	soap	Indel	5781568	5781568	5	+	.	ID=rs34311594; status=-7; Type=+2; ; Base=AC
+chr1	soap	Indel	5791516	5791518	6	+	.	ID=YHIndel00134; status=novel; Type=-2; location=Tandem001399:Simple_repeat; Base=AC
+chr1	soap	Indel	5792086	5792086	11	+	.	ID=YHIndel00135; status=novel; Type=+3; location=Tandem001402:Simple_repeat; Base=ACA
+chr1	soap	Indel	5796536	5796537	5	+	.	ID=YHIndel00136; status=novel; Type=-1; location=Transposons0002743:DNA/MER1_type; Base=T
+chr1	soap	Indel	5812338	5812341	8	+	.	ID=YHIndel00137; status=novel; Type=-3; location=Tandem001411:Simple_repeat; Base=GTG
+chr1	soap	Indel	5814848	5814849	8	+	.	ID=YHIndel00138; status=novel; Type=-1; Base=C
+chr1	soap	Indel	5832915	5832916	5	+	.	ID=YHIndel00139; status=novel; Type=-1; Base=A
+chr1	soap	Indel	5877989	5877989	5	+	.	ID=rs34020356; status=9; Type=+1; location=NM_015102:intron; Base=A
+chr1	soap	Indel	5955009	5955009	5	+	.	ID=rs33975439; status=-1; Type=+2; location=NM_015102:intron; Base=TC
+chr1	soap	Indel	5972216	5972217	8	+	.	ID=YHIndel00140; status=novel; Type=-1; location=NM_015102:intron; Base=G
+chr1	soap	Indel	5973927	5973928	4	+	.	ID=YHIndel00141; status=novel; Type=-1; location=NM_015102:intron; Base=C
+chr1	soap	Indel	6013311	6013311	13	+	.	ID=rs35310819; status=0; Type=+1; location=NM_172130:intron; Base=A
+chr1	soap	Indel	6087140	6087140	5	+	.	ID=rs3036973; status=3; Type=+2; location=NM_015557:3-UTR; Base=GG
+chr1	soap	Indel	6092887	6092890	3	+	.	ID=YHIndel00142; status=novel; Type=-3; location=NM_015557:intron; Base=ACT
+chr1	soap	Indel	6093011	6093012	4	+	.	ID=YHIndel00143; status=novel; Type=-1; location=NM_015557:intron; Base=G
+chr1	soap	Indel	6106349	6106350	3	+	.	ID=YHIndel00144; status=novel; Type=-1; location=NM_015557:intron; Base=A
+chr1	soap	Indel	6125720	6125721	5	+	.	ID=YHIndel00145; status=novel; Type=-1; location=NM_015557:intron; Base=T
+chr1	soap	Indel	6170691	6170691	4	+	.	ID=YHIndel00146; status=novel; Type=+2; location=NM_000983:intron; Base=TG
+chr1	soap	Indel	6189686	6189687	3	+	.	ID=YHIndel00147; status=novel; Type=-1; Base=A
+chr1	soap	Indel	6248263	6248263	4	+	.	ID=rs34902161; status=-1; Type=+2; location=NM_181864:intron; Base=AA
+chr1	soap	Indel	6424514	6424515	7	+	.	ID=YHIndel00148; status=novel; Type=-1; location=NM_031475:intron; Base=C
+chr1	soap	Indel	6490834	6490834	4	+	.	ID=rs36064039; status=4; Type=+3; ; Base=GGG
+chr1	soap	Indel	6499748	6499749	5	+	.	ID=YHIndel00149; status=novel; Type=-1; location=Transposons0193790:SINE/Alu; Base=A
+chr1	soap	Indel	6506902	6506902	6	+	.	ID=rs35857418; status=3; Type=+2; location=OREG0013044:REGULATORY REGION; Base=TA
+chr1	soap	Indel	6509911	6509913	7	+	.	ID=rs34948999; status=0; Type=-2; location=NM_024654:intron; Base=AA
+chr1	soap	Indel	6532695	6532696	4	+	.	ID=YHIndel00150; status=novel; Type=-1; location=NM_024654:intron; Base=T
+chr1	soap	Indel	6551182	6551184	3	+	.	ID=YHIndel00151; status=novel; Type=-2; location=NM_138697:intron; Base=GT
+chr1	soap	Indel	6553945	6553946	5	+	.	ID=YHIndel00152; status=novel; Type=-1; location=NM_138697:intron; Base=C
+chr1	soap	Indel	6641309	6641309	4	+	.	ID=rs34573513; status=7; Type=+1; ; Base=A
+chr1	soap	Indel	6645484	6645484	5	+	.	ID=rs3830770; status=5; Type=+3; location=Transposons0143817:LTR/ERV1; Base=GCA
+chr1	soap	Indel	6715975	6715976	6	+	.	ID=YHIndel00153; status=novel; Type=-1; Base=A
+chr1	soap	Indel	6728464	6728465	5	+	.	ID=YHIndel00154; status=novel; Type=-1; location=Transposons0194080:SINE/Alu; Base=A
+chr1	soap	Indel	6729427	6729428	6	+	.	ID=YHIndel00155; status=novel; Type=-1; Base=T
+chr1	soap	Indel	6730327	6730329	10	+	.	ID=YHIndel00156; status=novel; Type=-2; location=Transposons0194082:SINE/Alu; Base=AG
+chr1	soap	Indel	6738503	6738505	6	+	.	ID=YHIndel00157; status=novel; Type=-2; Base=GA
+chr1	soap	Indel	6743972	6743972	10	+	.	ID=YHIndel00158; status=novel; Type=+3; Base=TCA
+chr1	soap	Indel	6746663	6746665	4	+	.	ID=YHIndel00159; status=novel; Type=-2; location=Transposons0035943:LINE/L1; Base=CT
+chr1	soap	Indel	6749351	6749352	5	+	.	ID=YHIndel00160; status=novel; Type=-1; location=Transposons0194119:SINE/Alu; Base=T
+chr1	soap	Indel	6750070	6750070	5	+	.	ID=rs35749600; status=0; Type=+1; ; Base=T
+chr1	soap	Indel	6928848	6928848	8	+	.	ID=YHIndel00161; status=novel; Type=+1; location=NM_015215:intron; Base=T
+chr1	soap	Indel	6939193	6939195	4	+	.	ID=rs36082445; status=-1; Type=-2; location=NM_015215:intron; Base=AA
+chr1	soap	Indel	6942150	6942151	3	+	.	ID=YHIndel00162; status=novel; Type=-1; location=NM_015215:intron; Base=G
+chr1	soap	Indel	7086082	7086082	5	+	.	ID=rs36143115; status=2; Type=+3; location=NM_015215:intron; Base=AAC
+chr1	soap	Indel	7086697	7086697	7	+	.	ID=YHIndel00163; status=novel; Type=+2; location=NM_015215:intron; Base=CA
+chr1	soap	Indel	7086931	7086931	6	+	.	ID=rs36036618; status=5; Type=+2; location=NM_015215:intron; Base=TA
+chr1	soap	Indel	7125441	7125441	4	+	.	ID=rs34819404; status=4; Type=+3; location=NM_015215:intron; Base=GAA
+chr1	soap	Indel	7145689	7145689	3	+	.	ID=YHIndel00164; status=novel; Type=+1; location=NM_015215:intron; Base=G
+chr1	soap	Indel	7184499	7184499	8	+	.	ID=rs35874770; status=0; Type=+1; location=NM_015215:intron; Base=A
+chr1	soap	Indel	7197512	7197512	7	+	.	ID=rs34949585; status=1; Type=+2; location=NM_015215:intron; Base=CT
+chr1	soap	Indel	7197814	7197814	7	+	.	ID=rs34829257; status=6; Type=+1; location=NM_015215:intron; Base=T
+chr1	soap	Indel	7199120	7199121	6	+	.	ID=YHIndel00165; status=novel; Type=-1; location=NM_015215:intron; Base=T
+chr1	soap	Indel	7214945	7214945	5	+	.	ID=rs35659540; status=-1; Type=+1; location=NM_015215:intron; Base=G
+chr1	soap	Indel	7224658	7224658	4	+	.	ID=rs35045762; status=0; Type=+1; location=NM_015215:intron; Base=A
+chr1	soap	Indel	7240231	7240231	5	+	.	ID=rs35500006; status=4; Type=+2; location=NM_015215:intron; Base=TG
+chr1	soap	Indel	7250919	7250920	10	+	.	ID=YHIndel00166; status=novel; Type=-1; location=NM_015215:intron; Base=G
+chr1	soap	Indel	7255320	7255320	8	+	.	ID=YHIndel00167; status=novel; Type=+1; location=NM_015215:intron; Base=G
+chr1	soap	Indel	7280985	7280985	8	+	.	ID=rs35939899; status=-1; Type=+1; location=NM_015215:intron; Base=G
+chr1	soap	Indel	7288046	7288047	5	+	.	ID=YHIndel00168; status=novel; Type=-1; location=NM_015215:intron; Base=C
+chr1	soap	Indel	7289989	7289990	4	+	.	ID=YHIndel00169; status=novel; Type=-1; location=NM_015215:intron; Base=T
+chr1	soap	Indel	7290910	7290911	6	+	.	ID=YHIndel00170; status=novel; Type=-1; location=NM_015215:intron; Base=G
+chr1	soap	Indel	7294257	7294258	3	+	.	ID=YHIndel00171; status=novel; Type=-1; location=NM_015215:intron; Base=T
+chr1	soap	Indel	7311009	7311010	4	+	.	ID=YHIndel00172; status=novel; Type=-1; location=NM_015215:intron; Base=T
+chr1	soap	Indel	7321972	7321972	13	+	.	ID=rs35301411; status=3; Type=+2; location=NM_015215:intron; Base=AA
+chr1	soap	Indel	7338490	7338490	6	+	.	ID=YHIndel00173; status=novel; Type=+1; location=NM_015215:intron; Base=C
+chr1	soap	Indel	7340342	7340345	7	+	.	ID=YHIndel00174; status=novel; Type=-3; location=NM_015215:intron; Base=ATT
+chr1	soap	Indel	7349364	7349365	4	+	.	ID=YHIndel00175; status=novel; Type=-1; location=NM_015215:intron; Base=T
+chr1	soap	Indel	7365185	7365185	3	+	.	ID=YHIndel00176; status=novel; Type=+1; location=NM_015215:intron; Base=G
+chr1	soap	Indel	7366429	7366432	6	+	.	ID=YHIndel00177; status=novel; Type=-3; location=NM_015215:intron; Base=GGA
+chr1	soap	Indel	7390859	7390859	5	+	.	ID=YHIndel00178; status=novel; Type=+1; location=NM_015215:intron; Base=C
+chr1	soap	Indel	7392186	7392186	5	+	.	ID=rs33993687; status=1; Type=+1; location=NM_015215:intron; Base=A
+chr1	soap	Indel	7400765	7400765	18	+	.	ID=rs35997377; status=1; Type=+1; location=NM_015215:intron; Base=C
+chr1	soap	Indel	7433528	7433528	3	+	.	ID=rs34661444; status=0; Type=+1; location=NM_015215:intron; Base=G
+chr1	soap	Indel	7469679	7469679	3	+	.	ID=YHIndel00179; status=novel; Type=+1; location=NM_015215:intron; Base=A
+chr1	soap	Indel	7479672	7479673	3	+	.	ID=YHIndel00180; status=novel; Type=-1; location=NM_015215:intron; Base=T
+chr1	soap	Indel	7481402	7481402	5	+	.	ID=YHIndel00181; status=novel; Type=+2; location=NM_015215:intron; Base=AG
+chr1	soap	Indel	7495759	7495760	4	+	.	ID=YHIndel00182; status=novel; Type=-1; location=NM_015215:intron; Base=G
+chr1	soap	Indel	7533949	7533949	9	+	.	ID=rs34180195; status=0; Type=+1; location=NM_015215:intron; Base=G
+chr1	soap	Indel	7534048	7534048	10	+	.	ID=rs35588400; status=1; Type=+2; location=NM_015215:intron; Base=GA
+chr1	soap	Indel	7538262	7538263	4	+	.	ID=YHIndel00183; status=novel; Type=-1; location=NM_015215:intron; Base=G
+chr1	soap	Indel	7538416	7538416	7	+	.	ID=rs36010828; status=0; Type=+1; location=NM_015215:intron; Base=T
+chr1	soap	Indel	7540454	7540455	6	+	.	ID=YHIndel00184; status=novel; Type=-1; location=NM_015215:intron; Base=C
+chr1	soap	Indel	7638126	7638128	11	+	.	ID=YHIndel00185; status=novel; Type=-2; location=NM_015215:intron; Base=AA
+chr1	soap	Indel	7638178	7638178	5	+	.	ID=YHIndel00186; status=novel; Type=+2; location=NM_015215:intron; Base=CT
+chr1	soap	Indel	7638248	7638250	3	+	.	ID=YHIndel00187; status=novel; Type=-2; location=NM_015215:intron; Base=AC
+chr1	soap	Indel	7638290	7638292	3	+	.	ID=YHIndel00188; status=novel; Type=-2; location=NM_015215:intron; Base=AC
+chr1	soap	Indel	7663460	7663460	6	+	.	ID=rs36095087; status=7; Type=+1; location=NM_015215:intron; Base=T
+chr1	soap	Indel	7678833	7678833	7	+	.	ID=YHIndel00189; status=novel; Type=+1; location=NM_015215:intron; Base=G
+chr1	soap	Indel	7679933	7679935	7	+	.	ID=rs34593495; status=0; Type=-2; location=NM_015215:intron; Base=AT
+chr1	soap	Indel	7695497	7695498	8	+	.	ID=YHIndel00190; status=novel; Type=-1; location=NM_015215:intron; Base=A
+chr1	soap	Indel	7748909	7748909	6	+	.	ID=rs35182403; status=9; Type=+1; location=NM_015215:intron; Base=T
+chr1	soap	Indel	7750875	7750876	8	+	.	ID=YHIndel00191; status=novel; Type=-1; location=NM_015215:3-UTR; Base=A
+chr1	soap	Indel	7757015	7757016	5	+	.	ID=YHIndel00192; status=novel; Type=-1; location=NM_004781:intron; Base=C
+chr1	soap	Indel	7769955	7769955	7	+	.	ID=rs35115980; status=6; Type=+1; location=NM_016831:intron; Base=T
+chr1	soap	Indel	7834807	7834807	5	+	.	ID=rs3835494; status=8; Type=+1; location=NM_021995:intron; Base=T
+chr1	soap	Indel	7838858	7838858	3	+	.	ID=YHIndel00193; status=novel; Type=+1; Base=C
+chr1	soap	Indel	7843311	7843311	4	+	.	ID=YHIndel00194; status=novel; Type=+1; location=Transposons0194535:SINE/Alu; Base=G
+chr1	soap	Indel	7850786	7850787	7	+	.	ID=rs3034084; status=7; Type=-1; ; Base=A
+chr1	soap	Indel	7859051	7859052	8	+	.	ID=YHIndel00195; status=novel; Type=-1; location=Transposons0036243:LINE/L1; Base=T
+chr1	soap	Indel	7859411	7859412	6	+	.	ID=YHIndel00196; status=novel; Type=-1; location=Transposons0036243:LINE/L1; Base=A
+chr1	soap	Indel	7874327	7874328	7	+	.	ID=YHIndel00197; status=novel; Type=-1; location=Transposons0036252:LINE/L1; Base=T
+chr1	soap	Indel	7882819	7882821	3	+	.	ID=YHIndel00198; status=novel; Type=-2; location=Transposons0194569:SINE/Alu; Base=AG
+chr1	soap	Indel	7884848	7884848	4	+	.	ID=rs33992245; status=1; Type=+3; ; Base=TCC
+chr1	soap	Indel	7886322	7886322	4	+	.	ID=YHIndel00199; status=novel; Type=+1; location=Transposons0194572:SINE/Alu; Base=C
+chr1	soap	Indel	7888989	7888989	8	+	.	ID=YHIndel00200; status=novel; Type=+1; Base=G
+chr1	soap	Indel	7889843	7889843	5	+	.	ID=YHIndel00201; status=novel; Type=+1; location=Transposons0194576:SINE/Alu; Base=C
+chr1	soap	Indel	7896384	7896384	4	+	.	ID=YHIndel00202; status=novel; Type=+2; location=Tandem001891:Simple_repeat; Base=GT
+chr1	soap	Indel	7917368	7917368	6	+	.	ID=YHIndel00203; status=novel; Type=+1; location=NM_001561:intron; Base=A
+chr1	soap	Indel	7970525	7970525	4	+	.	ID=rs34778213; status=6; Type=+1; location=Transposons0194675:SINE/Alu; Base=T
+chr1	soap	Indel	7997264	7997264	3	+	.	ID=YHIndel00204; status=novel; Type=+1; location=NM_018948:intron; Base=T
+chr1	soap	Indel	8036729	8036731	7	+	.	ID=rs2307538; status=-1; Type=-2; ; Base=CT
+chr1	soap	Indel	8066439	8066439	4	+	.	ID=YHIndel00205; status=novel; Type=+1; Base=T
+chr1	soap	Indel	8106449	8106450	7	+	.	ID=YHIndel00206; status=novel; Type=-1; location=Transposons0143855:LTR/ERV1; Base=G
+chr1	soap	Indel	8117914	8117914	7	+	.	ID=rs35227644; status=1; Type=+1; ; Base=G
+chr1	soap	Indel	8145847	8145847	8	+	.	ID=YHIndel00207; status=novel; Type=+1; location=Transposons0036359:LINE/L1; Base=A
+chr1	soap	Indel	8146807	8146808	4	+	.	ID=YHIndel00208; status=novel; Type=-1; location=Transposons0036360:LINE/L1; Base=C
+chr1	soap	Indel	8189424	8189424	6	+	.	ID=rs35395352; status=8; Type=+1; location=Transposons0194926:SINE/Alu; Base=A
+chr1	soap	Indel	8200722	8200722	3	+	.	ID=rs3994831; status=9; Type=+1; ; Base=A
+chr1	soap	Indel	8202861	8202861	4	+	.	ID=YHIndel00209; status=novel; Type=+1; location=Transposons0194942:SINE/Alu; Base=A
+chr1	soap	Indel	8225255	8225255	8	+	.	ID=rs35582504; status=0; Type=+1; location=Transposons0036381:LINE/L1; Base=A
+chr1	soap	Indel	8262058	8262058	5	+	.	ID=rs35441979; status=9; Type=+1; ; Base=T
+chr1	soap	Indel	8275652	8275653	11	+	.	ID=YHIndel00210; status=novel; Type=-1; Base=C
+chr1	soap	Indel	8276518	8276519	8	+	.	ID=YHIndel00211; status=novel; Type=-1; location=Transposons0195060:SINE/Alu; Base=T
+chr1	soap	Indel	8285704	8285704	7	+	.	ID=rs34454113; status=1; Type=+1; ; Base=A
+chr1	soap	Indel	8296170	8296171	5	+	.	ID=YHIndel00212; status=novel; Type=-1; location=Transposons0195082:SINE/Alu; Base=T
+chr1	soap	Indel	8357759	8357759	8	+	.	ID=rs36085291; status=0; Type=+1; location=NM_001042682:intron; Base=C
+chr1	soap	Indel	8371403	8371405	5	+	.	ID=rs5772320; status=-1; Type=-2; location=NM_001042682:intron; Base=AT
+chr1	soap	Indel	8378243	8378244	3	+	.	ID=YHIndel00213; status=novel; Type=-1; location=NM_001042682:intron; Base=A
+chr1	soap	Indel	8389460	8389460	3	+	.	ID=rs33915279; status=-1; Type=+1; location=NM_001042682:intron; Base=A
+chr1	soap	Indel	8420915	8420915	3	+	.	ID=rs34976449; status=2; Type=+1; location=Transposons0195142:SINE/Alu; Base=G
+chr1	soap	Indel	8443077	8443080	3	+	.	ID=YHIndel00214; status=novel; Type=-3; Base=AAG
+chr1	soap	Indel	8464868	8464870	5	+	.	ID=rs34734838; status=1; Type=-2; ; Base=AA
+chr1	soap	Indel	8487096	8487096	8	+	.	ID=rs35335980; status=0; Type=+1; ; Base=A
+chr1	soap	Indel	8511057	8511058	3	+	.	ID=YHIndel00215; status=novel; Type=-1; location=Transposons0036470:LINE/L1; Base=T
+chr1	soap	Indel	8518395	8518396	6	+	.	ID=YHIndel00216; status=novel; Type=-1; Base=T
+chr1	soap	Indel	8556057	8556057	3	+	.	ID=rs34524431; status=3; Type=+1; location=Transposons0036491:LINE/L1; Base=T
+chr1	soap	Indel	8569448	8569449	10	+	.	ID=YHIndel00217; status=novel; Type=-1; Base=T
+chr1	soap	Indel	8605436	8605437	4	+	.	ID=YHIndel00218; status=novel; Type=-1; Base=T
+chr1	soap	Indel	8631950	8631951	8	+	.	ID=YHIndel00219; status=novel; Type=-1; Base=A
+chr1	soap	Indel	8668036	8668039	4	+	.	ID=YHIndel00220; status=novel; Type=-3; Base=CAA
+chr1	soap	Indel	8675001	8675001	5	+	.	ID=YHIndel00221; status=novel; Type=+1; location=Transposons0195334:SINE/Alu; Base=T
+chr1	soap	Indel	8679602	8679603	3	+	.	ID=YHIndel00222; status=novel; Type=-1; Base=A
+chr1	soap	Indel	8708606	8708607	3	+	.	ID=YHIndel00223; status=novel; Type=-1; Base=C
+chr1	soap	Indel	8714429	8714429	5	+	.	ID=YHIndel00224; status=novel; Type=+1; location=Tandem002115:Simple_repeat; Base=T
+chr1	soap	Indel	8739757	8739757	4	+	.	ID=YHIndel00225; status=novel; Type=+3; location=Transposons0195385:SINE/Alu; Base=AAA
+chr1	soap	Indel	8782475	8782475	3	+	.	ID=YHIndel00226; status=novel; Type=+1; location=Transposons0195447:SINE/Alu; Base=T
+chr1	soap	Indel	8787403	8787404	4	+	.	ID=YHIndel00227; status=novel; Type=-1; location=Transposons0168684:LTR/MaLR; Base=A
+chr1	soap	Indel	8798913	8798916	3	+	.	ID=YHIndel00228; status=novel; Type=-3; Base=AAG
+chr1	soap	Indel	8829809	8829812	3	+	.	ID=YHIndel00229; status=novel; Type=-3; location=Tandem002137:Simple_repeat; Base=GTT
+chr1	soap	Indel	8839988	8839988	8	+	.	ID=YHIndel00230; status=novel; Type=+2; Base=AT
+chr1	soap	Indel	8866978	8866978	4	+	.	ID=rs35605212; status=4; Type=+1; ; Base=C
+chr1	soap	Indel	8915727	8915728	8	+	.	ID=YHIndel00231; status=novel; Type=-1; location=Transposons0195642:SINE/Alu; Base=T
+chr1	soap	Indel	8920763	8920763	4	+	.	ID=rs35364122; status=7; Type=+1; location=Transposons0168701:LTR/MaLR; Base=CCC
+chr1	soap	Indel	8921751	8921751	7	+	.	ID=rs35335701; status=6; Type=+1; location=Transposons0143901:LTR/ERV1; Base=T
+chr1	soap	Indel	8921828	8921829	9	+	.	ID=YHIndel00232; status=novel; Type=-1; location=Transposons0143901:LTR/ERV1; Base=T
+chr1	soap	Indel	8946358	8946359	6	+	.	ID=YHIndel00233; status=novel; Type=-1; location=NM_001215:intron; Base=T
+chr1	soap	Indel	8949640	8949640	7	+	.	ID=rs35048690; status=8; Type=+1; location=NM_001215:intron; Base=A
+chr1	soap	Indel	8956434	8956434	4	+	.	ID=YHIndel00234; status=novel; Type=+1; location=NM_001215:intron; Base=T
+chr1	soap	Indel	8957407	8957407	6	+	.	ID=rs35753212; status=5; Type=+3; location=NM_001215:3-UTR; Base=AAG
+chr1	soap	Indel	8962649	8962650	3	+	.	ID=YHIndel00235; status=novel; Type=-1; location=Transposons0195705:SINE/Alu; Base=T
+chr1	soap	Indel	9000061	9000062	5	+	.	ID=YHIndel00236; status=novel; Type=-1; location=NM_207420:intron; Base=T
+chr1	soap	Indel	9001497	9001497	7	+	.	ID=rs35266452; status=4; Type=+2; location=NM_207420:intron; Base=GT
+chr1	soap	Indel	9041415	9041416	4	+	.	ID=YHIndel00237; status=novel; Type=-1; location=NM_003039:intron; Base=A
+chr1	soap	Indel	9043170	9043172	4	+	.	ID=YHIndel00238; status=novel; Type=-2; location=NM_003039:intron; Base=CA
+chr1	soap	Indel	9057322	9057322	5	+	.	ID=YHIndel00239; status=novel; Type=+1; location=Transposons0143912:LTR/ERV1; Base=C
+chr1	soap	Indel	9125376	9125376	7	+	.	ID=rs34536053; status=0; Type=+1; location=Transposons0195892:SINE/Alu; Base=C
+chr1	soap	Indel	9125504	9125504	3	+	.	ID=rs36076339; status=0; Type=+1; location=Transposons0195892:SINE/Alu; Base=C
+chr1	soap	Indel	9151171	9151173	6	+	.	ID=rs5772349; status=8; Type=-2; location=Tandem002222:Simple_repeat; Base=TG
+chr1	soap	Indel	9206077	9206080	11	+	.	ID=YHIndel00240; status=novel; Type=-3; location=Tandem002234:Simple_repeat; Base=TTC
+chr1	soap	Indel	9210292	9210294	4	+	.	ID=YHIndel00241; status=novel; Type=-2; location=Transposons0195987:SINE/Alu; Base=CT
+chr1	soap	Indel	9229896	9229896	4	+	.	ID=YHIndel00242; status=novel; Type=+1; location=NM_004285:intron; Base=G
+chr1	soap	Indel	9242474	9242474	5	+	.	ID=YHIndel00243; status=novel; Type=+1; location=NM_004285:intron; Base=A
+chr1	soap	Indel	9255995	9255995	4	+	.	ID=rs36099002; status=1; Type=+1; ; Base=G
+chr1	soap	Indel	9262552	9262552	7	+	.	ID=rs34251124; status=2; Type=+1; ; Base=A
+chr1	soap	Indel	9269288	9269288	8	+	.	ID=YHIndel00244; status=novel; Type=+3; location=Transposons0101602:LINE/L2; Base=TGG
+chr1	soap	Indel	9291876	9291876	11	+	.	ID=YHIndel00245; status=novel; Type=+1; location=NM_025106:intron; Base=C
+chr1	soap	Indel	9313204	9313205	3	+	.	ID=YHIndel00246; status=novel; Type=-1; location=NM_025106:intron; Base=G
+chr1	soap	Indel	9357187	9357187	3	+	.	ID=YHIndel00247; status=novel; Type=+1; location=Transposons0196068:SINE/Alu; Base=A
+chr1	soap	Indel	9357380	9357381	3	+	.	ID=YHIndel00248; status=novel; Type=-1; location=Transposons0168748:LTR/MaLR; Base=A
+chr1	soap	Indel	9362432	9362433	3	+	.	ID=rs3057847; status=-1; Type=-1; location=Transposons0196071:SINE/Alu; Base=A
+chr1	soap	Indel	9379330	9379331	5	+	.	ID=YHIndel00249; status=novel; Type=-1; location=Transposons0196087:SINE/Alu; Base=A
+chr1	soap	Indel	9393451	9393452	7	+	.	ID=YHIndel00250; status=novel; Type=-1; location=Transposons0295962:SINE/MIR; Base=T
+chr1	soap	Indel	9430689	9430690	4	+	.	ID=YHIndel00251; status=novel; Type=-1; location=Transposons0196141:SINE/Alu; Base=T
+chr1	soap	Indel	9433280	9433280	6	+	.	ID=YHIndel00252; status=novel; Type=+1; Base=C
+chr1	soap	Indel	9448590	9448591	4	+	.	ID=YHIndel00253; status=novel; Type=-1; location=Transposons0002974:DNA/MER1_type; Base=C
+chr1	soap	Indel	9449093	9449093	4	+	.	ID=YHIndel00254; status=novel; Type=+1; location=Transposons0196162:SINE/Alu; Base=A
+chr1	soap	Indel	9449285	9449286	3	+	.	ID=YHIndel00255; status=novel; Type=-1; location=Transposons0196162:SINE/Alu; Base=A
+chr1	soap	Indel	9468761	9468761	5	+	.	ID=YHIndel00256; status=novel; Type=+1; Base=T
+chr1	soap	Indel	9480137	9480137	8	+	.	ID=rs34180993; status=2; Type=+1; location=Transposons0036705:LINE/L1; Base=C
+chr1	soap	Indel	9480961	9480961	8	+	.	ID=YHIndel00257; status=novel; Type=+2; location=Transposons0196206:SINE/Alu; Base=AG
+chr1	soap	Indel	9484351	9484351	6	+	.	ID=rs34265250; status=1; Type=+1; location=Transposons0026849:DNA/Tip100; Base=G
+chr1	soap	Indel	9524806	9524806	3	+	.	ID=YHIndel00258; status=novel; Type=+1; location=NM_032315:intron; Base=C
+chr1	soap	Indel	9631333	9631335	5	+	.	ID=rs34499363; status=2; Type=-2; ; Base=TA
+chr1	soap	Indel	9632782	9632782	9	+	.	ID=rs34720225; status=3; Type=+1; ; Base=G
+chr1	soap	Indel	9714701	9714701	4	+	.	ID=rs36067873; status=-1; Type=+1; ; Base=A
+chr1	soap	Indel	9719910	9719911	3	+	.	ID=YHIndel00259; status=novel; Type=-1; Base=G
+chr1	soap	Indel	9759180	9759180	5	+	.	ID=YHIndel00260; status=novel; Type=+1; Base=A
+chr1	soap	Indel	9794448	9794448	3	+	.	ID=YHIndel00261; status=novel; Type=+1; Base=T
+chr1	soap	Indel	9825225	9825227	3	+	.	ID=YHIndel00262; status=novel; Type=-2; Base=AA
+chr1	soap	Indel	9878791	9878791	4	+	.	ID=YHIndel00263; status=novel; Type=+1; location=NM_020248:intron; Base=A
+chr1	soap	Indel	9882925	9882926	4	+	.	ID=YHIndel00264; status=novel; Type=-1; location=NM_020248:intron; Base=A
+chr1	soap	Indel	9886974	9886974	6	+	.	ID=rs3064809; status=5; Type=+3; location=NM_020248:intron; Base=AAC
+chr1	soap	Indel	9903396	9903397	6	+	.	ID=rs36075610; status=1; Type=-1; location=Transposons0196781:SINE/Alu; Base=T
+chr1	soap	Indel	9963117	9963118	3	+	.	ID=YHIndel00265; status=novel; Type=-1; location=NM_022787:intron; Base=A
+chr1	soap	Indel	9993455	9993456	4	+	.	ID=YHIndel00266; status=novel; Type=-1; location=NM_052960:intron; Base=C
+chr1	soap	Indel	10045211	10045211	5	+	.	ID=YHIndel00267; status=novel; Type=+1; location=Transposons0197065:SINE/Alu; Base=G
+chr1	soap	Indel	10074869	10074871	4	+	.	ID=YHIndel00268; status=novel; Type=-2; location=Transposons0197112:SINE/Alu; Base=TT
+chr1	soap	Indel	10188585	10188585	4	+	.	ID=rs34778142; status=0; Type=+1; location=Transposons0197276:SINE/Alu; Base=T
+chr1	soap	Indel	10235375	10235375	4	+	.	ID=rs35110415; status=9; Type=+1; location=NM_015074:intron; Base=T
+chr1	soap	Indel	10261798	10261800	9	+	.	ID=rs35347635; status=1; Type=-2; location=NM_015074:intron; Base=AT
+chr1	soap	Indel	10278615	10278615	6	+	.	ID=rs34437412; status=0; Type=+1; location=NM_015074:intron; Base=G
+chr1	soap	Indel	10281888	10281888	3	+	.	ID=rs5772407; status=2; Type=+1; location=NM_015074:intron; Base=A
+chr1	soap	Indel	10285641	10285641	3	+	.	ID=rs3833523; status=0; Type=+2; location=NM_015074:intron; Base=CA
+chr1	soap	Indel	10298870	10298871	4	+	.	ID=rs35809122; status=4; Type=-1; location=NM_015074:intron; Base=C
+chr1	soap	Indel	10312392	10312392	3	+	.	ID=rs35402868; status=9; Type=+1; location=NM_015074:intron; Base=A
+chr1	soap	Indel	10314622	10314622	7	+	.	ID=rs35412726; status=1; Type=+1; location=NM_015074:intron; Base=A
+chr1	soap	Indel	10347149	10347150	3	+	.	ID=YHIndel00269; status=novel; Type=-1; location=NM_015074:intron; Base=C
+chr1	soap	Indel	10366178	10366178	4	+	.	ID=rs34362834; status=1; Type=+1; location=Transposons0101757:LINE/L2; Base=C
+chr1	soap	Indel	10369511	10369511	8	+	.	ID=YHIndel00270; status=novel; Type=+1; Base=T
+chr1	soap	Indel	10407563	10407563	10	+	.	ID=rs34776634; status=0; Type=+1; location=Transposons0101761:LINE/L2; Base=A
+chr1	soap	Indel	10421629	10421630	4	+	.	ID=YHIndel00271; status=novel; Type=-1; location=NM_198544:intron; Base=A
+chr1	soap	Indel	10423524	10423524	5	+	.	ID=rs35315955; status=1; Type=+1; location=NM_198544:intron; Base=A
+chr1	soap	Indel	10436635	10436635	3	+	.	ID=rs5772412; status=2; Type=+1; ; Base=G
+chr1	soap	Indel	10482803	10482805	5	+	.	ID=rs34611625; status=1; Type=-2; location=NM_004565:intron; Base=TG
+chr1	soap	Indel	10495887	10495888	5	+	.	ID=YHIndel00272; status=novel; Type=-1; location=NM_004565:intron; Base=T
+chr1	soap	Indel	10520579	10520579	3	+	.	ID=rs35357504; status=0; Type=+1; location=NM_004565:intron; Base=G
+chr1	soap	Indel	10546644	10546646	5	+	.	ID=YHIndel00273; status=novel; Type=-2; location=NM_004565:intron; Base=AT
+chr1	soap	Indel	10546829	10546829	8	+	.	ID=YHIndel00274; status=novel; Type=+2; location=NM_004565:intron; Base=TT
+chr1	soap	Indel	10560429	10560429	5	+	.	ID=YHIndel00275; status=novel; Type=+1; location=NM_004565:intron; Base=A
+chr1	soap	Indel	10577473	10577473	6	+	.	ID=rs5772422; status=0; Type=+1; location=NM_004565:intron; Base=A
+chr1	soap	Indel	10578506	10578506	5	+	.	ID=rs33919182; status=-1; Type=+1; location=NM_004565:intron; Base=G
+chr1	soap	Indel	10633438	10633438	4	+	.	ID=rs35751856; status=2; Type=+1; location=NM_017766:intron; Base=C
+chr1	soap	Indel	10644714	10644714	9	+	.	ID=YHIndel00276; status=novel; Type=+2; location=NM_017766:intron; Base=AC
+chr1	soap	Indel	10720017	10720017	3	+	.	ID=rs35295665; status=2; Type=+1; location=NM_017766:intron; Base=C
+chr1	soap	Indel	10804422	10804425	7	+	.	ID=rs5772430; status=1; Type=-3; ; Base=TCA
+chr1	soap	Indel	10814722	10814722	7	+	.	ID=YHIndel00277; status=novel; Type=+2; location=Transposons0197821:SINE/Alu; Base=CT
+chr1	soap	Indel	10826068	10826068	4	+	.	ID=rs34552600; status=9; Type=+1; location=Transposons0197828:SINE/Alu; Base=T
+chr1	soap	Indel	10827513	10827513	7	+	.	ID=rs34753131; status=0; Type=+1; location=Transposons0036971:LINE/L1; Base=T
+chr1	soap	Indel	10834552	10834552	6	+	.	ID=YHIndel00278; status=novel; Type=+2; Base=TC
+chr1	soap	Indel	10835685	10835685	4	+	.	ID=YHIndel00279; status=novel; Type=+1; Base=C
+chr1	soap	Indel	10905979	10905979	9	+	.	ID=YHIndel00280; status=novel; Type=+1; location=Transposons0036992:LINE/L1; Base=T
+chr1	soap	Indel	10993981	10993982	5	+	.	ID=YHIndel00281; status=novel; Type=-1; location=Tandem002735:Tandem_repeat; Base=A
+chr1	soap	Indel	10996096	10996098	3	+	.	ID=YHIndel00282; status=novel; Type=-2; location=NM_007375:intron; Base=CA
+chr1	soap	Indel	11003312	11003312	4	+	.	ID=YHIndel00283; status=novel; Type=+1; location=NM_007375:intron; Base=G
+chr1	soap	Indel	11008685	11008685	4	+	.	ID=rs35526342; status=-1; Type=+1; ; Base=T
+chr1	soap	Indel	11023033	11023033	5	+	.	ID=YHIndel00284; status=novel; Type=+1; location=NM_006610:intron; Base=A
+chr1	soap	Indel	11025106	11025106	10	+	.	ID=YHIndel00285; status=novel; Type=+1; location=NM_006610:intron; Base=G
+chr1	soap	Indel	11034567	11034570	5	+	.	ID=rs34107968; status=3; Type=-3; location=Transposons0144026:LTR/ERV1; Base=AAG
+chr1	soap	Indel	11054357	11054357	3	+	.	ID=rs36067906; status=0; Type=+1; location=NM_001001998:intron; Base=C
+chr1	soap	Indel	11054511	11054514	4	+	.	ID=rs33957776; status=0; Type=-3; location=NM_001001998:intron; Base=AAC
+chr1	soap	Indel	11116151	11116151	6	+	.	ID=rs34798259; status=4; Type=+3; location=NM_004958:intron; Base=TTG
+chr1	soap	Indel	11116714	11116716	5	+	.	ID=YHIndel00286; status=novel; Type=-2; location=NM_004958:intron; Base=AA
+chr1	soap	Indel	11160042	11160044	5	+	.	ID=YHIndel00287; status=novel; Type=-2; location=NM_004958:intron; Base=AA
+chr1	soap	Indel	11160636	11160636	4	+	.	ID=rs34820345; status=-1; Type=+1; location=NM_004958:intron; Base=A
+chr1	soap	Indel	11176599	11176600	6	+	.	ID=YHIndel00288; status=novel; Type=-1; location=NM_004958:intron; Base=C
+chr1	soap	Indel	11186622	11186623	6	+	.	ID=YHIndel00289; status=novel; Type=-1; location=NM_004958:intron; Base=A
+chr1	soap	Indel	11202719	11202719	5	+	.	ID=rs34785633; status=-1; Type=+1; location=NM_004958:intron; Base=A
+chr1	soap	Indel	11210635	11210635	4	+	.	ID=YHIndel00290; status=novel; Type=+1; location=NM_004958:intron; Base=G
+chr1	soap	Indel	11233263	11233264	6	+	.	ID=YHIndel00291; status=novel; Type=-1; location=NM_004958:intron; Base=T
+chr1	soap	Indel	11233808	11233808	8	+	.	ID=rs35501739; status=4; Type=+1; location=NM_004958:intron; Base=C
+chr1	soap	Indel	11237244	11237244	7	+	.	ID=rs33976592; status=-1; Type=+1; location=NM_004958:intron; Base=A
+chr1	soap	Indel	11243372	11243372	6	+	.	ID=rs35365679; status=9; Type=+1; location=NM_004958:intron; Base=T
+chr1	soap	Indel	11262076	11262076	4	+	.	ID=YHIndel00292; status=novel; Type=+1; location=NM_013319:intron; Base=T
+chr1	soap	Indel	11279532	11279532	8	+	.	ID=YHIndel00293; status=novel; Type=+1; Base=A
+chr1	soap	Indel	11281463	11281464	4	+	.	ID=YHIndel00294; status=novel; Type=-1; Base=C
+chr1	soap	Indel	11342116	11342116	5	+	.	ID=rs35921135; status=2; Type=+1; ; Base=A
+chr1	soap	Indel	11342263	11342263	4	+	.	ID=rs35164768; status=1; Type=+1; ; Base=C
+chr1	soap	Indel	11360914	11360915	3	+	.	ID=YHIndel00295; status=novel; Type=-1; location=Transposons0158322:LTR/ERVL; Base=A
+chr1	soap	Indel	11410608	11410609	7	+	.	ID=YHIndel00296; status=novel; Type=-1; location=Transposons0296422:SINE/MIR; Base=T
+chr1	soap	Indel	11428129	11428129	4	+	.	ID=rs34975026; status=9; Type=+1; location=Transposons0144048:LTR/ERV1; Base=G
+chr1	soap	Indel	11430440	11430440	10	+	.	ID=rs35621987; status=2; Type=+1; ; Base=C
+chr1	soap	Indel	11431328	11431328	3	+	.	ID=rs35568217; status=6; Type=+1; ; Base=G
+chr1	soap	Indel	11448689	11448690	3	+	.	ID=YHIndel00297; status=novel; Type=-1; Base=C
+chr1	soap	Indel	11453184	11453184	8	+	.	ID=rs34445294; status=2; Type=+1; location=Transposons0296453:SINE/MIR; Base=G
+chr1	soap	Indel	11463573	11463575	3	+	.	ID=YHIndel00298; status=novel; Type=-2; location=NM_020780:intron; Base=TA
+chr1	soap	Indel	11499790	11499791	5	+	.	ID=YHIndel00299; status=novel; Type=-1; location=NM_020780:intron; Base=C
+chr1	soap	Indel	11540332	11540332	7	+	.	ID=rs34928777; status=0; Type=+1; ; Base=G
+chr1	soap	Indel	11562196	11562196	4	+	.	ID=rs35537145; status=-1; Type=+1; ; Base=G
+chr1	soap	Indel	11567784	11567785	3	+	.	ID=YHIndel00300; status=novel; Type=-1; location=Tandem002887:Simple_repeat; Base=T
+chr1	soap	Indel	11596154	11596154	5	+	.	ID=rs35766968; status=1; Type=+1; location=Transposons0158346:LTR/ERVL; Base=G
+chr1	soap	Indel	11703257	11703257	3	+	.	ID=rs34041422; status=0; Type=+2; location=Transposons0198606:SINE/Alu; Base=AAG
+chr1	soap	Indel	11735633	11735633	4	+	.	ID=YHIndel00301; status=novel; Type=+1; location=Transposons0198627:SINE/Alu; Base=T
+chr1	soap	Indel	11748228	11748228	6	+	.	ID=rs35770710; status=1; Type=+1; location=Transposons0102028:LINE/L2; Base=A
+chr1	soap	Indel	11755081	11755082	5	+	.	ID=YHIndel00302; status=novel; Type=-1; location=Transposons0198648:SINE/Alu; Base=T
+chr1	soap	Indel	11769926	11769926	6	+	.	ID=rs35134728; status=5; Type=+3; location=NM_005957:3-UTR; Base=AGA
+chr1	soap	Indel	11787103	11787103	6	+	.	ID=YHIndel00303; status=novel; Type=+1; location=NM_005957:intron; Base=A
+chr1	soap	Indel	11809966	11809966	4	+	.	ID=YHIndel00304; status=novel; Type=+1; location=NM_001286:intron; Base=G
+chr1	soap	Indel	11903729	11903729	5	+	.	ID=rs34556195; status=2; Type=+2; location=NM_138346:intron; Base=GG
+chr1	soap	Indel	11907012	11907012	4	+	.	ID=YHIndel00305; status=novel; Type=+1; location=NM_138346:intron; Base=G
+chr1	soap	Indel	11909141	11909141	7	+	.	ID=YHIndel00306; status=novel; Type=+1; Base=G
+chr1	soap	Indel	11975623	11975623	5	+	.	ID=YHIndel00307; status=novel; Type=+1; location=NM_014874:intron; Base=TT
+chr1	soap	Indel	12032325	12032327	3	+	.	ID=YHIndel00308; status=novel; Type=-2; location=Transposons0198956:SINE/Alu; Base=AA
+chr1	soap	Indel	12035899	12035900	5	+	.	ID=YHIndel00309; status=novel; Type=-1; location=Transposons0198961:SINE/Alu; Base=T
+chr1	soap	Indel	12070975	12070976	4	+	.	ID=YHIndel00310; status=novel; Type=-1; location=NM_001243:intron; Base=G
+chr1	soap	Indel	12079449	12079451	3	+	.	ID=YHIndel00311; status=novel; Type=-2; location=NM_001243:intron; Base=CA
+chr1	soap	Indel	12340580	12340580	4	+	.	ID=rs33944441; status=0; Type=+1; location=NM_018156:intron; Base=G
+chr1	soap	Indel	12505004	12505004	3	+	.	ID=rs35531570; status=-1; Type=+2; location=Transposons0199288:SINE/Alu; Base=GA
+chr1	soap	Indel	12513551	12513551	3	+	.	ID=rs35682044; status=0; Type=+1; location=Transposons0199298:SINE/Alu; Base=A
+chr1	soap	Indel	12548718	12548720	3	+	.	ID=rs35206798; status=1; Type=-2; ; Base=AG
+chr1	soap	Indel	12570853	12570853	7	+	.	ID=YHIndel00312; status=novel; Type=+3; location=NM_004753:intron; Base=ACA
+chr1	soap	Indel	12580999	12580999	4	+	.	ID=YHIndel00313; status=novel; Type=+1; location=NM_004753:intron; Base=A
+chr1	soap	Indel	12584948	12584949	3	+	.	ID=YHIndel00314; status=novel; Type=-1; location=NM_004753:intron; Base=G
+chr1	soap	Indel	12721612	12721612	4	+	.	ID=rs35331088; status=0; Type=+2; location=Transposons0199443:SINE/Alu; Base=AT
+chr1	soap	Indel	12725838	12725838	7	+	.	ID=rs35189888; status=10; Type=+1; location=Transposons0199449:SINE/Alu; Base=T
+chr1	soap	Indel	12763886	12763888	3	+	.	ID=YHIndel00315; status=novel; Type=-2; location=Transposons0157162:LTR/ERVK; Base=GT
+chr1	soap	Indel	12769407	12769408	5	+	.	ID=YHIndel00316; status=novel; Type=-1; Base=C
+chr1	soap	Indel	12793940	12793941	7	+	.	ID=YHIndel00317; status=novel; Type=-1; Base=C
+chr1	soap	Indel	12815921	12815921	3	+	.	ID=YHIndel00318; status=novel; Type=+1; location=Transposons0144130:LTR/ERV1; Base=G
+chr1	soap	Indel	12832311	12832313	3	+	.	ID=YHIndel00319; status=novel; Type=-2; location=Transposons0144135:LTR/ERV1; Base=CT
+chr1	soap	Indel	12836437	12836440	5	+	.	ID=YHIndel00320; status=novel; Type=-3; location=Transposons0199520:SINE/Alu; Base=CTC
+chr1	soap	Indel	12955360	12955361	3	+	.	ID=YHIndel00321; status=novel; Type=-1; location=Transposons0199647:SINE/Alu; Base=C
+chr1	soap	Indel	12955794	12955796	5	+	.	ID=YHIndel00322; status=novel; Type=-2; Base=AT
+chr1	soap	Indel	13060699	13060701	4	+	.	ID=YHIndel00323; status=novel; Type=-2; Base=AT
+chr1	soap	Indel	13102893	13102893	5	+	.	ID=YHIndel00324; status=novel; Type=+3; Base=TTA
+chr1	soap	Indel	13242769	13242772	4	+	.	ID=YHIndel00325; status=novel; Type=-3; Base=CCT
+chr1	soap	Indel	13327298	13327300	4	+	.	ID=YHIndel00326; status=novel; Type=-2; location=Tandem003276:Simple_repeat; Base=GA
+chr1	soap	Indel	13335661	13335663	3	+	.	ID=YHIndel00327; status=novel; Type=-2; location=Transposons0157169:LTR/ERVK; Base=CA
+chr1	soap	Indel	13381594	13381595	3	+	.	ID=YHIndel00328; status=novel; Type=-1; Base=G
+chr1	soap	Indel	13383823	13383823	4	+	.	ID=rs35148596; status=4; Type=+2; location=Transposons0200009:SINE/Alu; Base=AG
+chr1	soap	Indel	13386402	13386404	4	+	.	ID=YHIndel00329; status=novel; Type=-2; location=Transposons0144279:LTR/ERV1; Base=CT
+chr1	soap	Indel	13577149	13577152	8	+	.	ID=YHIndel00330; status=novel; Type=-3; location=Transposons0144315:LTR/ERV1; Base=AAG
+chr1	soap	Indel	13602424	13602425	3	+	.	ID=YHIndel00331; status=novel; Type=-1; Base=G
+chr1	soap	Indel	13607243	13607245	4	+	.	ID=YHIndel00332; status=novel; Type=-2; location=Transposons0144330:LTR/ERV1; Base=CT
+chr1	soap	Indel	13608372	13608373	4	+	.	ID=YHIndel00333; status=novel; Type=-1; location=Transposons0200214:SINE/Alu; Base=T
+chr1	soap	Indel	13737771	13737771	4	+	.	ID=rs34808300; status=2; Type=+3; location=Transposons0200367:SINE/Alu; Base=ACT
+chr1	soap	Indel	13742182	13742183	4	+	.	ID=YHIndel00334; status=novel; Type=-1; location=Transposons0200373:SINE/Alu; Base=T
+chr1	soap	Indel	13803698	13803699	3	+	.	ID=YHIndel00335; status=novel; Type=-1; location=NM_006474:intron; Base=T
+chr1	soap	Indel	13811211	13811212	5	+	.	ID=YHIndel00336; status=novel; Type=-1; location=NM_006474:intron; Base=A
+chr1	soap	Indel	13812079	13812081	6	+	.	ID=YHIndel00337; status=novel; Type=-2; location=NM_006474:intron; Base=AT
+chr1	soap	Indel	13815478	13815479	8	+	.	ID=YHIndel00338; status=novel; Type=-1; location=NM_006474:3-UTR; Base=G
+chr1	soap	Indel	13816824	13816824	5	+	.	ID=rs33931816; status=-1; Type=+2; location=NM_006474:3-UTR; Base=TT
+chr1	soap	Indel	13918876	13918877	7	+	.	ID=YHIndel00339; status=novel; Type=-1; Base=T
+chr1	soap	Indel	13978986	13978986	6	+	2	ID=rs2308040; status=5; Type=+3; location=NM_001007257:CDS; Base=CCT
+chr1	soap	Indel	13997573	13997573	5	+	.	ID=rs35547481; status=1; Type=+2; ; Base=TG
+chr1	soap	Indel	14008059	14008060	5	+	.	ID=YHIndel00340; status=novel; Type=-1; location=Transposons0003329:DNA/MER1_type; Base=A
+chr1	soap	Indel	14009244	14009244	6	+	.	ID=YHIndel00341; status=novel; Type=+3; location=Transposons0169079:LTR/MaLR; Base=TTA
+chr1	soap	Indel	14014364	14014365	8	+	.	ID=YHIndel00342; status=novel; Type=-1; location=Transposons0200532:SINE/Alu; Base=T
+chr1	soap	Indel	14037313	14037313	5	+	.	ID=YHIndel00343; status=novel; Type=+1; location=Transposons0037585:LINE/L1; Base=C
+chr1	soap	Indel	14037403	14037403	4	+	.	ID=rs34382928; status=7; Type=+3; location=Transposons0037585:LINE/L1; Base=TTT
+chr1	soap	Indel	14053575	14053575	8	+	.	ID=YHIndel00344; status=novel; Type=+2; location=Transposons0037599:LINE/L1; Base=CA
+chr1	soap	Indel	14080583	14080583	6	+	.	ID=YHIndel00345; status=novel; Type=+1; location=Transposons0037612:LINE/L1; Base=T
+chr1	soap	Indel	14083935	14083937	3	+	.	ID=YHIndel00346; status=novel; Type=-2; location=Tandem003419:Tandem_repeat; Base=CT
+chr1	soap	Indel	14085109	14085110	3	+	.	ID=YHIndel00347; status=novel; Type=-1; location=Transposons0037617:LINE/L1; Base=T
+chr1	soap	Indel	14087798	14087798	3	+	.	ID=rs33958735; status=-1; Type=+1; location=Transposons0157178:LTR/ERVK; Base=G
+chr1	soap	Indel	14093493	14093494	7	+	.	ID=YHIndel00348; status=novel; Type=-1; Base=A
+chr1	soap	Indel	14125688	14125689	3	+	.	ID=YHIndel00349; status=novel; Type=-1; Base=T
+chr1	soap	Indel	14127939	14127940	4	+	.	ID=YHIndel00350; status=novel; Type=-1; Base=T
+chr1	soap	Indel	14139376	14139377	4	+	.	ID=YHIndel00351; status=novel; Type=-1; location=Transposons0037637:LINE/L1; Base=T
+chr1	soap	Indel	14143878	14143880	3	+	.	ID=YHIndel00352; status=novel; Type=-2; location=Transposons0037642:LINE/L1; Base=AA
+chr1	soap	Indel	14148406	14148406	3	+	.	ID=rs34893892; status=-1; Type=+2; ; Base=CA
+chr1	soap	Indel	14149340	14149341	3	+	.	ID=YHIndel00353; status=novel; Type=-1; Base=C
+chr1	soap	Indel	14167901	14167903	5	+	.	ID=rs34220713; status=0; Type=-2; location=Transposons0102352:LINE/L2; Base=GT
+chr1	soap	Indel	14242703	14242704	6	+	.	ID=YHIndel00354; status=novel; Type=-1; location=Transposons0037677:LINE/L1; Base=T
+chr1	soap	Indel	14245486	14245488	3	+	.	ID=YHIndel00355; status=novel; Type=-2; Base=TA
+chr1	soap	Indel	14309386	14309387	3	+	.	ID=YHIndel00356; status=novel; Type=-1; Base=T
+chr1	soap	Indel	14323793	14323793	7	+	.	ID=rs35685062; status=2; Type=+1; ; Base=T
+chr1	soap	Indel	14325727	14325727	5	+	.	ID=YHIndel00357; status=novel; Type=+1; location=Transposons0297181:SINE/MIR; Base=A
+chr1	soap	Indel	14329716	14329716	4	+	.	ID=rs33924358; status=-1; Type=+3; ; Base=AGT
+chr1	soap	Indel	14341049	14341049	6	+	.	ID=rs34052668; status=6; Type=+1; ; Base=T
+chr1	soap	Indel	14367539	14367541	9	+	.	ID=YHIndel00358; status=novel; Type=-2; Base=CT
+chr1	soap	Indel	14369828	14369830	4	+	.	ID=rs3033860; status=-1; Type=-2; location=Transposons0200636:SINE/Alu; Base=AG
+chr1	soap	Indel	14370575	14370578	6	+	.	ID=YHIndel00359; status=novel; Type=-3; Base=GGG
+chr1	soap	Indel	14371080	14371080	5	+	.	ID=rs35700845; status=0; Type=+2; ; Base=TT
+chr1	soap	Indel	14376400	14376400	5	+	.	ID=YHIndel00360; status=novel; Type=+2; location=Transposons0037705:LINE/L1; Base=AA
+chr1	soap	Indel	14405013	14405014	5	+	.	ID=YHIndel00361; status=novel; Type=-1; location=Transposons0037709:LINE/L1; Base=T
+chr1	soap	Indel	14405797	14405797	4	+	.	ID=YHIndel00362; status=novel; Type=+1; Base=T
+chr1	soap	Indel	14406062	14406062	3	+	.	ID=rs35701396; status=0; Type=+2; location=Transposons0200644:SINE/Alu; Base=TT
+chr1	soap	Indel	14417382	14417384	5	+	.	ID=rs35019630; status=2; Type=-2; location=Transposons0037712:LINE/L1; Base=TA
+chr1	soap	Indel	14417989	14417989	5	+	.	ID=YHIndel00363; status=novel; Type=+3; location=Transposons0037713:LINE/L1; Base=CAT
+chr1	soap	Indel	14425950	14425951	6	+	.	ID=YHIndel00364; status=novel; Type=-1; location=Transposons0037715:LINE/L1; Base=A
+chr1	soap	Indel	14426214	14426214	4	+	.	ID=rs34197768; status=2; Type=+1; location=Transposons0003370:DNA/MER1_type; Base=A
+chr1	soap	Indel	14435198	14435200	3	+	.	ID=rs33975751; status=-1; Type=-2; ; Base=TT
+chr1	soap	Indel	14449988	14449988	5	+	.	ID=rs35354610; status=0; Type=+1; ; Base=T
+chr1	soap	Indel	14536397	14536397	6	+	.	ID=rs34693856; status=5; Type=+1; ; Base=A
+chr1	soap	Indel	14537697	14537697	4	+	.	ID=YHIndel00365; status=novel; Type=+1; location=Transposons0169246:LTR/MaLR; Base=G
+chr1	soap	Indel	14538108	14538109	6	+	.	ID=YHIndel00366; status=novel; Type=-1; Base=A
+chr1	soap	Indel	14540249	14540250	3	+	.	ID=YHIndel00367; status=novel; Type=-1; location=Transposons0200673:SINE/Alu; Base=A
+chr1	soap	Indel	14544464	14544466	7	+	.	ID=rs35576636; status=0; Type=-2; location=Transposons0003383:DNA/MER1_type; Base=CT
+chr1	soap	Indel	14569046	14569047	6	+	.	ID=YHIndel00368; status=novel; Type=-1; Base=C
+chr1	soap	Indel	14578160	14578160	5	+	.	ID=rs35116579; status=2; Type=+2; location=Transposons0037766:LINE/L1; Base=AG
+chr1	soap	Indel	14607628	14607629	4	+	.	ID=YHIndel00369; status=novel; Type=-1; location=Transposons0169259:LTR/MaLR; Base=C
+chr1	soap	Indel	14626704	14626704	4	+	.	ID=rs33976564; status=-1; Type=+2; location=Tandem003523:Simple_repeat; Base=AT
+chr1	soap	Indel	14632493	14632494	5	+	.	ID=YHIndel00370; status=novel; Type=-1; location=Transposons0037791:LINE/L1; Base=T
+chr1	soap	Indel	14691780	14691780	5	+	.	ID=YHIndel00371; status=novel; Type=+1; location=Tandem003545:Simple_repeat; Base=T
+chr1	soap	Indel	14710198	14710198	3	+	.	ID=YHIndel00372; status=novel; Type=+1; Base=G
+chr1	soap	Indel	14725793	14725794	4	+	.	ID=YHIndel00373; status=novel; Type=-1; Base=A
+chr1	soap	Indel	14734758	14734759	3	+	.	ID=YHIndel00374; status=novel; Type=-1; location=Transposons0200735:SINE/Alu; Base=A
+chr1	soap	Indel	14785794	14785796	3	+	.	ID=YHIndel00375; status=novel; Type=-2; location=Transposons0200752:SINE/Alu; Base=TT
+chr1	soap	Indel	14790263	14790264	3	+	.	ID=YHIndel00376; status=novel; Type=-1; Base=C
+chr1	soap	Indel	14869461	14869464	5	+	.	ID=YHIndel00377; status=novel; Type=-3; location=Transposons0003429:DNA/MER1_type; Base=TCT
+chr1	soap	Indel	14907094	14907096	5	+	.	ID=rs34063708; status=1; Type=-2; ; Base=TT
+chr1	soap	Indel	15003872	15003872	4	+	.	ID=rs35507012; status=0; Type=+2; ; Base=AT
+chr1	soap	Indel	15066184	15066184	3	+	.	ID=rs34573940; status=6; Type=+1; ; Base=T
+chr1	soap	Indel	15068356	15068356	3	+	.	ID=rs34626688; status=6; Type=+1; ; Base=T
+chr1	soap	Indel	15070420	15070421	5	+	.	ID=YHIndel00378; status=novel; Type=-1; Base=A
+chr1	soap	Indel	15074459	15074459	6	+	.	ID=YHIndel00379; status=novel; Type=+1; Base=G
+chr1	soap	Indel	15089602	15089602	5	+	.	ID=rs34732218; status=10; Type=+1; ; Base=T
+chr1	soap	Indel	15100516	15100516	8	+	.	ID=rs34321742; status=4; Type=+1; location=Transposons0102572:LINE/L2; Base=T
+chr1	soap	Indel	15102007	15102007	8	+	.	ID=YHIndel00380; status=novel; Type=+1; location=Transposons0200887:SINE/Alu; Base=G
+chr1	soap	Indel	15131873	15131874	4	+	.	ID=YHIndel00381; status=novel; Type=-1; Base=T
+chr1	soap	Indel	15145437	15145438	3	+	.	ID=YHIndel00382; status=novel; Type=-1; location=NM_001017999:intron; Base=T
+chr1	soap	Indel	15254197	15254197	3	+	.	ID=rs33987167; status=2; Type=+1; location=NM_001017999:intron; Base=A
+chr1	soap	Indel	15308745	15308747	4	+	.	ID=rs3044316; status=0; Type=-2; location=Tandem003690:Simple_repeat; Base=GT
+chr1	soap	Indel	15308859	15308859	7	+	.	ID=YHIndel00383; status=novel; Type=+2; Base=GT
+chr1	soap	Indel	15309133	15309135	6	+	.	ID=YHIndel00384; status=novel; Type=-2; location=Tandem003691:Simple_repeat; Base=AT
+chr1	soap	Indel	15309157	15309159	8	+	.	ID=YHIndel00385; status=novel; Type=-2; location=Tandem003691:Simple_repeat; Base=GT
+chr1	soap	Indel	15309597	15309597	4	+	.	ID=YHIndel00386; status=novel; Type=+2; location=Tandem003691:Simple_repeat; Base=GT
+chr1	soap	Indel	15310355	15310356	8	+	.	ID=YHIndel00387; status=novel; Type=-1; location=Tandem003692:Simple_repeat; Base=T
+chr1	soap	Indel	15312079	15312080	3	+	.	ID=YHIndel00388; status=novel; Type=-1; Base=C
+chr1	soap	Indel	15335578	15335580	12	+	.	ID=YHIndel00389; status=novel; Type=-2; Base=CA
+chr1	soap	Indel	15340564	15340564	4	+	.	ID=rs33964345; status=4; Type=+1; location=Transposons0201028:SINE/Alu; Base=C
+chr1	soap	Indel	15341812	15341812	4	+	.	ID=YHIndel00390; status=novel; Type=+1; location=Transposons0201029:SINE/Alu; Base=A
+chr1	soap	Indel	15383205	15383205	3	+	.	ID=YHIndel00391; status=novel; Type=+1; location=NM_018022:intron; Base=T
+chr1	soap	Indel	15383945	15383946	4	+	.	ID=YHIndel00392; status=novel; Type=-1; location=NM_018022:intron; Base=C
+chr1	soap	Indel	15390957	15390958	5	+	.	ID=YHIndel00393; status=novel; Type=-1; location=NM_018022:intron; Base=T
+chr1	soap	Indel	15396755	15396757	4	+	.	ID=rs5772626; status=-1; Type=-2; location=NM_018022:intron; Base=TT
+chr1	soap	Indel	15428202	15428203	3	+	.	ID=YHIndel00394; status=novel; Type=-1; Base=G
+chr1	soap	Indel	15429774	15429775	9	+	.	ID=YHIndel00395; status=novel; Type=-1; location=Transposons0037946:LINE/L1; Base=T
+chr1	soap	Indel	15453591	15453591	5	+	.	ID=rs33975303; status=-1; Type=+3; ; Base=GGT
+chr1	soap	Indel	15457842	15457842	5	+	.	ID=rs34197883; status=7; Type=+1; location=Transposons0201097:SINE/Alu; Base=T
+chr1	soap	Indel	15466086	15466088	4	+	.	ID=rs35940190; status=2; Type=-2; location=Transposons0037968:LINE/L1; Base=TT
+chr1	soap	Indel	15472571	15472571	3	+	.	ID=rs34698619; status=2; Type=+1; location=Transposons0037976:LINE/L1; Base=T
+chr1	soap	Indel	15476017	15476018	9	+	.	ID=YHIndel00396; status=novel; Type=-1; Base=G
+chr1	soap	Indel	15478552	15478553	8	+	.	ID=YHIndel00397; status=novel; Type=-1; location=Transposons0144400:LTR/ERV1; Base=C
+chr1	soap	Indel	15504034	15504037	5	+	.	ID=YHIndel00398; status=novel; Type=-3; location=OREG0013126:REGULATORY REGION; Base=TCG
+chr1	soap	Indel	15603687	15603689	7	+	.	ID=rs34970658; status=-1; Type=-2; ; Base=TA
+chr1	soap	Indel	15617722	15617722	8	+	.	ID=YHIndel00399; status=novel; Type=+3; location=NM_024329:intron; Base=GCC
+chr1	soap	Indel	15634566	15634568	4	+	.	ID=rs33954182; status=4; Type=-2; location=Tandem003759:Simple_repeat; Base=TG
+chr1	soap	Indel	15642465	15642465	9	+	.	ID=rs35149641; status=1; Type=+1; location=NM_007272:intron; Base=C
+chr1	soap	Indel	15657445	15657447	12	+	.	ID=rs33962203; status=0; Type=-2; location=NM_033440:intron; Base=TT
+chr1	soap	Indel	15659044	15659044	5	+	.	ID=YHIndel00400; status=novel; Type=+1; location=NM_033440:intron; Base=A
+chr1	soap	Indel	15659399	15659401	8	+	.	ID=rs33976415; status=7; Type=-2; location=NM_033440:intron; Base=GG
+chr1	soap	Indel	15659957	15659958	8	+	.	ID=YHIndel00401; status=novel; Type=-1; location=NM_033440:intron; Base=T
+chr1	soap	Indel	15681095	15681097	6	+	.	ID=rs35206351; status=-1; Type=-2; location=NM_015849:intron; Base=AG
+chr1	soap	Indel	15684505	15684506	8	+	.	ID=YHIndel00402; status=novel; Type=-1; location=NM_015849:intron; Base=A
+chr1	soap	Indel	15697604	15697604	5	+	.	ID=rs34567745; status=0; Type=+2; location=NM_032996:intron; Base=TC
+chr1	soap	Indel	15719064	15719065	3	+	.	ID=YHIndel00403; status=novel; Type=-1; location=NM_032996:intron; Base=T
+chr1	soap	Indel	15719213	15719215	7	+	.	ID=YHIndel00404; status=novel; Type=-2; location=NM_032996:intron; Base=GA
+chr1	soap	Indel	15724659	15724660	4	+	.	ID=YHIndel00405; status=novel; Type=-1; Base=A
+chr1	soap	Indel	15771271	15771272	3	+	.	ID=YHIndel00406; status=novel; Type=-1; location=Tandem003784:Tandem_repeat; Base=T
+chr1	soap	Indel	15784365	15784365	4	+	.	ID=YHIndel00407; status=novel; Type=+2; location=Transposons0201378:SINE/Alu; Base=CT
+chr1	soap	Indel	15785261	15785261	3	+	.	ID=rs34381833; status=0; Type=+1; ; Base=T
+chr1	soap	Indel	15827841	15827842	7	+	.	ID=YHIndel00408; status=novel; Type=-1; location=NM_032341:intron; Base=T
+chr1	soap	Indel	15868636	15868637	5	+	.	ID=YHIndel00409; status=novel; Type=-1; location=Transposons0297883:SINE/MIR; Base=G
+chr1	soap	Indel	15973350	15973350	12	+	.	ID=rs36049243; status=0; Type=+1; location=NM_017556:intron; Base=G
+chr1	soap	Indel	15975772	15975772	6	+	.	ID=YHIndel00410; status=novel; Type=+1; location=NM_017556:intron; Base=C
+chr1	soap	Indel	16041080	16041080	5	+	.	ID=YHIndel00411; status=novel; Type=+1; location=Transposons0201778:SINE/Alu; Base=C
+chr1	soap	Indel	16056779	16056779	4	+	.	ID=rs34199284; status=8; Type=+1; location=NM_015001:intron; Base=T
+chr1	soap	Indel	16069839	16069839	6	+	.	ID=rs36118445; status=5; Type=+3; location=NM_015001:intron; Base=GAG
+chr1	soap	Indel	16083832	16083833	6	+	.	ID=YHIndel00412; status=novel; Type=-1; location=NM_015001:intron; Base=T
+chr1	soap	Indel	16173284	16173284	5	+	.	ID=YHIndel00413; status=novel; Type=+1; location=NM_003443:intron; Base=A
+chr1	soap	Indel	16184617	16184618	5	+	.	ID=YHIndel00414; status=novel; Type=-1; location=Transposons0201950:SINE/Alu; Base=T
+chr1	soap	Indel	16212640	16212640	3	+	.	ID=YHIndel00415; status=novel; Type=+1; Base=C
+chr1	soap	Indel	16213436	16213437	6	+	.	ID=YHIndel00416; status=novel; Type=-1; location=NM_014424:3-UTR; Base=C
+chr1	soap	Indel	16218601	16218601	4	+	.	ID=rs3841842; status=5; Type=+1; ; Base=C
+chr1	soap	Indel	16243320	16243322	5	+	.	ID=YHIndel00417; status=novel; Type=-2; location=NM_000085:intron; Base=AG
+chr1	soap	Indel	16245788	16245791	8	+	.	ID=rs35820664; status=1; Type=-3; location=NM_000085:intron; Base=TCT
+chr1	soap	Indel	16283605	16283608	6	+	.	ID=rs34568113; status=1; Type=-3; ; Base=TCC
+chr1	soap	Indel	16352222	16352223	5	+	.	ID=YHIndel00418; status=novel; Type=-1; location=NM_004431:intron; Base=A
+chr1	soap	Indel	16372960	16372960	5	+	.	ID=rs33959605; status=-1; Type=+1; ; Base=A
+chr1	soap	Indel	16387648	16387648	14	+	.	ID=rs35019794; status=1; Type=+1; location=Transposons0202076:SINE/Alu; Base=T
+chr1	soap	Indel	16388495	16388496	5	+	.	ID=YHIndel00419; status=novel; Type=-1; Base=G
+chr1	soap	Indel	16469798	16469798	6	+	.	ID=rs34255954; status=-1; Type=+3; location=NM_018994:intron; Base=GCA
+chr1	soap	Indel	16512356	16512356	6	+	.	ID=YHIndel00420; status=novel; Type=+1; location=NM_018994:intron; Base=G
+chr1	soap	Indel	16549626	16549627	3	+	.	ID=YHIndel00421; status=novel; Type=-1; location=NM_018994:intron; Base=C
+chr1	soap	Indel	16614428	16614428	6	+	.	ID=rs35407415; status=10; Type=+1; location=NM_198546:intron; Base=A
+chr1	soap	Indel	16646398	16646398	5	+	.	ID=YHIndel00422; status=novel; Type=+3; location=NM_018090:intron; Base=CTT
+chr1	soap	Indel	16713153	16713153	8	+	.	ID=YHIndel00423; status=novel; Type=+1; Base=G
+chr1	soap	Indel	16719084	16719084	8	+	.	ID=rs3067674; status=0; Type=+3; location=Transposons0202540:SINE/Alu; Base=TGG
+chr1	soap	Indel	16738360	16738361	5	+	.	ID=YHIndel00424; status=novel; Type=-1; Base=T
+chr1	soap	Indel	16767982	16767983	6	+	.	ID=YHIndel00425; status=novel; Type=-1; Base=C
+chr1	soap	Indel	16793084	16793084	11	+	.	ID=rs35766833; status=-6; Type=+1; ; Base=AT
+chr1	soap	Indel	16794492	16794492	4	+	.	ID=YHIndel00426; status=novel; Type=+2; location=Transposons0003665:DNA/MER1_type; Base=GT
+chr1	soap	Indel	16798438	16798438	18	+	.	ID=rs35865419; status=7; Type=+2; location=Tandem004039:Simple_repeat; Base=TA
+chr1	soap	Indel	16799229	16799230	9	+	.	ID=YHIndel00427; status=novel; Type=-1; location=Transposons0038228:LINE/L1; Base=C
+chr1	soap	Indel	16828256	16828256	9	+	.	ID=rs34378727; status=5; Type=+1; ; Base=A
+chr1	soap	Indel	16838062	16838063	16	+	.	ID=YHIndel00428; status=novel; Type=-1; location=Transposons0202599:SINE/Alu; Base=C
+chr1	soap	Indel	16858158	16858159	11	+	.	ID=YHIndel00429; status=novel; Type=-1; Base=A
+chr1	soap	Indel	16870091	16870092	6	+	.	ID=YHIndel00430; status=novel; Type=-1; location=Transposons0144469:LTR/ERV1; Base=G
+chr1	soap	Indel	16873013	16873013	3	+	.	ID=rs35299499; status=5; Type=+1; location=Transposons0202619:SINE/Alu; Base=G
+chr1	soap	Indel	16874651	16874654	11	+	.	ID=rs3982021; status=3; Type=-3; location=Transposons0144470:LTR/ERV1; Base=CAA
+chr1	soap	Indel	16896662	16896662	10	+	.	ID=rs33933185; status=-1; Type=+1; ; Base=G
+chr1	soap	Indel	16913820	16913820	3	+	.	ID=YHIndel00431; status=novel; Type=+1; location=Transposons0202642:SINE/Alu; Base=T
+chr1	soap	Indel	16920951	16920952	20	+	.	ID=YHIndel00432; status=novel; Type=-1; Base=T
+chr1	soap	Indel	16921448	16921449	7	+	.	ID=YHIndel00433; status=novel; Type=-1; Base=T
+chr1	soap	Indel	16931275	16931278	12	+	.	ID=YHIndel00434; status=novel; Type=-3; location=Transposons0144471:LTR/ERV1; Base=TTG
+chr1	soap	Indel	16931281	16931284	3	+	.	ID=YHIndel00435; status=novel; Type=-3; location=Transposons0144471:LTR/ERV1; Base=CTG
+chr1	soap	Indel	16932614	16932614	8	+	.	ID=rs34102302; status=-7; Type=+1; location=Transposons0202651:SINE/Alu; Base=C
+chr1	soap	Indel	16935538	16935539	6	+	.	ID=YHIndel00436; status=novel; Type=-1; location=Transposons0144472:LTR/ERV1; Base=C
+chr1	soap	Indel	16947479	16947480	5	+	.	ID=YHIndel00437; status=novel; Type=-1; Base=T
+chr1	soap	Indel	16951085	16951086	4	+	.	ID=YHIndel00438; status=novel; Type=-1; Base=A
+chr1	soap	Indel	16954850	16954851	9	+	.	ID=YHIndel00439; status=novel; Type=-1; location=Transposons0298245:SINE/MIR; Base=G
+chr1	soap	Indel	16993583	16993583	7	+	.	ID=rs34110572; status=2; Type=+2; location=Transposons0202671:SINE/Alu; Base=GT
+chr1	soap	Indel	17072519	17072521	3	+	.	ID=YHIndel00440; status=novel; Type=-2; Base=AG
+chr1	soap	Indel	17073867	17073867	7	+	.	ID=rs5772734; status=0; Type=+2; ; Base=AT
+chr1	soap	Indel	17088047	17088047	4	+	.	ID=rs1536933; status=0; Type=+1; ; Base=A
+chr1	soap	Indel	17104889	17104890	3	+	.	ID=YHIndel00441; status=novel; Type=-1; location=Transposons0144501:LTR/ERV1; Base=A
+chr1	soap	Indel	17110233	17110234	5	+	.	ID=YHIndel00442; status=novel; Type=-1; Base=T
+chr1	soap	Indel	17119178	17119179	3	+	.	ID=YHIndel00443; status=novel; Type=-1; location=Transposons0202719:SINE/Alu; Base=T
+chr1	soap	Indel	17128526	17128527	13	+	.	ID=YHIndel00444; status=novel; Type=-1; location=NM_014675:intron; Base=C
+chr1	soap	Indel	17217661	17217661	4	+	.	ID=rs35394060; status=1; Type=+1; location=Transposons0298339:SINE/MIR; Base=C
+chr1	soap	Indel	17233237	17233237	5	+	.	ID=rs34218856; status=8; Type=+1; location=NM_003000:intron; Base=T
+chr1	soap	Indel	17241866	17241866	3	+	.	ID=rs35897475; status=9; Type=+2; location=NM_003000:intron; Base=A
+chr1	soap	Indel	17243165	17243166	6	+	.	ID=YHIndel00445; status=novel; Type=-1; location=NM_003000:intron; Base=T
+chr1	soap	Indel	17247549	17247551	9	+	.	ID=rs35655194; status=3; Type=-2; location=NM_003000:intron; Base=TG
+chr1	soap	Indel	17263540	17263541	8	+	.	ID=YHIndel00446; status=novel; Type=-1; Base=T
+chr1	soap	Indel	17268738	17268740	12	+	.	ID=rs10562890; status=4; Type=-2; location=NM_007365:intron; Base=GT
+chr1	soap	Indel	17278892	17278892	4	+	.	ID=rs36117244; status=8; Type=+1; location=NM_007365:intron; Base=T
+chr1	soap	Indel	17302748	17302748	7	+	.	ID=rs35136759; status=4; Type=+1; location=NM_007365:intron; Base=C
+chr1	soap	Indel	17327971	17327972	4	+	.	ID=YHIndel00447; status=novel; Type=-1; location=Transposons0202914:SINE/Alu; Base=T
+chr1	soap	Indel	17335900	17335901	7	+	.	ID=YHIndel00448; status=novel; Type=-1; location=Transposons0298399:SINE/MIR; Base=C
+chr1	soap	Indel	17339317	17339317	4	+	.	ID=rs35610366; status=-1; Type=+1; location=Transposons0169543:LTR/MaLR; Base=T
+chr1	soap	Indel	17340698	17340699	9	+	.	ID=YHIndel00449; status=novel; Type=-1; location=Transposons0144518:LTR/ERV1; Base=C
+chr1	soap	Indel	17346137	17346138	4	+	.	ID=YHIndel00450; status=novel; Type=-1; location=Transposons0102935:LINE/L2; Base=G
+chr1	soap	Indel	17419251	17419252	5	+	.	ID=YHIndel00451; status=novel; Type=-1; location=NM_013358:intron; Base=C
+chr1	soap	Indel	17495623	17495624	10	+	.	ID=YHIndel00452; status=novel; Type=-1; location=Transposons0158519:LTR/ERVL; Base=T
+chr1	soap	Indel	17508239	17508241	5	+	.	ID=YHIndel00453; status=novel; Type=-2; location=NM_012387:intron; Base=AA
+chr1	soap	Indel	17509863	17509864	5	+	.	ID=YHIndel00454; status=novel; Type=-1; location=NM_012387:intron; Base=G
+chr1	soap	Indel	17519352	17519353	7	+	.	ID=YHIndel00455; status=novel; Type=-1; location=NM_012387:intron; Base=A
+chr1	soap	Indel	17524809	17524809	3	+	.	ID=rs11378800; status=5; Type=+1; location=NM_012387:intron; Base=T
+chr1	soap	Indel	17579885	17579887	3	+	.	ID=YHIndel00456; status=novel; Type=-2; Base=CT
+chr1	soap	Indel	17583581	17583582	3	+	.	ID=YHIndel00457; status=novel; Type=-1; location=Transposons0203078:SINE/Alu; Base=T
+chr1	soap	Indel	17585142	17585142	3	+	.	ID=rs34553706; status=1; Type=+1; ; Base=A
+chr1	soap	Indel	17591260	17591261	4	+	.	ID=YHIndel00458; status=novel; Type=-1; Base=G
+chr1	soap	Indel	17627503	17627505	3	+	.	ID=YHIndel00459; status=novel; Type=-2; location=NM_018715:intron; Base=CT
+chr1	soap	Indel	17664254	17664254	4	+	.	ID=rs34434647; status=0; Type=+1; location=Transposons0203177:SINE/Alu; Base=C
+chr1	soap	Indel	17672343	17672343	4	+	.	ID=YHIndel00460; status=novel; Type=+1; location=Transposons0144554:LTR/ERV1; Base=A
+chr1	soap	Indel	17678244	17678244	5	+	.	ID=rs35360220; status=10; Type=+1; location=Transposons0203213:SINE/Alu; Base=T
+chr1	soap	Indel	17679246	17679247	7	+	.	ID=YHIndel00461; status=novel; Type=-1; location=Transposons0144558:LTR/ERV1; Base=A
+chr1	soap	Indel	17693300	17693301	3	+	.	ID=YHIndel00462; status=novel; Type=-1; location=Transposons0103022:LINE/L2; Base=C
+chr1	soap	Indel	17711214	17711215	8	+	.	ID=YHIndel00463; status=novel; Type=-1; location=Transposons0203278:SINE/Alu; Base=T
+chr1	soap	Indel	17731312	17731312	3	+	.	ID=rs36049595; status=1; Type=+1; ; Base=C
+chr1	soap	Indel	17749743	17749743	7	+	.	ID=YHIndel00464; status=novel; Type=+1; location=NM_018125:intron; Base=A
+chr1	soap	Indel	17769934	17769936	4	+	.	ID=YHIndel00465; status=novel; Type=-2; location=NM_018125:intron; Base=TG
+chr1	soap	Indel	17785586	17785588	9	+	.	ID=rs34452673; status=-1; Type=-2; location=NM_018125:intron; Base=AG
+chr1	soap	Indel	17894873	17894873	3	+	.	ID=rs35583176; status=1; Type=+3; location=NM_018125:intron; Base=TGC
+chr1	soap	Indel	17896585	17896585	4	+	.	ID=rs11415130; status=1; Type=+1; location=NM_018125:3-UTR; Base=C
+chr1	soap	Indel	17900624	17900625	3	+	.	ID=YHIndel00466; status=novel; Type=-1; Base=T
+chr1	soap	Indel	17908756	17908756	5	+	.	ID=rs35957915; status=2; Type=+1; ; Base=G
+chr1	soap	Indel	17915786	17915787	4	+	.	ID=YHIndel00467; status=novel; Type=-1; location=Tandem004285:Simple_repeat; Base=C
+chr1	soap	Indel	17916280	17916280	5	+	.	ID=rs35209738; status=9; Type=+2; location=Transposons0103092:LINE/L2; Base=T
+chr1	soap	Indel	17927231	17927232	3	+	.	ID=YHIndel00468; status=novel; Type=-1; location=Transposons0169598:LTR/MaLR; Base=C
+chr1	soap	Indel	17968584	17968584	5	+	.	ID=rs34859283; status=0; Type=+1; location=NM_030812:intron; Base=A
+chr1	soap	Indel	17971016	17971017	5	+	.	ID=YHIndel00469; status=novel; Type=-1; location=NM_030812:intron; Base=C
+chr1	soap	Indel	17971570	17971570	4	+	.	ID=YHIndel00470; status=novel; Type=+1; location=NM_030812:intron; Base=T
+chr1	soap	Indel	17986763	17986764	4	+	.	ID=YHIndel00471; status=novel; Type=-1; location=NM_030812:intron; Base=T
+chr1	soap	Indel	17990516	17990517	3	+	.	ID=YHIndel00472; status=novel; Type=-1; location=NM_030812:intron; Base=G
+chr1	soap	Indel	17994658	17994659	4	+	.	ID=YHIndel00473; status=novel; Type=-1; location=NM_030812:intron; Base=A
+chr1	soap	Indel	18020722	18020722	6	+	.	ID=rs35829365; status=8; Type=+1; location=NM_030812:intron; Base=T
+chr1	soap	Indel	18021338	18021338	6	+	.	ID=rs11388795; status=0; Type=+1; location=NM_030812:intron; Base=T
+chr1	soap	Indel	18043721	18043722	5	+	.	ID=YHIndel00474; status=novel; Type=-1; Base=A
+chr1	soap	Indel	18068816	18068816	7	+	.	ID=rs34133273; status=5; Type=+1; location=Transposons0298865:SINE/MIR; Base=C
+chr1	soap	Indel	18069408	18069408	6	+	.	ID=rs11438878; status=0; Type=+1; location=Transposons0038461:LINE/L1; Base=T
+chr1	soap	Indel	18070239	18070239	3	+	.	ID=YHIndel00475; status=novel; Type=+1; location=Transposons0038462:LINE/L1; Base=G
+chr1	soap	Indel	18077287	18077288	8	+	.	ID=YHIndel00476; status=novel; Type=-1; Base=G
+chr1	soap	Indel	18087292	18087292	5	+	.	ID=YHIndel00477; status=novel; Type=+1; Base=C
+chr1	soap	Indel	18113248	18113251	6	+	.	ID=YHIndel00478; status=novel; Type=-3; location=Transposons0298903:SINE/MIR; Base=GAT
+chr1	soap	Indel	18118275	18118277	3	+	.	ID=rs10573507; status=2; Type=-2; location=Transposons0203447:SINE/Alu; Base=GT
+chr1	soap	Indel	18125977	18125977	4	+	.	ID=YHIndel00479; status=novel; Type=+1; Base=G
+chr1	soap	Indel	18129700	18129700	5	+	.	ID=YHIndel00480; status=novel; Type=+1; location=Transposons0298921:SINE/MIR; Base=T
+chr1	soap	Indel	18132978	18132981	5	+	.	ID=YHIndel00481; status=novel; Type=-3; location=Tandem004328:Simple_repeat; Base=CAA
+chr1	soap	Indel	18164628	18164631	4	+	.	ID=YHIndel00482; status=novel; Type=-3; location=Transposons0203465:SINE/Alu; Base=AGC
+chr1	soap	Indel	18165687	18165687	3	+	.	ID=rs33977410; status=2; Type=+3; ; Base=CTC
+chr1	soap	Indel	18200874	18200874	4	+	.	ID=rs35106669; status=0; Type=+2; ; Base=CT
+chr1	soap	Indel	18241439	18241439	3	+	.	ID=rs35201067; status=0; Type=+2; ; Base=TC
+chr1	soap	Indel	18241649	18241649	4	+	.	ID=rs34059773; status=0; Type=+1; location=Transposons0203486:SINE/Alu; Base=T
+chr1	soap	Indel	18286809	18286809	4	+	.	ID=rs34404231; status=-1; Type=+1; ; Base=A
+chr1	soap	Indel	18300280	18300283	4	+	.	ID=YHIndel00483; status=novel; Type=-3; Base=CCT
+chr1	soap	Indel	18399370	18399373	6	+	.	ID=YHIndel00484; status=novel; Type=-3; location=NM_032880:intron; Base=TAG
+chr1	soap	Indel	18435814	18435814	3	+	.	ID=rs34898796; status=2; Type=+2; location=NM_032880:intron; Base=AG
+chr1	soap	Indel	18437099	18437099	3	+	.	ID=rs33930180; status=2; Type=+1; location=NM_032880:intron; Base=A
+chr1	soap	Indel	18437706	18437707	6	+	.	ID=YHIndel00485; status=novel; Type=-1; location=NM_032880:intron; Base=A
+chr1	soap	Indel	18438160	18438163	3	+	.	ID=rs34947214; status=4; Type=-3; location=NM_032880:intron; Base=ACT
+chr1	soap	Indel	18536723	18536724	3	+	.	ID=YHIndel00486; status=novel; Type=-1; location=NM_032880:intron; Base=C
+chr1	soap	Indel	18567640	18567640	3	+	.	ID=rs35969748; status=0; Type=+2; location=NM_032880:intron; Base=TT
+chr1	soap	Indel	18590605	18590605	12	+	.	ID=rs35656050; status=-1; Type=+1; location=Transposons0299295:SINE/MIR; Base=G
+chr1	soap	Indel	18659792	18659792	10	+	.	ID=rs35558206; status=3; Type=+1; location=Tandem004465:Simple_repeat; Base=G
+chr1	soap	Indel	18674441	18674442	5	+	.	ID=YHIndel00487; status=novel; Type=-1; location=Transposons0203578:SINE/Alu; Base=T
+chr1	soap	Indel	18679251	18679252	3	+	.	ID=YHIndel00488; status=novel; Type=-1; Base=G
+chr1	soap	Indel	18791381	18791382	4	+	.	ID=YHIndel00489; status=novel; Type=-1; location=Transposons0203626:SINE/Alu; Base=A
+chr1	soap	Indel	18892859	18892859	8	+	.	ID=YHIndel00490; status=novel; Type=+2; location=NM_013945:intron; Base=GC
+chr1	soap	Indel	18894300	18894300	6	+	.	ID=YHIndel00491; status=novel; Type=+2; location=NM_013945:intron; Base=A
+chr1	soap	Indel	18896973	18896974	5	+	.	ID=YHIndel00492; status=novel; Type=-1; location=NM_013945:intron; Base=G
+chr1	soap	Indel	18905734	18905735	3	+	.	ID=YHIndel00493; status=novel; Type=-1; location=NM_013945:intron; Base=T
+chr1	soap	Indel	18918889	18918889	5	+	.	ID=rs3216187; status=3; Type=+1; location=NM_013945:intron; Base=G
+chr1	soap	Indel	19006942	19006943	5	+	.	ID=YHIndel00494; status=novel; Type=-1; Base=C
+chr1	soap	Indel	19036615	19036615	3	+	.	ID=YHIndel00495; status=novel; Type=+3; location=Transposons0029309:LINE/CR1; Base=GAA
+chr1	soap	Indel	19046635	19046636	7	+	.	ID=YHIndel00496; status=novel; Type=-1; location=NM_152232:intron; Base=G
+chr1	soap	Indel	19065819	19065819	8	+	.	ID=rs35930993; status=0; Type=+1; location=Transposons0203726:SINE/Alu; Base=A
+chr1	soap	Indel	19071273	19071274	4	+	.	ID=YHIndel00497; status=novel; Type=-1; location=NM_170726:intron; Base=C
+chr1	soap	Indel	19073799	19073799	8	+	.	ID=rs35163726; status=1; Type=+1; location=NM_170726:intron; Base=G
+chr1	soap	Indel	19137173	19137175	6	+	.	ID=rs34264221; status=-1; Type=-2; ; Base=CT
+chr1	soap	Indel	19137869	19137870	4	+	.	ID=YHIndel00498; status=novel; Type=-1; Base=C
+chr1	soap	Indel	19176569	19176569	8	+	.	ID=rs34955749; status=0; Type=+1; location=Transposons0169815:LTR/MaLR; Base=A
+chr1	soap	Indel	19204431	19204432	4	+	.	ID=YHIndel00499; status=novel; Type=-1; location=Transposons0003906:DNA/MER1_type; Base=T
+chr1	soap	Indel	19230075	19230075	4	+	.	ID=YHIndel00500; status=novel; Type=+2; location=Transposons0038655:LINE/L1; Base=GT
+chr1	soap	Indel	19262458	19262458	5	+	.	ID=rs34846291; status=4; Type=+1; ; Base=C
+chr1	soap	Indel	19280885	19280885	7	+	.	ID=YHIndel00501; status=novel; Type=+1; location=NM_020765:intron; Base=C
+chr1	soap	Indel	19328852	19328853	8	+	.	ID=YHIndel00502; status=novel; Type=-1; location=NM_020765:intron; Base=A
+chr1	soap	Indel	19344584	19344586	4	+	.	ID=YHIndel00503; status=novel; Type=-2; location=NM_020765:intron; Base=CT
+chr1	soap	Indel	19365991	19365991	3	+	.	ID=rs11379504; status=10; Type=+1; location=NM_020765:intron; Base=A
+chr1	soap	Indel	19370306	19370307	14	+	.	ID=YHIndel00504; status=novel; Type=-1; location=NM_020765:intron; Base=A
+chr1	soap	Indel	19398362	19398363	3	+	.	ID=YHIndel00505; status=novel; Type=-1; location=NM_020765:intron; Base=C
+chr1	soap	Indel	19399374	19399374	3	+	.	ID=YHIndel00506; status=novel; Type=+1; location=NM_020765:intron; Base=A
+chr1	soap	Indel	19440481	19440483	4	+	.	ID=rs35705446; status=0; Type=-2; location=NM_015047:intron; Base=CA
+chr1	soap	Indel	19443853	19443854	10	+	.	ID=YHIndel00507; status=novel; Type=-1; location=NM_015047:intron; Base=A
+chr1	soap	Indel	19465996	19465998	4	+	.	ID=YHIndel00508; status=novel; Type=-2; location=NM_201252:3-UTR; Base=GT
+chr1	soap	Indel	19488611	19488612	9	+	.	ID=YHIndel00509; status=novel; Type=-1; location=Transposons0203976:SINE/Alu; Base=A
+chr1	soap	Indel	19491801	19491801	7	+	.	ID=YHIndel00510; status=novel; Type=+1; location=Transposons0203982:SINE/Alu; Base=A
+chr1	soap	Indel	19495678	19495679	8	+	.	ID=YHIndel00511; status=novel; Type=-1; location=Transposons0144647:LTR/ERV1; Base=G
+chr1	soap	Indel	19564920	19564921	4	+	.	ID=YHIndel00512; status=novel; Type=-1; location=NM_004930:intron; Base=G
+chr1	soap	Indel	19596915	19596915	5	+	.	ID=rs34032610; status=5; Type=+1; location=NM_004930:intron; Base=G
+chr1	soap	Indel	19602150	19602150	3	+	.	ID=rs34118428; status=0; Type=+1; location=NM_004930:intron; Base=A
+chr1	soap	Indel	19621936	19621938	6	+	.	ID=rs10535634; status=-1; Type=-2; location=NM_004930:intron; Base=TA
+chr1	soap	Indel	19630666	19630667	3	+	.	ID=YHIndel00513; status=novel; Type=-1; location=NM_004930:intron; Base=T
+chr1	soap	Indel	19641225	19641228	8	+	.	ID=YHIndel00514; status=novel; Type=-3; location=NM_004930:intron; Base=GTT
+chr1	soap	Indel	19645714	19645714	6	+	.	ID=rs35581409; status=7; Type=+1; location=NM_004930:intron; Base=A
+chr1	soap	Indel	19649739	19649740	4	+	.	ID=YHIndel00515; status=novel; Type=-1; location=NM_004930:intron; Base=C
+chr1	soap	Indel	19653001	19653001	3	+	.	ID=YHIndel00516; status=novel; Type=+3; location=NM_004930:intron; Base=GAA
+chr1	soap	Indel	19683403	19683403	3	+	.	ID=rs11450129; status=6; Type=+1; location=NM_004930:intron; Base=C
+chr1	soap	Indel	19685580	19685580	5	+	.	ID=rs11400167; status=5; Type=+1; location=Transposons0204117:SINE/Alu; Base=G
+chr1	soap	Indel	19685794	19685796	4	+	.	ID=rs10603260; status=9; Type=-2; location=Tandem004699:Simple_repeat; Base=TC
+chr1	soap	Indel	19686348	19686348	3	+	.	ID=YHIndel00517; status=novel; Type=+2; location=Transposons0204118:SINE/Alu; Base=CT
+chr1	soap	Indel	19687314	19687314	3	+	.	ID=rs34912410; status=10; Type=+1; location=Transposons0103597:LINE/L2; Base=T
+chr1	soap	Indel	19695085	19695085	4	+	.	ID=YHIndel00518; status=novel; Type=+1; Base=A
+chr1	soap	Indel	19698070	19698073	3	+	.	ID=YHIndel00519; status=novel; Type=-3; location=Transposons0204136:SINE/Alu; Base=GCA
+chr1	soap	Indel	19709130	19709130	4	+	.	ID=YHIndel00520; status=novel; Type=+1; location=Transposons0299951:SINE/MIR; Base=G
+chr1	soap	Indel	19710493	19710494	3	+	.	ID=YHIndel00521; status=novel; Type=-1; Base=C
+chr1	soap	Indel	19713218	19713219	5	+	.	ID=YHIndel00522; status=novel; Type=-1; location=Transposons0204159:SINE/Alu; Base=G
+chr1	soap	Indel	19721685	19721686	3	+	.	ID=YHIndel00523; status=novel; Type=-1; location=Transposons0204174:SINE/Alu; Base=C
+chr1	soap	Indel	19790483	19790483	4	+	.	ID=YHIndel00524; status=novel; Type=+1; Base=A
+chr1	soap	Indel	19794895	19794896	4	+	.	ID=YHIndel00525; status=novel; Type=-1; location=Transposons0018380:DNA/MER2_type; Base=T
+chr1	soap	Indel	19840861	19840864	3	+	.	ID=YHIndel00526; status=novel; Type=-3; location=Transposons0299993:SINE/MIR; Base=CAC
+chr1	soap	Indel	19856690	19856690	4	+	.	ID=rs34979199; status=-1; Type=+1; location=NM_182744:3-UTR; Base=C
+chr1	soap	Indel	19900284	19900285	7	+	.	ID=YHIndel00527; status=novel; Type=-1; location=NM_181719:intron; Base=C
+chr1	soap	Indel	19920376	19920378	6	+	.	ID=rs1305034; status=2; Type=-2; location=NM_181719:intron; Base=TA
+chr1	soap	Indel	20014470	20014471	8	+	.	ID=YHIndel00528; status=novel; Type=-1; Base=A
+chr1	soap	Indel	20024928	20024929	6	+	.	ID=YHIndel00529; status=novel; Type=-1; location=Transposons0204473:SINE/Alu; Base=T
+chr1	soap	Indel	20130078	20130078	11	+	.	ID=YHIndel00530; status=novel; Type=+2; location=Transposons0157198:LTR/ERVK; Base=GT
+chr1	soap	Indel	20179856	20179857	9	+	.	ID=YHIndel00531; status=novel; Type=-1; location=Transposons0169904:LTR/MaLR; Base=A
+chr1	soap	Indel	20196435	20196435	5	+	.	ID=YHIndel00532; status=novel; Type=+1; location=Transposons0038883:LINE/L1; Base=T
+chr1	soap	Indel	20198174	20198175	4	+	.	ID=YHIndel00533; status=novel; Type=-1; location=Transposons0157203:LTR/ERVK; Base=T
+chr1	soap	Indel	20224975	20224976	3	+	.	ID=YHIndel00534; status=novel; Type=-1; location=Transposons0038904:LINE/L1; Base=T
+chr1	soap	Indel	20256958	20256959	3	+	.	ID=YHIndel00535; status=novel; Type=-1; location=Transposons0038920:LINE/L1; Base=T
+chr1	soap	Indel	20266091	20266091	7	+	.	ID=rs35795826; status=8; Type=+1; location=Transposons0204608:SINE/Alu; Base=T
+chr1	soap	Indel	20266781	20266782	5	+	.	ID=YHIndel00536; status=novel; Type=-1; location=Transposons0204609:SINE/Alu; Base=A
+chr1	soap	Indel	20271165	20271166	4	+	.	ID=YHIndel00537; status=novel; Type=-1; location=NM_000929:intron; Base=G
+chr1	soap	Indel	20275666	20275668	7	+	.	ID=rs11573221; status=-1; Type=-2; location=NM_000929:intron; Base=CT
+chr1	soap	Indel	20294316	20294316	5	+	.	ID=rs5772884; status=1; Type=+2; location=Transposons0158630:LTR/ERVL; Base=AA
+chr1	soap	Indel	20300117	20300117	3	+	.	ID=rs34970318; status=-1; Type=+1; location=OREG0013185:REGULATORY REGION; Base=C
+chr1	soap	Indel	20310852	20310852	4	+	.	ID=YHIndel00538; status=novel; Type=+1; location=Transposons0204635:SINE/Alu; Base=A
+chr1	soap	Indel	20332182	20332183	4	+	.	ID=YHIndel00539; status=novel; Type=-1; location=Transposons0038951:LINE/L1; Base=T
+chr1	soap	Indel	20412695	20412695	3	+	.	ID=rs35550420; status=9; Type=+1; ; Base=T
+chr1	soap	Indel	20418832	20418832	4	+	.	ID=rs34864541; status=4; Type=+3; location=Transposons0038961:LINE/L1; Base=GAA
+chr1	soap	Indel	20490570	20490570	7	+	.	ID=rs34869163; status=2; Type=+2; ; Base=CT
+chr1	soap	Indel	20545303	20545304	3	+	.	ID=YHIndel00540; status=novel; Type=-1; location=Transposons0300349:SINE/MIR; Base=A
+chr1	soap	Indel	20553896	20553896	3	+	.	ID=rs35384255; status=7; Type=+1; ; Base=C
+chr1	soap	Indel	20575013	20575013	5	+	.	ID=YHIndel00541; status=novel; Type=+1; Base=G
+chr1	soap	Indel	20608591	20608591	5	+	.	ID=rs33974105; status=-1; Type=+1; location=Transposons0103873:LINE/L2; Base=C
+chr1	soap	Indel	20658626	20658626	5	+	.	ID=rs34844535; status=0; Type=+3; ; Base=TCT
+chr1	soap	Indel	20670159	20670159	7	+	.	ID=rs35587372; status=1; Type=+1; location=Transposons0300448:SINE/MIR; Base=G
+chr1	soap	Indel	20734102	20734103	5	+	.	ID=YHIndel00542; status=novel; Type=-1; location=Transposons0103913:LINE/L2; Base=T
+chr1	soap	Indel	20770775	20770776	4	+	.	ID=YHIndel00543; status=novel; Type=-1; location=Transposons0169989:LTR/MaLR; Base=A
+chr1	soap	Indel	20772892	20772892	9	+	.	ID=YHIndel00544; status=novel; Type=+2; location=Transposons0103924:LINE/L2; Base=CT
+chr1	soap	Indel	20778874	20778874	6	+	.	ID=rs33991242; status=7; Type=+1; location=Transposons0204852:SINE/Alu; Base=AA
+chr1	soap	Indel	20784743	20784744	3	+	.	ID=YHIndel00545; status=novel; Type=-1; location=Transposons0204861:SINE/Alu; Base=A
+chr1	soap	Indel	20786021	20786021	4	+	.	ID=rs10653818; status=2; Type=+2; location=Transposons0204863:SINE/Alu; Base=CT
+chr1	soap	Indel	20789012	20789013	4	+	.	ID=YHIndel00546; status=novel; Type=-1; location=NM_001785:intron; Base=G
+chr1	soap	Indel	20794434	20794435	4	+	.	ID=YHIndel00547; status=novel; Type=-1; location=NM_001785:intron; Base=C
+chr1	soap	Indel	20803129	20803130	3	+	.	ID=YHIndel00548; status=novel; Type=-1; location=NM_001785:intron; Base=G
+chr1	soap	Indel	20816897	20816900	3	+	.	ID=YHIndel00549; status=novel; Type=-3; location=NM_001785:intron; Base=TCT
+chr1	soap	Indel	20837730	20837730	4	+	.	ID=rs35346410; status=3; Type=+2; location=NM_032409:intron; Base=AA
+chr1	soap	Indel	20843057	20843059	5	+	.	ID=YHIndel00550; status=novel; Type=-2; location=NM_032409:intron; Base=TA
+chr1	soap	Indel	20846899	20846899	5	+	.	ID=rs36094130; status=1; Type=+2; location=NM_032409:intron; Base=TA
+chr1	soap	Indel	20850719	20850719	7	+	.	ID=rs34314334; status=-1; Type=+3; ; Base=CAT
+chr1	soap	Indel	20851897	20851897	5	+	.	ID=rs34089130; status=3; Type=+1; location=NM_005216:intron; Base=T
+chr1	soap	Indel	20857075	20857075	7	+	.	ID=rs5772913; status=3; Type=+1; location=NM_005216:intron; Base=G
+chr1	soap	Indel	20885401	20885401	6	+	.	ID=rs3215777; status=0; Type=+1; location=NM_020816:intron; Base=G
+chr1	soap	Indel	20888750	20888751	8	+	.	ID=YHIndel00551; status=novel; Type=-1; location=NM_020816:intron; Base=T
+chr1	soap	Indel	20906554	20906554	8	+	.	ID=rs35969574; status=6; Type=+1; location=NM_020816:intron; Base=A
+chr1	soap	Indel	20909179	20909181	4	+	.	ID=rs34318522; status=0; Type=-2; location=NM_020816:intron; Base=AT
+chr1	soap	Indel	20927246	20927247	4	+	.	ID=YHIndel00552; status=novel; Type=-1; location=Transposons0103973:LINE/L2; Base=C
+chr1	soap	Indel	20985178	20985179	3	+	.	ID=YHIndel00553; status=novel; Type=-1; location=NM_016287:intron; Base=G
+chr1	soap	Indel	21016370	21016370	4	+	.	ID=YHIndel00554; status=novel; Type=+2; location=NM_003760:intron; Base=TA
+chr1	soap	Indel	21024493	21024494	8	+	.	ID=YHIndel00555; status=novel; Type=-1; location=NM_003760:intron; Base=G
+chr1	soap	Indel	21034142	21034143	7	+	.	ID=YHIndel00556; status=novel; Type=-1; location=NM_003760:intron; Base=T
+chr1	soap	Indel	21064997	21064998	7	+	.	ID=YHIndel00557; status=novel; Type=-1; location=NM_003760:intron; Base=C
+chr1	soap	Indel	21069176	21069176	4	+	.	ID=rs35236352; status=4; Type=+1; location=NM_003760:intron; Base=A
+chr1	soap	Indel	21074205	21074205	8	+	.	ID=rs35634943; status=2; Type=+1; location=NM_003760:intron; Base=G
+chr1	soap	Indel	21095041	21095041	6	+	.	ID=rs34582942; status=2; Type=+3; location=NM_003760:intron; Base=GAG
+chr1	soap	Indel	21111511	21111511	9	+	.	ID=rs36068740; status=6; Type=+1; location=NM_003760:intron; Base=A
+chr1	soap	Indel	21131015	21131016	7	+	.	ID=YHIndel00558; status=novel; Type=-1; location=NM_003760:intron; Base=A
+chr1	soap	Indel	21176180	21176180	3	+	.	ID=rs11444926; status=0; Type=+1; location=NM_003760:intron; Base=A
+chr1	soap	Indel	21191437	21191439	7	+	.	ID=rs34332069; status=3; Type=-2; location=NM_003760:intron; Base=TA
+chr1	soap	Indel	21259252	21259252	8	+	.	ID=rs36062359; status=2; Type=+1; location=NM_003760:intron; Base=A
+chr1	soap	Indel	21344422	21344422	5	+	.	ID=YHIndel00559; status=novel; Type=+1; location=NM_003760:intron; Base=A
+chr1	soap	Indel	21361836	21361837	3	+	.	ID=YHIndel00560; status=novel; Type=-1; location=NM_003760:intron; Base=A
+chr1	soap	Indel	21453804	21453806	4	+	.	ID=rs3061095; status=-1; Type=-2; location=NM_001397:intron; Base=AA
+chr1	soap	Indel	21462752	21462753	4	+	.	ID=YHIndel00561; status=novel; Type=-1; location=NM_001397:intron; Base=T
+chr1	soap	Indel	21549041	21549042	5	+	.	ID=YHIndel00562; status=novel; Type=-1; location=Transposons0170025:LTR/MaLR; Base=T
+chr1	soap	Indel	21567488	21567489	8	+	.	ID=YHIndel00563; status=novel; Type=-1; location=Transposons0205674:SINE/Alu; Base=A
+chr1	soap	Indel	21584268	21584270	3	+	.	ID=YHIndel00564; status=novel; Type=-2; location=Transposons0144780:LTR/ERV1; Base=TG
+chr1	soap	Indel	21590880	21590881	7	+	.	ID=YHIndel00565; status=novel; Type=-1; location=Transposons0144787:LTR/ERV1; Base=A
+chr1	soap	Indel	21607899	21607901	7	+	.	ID=YHIndel00566; status=novel; Type=-2; location=Transposons0039226:LINE/L1; Base=CT
+chr1	soap	Indel	21649830	21649830	3	+	.	ID=rs11376099; status=0; Type=+1; location=NM_032264:intron; Base=A
+chr1	soap	Indel	21668019	21668019	3	+	.	ID=rs35175190; status=0; Type=+1; location=NM_032264:intron; Base=A
+chr1	soap	Indel	21669108	21669108	10	+	.	ID=rs35261873; status=3; Type=+2; location=NM_032264:intron; Base=CT
+chr1	soap	Indel	21691748	21691749	6	+	.	ID=YHIndel00567; status=novel; Type=-1; location=Transposons0004119:DNA/MER1_type; Base=T
+chr1	soap	Indel	21692022	21692023	7	+	.	ID=YHIndel00568; status=novel; Type=-1; location=Transposons0205754:SINE/Alu; Base=A
+chr1	soap	Indel	21697232	21697233	7	+	.	ID=YHIndel00569; status=novel; Type=-1; Base=G
+chr1	soap	Indel	21750641	21750642	8	+	.	ID=YHIndel00570; status=novel; Type=-1; location=NM_000478:intron; Base=A
+chr1	soap	Indel	21752239	21752239	4	+	.	ID=YHIndel00571; status=novel; Type=+1; location=NM_000478:intron; Base=T
+chr1	soap	Indel	21757456	21757456	4	+	.	ID=rs3841814; status=0; Type=+2; location=NM_000478:intron; Base=GT
+chr1	soap	Indel	21773621	21773621	3	+	.	ID=rs3835555; status=9; Type=+2; location=NM_000478:intron; Base=CA
+chr1	soap	Indel	21784998	21784998	3	+	.	ID=rs34745509; status=1; Type=+1; ; Base=A
+chr1	soap	Indel	21819632	21819632	5	+	.	ID=rs35612713; status=0; Type=+1; location=NM_002885:intron; Base=G
+chr1	soap	Indel	21836414	21836415	7	+	.	ID=YHIndel00572; status=novel; Type=-1; location=NM_002885:intron; Base=T
+chr1	soap	Indel	21847642	21847642	5	+	.	ID=rs10646953; status=0; Type=+2; location=NM_002885:intron; Base=AT
+chr1	soap	Indel	21854701	21854704	3	+	.	ID=YHIndel00573; status=novel; Type=-3; location=NM_002885:intron; Base=TAC
+chr1	soap	Indel	21863838	21863839	3	+	.	ID=YHIndel00574; status=novel; Type=-1; location=NM_002885:intron; Base=T
+chr1	soap	Indel	21866204	21866205	4	+	.	ID=YHIndel00575; status=novel; Type=-1; location=NM_002885:intron; Base=C
+chr1	soap	Indel	21870395	21870395	3	+	.	ID=YHIndel00576; status=novel; Type=+3; Base=GCT
+chr1	soap	Indel	21885579	21885579	4	+	.	ID=rs34370174; status=-1; Type=+1; location=NM_032236:intron; Base=C
+chr1	soap	Indel	21895992	21895992	3	+	.	ID=rs34805237; status=5; Type=+1; location=NM_032236:intron; Base=G
+chr1	soap	Indel	21911519	21911522	3	+	.	ID=rs35020960; status=2; Type=-3; location=NM_032236:intron; Base=AAT
+chr1	soap	Indel	22055611	22055612	3	+	.	ID=YHIndel00577; status=novel; Type=-1; location=NM_005529:intron; Base=C
+chr1	soap	Indel	22055697	22055697	4	+	.	ID=rs35480356; status=0; Type=+1; location=NM_005529:intron; Base=A
+chr1	soap	Indel	22066164	22066164	3	+	.	ID=rs5772964; status=10; Type=+1; location=NM_005529:intron; Base=T
+chr1	soap	Indel	22069487	22069488	4	+	.	ID=YHIndel00578; status=novel; Type=-1; location=NM_005529:intron; Base=A
+chr1	soap	Indel	22085458	22085459	8	+	.	ID=YHIndel00579; status=novel; Type=-1; location=NM_005529:intron; Base=C
+chr1	soap	Indel	22104416	22104416	4	+	.	ID=rs34122101; status=1; Type=+1; location=NM_005529:intron; Base=T
+chr1	soap	Indel	22105811	22105811	7	+	.	ID=rs35359041; status=0; Type=+1; location=NM_005529:intron; Base=T
+chr1	soap	Indel	22113496	22113497	3	+	.	ID=YHIndel00580; status=novel; Type=-1; location=NM_005529:intron; Base=A
+chr1	soap	Indel	22122874	22122874	5	+	.	ID=rs34822206; status=1; Type=+1; location=NM_005529:intron; Base=T
+chr1	soap	Indel	22126620	22126621	5	+	.	ID=YHIndel00581; status=novel; Type=-1; location=NM_005529:intron; Base=C
+chr1	soap	Indel	22127846	22127846	4	+	.	ID=YHIndel00582; status=novel; Type=+1; location=NM_005529:intron; Base=T
+chr1	soap	Indel	22160984	22160984	8	+	.	ID=rs35959385; status=3; Type=+1; ; Base=A
+chr1	soap	Indel	22165036	22165037	3	+	.	ID=YHIndel00583; status=novel; Type=-1; location=Transposons0206175:SINE/Alu; Base=G
+chr1	soap	Indel	22181685	22181685	4	+	.	ID=YHIndel00584; status=novel; Type=+1; location=NM_007352:intron; Base=A
+chr1	soap	Indel	22186602	22186603	3	+	.	ID=YHIndel00585; status=novel; Type=-1; location=NM_007352:intron; Base=A
+chr1	soap	Indel	22187321	22187322	5	+	.	ID=YHIndel00586; status=novel; Type=-1; location=NM_007352:intron; Base=A
+chr1	soap	Indel	22191067	22191070	3	+	.	ID=YHIndel00587; status=novel; Type=-3; location=Transposons0206217:SINE/Alu; Base=TGG
+chr1	soap	Indel	22207210	22207210	3	+	.	ID=YHIndel00588; status=novel; Type=+1; location=NM_005747:intron; Base=G
+chr1	soap	Indel	22207851	22207852	5	+	.	ID=YHIndel00589; status=novel; Type=-1; location=NM_005747:intron; Base=A
+chr1	soap	Indel	22226119	22226121	8	+	.	ID=YHIndel00590; status=novel; Type=-2; location=Transposons0206274:SINE/Alu; Base=AA
+chr1	soap	Indel	22229214	22229214	5	+	.	ID=rs35277134; status=-1; Type=+1; ; Base=A
+chr1	soap	Indel	22244372	22244372	5	+	.	ID=rs34149947; status=8; Type=+1; ; Base=A
+chr1	soap	Indel	22258978	22258979	5	+	.	ID=YHIndel00591; status=novel; Type=-1; location=NM_044472:intron; Base=C
+chr1	soap	Indel	22263164	22263164	3	+	.	ID=YHIndel00592; status=novel; Type=+1; location=NM_044472:intron; Base=C
+chr1	soap	Indel	22263405	22263407	4	+	.	ID=rs17838001; status=-1; Type=-2; location=NM_044472:intron; Base=CT
+chr1	soap	Indel	22272910	22272911	10	+	.	ID=YHIndel00593; status=novel; Type=-1; location=NM_044472:intron; Base=T
+chr1	soap	Indel	22284304	22284306	5	+	.	ID=YHIndel00594; status=novel; Type=-2; location=NM_044472:intron; Base=CT
+chr1	soap	Indel	22301365	22301367	3	+	.	ID=rs10566135; status=-1; Type=-2; ; Base=CA
+chr1	soap	Indel	22302707	22302707	4	+	.	ID=rs34173345; status=-1; Type=+2; ; Base=TT
+chr1	soap	Indel	22302846	22302846	5	+	.	ID=rs35303742; status=1; Type=+3; ; Base=GTT
+chr1	soap	Indel	22311986	22311989	9	+	.	ID=YHIndel00595; status=novel; Type=-3; Base=AGG
+chr1	soap	Indel	22315908	22315908	6	+	.	ID=rs35008390; status=3; Type=+1; ; Base=C
+chr1	soap	Indel	22318203	22318205	4	+	.	ID=YHIndel00596; status=novel; Type=-2; location=NM_030761:3-UTR; Base=AG
+chr1	soap	Indel	22412828	22412830	5	+	.	ID=rs34994244; status=0; Type=-2; ; Base=TA
+chr1	soap	Indel	22497059	22497059	3	+	.	ID=rs35585541; status=6; Type=+1; location=Transposons0170093:LTR/MaLR; Base=T
+chr1	soap	Indel	22500857	22500857	4	+	.	ID=rs34564853; status=0; Type=+1; location=Transposons0039391:LINE/L1; Base=C
+chr1	soap	Indel	22515496	22515496	4	+	.	ID=rs36068621; status=-1; Type=+2; ; Base=CA
+chr1	soap	Indel	22554894	22554896	10	+	.	ID=YHIndel00597; status=novel; Type=-2; Base=TA
+chr1	soap	Indel	22636954	22636954	5	+	.	ID=rs34326395; status=2; Type=+1; location=Transposons0206525:SINE/Alu; Base=C
+chr1	soap	Indel	22637411	22637412	5	+	.	ID=YHIndel00598; status=novel; Type=-1; location=Transposons0039439:LINE/L1; Base=C
+chr1	soap	Indel	22645316	22645316	3	+	.	ID=YHIndel00599; status=novel; Type=+1; location=Transposons0039447:LINE/L1; Base=A
+chr1	soap	Indel	22645330	22645330	6	+	.	ID=rs34292769; status=0; Type=+2; location=Transposons0039447:LINE/L1; Base=TG
+chr1	soap	Indel	22645886	22645886	5	+	.	ID=YHIndel00600; status=novel; Type=+1; location=Transposons0039447:LINE/L1; Base=A
+chr1	soap	Indel	22663942	22663943	6	+	.	ID=YHIndel00601; status=novel; Type=-1; location=NM_014870:intron; Base=T
+chr1	soap	Indel	22679138	22679139	3	+	.	ID=YHIndel00602; status=novel; Type=-1; location=NM_014870:intron; Base=C
+chr1	soap	Indel	22681746	22681747	6	+	.	ID=YHIndel00603; status=novel; Type=-1; location=NM_014870:intron; Base=C
+chr1	soap	Indel	22715559	22715559	4	+	.	ID=YHIndel00604; status=novel; Type=+2; location=NM_014870:intron; Base=TG
+chr1	soap	Indel	22716886	22716889	5	+	.	ID=rs34545291; status=1; Type=-3; location=NM_014870:intron; Base=TTC
+chr1	soap	Indel	22777786	22777786	4	+	.	ID=YHIndel00605; status=novel; Type=+2; location=NM_001006943:intron; Base=GT
+chr1	soap	Indel	22777841	22777843	4	+	.	ID=YHIndel00606; status=novel; Type=-2; location=NM_001006943:intron; Base=TG
+chr1	soap	Indel	22778253	22778255	10	+	.	ID=YHIndel00607; status=novel; Type=-2; location=NM_001006943:intron; Base=TG
+chr1	soap	Indel	22781606	22781607	3	+	.	ID=YHIndel00608; status=novel; Type=-1; location=NM_001006943:intron; Base=A
+chr1	soap	Indel	22785384	22785385	3	+	.	ID=YHIndel00609; status=novel; Type=-1; location=NM_001006943:intron; Base=C
+chr1	soap	Indel	22797125	22797126	3	+	.	ID=YHIndel00610; status=novel; Type=-1; Base=T
+chr1	soap	Indel	22831562	22831562	7	+	.	ID=rs33955913; status=-1; Type=+1; location=Transposons0301540:SINE/MIR; Base=T
+chr1	soap	Indel	22847918	22847918	3	+	.	ID=rs35468463; status=0; Type=+3; ; Base=GAC
+chr1	soap	Indel	22849307	22849307	5	+	.	ID=YHIndel00611; status=novel; Type=+2; location=Tandem005491:Simple_repeat; Base=TA
+chr1	soap	Indel	22878181	22878183	5	+	.	ID=YHIndel00612; status=novel; Type=-2; location=Tandem005499:Simple_repeat; Base=CA
+chr1	soap	Indel	22878278	22878280	5	+	.	ID=YHIndel00613; status=novel; Type=-2; location=Tandem005499:Simple_repeat; Base=CA
+chr1	soap	Indel	22896129	22896130	4	+	.	ID=YHIndel00614; status=novel; Type=-1; location=Transposons0206624:SINE/Alu; Base=T
+chr1	soap	Indel	22908346	22908346	4	+	.	ID=rs35046719; status=1; Type=+1; location=OREG0013219:REGULATORY REGION; Base=T
+chr1	soap	Indel	22943259	22943260	6	+	.	ID=YHIndel00615; status=novel; Type=-1; location=NM_004442:intron; Base=C
+chr1	soap	Indel	22953284	22953285	4	+	.	ID=YHIndel00616; status=novel; Type=-1; location=NM_004442:intron; Base=C
+chr1	soap	Indel	22956956	22956957	6	+	.	ID=YHIndel00617; status=novel; Type=-1; location=NM_004442:intron; Base=A
+chr1	soap	Indel	22967877	22967880	5	+	.	ID=YHIndel00618; status=novel; Type=-3; location=NM_004442:intron; Base=TCC
+chr1	soap	Indel	23031979	23031979	4	+	.	ID=rs35231501; status=2; Type=+2; location=NM_004442:intron; Base=AG
+chr1	soap	Indel	23033141	23033141	6	+	.	ID=rs35995262; status=-1; Type=+2; location=NM_004442:intron; Base=AA
+chr1	soap	Indel	23046875	23046876	7	+	.	ID=YHIndel00619; status=novel; Type=-1; location=NM_004442:intron; Base=C
+chr1	soap	Indel	23078299	23078299	9	+	.	ID=rs33977796; status=-1; Type=+2; location=NM_004442:intron; Base=CA
+chr1	soap	Indel	23140718	23140718	5	+	.	ID=rs3053645; status=2; Type=+3; location=Transposons0144868:LTR/ERV1; Base=GGA
+chr1	soap	Indel	23150139	23150140	5	+	.	ID=YHIndel00620; status=novel; Type=-1; location=Transposons0206740:SINE/Alu; Base=A
+chr1	soap	Indel	23182432	23182433	8	+	.	ID=YHIndel00621; status=novel; Type=-1; location=Transposons0206775:SINE/Alu; Base=T
+chr1	soap	Indel	23200884	23200885	3	+	.	ID=YHIndel00622; status=novel; Type=-1; location=Transposons0144899:LTR/ERV1; Base=G
+chr1	soap	Indel	23204533	23204534	4	+	.	ID=YHIndel00623; status=novel; Type=-1; location=Transposons0144905:LTR/ERV1; Base=G
+chr1	soap	Indel	23208788	23208789	4	+	.	ID=YHIndel00624; status=novel; Type=-1; Base=T

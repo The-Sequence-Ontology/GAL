@@ -14,7 +14,7 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $parser = GAL::Parser->new(file => 'data/soap.gff');
+my $parser = GAL::Parser->new(file => 'data/soap_snp.gff');
 
 # TEST 2
 isa_ok($parser, 'GAL::Parser');
@@ -33,7 +33,7 @@ while (my $f = $parser->parse_next_feature) {
 ok(scalar @ids > 2, '$parser->parse_next_feature');
 $parser = undef;
 
-my $parser = GAL::Parser->new(file => 'data/soap.gff');
+my $parser = GAL::Parser->new(file => 'data/soap_snp.gff');
 
 # TEST 6
 ok($parser->get_all_features, '$parser->parse->get_features');
