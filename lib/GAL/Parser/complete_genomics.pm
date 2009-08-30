@@ -109,8 +109,8 @@ sub parse_record {
 		       );
 	$type = $type_map{$type} || 'sequence_alteration';
 
-	my $start      = $record->{begin};
-	my $end        = $record->{end} - 1;
+	my $start      = $record->{begin}++;
+	my $end        = $record->{end};
 	my $score      = $record->{totalScore};
 	my $strand     = '+';
 	my $phase      = '.';

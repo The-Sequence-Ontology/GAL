@@ -92,6 +92,9 @@ sub parse_record {
 
 	map {s/^0+//} ($chromosome, $position);
 
+	$chromosome = 'X' if $chromosome eq '24';
+	$chromosome = 'Y' if $chromosome eq '25';
+
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
 	my $seqid = 'chr' . $chromosome;
