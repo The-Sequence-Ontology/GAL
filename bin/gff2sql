@@ -11,7 +11,7 @@ my $usage = "
 
 Synopsis:
 
-gff2sql --create --dsn 'dbi:mysql:gff_db' file.gff3
+gff2sql --create --dsn 'dbi:mysql:gff_db' file.gff3 [another_file.gff3]
 
 Description:
 
@@ -20,7 +20,8 @@ Load a GFF3 file into a MySQL database.
 Options:
 
   --dsn     The DBD::MySQL formatted database source name (i.e. dbi:mysql:db_name).
-  --create  Create or empty the database first.
+  --create  Create or empty the database first.  Default would be to add to
+            the existing database if it exists.
   --user    DB user.
   --pass    DB password.
 

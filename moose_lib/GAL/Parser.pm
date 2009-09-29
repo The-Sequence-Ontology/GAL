@@ -1,159 +1,54 @@
 package GAL::Parser;
 
-use strict;
-use vars qw($VERSION);
-
-
-$VERSION = '0.01';
-use base qw(GAL::Base);
-use GAL::FeatureFactory;
+use Moose;
 use Text::RecordParser;
+use GAL::FeatureFactory;
 
-=head1 NAME
+with 'GAL::Base';
 
-GAL::Parser - <One line description of module's purpose here>
+has 'file' => ( is       => 'rw',
+		required => 1
+	      );
 
-=head1 VERSION
+has 'record_separator' => ( is  => 'rw',
+			    isa => 'Str',
+			    default => sub {"\n"},
+			  );
 
-This document describes GAL::Parser version 0.01
+has 'field_separator' => ( is => 'rw',
+			   isa => 'Str',
+			   default => sub {"\t"},
+			 );
 
-=head1 SYNOPSIS
+has 'comment_delimiter' => ( is => 'rw',
+			     isa => 'RegexpRef',
+			     default => sub {qr|\s*\#|},
+			   );
 
-     use GAL::Parser;
+has 'feature_factory' => ( is => 'rw',
+			   default => sub {GAL::FeatureFactory->new()},
+			 );
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+has 'fields' => ( is => 'rw',
+		  isa => 'ArrayRef',
+		  default => sub {[qw(seqid source type start end score strand phase attributes)]},
+		);
 
-=head1 DESCRIPTION
+has 'parser' => ( is      => 'rw',
+		  lazy    => 1,
+		  builder => '_build_parser',
+		);
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
-
-
-################################################################################
-################################  TO DO ########################################
-################################################################################
-
-Maybe allow using using any file iterator
-Maybe remove Text::RecordParser
-Maybe allow using any feature_factory
-
-################################################################################
-################################################################################
-################################################################################
-
-=head1 METHODS
-
-=cut
-
-#-----------------------------------------------------------------------------
-
-=head2
-
-     Title   : new
-     Usage   : GAL::Parser->new();
-     Function: Creates a GAL::Parser object;
-     Returns : A GAL::Parser object
-     Args    :
-
-=cut
-
-sub new {
-	my ($class, @args) = @_;
-	my $self = $class->SUPER::new(@args);
-	return $self;
-}
-
-#-----------------------------------------------------------------------------
-
-sub _initialize_args {
-	my ($self, @args) = @_;
-
-	$self->SUPER::_initialize_args(@args);
-
-	my $args = $self->prepare_args(@args);
-
-	my @valid_attributes = qw(file
-				  record_separator
-				  field_separator
-				  comment_delimiter
-				  fields
-				 );
-
-	$self->set_attributes($args, @valid_attributes);
-
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 file
-
- Title   : file
- Usage   : $a = $self->file();
- Function: Get/Set the value of file.
- Returns : The value of file.
- Args    : A value to set file to.
-
-=cut
-
-sub file {
-	my ($self, $value) = @_;
-	$self->{file} = $value if defined $value;
-	return $self->{file};
-}
-
-=head2 feature_factory
-
- Title   : feature_factory
- Usage   : $a = $self->feature_factory();
- Function: Get/Set the Feature_Factory.  This is left as a public
-	   method to support future use of alternate factories, but
-	   this is currently not implimented so this method should be
-	   considered for internal use only.
- Returns : The value of feature_factory.
- Args    : A value to set feature_factory to.
-
-=cut
-
-sub feature_factory {
-	my ($self, $value) = @_;
-	$self->{feature_factory} = $value if defined $value;
-	$self->{feature_factory} ||= GAL::FeatureFactory->new();
-	return $self->{feature_factory};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 parser
-
- Title   : parser
- Usage   : $a = $self->parser();
- Function: Get/Set the parser.  This is left as a public
-	   method to support future use of alternate parsers, but
-	   this is currently not implimented so this method should be
-	   considered for internal use only.
- Returns : The value of parser.
- Args    : A value to set parser to.
-
-=cut
-
-sub parser {
-	my ($self, $value) = @_;
-	$self->{parser} = $value if defined $value;
-	if (! $self->{parser}) {
-		my $parser = Text::RecordParser->new({filename         => $self->file,
-						      record_separator => $self->record_separator,
-						      field_separator  => $self->field_separator,
-						      comment          => $self->comment_delimiter,
-						     });
-		$parser->bind_fields($self->fields);
-		$self->{parser} = $parser;
-	}
-
-	return $self->{parser};
+sub _build_parser {
+	my $self = shift;
+	my $parser = Text::RecordParser->new({filename         => $self->file,
+					      record_separator => $self->record_separator,
+					      field_separator  => $self->field_separator,
+					      comment          => $self->comment_delimiter,
+					     }
+					    );
+	$parser->bind_fields(@{$self->fields});
+	return $parser;
 }
 
 #-----------------------------------------------------------------------------
@@ -267,82 +162,6 @@ sub parse_next_feature {
 	my $feature = $self->feature_factory->create($feature_hash);
 
 	return $feature;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 record_separator
-
- Title   : record_separator
- Usage   : $a = $self->record_separator();
- Function: Get/Set the value of record_separator.
- Returns : The value of record_separator.
- Args    : A value to set record_separator to.
-
-=cut
-
-sub record_separator {
-	my ($self, $value) = @_;
-	$self->{record_separator} = $value if defined $value;
-	$self->{record_separator} ||= "\n";
-	return $self->{record_separator};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 field_separator
-
- Title   : field_separator
- Usage   : $a = $self->field_separator();
- Function: Get/Set the value of field_separator.
- Returns : The value of field_separator.
- Args    : A value to set field_separator to.
-
-=cut
-
-sub field_separator {
-	my ($self, $value) = @_;
-	$self->{field_separator} = $value if defined $value;
-	$self->{field_separator} ||= "\t";
-	return $self->{field_separator};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 comment_delimiter
-
- Title   : comment_delimiter
- Usage   : $a = $self->comment_delimiter();
- Function: Get/Set the value of comment_delimiter.
- Returns : The value of comment_delimiter.
- Args    : A value to set comment_delimiter to.
-
-=cut
-
-sub comment_delimiter {
-	my ($self, $value) = @_;
-	$self->{comment_delimiter} = $value if defined $value;
-	$self->{comment_delimiter} ||= qr/^\#/;
-	return $self->{comment_delimiter};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 fields
-
- Title   : fields
- Usage   : $a = $self->fields();
- Function: Get/Set the value of fields.
- Returns : The value of fields.
- Args    : A value to set fields to.
-
-=cut
-
-sub fields {
-	my ($self, $value) = @_;
-	$self->{fields} = $value if defined $value;
-	$self->{fields} ||= [qw(seqid source type start end score strand phase attributes)];
-	return wantarray ? @{$self->{fields}} : $self->{fields};
 }
 
 #-----------------------------------------------------------------------------
@@ -507,5 +326,7 @@ SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.
 
 =cut
+
+__PACKAGE__->meta->make_immutable;
 
 1;

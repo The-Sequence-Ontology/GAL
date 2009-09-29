@@ -1,4 +1,4 @@
-package GAL::Parser::soap_indel;
+package GAL::Parser::baylor;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::soap_indel - <One line description of module's purpose here>
+GAL::Parser::baylor - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::soap_indel version 0.01
+This document describes GAL::Parser::baylor version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::soap_indel;
+     use GAL::Parser::baylor;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::soap_indel version 0.01
 =head2
 
      Title   : new
-     Usage   : GAL::Parser::soap_indel->new();
-     Function: Creates a GAL::Parser::soap_indel object;
-     Returns : A GAL::Parser::soap_indel object
+     Usage   : GAL::Parser::baylor->new();
+     Function: Creates a GAL::Parser::baylor object;
+     Returns : A GAL::Parser::baylor object
      Args    :
 
 =cut
@@ -63,11 +63,57 @@ sub _initialize_args {
 
 	my @valid_attributes = qw();
 
+# The columns are:
+#
+# BCM_local_SNP_ID -- unique ID for referring to the SNPs ahead of
+# submission to dbSNP (we can talk about what and when to submit to
+# dbSNP).
+#
+# chromosome --  (self explanatory)
+#
+# coordinate -- (self explanatory)
+#
+# reference_allele -- plus strand reference base
+#
+# variant_allele -- plus strand variant base
+#
+# match_status -- a Y, N or "." if a dbSNP allele, Y if the variant
+# matches the dbSNP allele, or N if it doesn't; a "." if it's a novel
+# SNP.
+#
+# rs# -- the rsid if dbSNP, "novel" otherwise.
+#
+# alternate_allele -- usually a "." (surrogate for null). A, C, T or G
+# if a third allele is seen in the reads at the given position, it's
+# listed here.  I'm don't expect you to dis play 3d allele
+# information.
+#
+# variant_count -- number of reads in which variant allele was
+# seen. Can be 1 variants matching dbSNP alleles ("Y" in match_status
+# column), must be 2 for novel alleles, for dbSNP positions that don't
+# match the dbSNP alleles ("N" in match_status column) or for dbSNP
+# positions where there is an alternate allele.
+#
+# alternate_allele_count -- number of reads in which an
+# alternate_allele is seen. Generally these are seen in only one read
+# and are probably errors, and should not be mentioned. I n some rare
+# instances (134 times), both the variant allele and the alternate
+# allele are seen multiple times.
+#
+# total_coverage -- the total number of reads at a given SNP position.
+#
+# "genotype" -- "het" if the reference allele is seen at least
+# once. "." (null) if not. These are the sites that are confidently
+# heterozygotes. The others provisionally homozygote s, and in cases
+# where the coverage is deep enough probably they are.
+
+	$self->fields([qw(id chromosome coordinate reference_allele
+			  variant_allele match_status rsid alternate_allele
+			  variant_count alternate_allele_count
+			  total_coverage genotype)]);
+
 	$self->set_attributes($args, @valid_attributes);
 
-	# Set the column headers from your incoming data file here
-	# These will become the keys in your $record hash reference below.
-	$self->fields([qw(seqid source type start end score strand phase attributes)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -85,71 +131,74 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# $record is a hash reference that contains the keys assigned
-	# in the $self->fields call in _initialize_args above
+	# $record is a hash reference keyed to the fields of the
+	# incoming data These key names are set in the $self->fields
+	# call in _initialize_args above
 
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
-	my $original_atts = $self->parse_attributes($record->{attributes});
 
-	my $id         = $original_atts->{ID}[0];
-	my $seqid      = $record->{seqid};
-	my $source     = $record->{source};
-	my $type       = $record->{type};
-	my $start      = $record->{start} + 1; # Soap indels are space based
-	my $end        = $record->{end};
-	my $score      = $record->{score};
-	my $strand     = $record->{strand};
-	my $phase      = $record->{phase};
+	# id chromosome coordinate reference_allele variant_allele
+	# match_status rsid alternate_allele variant_count
+	# alternate_allele_count total_coverage genotype
 
-	# chr1 soap Indel   1409   14094 + . ID=YHIndel00001; status=novel; Type=+1; location=Transposons0034384:LINE/L1; Base=A
-	# chr1 soap Indel   3824   38253 + . ID=YHIndel00002; status=novel; Type=-1; Base=C
-	# chr1 soap Indel  29355  293553 + . ID=YHIndel00003; status=novel; Type=+1; location=Transposons0167541:LTR/MaLR; Base=C
-	# chr1 soap Indel  39377  393784 + . ID=YHIndel00004; status=novel; Type=-1; location=Transposons0034394:LINE/L1; Base=G
-	# chr1 soap Indel  53601  536043 + . ID=YHIndel00005; status=novel; Type=-3; Base=CTA
-	# chr1 soap Indel 241491 2414923 + . ID=YHIndel00006; status=novel; Type=-1; Base=C
-	# chr1 soap Indel 429836 4298384 + . ID=YHIndel00007; status=novel; Type=-2; Base=CC
+	my $id         = $record->{id};
+	my $seqid      = $record->{chromosome};
+	my $source     = 'Baylor';
+
+	my $type       = 'SNP';
+	my $start      = $record->{coordinate};
+	my $end        = $record->{coordinate};
+	my $score      = '.';
+	my $strand     = '.';
+	my $phase      = '.';
 
 	# Create the attributes hash
 
 	# Assign the reference and variant allele sequences:
-	# reference_allele=A
-	# variant_allele=G
-	my $indel_type = $original_atts->{Type}[0];
-	my ($reference_allele, $variant_allele);
-	if ($indel_type > 0) {
-		$reference_allele = '-';
-		$variant_allele   = $original_atts->{Base}[0];
-		$type             = 'nucleotide_insertion';
-		$start            = $record->{start} - 1;
-		$end              = $record->{start} - 1;
-	}
-	elsif ($indel_type < 0) {
-		$reference_allele = $original_atts->{Base}[0];
-		$variant_allele   = '-';
-		$type             = 'nucleotide_deletion';
-		$start            = $record->{start} + 1;
-		$end              = $record->{end};
-	}
+	# reference_allele=A;
+	# variant_allele=G;
+	my $reference_allele = $record->{reference_allele};
+	my @variant_alleles;
+	push @variant_alleles, $record->{variant_allele};
 
 	# Assign the reference and variant allele read counts:
-	# reference_reads=A:7
-	# variant_reads=G:8
+	# reference_reads=A:7;
+	# variant_reads=G:8;
+	my $reference_reads = $reference_allele . ":" . ($record->{total_coverage} -
+							 $record->{variant_count}  -
+							 $record->{alternate_count});
+	my @variant_reads;
+	push @variant_reads, ($record->{variant_allele}   . ":" . $record->{variant_count});
+
+	if ($record->{alternate_allele} ne '.') {
+		push @variant_reads, ($record->{alternate_allele} . ":" . $record->{alternate_allele_count});
+		push @variant_alleles, $record->{alternate_allele};
+	}
+
+	# If we have reference_reads then push that allele to the variants
+	if ($record->{total_coverage} - $record->{variant_count}  - $record->{alternate_count} > 0) {
+		push @variant_reads, $reference_reads;
+		push @variant_alleles, $reference_allele;
+	}
 
 	# Assign the total number of reads covering this position:
-	# total_reads=16
+	# total_reads=16;
+	my $total_reads = $record->{total_coverage};
 
 	# Assign the genotype:
-	# genotype=homozygous
+	# genotype=homozygous;
+	my $their_genotype = $record->{genotype} eq 'het' ? 'heterozygous' : undef;
+	my $our_genotype   = $self->get_genotype($reference_allele, \@variant_alleles);
 
 	# Assign the probability that the genotype call is correct:
-	# genotype_probability=0.667
+	# genotype_probability=0.667;
 
 	# Any quality score given for this variant should be assigned
 	# to $score above (column 6 in GFF3).  Here you can assign a
 	# name for the type of score or algorithm used to calculate
 	# the sscore (e.g. phred_like, clcbio, illumina).
-	# score_type=soap
+	# score_type=baylor;
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -167,8 +216,13 @@ sub parse_record {
 	# reference_allele, variant_allele, reference_reads, variant_reads
 	# total_reads, genotype, genotype_probability and score type.
 	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => [$variant_allele],
+			  variant_allele   => \@variant_alleles,
+			  genotype         => [$our_genotype],
 			  ID               => [$id],
+			  reference_reads  => [$reference_reads],
+			  variant_reads    => \@variant_reads,
+			  total_reads      => [$total_reads],
+			  genotype         => [$our_genotype],
 			 };
 
 	my $feature_data = {id         => $id,
@@ -230,7 +284,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::soap_indel> requires no configuration files or environment variables.
+<GAL::Parser::baylor> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

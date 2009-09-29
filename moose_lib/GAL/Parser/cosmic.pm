@@ -1,4 +1,4 @@
-package GAL::Parser::soap_indel;
+package GAL::Parser::template;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::soap_indel - <One line description of module's purpose here>
+GAL::Parser::template - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::soap_indel version 0.01
+This document describes GAL::Parser::template version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::soap_indel;
+     use GAL::Parser::template;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::soap_indel version 0.01
 =head2
 
      Title   : new
-     Usage   : GAL::Parser::soap_indel->new();
-     Function: Creates a GAL::Parser::soap_indel object;
-     Returns : A GAL::Parser::soap_indel object
+     Usage   : GAL::Parser::template->new();
+     Function: Creates a template object;
+     Returns : A template object
      Args    :
 
 =cut
@@ -63,11 +63,10 @@ sub _initialize_args {
 
 	my @valid_attributes = qw();
 
+	$self->fields([qw(these are the header names for your record hash)]);
+
 	$self->set_attributes($args, @valid_attributes);
 
-	# Set the column headers from your incoming data file here
-	# These will become the keys in your $record hash reference below.
-	$self->fields([qw(seqid source type start end score strand phase attributes)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -90,47 +89,22 @@ sub parse_record {
 
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
-	my $original_atts = $self->parse_attributes($record->{attributes});
-
-	my $id         = $original_atts->{ID}[0];
-	my $seqid      = $record->{seqid};
-	my $source     = $record->{source};
-	my $type       = $record->{type};
-	my $start      = $record->{start} + 1; # Soap indels are space based
+	my $id         = $record->{id};
+	my $seqid      = $record->{chromosome};
+	my $source     = 'Template';
+	my $type       = 'gene';
+	my $start      = $record->{start};
 	my $end        = $record->{end};
-	my $score      = $record->{score};
+	my $score      = '.';
 	my $strand     = $record->{strand};
-	my $phase      = $record->{phase};
-
-	# chr1 soap Indel   1409   14094 + . ID=YHIndel00001; status=novel; Type=+1; location=Transposons0034384:LINE/L1; Base=A
-	# chr1 soap Indel   3824   38253 + . ID=YHIndel00002; status=novel; Type=-1; Base=C
-	# chr1 soap Indel  29355  293553 + . ID=YHIndel00003; status=novel; Type=+1; location=Transposons0167541:LTR/MaLR; Base=C
-	# chr1 soap Indel  39377  393784 + . ID=YHIndel00004; status=novel; Type=-1; location=Transposons0034394:LINE/L1; Base=G
-	# chr1 soap Indel  53601  536043 + . ID=YHIndel00005; status=novel; Type=-3; Base=CTA
-	# chr1 soap Indel 241491 2414923 + . ID=YHIndel00006; status=novel; Type=-1; Base=C
-	# chr1 soap Indel 429836 4298384 + . ID=YHIndel00007; status=novel; Type=-2; Base=CC
+	my $phase      = '.';
 
 	# Create the attributes hash
 
 	# Assign the reference and variant allele sequences:
 	# reference_allele=A
 	# variant_allele=G
-	my $indel_type = $original_atts->{Type}[0];
-	my ($reference_allele, $variant_allele);
-	if ($indel_type > 0) {
-		$reference_allele = '-';
-		$variant_allele   = $original_atts->{Base}[0];
-		$type             = 'nucleotide_insertion';
-		$start            = $record->{start} - 1;
-		$end              = $record->{start} - 1;
-	}
-	elsif ($indel_type < 0) {
-		$reference_allele = $original_atts->{Base}[0];
-		$variant_allele   = '-';
-		$type             = 'nucleotide_deletion';
-		$start            = $record->{start} + 1;
-		$end              = $record->{end};
-	}
+	my ($reference_allele, @variant_alleles) = split m|/|, $record->{alleles};
 
 	# Assign the reference and variant allele read counts:
 	# reference_reads=A:7
@@ -145,11 +119,13 @@ sub parse_record {
 	# Assign the probability that the genotype call is correct:
 	# genotype_probability=0.667
 
+	my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
+
 	# Any quality score given for this variant should be assigned
 	# to $score above (column 6 in GFF3).  Here you can assign a
 	# name for the type of score or algorithm used to calculate
 	# the sscore (e.g. phred_like, clcbio, illumina).
-	# score_type=soap
+	my $score_type = 'template';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -167,7 +143,9 @@ sub parse_record {
 	# reference_allele, variant_allele, reference_reads, variant_reads
 	# total_reads, genotype, genotype_probability and score type.
 	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => [$variant_allele],
+			  variant_allele   => \@variant_alleles,
+			  genotype         => [$genotype],
+			  score_type       => [$score_type],
 			  ID               => [$id],
 			 };
 
@@ -230,7 +208,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::soap_indel> requires no configuration files or environment variables.
+<GAL::Parser::template> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

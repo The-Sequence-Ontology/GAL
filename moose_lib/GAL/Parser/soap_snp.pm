@@ -1,4 +1,4 @@
-package GAL::Parser::soap_indel;
+package GAL::Parser::soap_snp;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::soap_indel - <One line description of module's purpose here>
+GAL::Parser::soap_snp - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::soap_indel version 0.01
+This document describes GAL::Parser::soap_snp version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::soap_indel;
+     use GAL::Parser::soap_snp;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::soap_indel version 0.01
 =head2
 
      Title   : new
-     Usage   : GAL::Parser::soap_indel->new();
-     Function: Creates a GAL::Parser::soap_indel object;
-     Returns : A GAL::Parser::soap_indel object
+     Usage   : GAL::Parser::soap_snp->new();
+     Function: Creates a GAL::Parser::soap_snp object;
+     Returns : A GAL::Parser::soap_snp object
      Args    :
 
 =cut
@@ -96,51 +96,77 @@ sub parse_record {
 	my $seqid      = $record->{seqid};
 	my $source     = $record->{source};
 	my $type       = $record->{type};
-	my $start      = $record->{start} + 1; # Soap indels are space based
+	my $start      = $record->{start};
 	my $end        = $record->{end};
 	my $score      = $record->{score};
 	my $strand     = $record->{strand};
 	my $phase      = $record->{phase};
 
-	# chr1 soap Indel   1409   14094 + . ID=YHIndel00001; status=novel; Type=+1; location=Transposons0034384:LINE/L1; Base=A
-	# chr1 soap Indel   3824   38253 + . ID=YHIndel00002; status=novel; Type=-1; Base=C
-	# chr1 soap Indel  29355  293553 + . ID=YHIndel00003; status=novel; Type=+1; location=Transposons0167541:LTR/MaLR; Base=C
-	# chr1 soap Indel  39377  393784 + . ID=YHIndel00004; status=novel; Type=-1; location=Transposons0034394:LINE/L1; Base=G
-	# chr1 soap Indel  53601  536043 + . ID=YHIndel00005; status=novel; Type=-3; Base=CTA
-	# chr1 soap Indel 241491 2414923 + . ID=YHIndel00006; status=novel; Type=-1; Base=C
-	# chr1 soap Indel 429836 4298384 + . ID=YHIndel00007; status=novel; Type=-2; Base=CC
+	# chr1SoapSnpSNPSNP4793479325+.ID=YHSNP0128643; status=novel; ref=A; allele=A/G; support1=48; support2=26;
+	# chr1SoapSNPSNP6434643448+.ID=YHSNP0128644; status=novel; ref=G; allele=A/G; support1=10; support2=11;
+	# chr1SoapSNPSNP938969389651+.ID=rs4287120; status=dbSNP; ref=T; allele=C/T; support1=5; support2=4; location=MSTB1:LTR/MaLR;
+	# chr1SoapSNPSNP22570722570743+.ID=rs6603780; status=dbSNP; ref=C; allele=C/G; support1=23; support2=12;
+	# chr1SoapSNPSNP22583922583931+.ID=rs6422503; status=dbSNP; ref=C; allele=A/C; support1=13; support2=5; location=L1P2:LINE/L1;
+	# chr1SoapSNPSNP52684952684976+.ID=YHSNP0128645; status=novel; ref=G; allele=G/T; support1=14; support2=12; location=L1MD3:LINE/L1;
+	# chr1SoapSNPSNP55473155473130+.ID=rs1832728; status=dbSNP; ref=T; allele=C/T; support1=37; support2=12; location=Mitochondrial:Mt-tRNA;
+	# chr1SoapSNPSNP55535355535328+.ID=rs7349153; status=dbSNP; ref=T; allele=C/T; support1=37; support2=9;
+	# chr1SoapSNPSNP55537155537122+.ID=rs9283150; status=dbSNP; ref=G; allele=A/G; support1=46; support2=27;
+	# chr1SoapSNPSNP55677955677945+.ID=rs3949348; status=dbSNP; ref=A; allele=A/G; support1=37; support2=13;
 
 	# Create the attributes hash
 
 	# Assign the reference and variant allele sequences:
 	# reference_allele=A
 	# variant_allele=G
-	my $indel_type = $original_atts->{Type}[0];
-	my ($reference_allele, $variant_allele);
-	if ($indel_type > 0) {
-		$reference_allele = '-';
-		$variant_allele   = $original_atts->{Base}[0];
-		$type             = 'nucleotide_insertion';
-		$start            = $record->{start} - 1;
-		$end              = $record->{start} - 1;
-	}
-	elsif ($indel_type < 0) {
-		$reference_allele = $original_atts->{Base}[0];
-		$variant_allele   = '-';
-		$type             = 'nucleotide_deletion';
-		$start            = $record->{start} + 1;
-		$end              = $record->{end};
-	}
+	my $reference_allele = $original_atts->{ref}[0];
+	my @variant_alleles  = split m|/|, $original_atts->{allele}[0];
 
 	# Assign the reference and variant allele read counts:
 	# reference_reads=A:7
 	# variant_reads=G:8
 
+	my @variant_reads = ($variant_alleles[0] . ':' . $original_atts->{support1}[0],
+			     $variant_alleles[1] . ':' . $original_atts->{support2}[0],
+			    );
+
+	my ($reference_reads) = grep {$_ =~ /^$reference_allele:\d+/} @variant_reads;
+	$reference_reads ||= 0;
+
+	# reference_reads;
+	# if ($reference_allele eq $variant_alleles[0]) {
+	# 	$reference_reads = $reference_allele . ':' . $original_atts->{support1}[0];
+	# 	# Remove a variant if it is equal to the reference.
+	# 	shift @variant_alleles;
+	# 	shift @variant_reads;
+	# }
+	# elsif ($reference_allele eq $variant_alleles[1]) {
+	# 	# Remove a variant if it is equal to the reference.
+	# 	$reference_reads = $reference_allele . ':' . $original_atts->{support2}[0];
+	# 	pop @variant_alleles;
+	# 	pop @variant_reads;
+	# }
+	# else {
+	# 	$reference_reads = 0;
+	# }
+
+	if (scalar @variant_alleles == 2 &&
+	    $variant_alleles[0] eq $variant_alleles[1]) {
+
+		# Remove a variant if it is equal to the other variant.
+		pop @variant_alleles;
+		pop @variant_reads;
+	}
+
 	# Assign the total number of reads covering this position:
 	# total_reads=16
 
+	my $total_reads;
+	map {my ($allele, $reads) = split /:/, $_;$total_reads += $reads} (@variant_reads); #, $reference_reads);
+
 	# Assign the genotype:
 	# genotype=homozygous
+
+	my $genotype = $self->get_genotype($reference_allele, \@variant_alleles);
 
 	# Assign the probability that the genotype call is correct:
 	# genotype_probability=0.667
@@ -167,7 +193,11 @@ sub parse_record {
 	# reference_allele, variant_allele, reference_reads, variant_reads
 	# total_reads, genotype, genotype_probability and score type.
 	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => [$variant_allele],
+			  reference_reads  => [$reference_reads],
+			  variant_allele   => \@variant_alleles,
+			  variant_reads    => \@variant_reads,
+			  total_reads      => [$total_reads],
+			  genotype         => [$genotype],
 			  ID               => [$id],
 			 };
 
@@ -230,7 +260,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::soap_indel> requires no configuration files or environment variables.
+<GAL::Parser::soap_snp> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

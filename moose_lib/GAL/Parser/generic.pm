@@ -1,4 +1,4 @@
-package GAL::Parser::soap_indel;
+package GAL::Parser::celera;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::soap_indel - <One line description of module's purpose here>
+GAL::Parser::celera - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::soap_indel version 0.01
+This document describes GAL::Parser::celera version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::soap_indel;
+     use GAL::Parser::celera;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::soap_indel version 0.01
 =head2
 
      Title   : new
-     Usage   : GAL::Parser::soap_indel->new();
-     Function: Creates a GAL::Parser::soap_indel object;
-     Returns : A GAL::Parser::soap_indel object
+     Usage   : GAL::Parser::celera->new();
+     Function: Creates a celera object;
+     Returns : A celera object
      Args    :
 
 =cut
@@ -63,11 +63,10 @@ sub _initialize_args {
 
 	my @valid_attributes = qw();
 
+	$self->fields([qw(chromosome variant_id variant_type start end score orientation alleles processing)]);
+
 	$self->set_attributes($args, @valid_attributes);
 
-	# Set the column headers from your incoming data file here
-	# These will become the keys in your $record hash reference below.
-	$self->fields([qw(seqid source type start end score strand phase attributes)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -85,54 +84,83 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# $record is a hash reference that contains the keys assigned
-	# in the $self->fields call in _initialize_args above
+# 1.  Chromosome (NCBI 36)
+#
+# 2.  Variant identifier (unique to each variant)
+#
+# 3.  Variant Type
+#         There are 7 different variant types in this file.  See  Fig. 4
+#         in Levy, et al. for a description of the variant types.
+#         "heterozygous_mixed_sequence_variant" in this file corresponds
+#         to "complex" in the figure.
+#
+# 4.  Chromosome start position (NCBI 36, in space-based coordinates)
+#
+# 5.  Chromosome end position (NCBI 36, space-based coordinates)
+#
+# 6.  Not used.
+#
+# 7.  Orientation with respect to NCBI.  The sequence is give in column.
+#     If the value in column 7 is "+" or "-", this means that the sequence
+#     corresponds to the positive or negative strand of NCBI, respectively.
+#     A "." is given for variants that had ambiguous mapping.
+#
+# 8.  This field is delimited by semicolons. In the first field, the
+#     alleles of the variant are given (e.g. A/B).  For homozygous
+#     variants, the first allele A matches NCBI 36, the second allele B
+#     matches HuRef.  There can be more than 2 alleles, which may occur
+#     when reads may pile up in repititive regions.
+#
+#     The second field "RMR" indicates RepeatMasker status.   RMR=1
+#     indicates that the variant occurs in a region identified by
+#     RepeatMasker; RMR=0 indicates that the variant does not.
+#
+#     The third field "TR" indicates TandemRepeat status. TR=1 indicates
+#     that the variant occurs in a tandem repeat, as identified by
+#     TandemRepeatFinder.  TR=0 indicates that the variant does not.
+#
+#
+# 9.  This column indicates whether a variant was post-processed.
+#     Method1 indicates the variant was kept in its original form and
+#     not post-processed.  Method1_MSV_clean corresponds to a modified
+#     variant call where heterozygous mixed sequence variants were
+#     changed to indels.  Method2 indicates that the variant is composed of a
+#     cluster of Method1 variants that were within 10 bp of each other
+#     (see paper for procedure).  Method2_AmbiguousMapping indicates
+#     that after the clustering, the position of the new variant could
+#     not be easily placed on NCBI 36, and there may be some error in
+#     the mapping position given.
+#
+# *Please note that the values provided in Table 4 of Levy, et al. are based on Method1
+# variants.
+
+# 1       1103675000194   homozygous_SNP  815416  815417  .       +       A/G;RMR=1;TR=0  Method1
+# 1       1103675000195   heterozygous_SNP        817115  817116  .       +       A/C;RMR=1;TR=0  Method1
+
+	# Headers use by parser
+	# chromosome variant_id variant_type start end orientation alleles processing
 
 	# Fill in the first 8 columns for GFF3
-	# See http://www.sequenceontology.org/resources/gff3.html for details.
-	my $original_atts = $self->parse_attributes($record->{attributes});
-
-	my $id         = $original_atts->{ID}[0];
-	my $seqid      = $record->{seqid};
-	my $source     = $record->{source};
-	my $type       = $record->{type};
-	my $start      = $record->{start} + 1; # Soap indels are space based
+	my $id         = $record->{variant_id};
+	my $seqid      = 'chr' . $record->{chromosome};
+	my $source     = 'Celera';
+	my $type       = ''; # Assigned below
+	my $start      = $record->{start};
 	my $end        = $record->{end};
-	my $score      = $record->{score};
-	my $strand     = $record->{strand};
-	my $phase      = $record->{phase};
-
-	# chr1 soap Indel   1409   14094 + . ID=YHIndel00001; status=novel; Type=+1; location=Transposons0034384:LINE/L1; Base=A
-	# chr1 soap Indel   3824   38253 + . ID=YHIndel00002; status=novel; Type=-1; Base=C
-	# chr1 soap Indel  29355  293553 + . ID=YHIndel00003; status=novel; Type=+1; location=Transposons0167541:LTR/MaLR; Base=C
-	# chr1 soap Indel  39377  393784 + . ID=YHIndel00004; status=novel; Type=-1; location=Transposons0034394:LINE/L1; Base=G
-	# chr1 soap Indel  53601  536043 + . ID=YHIndel00005; status=novel; Type=-3; Base=CTA
-	# chr1 soap Indel 241491 2414923 + . ID=YHIndel00006; status=novel; Type=-1; Base=C
-	# chr1 soap Indel 429836 4298384 + . ID=YHIndel00007; status=novel; Type=-2; Base=CC
+	my $score      = '.';
+	my $strand     = $record->{orientation};
+	my $phase      = '.';
 
 	# Create the attributes hash
 
 	# Assign the reference and variant allele sequences:
 	# reference_allele=A
 	# variant_allele=G
-	my $indel_type = $original_atts->{Type}[0];
-	my ($reference_allele, $variant_allele);
-	if ($indel_type > 0) {
-		$reference_allele = '-';
-		$variant_allele   = $original_atts->{Base}[0];
-		$type             = 'nucleotide_insertion';
-		$start            = $record->{start} - 1;
-		$end              = $record->{start} - 1;
-	}
-	elsif ($indel_type < 0) {
-		$reference_allele = $original_atts->{Base}[0];
-		$variant_allele   = '-';
-		$type             = 'nucleotide_deletion';
-		$start            = $record->{start} + 1;
-		$end              = $record->{end};
-	}
+	my ($allele_text) = split /;/, $record->{alleles};
+	my ($reference_allele, @variant_alleles) = split m|/|, $allele_text;
 
 	# Assign the reference and variant allele read counts:
+
 	# reference_reads=A:7
 	# variant_reads=G:8
 
@@ -145,29 +173,44 @@ sub parse_record {
 	# Assign the probability that the genotype call is correct:
 	# genotype_probability=0.667
 
+	# 1624998 heterozygous_SNP
+	# 1450860 homozygous_SNP
+	#  128111 heterozygous_insertion
+	#   92647 heterozygous_deletion
+	#   22525 heterozygous_MNP
+	#   21480 heterozygous_mixed_sequence_variant
+	#   14838 homozygous_MNP
+
+	# The mixed sequence variants above have things like TT/C-
+	# where their is a contiguous substiution and deletion or
+	# insertion.
+
+	my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
+	my %type_map = (deletion               => 'nucleotide_deletion',
+			insertion              => 'nucleotide_insertion',
+			mixed_sequence_variant => 'sequence_alteration',
+			MNP                    => 'MNP',
+			SNP                    => 'SNP',
+		       );
+
+	$type = $type_map{$variant_type};
+
 	# Any quality score given for this variant should be assigned
-	# to $score above (column 6 in GFF3).  Here you can assign a
-	# name for the type of score or algorithm used to calculate
-	# the sscore (e.g. phred_like, clcbio, illumina).
-	# score_type=soap
+	# to $score above.  Here you can assign a name for the type of
+	# score or algorithm used to calculate the sscore.
+	my $score_type = 'celera';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
 	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested keys include
-	# (from the GFF3 spec), but are not limited to: ID, Name,
-	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
-	# Ontology_term. Note that attribute names are case
-	# sensitive. "Parent" is not the same as "parent". All
-	# attributes that begin with an uppercase letter are reserved
-	# for later use. Attributes that begin with a lowercase letter
-	# can be used freely by applications.
-
+	# Features.pm and it's subclasses.
 	# For sequence_alteration features the suggested keys include:
 	# reference_allele, variant_allele, reference_reads, variant_reads
-	# total_reads, genotype, genotype_probability and score type.
+	# total_reads, genotype, genotype_probability and score type
 	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => [$variant_allele],
+			  variant_allele   => \@variant_alleles,
+			  genotype         => [$genotype],
+			  score_type       => [$score_type],
 			  ID               => [$id],
 			 };
 
@@ -230,7 +273,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::soap_indel> requires no configuration files or environment variables.
+<GAL::Parser::celera> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

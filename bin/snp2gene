@@ -142,7 +142,7 @@ for my $gene_id (keys %{$ds}) {
 
 		my $var_reference = $dbh->selectall_arrayref($sth_var, {}, ($snp_id));;
 		my %var_hash = map {$_->[0], 1} @{$var_reference};
-		my @var_alleles = keys %var_hash;
+		my @var_alleles = grep {$_ ne $ref_allele} keys %var_hash;
 
 		my $alleles = join '/', ($ref_allele, @var_alleles);
 

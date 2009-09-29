@@ -1,4 +1,4 @@
-package GAL::Parser::soap_indel;
+package GAL::Parser::illumina_snp;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::soap_indel - <One line description of module's purpose here>
+GAL::Parser::illumina_snp - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::soap_indel version 0.01
+This document describes GAL::Parser::illumina_snp version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::soap_indel;
+     use GAL::Parser::illumina_snp;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::soap_indel version 0.01
 =head2
 
      Title   : new
-     Usage   : GAL::Parser::soap_indel->new();
-     Function: Creates a GAL::Parser::soap_indel object;
-     Returns : A GAL::Parser::soap_indel object
+     Usage   : GAL::Parser::illumina_snp->new();
+     Function: Creates a illumina_snp object;
+     Returns : A illumina_snp object
      Args    :
 
 =cut
@@ -49,6 +49,7 @@ This document describes GAL::Parser::soap_indel version 0.01
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
+
 	return $self;
 }
 
@@ -63,11 +64,11 @@ sub _initialize_args {
 
 	my @valid_attributes = qw();
 
+	$self->fields([qw(chromosome location ref_allele var_alleles id
+                          total_reads read_alleles ref_reads var_reads)]);
+
 	$self->set_attributes($args, @valid_attributes);
 
-	# Set the column headers from your incoming data file here
-	# These will become the keys in your $record hash reference below.
-	$self->fields([qw(seqid source type start end score strand phase attributes)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -76,7 +77,7 @@ sub _initialize_args {
 
  Title   : parse_record
  Usage   : $a = $self->parse_record();
- Function: Parse the data from a record.
+grep {$_ ne $reference_allele} Function: Parse the data from a record.
  Returns : A hash ref needed by Feature.pm to create a Feature object
  Args    : A hash ref of fields that this sub can understand (In this case GFF3).
 
@@ -90,66 +91,97 @@ sub parse_record {
 
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
-	my $original_atts = $self->parse_attributes($record->{attributes});
-
-	my $id         = $original_atts->{ID}[0];
-	my $seqid      = $record->{seqid};
-	my $source     = $record->{source};
-	my $type       = $record->{type};
-	my $start      = $record->{start} + 1; # Soap indels are space based
-	my $end        = $record->{end};
-	my $score      = $record->{score};
-	my $strand     = $record->{strand};
-	my $phase      = $record->{phase};
-
-	# chr1 soap Indel   1409   14094 + . ID=YHIndel00001; status=novel; Type=+1; location=Transposons0034384:LINE/L1; Base=A
-	# chr1 soap Indel   3824   38253 + . ID=YHIndel00002; status=novel; Type=-1; Base=C
-	# chr1 soap Indel  29355  293553 + . ID=YHIndel00003; status=novel; Type=+1; location=Transposons0167541:LTR/MaLR; Base=C
-	# chr1 soap Indel  39377  393784 + . ID=YHIndel00004; status=novel; Type=-1; location=Transposons0034394:LINE/L1; Base=G
-	# chr1 soap Indel  53601  536043 + . ID=YHIndel00005; status=novel; Type=-3; Base=CTA
-	# chr1 soap Indel 241491 2414923 + . ID=YHIndel00006; status=novel; Type=-1; Base=C
-	# chr1 soap Indel 429836 4298384 + . ID=YHIndel00007; status=novel; Type=-2; Base=CC
+	my $id         = $record->{id};
+	my $seqid      = $record->{chromosome};
+	my $source     = 'Illumina';
+	my $type       = 'SNP';
+	my $start      = $record->{location};
+	my $end        = $record->{location};
+	my $score      = '.';
+	my $strand     = '.';
+	my $phase      = '.';
 
 	# Create the attributes hash
+
+	# Het with ref: get var_alleles and remove ref.  ref_reads and var_reads OK
+	# chr10   56397   C       CT      rs12262442      28      C/T     17      11
+	# chr10   61776   T       CT      rs61838967      15      T/C     7       8
+	# chr10   65803   T       CT      KOREFSNP1       27      T/C     19      8
+	# chr10   68106   C       AC      KOREFSNP2       43      C/A     22      21
+	# chr10   84136   C       CT      rs4607995       24      C/T     10      13
+	# chr10   84238   A       AT      rs10904041      22      A/T     5       16
+
+	# Het but not ref: get var_alleles.  assign var_reads to correct var and calculate alter_var_reads from total - var_reads
+	# chr10   12625631        A       GT      rs2815636       42      A/G     0       21
+	# chr10   13864035        A       CT      rs5025431       27      A/T     0       15
+	# chr10   14292681        G       AC      rs11528656      29      G/A     0       18
+	# chr10   14771944        C       AG      rs3107794       29      C/G     0       15
+	# chr10   15075637        A       CG      rs9731518       29      A/G     4       16
+
+	# Homozygous get var_alleles and use only one.  ref_reads and var_reads OK
+	# chr10   168434  T       GG      rs7089889       20      T/G     0       20
+	# chr10   173151  T       CC      rs7476951       19      T/C     0       19
+	# chr10   175171  G       TT      rs7898275       25      G/T     0       25
+	# chr10   175358  C       TT      rs7910845       26      C/T     0       26
+
+	# $self->fields([qw(chromosome location ref_allele var_alleles id total_reads read_alleles ref_reads var_reads)]);
 
 	# Assign the reference and variant allele sequences:
 	# reference_allele=A
 	# variant_allele=G
-	my $indel_type = $original_atts->{Type}[0];
-	my ($reference_allele, $variant_allele);
-	if ($indel_type > 0) {
-		$reference_allele = '-';
-		$variant_allele   = $original_atts->{Base}[0];
-		$type             = 'nucleotide_insertion';
-		$start            = $record->{start} - 1;
-		$end              = $record->{start} - 1;
-	}
-	elsif ($indel_type < 0) {
-		$reference_allele = $original_atts->{Base}[0];
-		$variant_allele   = '-';
-		$type             = 'nucleotide_deletion';
-		$start            = $record->{start} + 1;
-		$end              = $record->{end};
-	}
+	my $reference_allele = $record->{ref_allele};
+	my %variant_alleles  = map {$_, 1} split //, $record->{var_alleles};
+	my @variant_alleles = keys %variant_alleles; # grep {$_ ne $reference_allele}
 
-	# Assign the reference and variant allele read counts:
+	# Assign the reference and variant allele read counts;
 	# reference_reads=A:7
 	# variant_reads=G:8
+
+	my $total_reads = $record->{total_reads};
+	my $reference_reads = "$reference_allele:" . $record->{ref_reads};
+
+	# chr10   56397   C       CT      rs12262442      28      C/T     17      11
+	my @read_alleles = split m|/|, $record->{read_alleles};
+	my %read_counts = ($read_alleles[0] => $record->{ref_reads},
+			   $read_alleles[1] => $record->{var_reads},
+			   );
+
+	my @variant_reads = map {"$_:" . ($read_counts{$_} || $total_reads - $record->{var_reads})} @variant_alleles;
+
+	# if (scalar @variant_alleles > 1) {
+	# 	my @read_alleles = split m|/|, $record->{read_alleles};
+	# 	my $alt_allele;
+	# 	for my $this_allele (@variant_alleles) {
+	# 		next if grep {$_ eq $this_allele} @read_alleles;
+	# 		$alt_allele = $this_allele;
+	# 	}
+	# 	my $var_allele = $variant_alleles[0] ne $alt_allele ? $variant_alleles[0] : $variant_alleles[1];
+	# 	my $var_reads = $record->{var_reads};
+	# 	my $alt_reads  = $total_reads - $record->{ref_reads} - $record->{var_reads};
+	# 	push @variant_reads, "$var_allele:$var_reads";
+	# 	push @variant_reads, "$alt_allele:$alt_reads";
+	# }
+	# else {
+	# 	push @variant_reads, ($variant_alleles[0] . ':' . $record->{var_reads});
+	# }
 
 	# Assign the total number of reads covering this position:
 	# total_reads=16
 
 	# Assign the genotype:
 	# genotype=homozygous
+	my $genotype = $self->get_genotype($reference_allele, \@variant_alleles);
 
 	# Assign the probability that the genotype call is correct:
 	# genotype_probability=0.667
+
+	# my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
 
 	# Any quality score given for this variant should be assigned
 	# to $score above (column 6 in GFF3).  Here you can assign a
 	# name for the type of score or algorithm used to calculate
 	# the sscore (e.g. phred_like, clcbio, illumina).
-	# score_type=soap
+	# score_type = 'illumina_snp';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -167,7 +199,11 @@ sub parse_record {
 	# reference_allele, variant_allele, reference_reads, variant_reads
 	# total_reads, genotype, genotype_probability and score type.
 	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => [$variant_allele],
+			  variant_allele   => \@variant_alleles,
+			  reference_reads  => [$reference_reads],
+			  variant_reads    => \@variant_reads,
+			  total_reads      => [$total_reads],
+			  genotype         => [$genotype],
 			  ID               => [$id],
 			 };
 
@@ -230,7 +266,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::soap_indel> requires no configuration files or environment variables.
+<GAL::Parser::illumina_snp> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
