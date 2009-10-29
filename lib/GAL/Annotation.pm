@@ -38,66 +38,203 @@ This document describes Annotation::GAL version 0.01
 
 =head2
 
-     Title   : new 
+     Title   : new
      Usage   : Annotation::GAL->new();
      Function: Creates a Annotation::GAL object;
      Returns : A Annotation::GAL object
-     Args    : 
+     Args    :
 
 =cut
 
 sub new {
-        my ($class, @args) = @_;
-        my $self = $class->SUPER::new;
-        $self->_initialize_args(@args);
-        $self->parse;
-        return $self;
+	my ($class, @args) = @_;
+	my $self = $class->SUPER::new;
+	$self->_initialize_args(@args);
+	$self->parse;
+	return $self;
 }
 
-#-----------------------------------------------------------------------------                                                                                                   
+#-----------------------------------------------------------------------------
 
 sub _initialize_args {
-        my ($self, @args) = @_;
+	my ($self, @args) = @_;
+
+	$self->SUPER::_initialize_args(@args);
 
 	my $args = $self->prepare_args(@args);
 
 	my @valid_attributes = qw(parse_file
-                                  add_feature
-                                  get_all_features
-                                  get_features_by_type
-                                  get_recursive_features_by_type
-                                  get_feature_by_id
-                                  filter_features
-                                 );
+				  add_feature
+				  get_all_features
+				  get_features_by_type
+				  get_recursive_features_by_type
+				  get_feature_by_id
+				  filter_features
+				 );
 
 	$self->set_attributes($args, @valid_attributes);
 
-	print '';
-
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 foo
+=head2 file
 
- Title   : foo 
- Usage   : $a = $self->foo();
- Function: Get/Set the value of foo.
- Returns : The value of foo.
- Args    : A value to set foo to.
+ Title   : file
+ Usage   : $a = $self->file();
+ Function: Get/Set the value of file.
+ Returns : The value of file.
+ Args    : A value to set file to.
 
 =cut
 
-sub foo {
-        my ($self, $value) = @_;
-        $self->{foo} = $value if defined $value;
-        return $self->{foo};
+sub file {
+	my ($self, $value) = @_;
+	$self->{file} = $value if defined $value;
+	return $self->{file};
 }
+
 #-----------------------------------------------------------------------------
 
-=head2 parse_file 
+=head2 feature_factory
 
- Title   : parse_file 
+ Title   : feature_factory
+ Usage   : $a = $self->feature_factory();
+ Function: Get/Set the Feature_Factory.  This is left as a public
+	   method to support future use of alternate factories, but
+	   this is currently not implimented so this method should be
+	   considered for internal use only.
+ Returns : The value of feature_factory.
+ Args    : A value to set feature_factory to.
+
+=cut
+
+################################################################################
+#
+# This should move to schema for inflation/deflation of features from the
+# database
+#
+################################################################################
+
+#-----------------------------------------------------------------------------
+
+sub feature_factory {
+	my ($self, $value) = @_;
+	$self->{feature_factory} = $value if defined $value;
+	$self->{feature_factory} ||= GAL::FeatureFactory->new();
+	return $self->{feature_factory};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 parser
+
+ Title   : parser
+ Usage   : $a = $self->parser();
+ Function: Get/Set the parser.  This is left as a public
+	   method to support future use of alternate parsers, but
+	   this is currently not implimented so this method should be
+	   considered for internal use only.
+ Returns : The value of parser.
+ Args    : A value to set parser to.
+
+=cut
+
+sub parser {
+	my ($self, $value) = @_;
+	$self->{parser} = $value if defined $value;
+	if (! $self->{parser}) {
+		my $parser = Text::RecordParser->new({filename         => $self->file,
+						      record_separator => $self->record_separator,
+						      field_separator  => $self->field_separator,
+						      comment          => $self->comment_delimiter,
+						     });
+		$parser->bind_fields($self->fields);
+		$self->{parser} = $parser;
+	}
+
+	return $self->{parser};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 get_all_features
+
+ Title   : get_all_features
+ Alias   : get_features
+ Usage   : $features = $self->get_all_features();
+ Function: Get all the features objects created by this parser.
+ Returns : A list of Feature objects.
+ Args    : N/A
+
+=cut
+
+#sub get_features {shift->get_all_features(@_)}
+
+#sub get_all_features {
+#	my $self = shift;
+#	$self->_parse_all_features unless $self->{features};
+#	return wantarray ? @{$self->{features}} : $self->{features};
+#}
+
+#-----------------------------------------------------------------------------
+
+=head2 _parse_all_features
+
+ Title   : _parse_all_features
+ Alias   : parse # Depricated but kept for backwards compatibility
+ Usage   : $a = $self->_parse_all_features();
+ Function: Parse and store all of the features in a file
+ Returns : N/A
+ Args    : N/A
+
+=cut
+
+sub parse {
+	my $self = shift;
+	$self->warn(message => ("The method GAL::Parser::parse is " .
+				"depricated.  Please use " .
+				"GAL::Parser::_parse_all_features " .
+				"instead.")
+		   );
+	return $self->_parse_all_features(@_);
+}
+
+sub _parse_all_features {
+
+	my $self = shift;
+
+	while (my $record = $self->_read_next_record) {
+
+		my $feature_hash = $self->parse_record($record);
+		next unless defined $feature_hash;
+		my $type = $feature_hash->{type};
+
+		################################################################################
+		#
+		# Here we should dump to the database via add_feature
+		# rather than create a feature
+		#
+		################################################################################
+		my $feature = $self->feature_factory->create($feature_hash);
+		push @{$self->{features}}, $feature;
+		################################################################################
+
+		}
+	return $self;
+}
+
+#-----------------------------------------------------------------------------
+
+################################################################################
+#
+# This should use the code _parse_all_features from above
+#
+################################################################################
+
+=head2 parse_file
+
+ Title   : parse_file
  Usage   : $self->parse_file();
  Function: Get/Set value of parse_file.
  Returns : Value of parse_file.
@@ -113,9 +250,18 @@ sub parse_file {
 
 #-----------------------------------------------------------------------------
 
-=head2 add_feature 
+################################################################################
+#
+# A subroutine for process_file that will parse and inflate features without
+# loading them to the database.
+#
+################################################################################
 
- Title   : add_feature 
+#-----------------------------------------------------------------------------
+
+=head2 add_feature
+
+ Title   : add_feature
  Usage   : $self->add_feature();
  Function: Get/Set value of add_feature.
  Returns : Value of add_feature.
@@ -131,9 +277,9 @@ sub add_feature {
 
 #-----------------------------------------------------------------------------
 
-=head2 get_all_features 
+=head2 get_all_features
 
- Title   : get_all_features 
+ Title   : get_all_features
  Usage   : $self->get_all_features();
  Function: Get/Set value of get_all_features.
  Returns : Value of get_all_features.
@@ -149,9 +295,9 @@ sub get_all_features {
 
 #-----------------------------------------------------------------------------
 
-=head2 get_features_by_type 
+=head2 get_features_by_type
 
- Title   : get_features_by_type 
+ Title   : get_features_by_type
  Usage   : $self->get_features_by_type();
  Function: Get/Set value of get_features_by_type.
  Returns : Value of get_features_by_type.
@@ -167,9 +313,9 @@ sub get_features_by_type {
 
 #-----------------------------------------------------------------------------
 
-=head2 get_recursive_features_by_type 
+=head2 get_recursive_features_by_type
 
- Title   : get_recursive_features_by_type 
+ Title   : get_recursive_features_by_type
  Usage   : $self->get_recursive_features_by_type();
  Function: Get/Set value of get_recursive_features_by_type.
  Returns : Value of get_recursive_features_by_type.
@@ -185,9 +331,9 @@ sub get_recursive_features_by_type {
 
 #-----------------------------------------------------------------------------
 
-=head2 get_feature_by_id 
+=head2 get_feature_by_id
 
- Title   : get_feature_by_id 
+ Title   : get_feature_by_id
  Usage   : $self->get_feature_by_id();
  Function: Get/Set value of get_feature_by_id.
  Returns : Value of get_feature_by_id.
@@ -203,9 +349,9 @@ sub get_feature_by_id {
 
 #-----------------------------------------------------------------------------
 
-=head2 filter_features 
+=head2 filter_features
 
- Title   : filter_features 
+ Title   : filter_features
  Usage   : $self->filter_features();
  Function: Get/Set value of filter_features.
  Returns : Value of filter_features.
@@ -219,6 +365,24 @@ sub filter_features {
   return $self->{filter_features};
 }
 
+
+#-----------------------------------------------------------------------------
+
+=head2 foo
+
+ Title   : foo
+ Usage   : $a = $self->foo();
+ Function: Get/Set the value of foo.
+ Returns : The value of foo.
+ Args    : A value to set foo to.
+
+=cut
+
+sub foo {
+	my ($self, $value) = @_;
+	$self->{foo} = $value if defined $value;
+	return $self->{foo};
+}
 
 #-----------------------------------------------------------------------------
 
@@ -300,9 +464,3 @@ SUCH DAMAGES.
 =cut
 
 1;
-
-
-
-
-
-
