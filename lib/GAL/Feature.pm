@@ -59,8 +59,6 @@ sub _initialize_args {
 
         $self->SUPER::_initialize_args(@args);
 
-	my $args = $self->prepare_args(@args);
-
 	my @valid_attributes = qw(seqid
 				  source
 				  type
@@ -71,6 +69,8 @@ sub _initialize_args {
 				  phase
 				  attributes
 				 );
+
+	my $args = $self->prepare_args(\@args, \@valid_attributes);
 
 	$self->set_attributes($args, @valid_attributes);
 

@@ -72,8 +72,8 @@ sub _initialize_args {
 
 sub throw {
 	my ($self, @args) = @_;
-
-	my $args = $self->prepare_args(@args);
+	my @valid_attributes = qw(message);
+	my $args = $self->prepare_args(\@args, \@valid_attributes);
 
 	my $caller = ref($self);
 
@@ -109,9 +109,9 @@ sub throw {
 =cut
 
 sub warn {
-	my ($self, @args) = @_;
-
-	my $args = $self->prepare_args(@args);
+	my $self = shift;
+	my @valid_attributes = qw(message);
+	my $args = $self->prepare_args(\@_, \@valid_attributes);
 
 	my $caller = ref($self);
 
@@ -201,21 +201,41 @@ sub first_word {
 =head2 prepare_args
 
  Title   : prepare_args
- Usage   : $args = $self->prepare_args(@args);
+ Usage   : $args = $self->prepare_args(\@_, \@valid_attributes);
  Function: Take a list of key value pairs that may be an array, hash or ref
 	   to either and return them as a hash or hash reference depending on
-	   calling context.
+	   calling context.  Optionally verify that args are valid.
  Returns : Hash or hash reference.
- Args    : An array, hash or reference to either of those containing key,
-	   value pairs.
+ Args    : Two array references.  The first can contain an array,
+	   hash or reference to either of those containing key,
+	   value pairs.  The second optional array reference contains
+           a list of valid attributes (arguments).
 
 =cut
 
 sub prepare_args {
 
-	my ($self, @args) = @_;
+	my ($self, $args, $valid_attributes) = @_;
 
 	my %args_hash;
+
+	if (ref $args ne 'ARRAY') {
+		my $message = 'First argument to prepare_args must be an array reference';
+		$self->throw(message => $message);
+	}
+	my @args = @{$args};
+
+	if ($valid_attributes) {
+		if (ref $valid_attributes ne 'ARRAY') {
+			my $message = 'Second argument to prepare_args must be an array reference';
+			$self->throw(message => $message);
+		}
+		my %valid_attributes = map {$_, 1} @{$valid_attributes};
+		my $invalid_attributes = join ', ', grep {! $valid_attributes{$_}} @args;
+		if ($invalid_attributes) {
+			$self->throw(message => "Invalid attributes: $invalid_attributes");
+		}
+	}
 
 	if (scalar @args == 1 && ref $args[0] eq 'ARRAY') {
 		%args_hash = @{$args[0]};
@@ -230,7 +250,7 @@ sub prepare_args {
 	else {
 		my $class = ref($self);
 		my $error = join "\n",
-		  ("Bad arguments passed to ${class}->new",
+		  ("Bad arguments passed to $class",
 		   "We always expect a list of key value pairs or a",
 		   "reference to such a list, But we got:\n",
 		   @args);
@@ -246,10 +266,10 @@ sub prepare_args {
  Title   : set_attributes
  Usage   : $args = $self->set_attributes($args, @valid_attributes);
  Function: Take a hash reference of arguments and a list of valid attribute
-           names and call the methods to set those attribute values.
+	   names and call the methods to set those attribute values.
  Returns : N/A
  Args    : A hash reference of arguments and an array or array reference of
-           valid attributes names.
+	   valid attributes names.
 
 =cut
 
@@ -269,7 +289,7 @@ sub set_attributes {
 		if (exists $self->{$attribute}) {
 			my $package = __PACKAGE__;
 			my $caller = ref($self);
-			my $warning_message = 
+			my $warning_message =
 			  ("$package is about to reset the value of $attribute " .
 			   "on behalf of a $caller object.  This is probably "   .
 			   "a bad idea.");
@@ -322,6 +342,28 @@ sub expand_iupac_nt_codes {
 	my $nts = $iupac_code_map{$code};
 
 	return wantarray ? @{$nts} : $nts;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 load_module
+
+ Title   : load_module
+ Usage   : $self->load_module(Some::Module);
+ Function: Do runtime loading (require) of a module/class.
+ Returns : 1 on success - throws exception on failure.
+ Args    : A valid module name.
+
+=cut
+
+sub load_module {
+
+	my ($self, $module_name) = @_;
+	eval{require $module_name};
+	$self->throw("Failed to load $module_name in " .
+		     ref $self .
+		     ":\n$@\n") if $@;
+	return 1;
 }
 
 #-----------------------------------------------------------------------------

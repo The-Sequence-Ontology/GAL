@@ -57,152 +57,80 @@ sub new {
 #-----------------------------------------------------------------------------
 
 sub _initialize_args {
-	my ($self, @args) = @_;
+	my $self = shift;
 
-	$self->SUPER::_initialize_args(@args);
+	$self->SUPER::_initialize_args(@_);
 
-	my $args = $self->prepare_args(@args);
-
-	my @valid_attributes = qw(parse_file
-				  add_feature
-				  get_all_features
-				  get_features_by_type
-				  get_recursive_features_by_type
-				  get_feature_by_id
-				  filter_features
+	my @valid_attributes = qw(dsn
+                                  parser
 				 );
 
-	$self->set_attributes($args, @valid_attributes);
+	my $args = $self->prepare_args(\@args, \@valid_attributes);
+
+	$self->set_attributes($args, \@valid_attributes);
 
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 file
+=head2 dsn
 
- Title   : file
- Usage   : $a = $self->file();
- Function: Get/Set the value of file.
- Returns : The value of file.
- Args    : A value to set file to.
+ Title   : dsn
+ Usage   : $a = $self->dsn();
+ Function: Get/Set the value of dsn.
+ Returns : The value of dsn.
+ Args    : A value to set dsn to.
 
 =cut
 
-sub file {
+sub dsn {
 	my ($self, $value) = @_;
-	$self->{file} = $value if defined $value;
-	return $self->{file};
+	$self->{dsn} = $value if defined $value;
+	return $self->{dsn};
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 feature_factory
+=head2 _parser
 
- Title   : feature_factory
- Usage   : $a = $self->feature_factory();
- Function: Get/Set the Feature_Factory.  This is left as a public
-	   method to support future use of alternate factories, but
-	   this is currently not implimented so this method should be
-	   considered for internal use only.
- Returns : The value of feature_factory.
- Args    : A value to set feature_factory to.
+ Title   : _parser
+ Usage   : $a = $self->_parser();
+ Function: Get/Set the parser.
+ Returns : The parser object.
+ Args    : A GAL::Parser subclass object or sublcass name.
 
 =cut
 
-################################################################################
-#
-# This should move to schema for inflation/deflation of features from the
-# database
-#
-################################################################################
-
-#-----------------------------------------------------------------------------
-
-sub feature_factory {
-	my ($self, $value) = @_;
-	$self->{feature_factory} = $value if defined $value;
-	$self->{feature_factory} ||= GAL::FeatureFactory->new();
-	return $self->{feature_factory};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 parser
-
- Title   : parser
- Usage   : $a = $self->parser();
- Function: Get/Set the parser.  This is left as a public
-	   method to support future use of alternate parsers, but
-	   this is currently not implimented so this method should be
-	   considered for internal use only.
- Returns : The value of parser.
- Args    : A value to set parser to.
-
-=cut
-
-sub parser {
-	my ($self, $value) = @_;
-	$self->{parser} = $value if defined $value;
-	if (! $self->{parser}) {
-		my $parser = Text::RecordParser->new({filename         => $self->file,
-						      record_separator => $self->record_separator,
-						      field_separator  => $self->field_separator,
-						      comment          => $self->comment_delimiter,
-						     });
-		$parser->bind_fields($self->fields);
-		$self->{parser} = $parser;
+sub _parser {
+	my $self = shift;
+	my @valid_args = qw(file class);
+	my $args = $self->prepare_args(\@_, \@valid_args);
+	my $class = $args->{class};
+	if ($parser && ! ref $parser) {
+		my $parser_class = $parser;
+		$self->load_module($class);
+		$parser = $parser_class->new;
 	}
-
-	return $self->{parser};
+	$self->{_parser} = $value if defined $parser;
+	return $self->{_parser};
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 get_all_features
+=head2 load_file
 
- Title   : get_all_features
- Alias   : get_features
- Usage   : $features = $self->get_all_features();
- Function: Get all the features objects created by this parser.
- Returns : A list of Feature objects.
- Args    : N/A
-
-=cut
-
-#sub get_features {shift->get_all_features(@_)}
-
-#sub get_all_features {
-#	my $self = shift;
-#	$self->_parse_all_features unless $self->{features};
-#	return wantarray ? @{$self->{features}} : $self->{features};
-#}
-
-#-----------------------------------------------------------------------------
-
-=head2 _parse_all_features
-
- Title   : _parse_all_features
- Alias   : parse # Depricated but kept for backwards compatibility
- Usage   : $a = $self->_parse_all_features();
+ Title   : load_file
+ Usage   : $a = $self->load_file();
  Function: Parse and store all of the features in a file
  Returns : N/A
- Args    : N/A
+ Args    : A file
 
 =cut
 
-sub parse {
-	my $self = shift;
-	$self->warn(message => ("The method GAL::Parser::parse is " .
-				"depricated.  Please use " .
-				"GAL::Parser::_parse_all_features " .
-				"instead.")
-		   );
-	return $self->_parse_all_features(@_);
-}
-
-sub _parse_all_features {
+sub load_file {
 
 	my $self = shift;
+	$self->_parser(@_);
 
 	while (my $record = $self->_read_next_record) {
 

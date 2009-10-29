@@ -6,7 +6,6 @@ use vars qw($VERSION);
 
 $VERSION = '0.01';
 use base qw(GAL::Base);
-use GAL::FeatureFactory;
 use Text::RecordParser;
 
 =head1 NAME
@@ -74,14 +73,14 @@ sub _initialize_args {
 
 	$self->SUPER::_initialize_args(@args);
 
-	my $args = $self->prepare_args(@args);
-
 	my @valid_attributes = qw(file
 				  record_separator
 				  field_separator
 				  comment_delimiter
 				  fields
 				 );
+
+	my $args = $self->prepare_args(\@args, \@valid_attributes);
 
 	$self->set_attributes($args, @valid_attributes);
 
@@ -105,26 +104,6 @@ sub file {
 	return $self->{file};
 }
 
-=head2 feature_factory
-
- Title   : feature_factory
- Usage   : $a = $self->feature_factory();
- Function: Get/Set the Feature_Factory.  This is left as a public
-	   method to support future use of alternate factories, but
-	   this is currently not implimented so this method should be
-	   considered for internal use only.
- Returns : The value of feature_factory.
- Args    : A value to set feature_factory to.
-
-=cut
-
-sub feature_factory {
-	my ($self, $value) = @_;
-	$self->{feature_factory} = $value if defined $value;
-	$self->{feature_factory} ||= GAL::FeatureFactory->new();
-	return $self->{feature_factory};
-}
-
 #-----------------------------------------------------------------------------
 
 =head2 parser
@@ -144,6 +123,9 @@ sub parser {
 	my ($self, $value) = @_;
 	$self->{parser} = $value if defined $value;
 	if (! $self->{parser}) {
+		if (! $self->file) {
+			$self->throw('Tried to create a ' . ref $self . 'without a file to parse');
+		}
 		my $parser = Text::RecordParser->new({filename         => $self->file,
 						      record_separator => $self->record_separator,
 						      field_separator  => $self->field_separator,

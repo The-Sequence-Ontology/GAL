@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use lib '../';
+use DBIx::Class::ResultClass::HashRefInflator;
 
 # This script uses DBIx::Class::ResultClass::HashRefInflator to skip
 # object creation.  It can process 4 million features in about 1.6

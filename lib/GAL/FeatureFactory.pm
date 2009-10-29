@@ -58,10 +58,10 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-	my $args = $self->prepare_args(@args);
-
 	my @valid_attributes = qw(type
 				 );
+
+	my $args = $self->prepare_args(\@args, \@valid_attributes);
 
 	$self->set_attributes($args, @valid_attributes);
 
@@ -161,9 +161,10 @@ sub type {
 
 sub create {
 	my ($self, @args) = @_;
-	my $args = $self->prepare_args(@args);
+	my @valid_attributes = qw(type);
+	my $args = $self->prepare_args(\@args, \@valid_attributes);
 	my $type = "GAL::Feature::" . $self->type($args->{type});
-	eval "require $type";
+	$self->load_module($type);
 	return $type->new(@args);
 }
 

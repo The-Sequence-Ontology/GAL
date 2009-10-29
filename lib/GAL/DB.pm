@@ -59,14 +59,14 @@ sub _initialize_args {
 
 	$self->SUPER::_initialize_args(@args);
 
-	my $args = $self->prepare_args(@args);
-
 	my @valid_attributes = qw(file
 				  record_separator
 				  field_separator
 				  comment_delimiter
 				  fields
 				 );
+
+	my $args = $self->prepare_args(\@args, \@valid_attributes);
 
 	$self->set_attributes($args, @valid_attributes);
 }
