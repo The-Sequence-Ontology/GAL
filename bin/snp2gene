@@ -138,13 +138,14 @@ for my $gene_id (keys %{$ds}) {
 
 
 		my $ref_allele = $dbh->selectall_arrayref($sth_ref, {}, ($snp_id));
-		$ref_allele = $ref_allele->[0][0];
+		$ref_allele = $ref_allele->[0][0] || '';
 
 		my $var_reference = $dbh->selectall_arrayref($sth_var, {}, ($snp_id));;
 		my %var_hash = map {$_->[0], 1} @{$var_reference};
 		my @var_alleles = grep {$_ ne $ref_allele} keys %var_hash;
 
-		my $alleles = join '/', ($ref_allele, @var_alleles);
+		# my $alleles = join '/', ($ref_allele, @var_alleles);
+		my $alleles = join '/', (@var_alleles);
 
 		print  $SNP join "\t", ($subject,
 					$ctg_id,

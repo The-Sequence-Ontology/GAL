@@ -44,6 +44,7 @@ Options:
                  Default is all types.
   compact:       Print output in compact form.
   expanded:      Print output in expanded form.
+  ids:           Print the IDs of all pair of overlapping features.
   user:          The user name of the database owner. [system username]
   password:      The password for the database (if the database is password
                  protected).
@@ -62,12 +63,15 @@ Notes:
   SNP_ID_002    intron
   SNP_ID_002    three_prime_cis_splice_site
 
+  IDs output example:
+  SNP_ID_001    NM_012345
+  SNP_ID_001    FBgn012345
 
 ";
 
 
 my ($help, $feature_dsn, @feature_types, $query_dsn, @query_types,
-    $compact, $expanded, $user, $password);
+    $compact, $expanded, $ids, $user, $password);
 my $opt_success = GetOptions('help'           => \$help,
 			     'feature_dsn=s'  => \$feature_dsn,
 			     'feature_type=s' => \@feature_types,
@@ -77,6 +81,7 @@ my $opt_success = GetOptions('help'           => \$help,
 			     'expanded'       => \$expanded,
 			     'user=s'         => \$user,
 			     'password=s'     => \$password,
+			     'ids'            => \$ids,
 			    );
 
 die $usage if $help || ! $opt_success;
@@ -95,6 +100,7 @@ my $feature_sth = $feature_dbh->prepare("SELECT seqid, feature_id, type, start, 
 my $query_type_text   = join ', ', map {"'$_'"} @query_types;
 my $query_where = $query_type_text ? "type IN ($query_type_text) AND" : '';
 my $query_sth  = $query_dbh->prepare("SELECT DISTINCT(type) FROM feature WHERE seqid = ? AND $query_where ((start >= ? AND start <= ?) OR (start <= ? AND end >= ?))");
+my $ids_sth  = $query_dbh->prepare("SELECT feature_id FROM feature WHERE seqid = ? AND $query_where ((start >= ? AND start <= ?) OR (start <= ? AND end >= ?))");
 
 my $features = $feature_dbh->selectall_arrayref($feature_sth);
 
@@ -102,26 +108,41 @@ for my $feature (@{$features}) {
 
 	my ($seqid, $feature_id, $feature_type, $feature_start, $feature_end) = @{$feature};
 
-	my $types_ref = $query_dbh->selectall_arrayref($query_sth, {}, ($seqid,
-									$feature_start,
-									$feature_end,
-									$feature_start,
-									$feature_start,
-								       )
-						      );
+	my $overlaps_ref;
+	if ($ids) {
+		$overlaps_ref = $query_dbh->selectall_arrayref($ids_sth, {}, ($seqid,
+									      $feature_start,
+									      $feature_end,
+									      $feature_start,
+									      $feature_start,
+									     )
+							      );
+	}
+	else {
+		$overlaps_ref = $query_dbh->selectall_arrayref($query_sth, {}, ($seqid,
+										$feature_start,
+										$feature_end,
+										$feature_start,
+										$feature_start,
+									       )
+							      );
+	}
 
-	my @types;
-	map{push @types, @{$_}} @{$types_ref};
-	push @types, 'NO_OVERLAP' unless scalar @types;
+	my @overlaps;
+	map{push @overlaps, @{$_}} @{$overlaps_ref};
+	push @overlaps, 'NO_OVERLAP' unless scalar @overlaps;
 
 	if ($expanded) {
-		for my $type (@types) {
-			print "$feature_id\t$feature_type\t$type\n";
+		for my $overlap (@overlaps) {
+			print "$feature_id\t";
+			print "$feature_type\t" unless $ids;
+			print "$overlap\n";
 		}
 	}
 	else {
-		print "$feature_id\t$feature_type\t";
-		print join ' ', @types;
+		print "$feature_id\t";
+		print "$feature_type\t" unless $ids;
+		print join ' ', @overlaps;
 		print "\n";
 	}
 }
