@@ -1,0 +1,316 @@
+package GAL::Parser::soap_snp;
+
+use strict;
+use vars qw($VERSION);
+
+
+$VERSION = '0.01';
+use base qw(GAL::Parser);
+
+=head1 NAME
+
+GAL::Parser::soap_snp - <One line description of module's purpose here>
+
+=head1 VERSION
+
+This document describes GAL::Parser::soap_snp version 0.01
+
+=head1 SYNOPSIS
+
+     use GAL::Parser::soap_snp;
+
+=for author to fill in:
+     Brief code example(s) here showing commonest usage(s).
+     This section will be as far as many users bother reading
+     so make it as educational and exemplary as possible.
+
+=head1 DESCRIPTION
+
+=for author to fill in:
+     Write a full description of the module and its features here.
+     Use subsections (=head2, =head3) as appropriate.
+
+=head1 METHODS
+
+=cut
+
+#-----------------------------------------------------------------------------
+
+=head2
+
+     Title   : new
+     Usage   : GAL::Parser::soap_snp->new();
+     Function: Creates a GAL::Parser::soap_snp object;
+     Returns : A GAL::Parser::soap_snp object
+     Args    :
+
+=cut
+
+sub new {
+	my ($class, @args) = @_;
+	my $self = $class->SUPER::new(@args);
+	return $self;
+}
+
+#-----------------------------------------------------------------------------
+
+sub _initialize_args {
+	my ($self, @args) = @_;
+
+	$self->SUPER::_initialize_args(@args);
+
+	my $args = $self->prepare_args(@args);
+
+	my @valid_attributes = qw();
+
+	$self->set_attributes($args, @valid_attributes);
+
+	# Set the column headers from your incoming data file here
+	# These will become the keys in your $record hash reference below.
+	$self->fields([qw(seqid source type start end score strand phase attributes)]);
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 parse_record
+
+ Title   : parse_record
+ Usage   : $a = $self->parse_record();
+ Function: Parse the data from a record.
+ Returns : A hash ref needed by Feature.pm to create a Feature object
+ Args    : A hash ref of fields that this sub can understand (In this case GFF3).
+
+=cut
+
+sub parse_record {
+	my ($self, $record) = @_;
+
+	# $record is a hash reference that contains the keys assigned
+	# in the $self->fields call in _initialize_args above
+
+	# Fill in the first 8 columns for GFF3
+	# See http://www.sequenceontology.org/resources/gff3.html for details.
+	my $original_atts = $self->parse_attributes($record->{attributes});
+
+	my $id         = $original_atts->{ID}[0];
+	my $seqid      = $record->{seqid};
+	my $source     = $record->{source};
+	my $type       = $record->{type};
+	my $start      = $record->{start};
+	my $end        = $record->{end};
+	my $score      = $record->{score};
+	my $strand     = $record->{strand};
+	my $phase      = $record->{phase};
+
+	# chr1SoapSnpSNPSNP4793479325+.ID=YHSNP0128643; status=novel; ref=A; allele=A/G; support1=48; support2=26;
+	# chr1SoapSNPSNP6434643448+.ID=YHSNP0128644; status=novel; ref=G; allele=A/G; support1=10; support2=11;
+	# chr1SoapSNPSNP938969389651+.ID=rs4287120; status=dbSNP; ref=T; allele=C/T; support1=5; support2=4; location=MSTB1:LTR/MaLR;
+	# chr1SoapSNPSNP22570722570743+.ID=rs6603780; status=dbSNP; ref=C; allele=C/G; support1=23; support2=12;
+	# chr1SoapSNPSNP22583922583931+.ID=rs6422503; status=dbSNP; ref=C; allele=A/C; support1=13; support2=5; location=L1P2:LINE/L1;
+	# chr1SoapSNPSNP52684952684976+.ID=YHSNP0128645; status=novel; ref=G; allele=G/T; support1=14; support2=12; location=L1MD3:LINE/L1;
+	# chr1SoapSNPSNP55473155473130+.ID=rs1832728; status=dbSNP; ref=T; allele=C/T; support1=37; support2=12; location=Mitochondrial:Mt-tRNA;
+	# chr1SoapSNPSNP55535355535328+.ID=rs7349153; status=dbSNP; ref=T; allele=C/T; support1=37; support2=9;
+	# chr1SoapSNPSNP55537155537122+.ID=rs9283150; status=dbSNP; ref=G; allele=A/G; support1=46; support2=27;
+	# chr1SoapSNPSNP55677955677945+.ID=rs3949348; status=dbSNP; ref=A; allele=A/G; support1=37; support2=13;
+
+	# Create the attributes hash
+
+	# Assign the reference and variant allele sequences:
+	# reference_allele=A
+	# variant_allele=G
+	my $reference_allele = $original_atts->{ref}[0];
+	my @variant_alleles  = split m|/|, $original_atts->{allele}[0];
+
+	# Assign the reference and variant allele read counts:
+	# reference_reads=A:7
+	# variant_reads=G:8
+
+	my @variant_reads = ($variant_alleles[0] . ':' . $original_atts->{support1}[0],
+			     $variant_alleles[1] . ':' . $original_atts->{support2}[0],
+			    );
+
+	my ($reference_reads) = grep {$_ =~ /^$reference_allele:\d+/} @variant_reads;
+	$reference_reads ||= 0;
+
+	# reference_reads;
+	# if ($reference_allele eq $variant_alleles[0]) {
+	# 	$reference_reads = $reference_allele . ':' . $original_atts->{support1}[0];
+	# 	# Remove a variant if it is equal to the reference.
+	# 	shift @variant_alleles;
+	# 	shift @variant_reads;
+	# }
+	# elsif ($reference_allele eq $variant_alleles[1]) {
+	# 	# Remove a variant if it is equal to the reference.
+	# 	$reference_reads = $reference_allele . ':' . $original_atts->{support2}[0];
+	# 	pop @variant_alleles;
+	# 	pop @variant_reads;
+	# }
+	# else {
+	# 	$reference_reads = 0;
+	# }
+
+	if (scalar @variant_alleles == 2 &&
+	    $variant_alleles[0] eq $variant_alleles[1]) {
+
+		# Remove a variant if it is equal to the other variant.
+		pop @variant_alleles;
+		pop @variant_reads;
+	}
+
+	# Assign the total number of reads covering this position:
+	# total_reads=16
+
+	my $total_reads;
+	map {my ($allele, $reads) = split /:/, $_;$total_reads += $reads} (@variant_reads); #, $reference_reads);
+
+	# Assign the genotype:
+	# genotype=homozygous
+
+	my $genotype = $self->get_genotype($reference_allele, \@variant_alleles);
+
+	# Assign the probability that the genotype call is correct:
+	# genotype_probability=0.667
+
+	# Any quality score given for this variant should be assigned
+	# to $score above (column 6 in GFF3).  Here you can assign a
+	# name for the type of score or algorithm used to calculate
+	# the sscore (e.g. phred_like, clcbio, illumina).
+	# score_type=soap
+
+	# Create the attribute hash reference.  Note that all values
+	# are array references - even those that could only ever have
+	# one value.  This is for consistency in the interface to
+	# Features.pm and it's subclasses.  Suggested keys include
+	# (from the GFF3 spec), but are not limited to: ID, Name,
+	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
+	# Ontology_term. Note that attribute names are case
+	# sensitive. "Parent" is not the same as "parent". All
+	# attributes that begin with an uppercase letter are reserved
+	# for later use. Attributes that begin with a lowercase letter
+	# can be used freely by applications.
+
+	# For sequence_alteration features the suggested keys include:
+	# reference_allele, variant_allele, reference_reads, variant_reads
+	# total_reads, genotype, genotype_probability and score type.
+	my $attributes = {reference_allele => [$reference_allele],
+			  reference_reads  => [$reference_reads],
+			  variant_allele   => \@variant_alleles,
+			  variant_reads    => \@variant_reads,
+			  total_reads      => [$total_reads],
+			  genotype         => [$genotype],
+			  ID               => [$id],
+			 };
+
+	my $feature_data = {id         => $id,
+			    seqid      => $seqid,
+			    source     => $source,
+			    type       => $type,
+			    start      => $start,
+			    end        => $end,
+			    score      => $score,
+			    strand     => $strand,
+			    phase      => $phase,
+			    attributes => $attributes,
+			   };
+
+	return $feature_data;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 foo
+
+ Title   : foo
+ Usage   : $a = $self->foo();
+ Function: Get/Set the value of foo.
+ Returns : The value of foo.
+ Args    : A value to set foo to.
+
+=cut
+
+sub foo {
+	my ($self, $value) = @_;
+	$self->{foo} = $value if defined $value;
+	return $self->{foo};
+}
+
+#-----------------------------------------------------------------------------
+
+=head1 DIAGNOSTICS
+
+=for author to fill in:
+     List every single error and warning message that the module can
+     generate (even the ones that will "never happen"), with a full
+     explanation of each problem, one or more likely causes, and any
+     suggested remedies.
+
+=over
+
+=item C<< Error message here, perhaps with %s placeholders >>
+
+[Description of error here]
+
+=item C<< Another error message here >>
+
+[Description of error here]
+
+[Et cetera, et cetera]
+
+=back
+
+=head1 CONFIGURATION AND ENVIRONMENT
+
+<GAL::Parser::soap_snp> requires no configuration files or environment variables.
+
+=head1 DEPENDENCIES
+
+None.
+
+=head1 INCOMPATIBILITIES
+
+None reported.
+
+=head1 BUGS AND LIMITATIONS
+
+No bugs have been reported.
+
+Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu
+
+=head1 AUTHOR
+
+Barry Moore <barry.moore@genetics.utah.edu>
+
+=head1 LICENCE AND COPYRIGHT
+
+Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+
+    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself.
+
+=head1 DISCLAIMER OF WARRANTY
+
+BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+=cut
+
+1;
