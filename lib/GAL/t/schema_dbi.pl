@@ -11,7 +11,7 @@ use lib '../';
 use DBI;
 
 my $dbh = DBI->connect('DBI:mysql:database=pg_chinese_snp');
-my $statement = 'select f.feature_id, a.att_value from feature f, attribute a where f.feature_id = a.feature_id and a.att_key = "reference_allele"';
+my $statement = 'select f.feature_id, a.value from feature f, attribute a where f.feature_id = a.feature_id and a.key = "reference_allele"';
 my $sth   = $dbh->prepare($statement);
 my $rv = $sth->execute;
 while (my @row = $sth->fetchrow_array) {

@@ -36,7 +36,7 @@ This document describes GAL::Parser::baylor version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : GAL::Parser::baylor->new();
@@ -57,63 +57,65 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-	$self->SUPER::_initialize_args(@args);
+	######################################################################
+	# This block of code handels class attributes.  Use the
+	# @valid_attributes below to define the valid attributes for
+	# this class.  You must have identically named get/set methods
+	# for each attribute.  Leave the rest of this block alone!
+	######################################################################
+	my $args = $self->SUPER::_initialize_args(@args);
+	my @valid_attributes = qw(); # Set valid class attributes here.
+	$self->set_attributes($args, @valid_attributes);
+	######################################################################
 
-	my $args = $self->prepare_args(@args);
-
-	my @valid_attributes = qw();
-
-# The columns are:
-#
-# BCM_local_SNP_ID -- unique ID for referring to the SNPs ahead of
-# submission to dbSNP (we can talk about what and when to submit to
-# dbSNP).
-#
-# chromosome --  (self explanatory)
-#
-# coordinate -- (self explanatory)
-#
-# reference_allele -- plus strand reference base
-#
-# variant_allele -- plus strand variant base
-#
-# match_status -- a Y, N or "." if a dbSNP allele, Y if the variant
-# matches the dbSNP allele, or N if it doesn't; a "." if it's a novel
-# SNP.
-#
-# rs# -- the rsid if dbSNP, "novel" otherwise.
-#
-# alternate_allele -- usually a "." (surrogate for null). A, C, T or G
-# if a third allele is seen in the reads at the given position, it's
-# listed here.  I'm don't expect you to dis play 3d allele
-# information.
-#
-# variant_count -- number of reads in which variant allele was
-# seen. Can be 1 variants matching dbSNP alleles ("Y" in match_status
-# column), must be 2 for novel alleles, for dbSNP positions that don't
-# match the dbSNP alleles ("N" in match_status column) or for dbSNP
-# positions where there is an alternate allele.
-#
-# alternate_allele_count -- number of reads in which an
-# alternate_allele is seen. Generally these are seen in only one read
-# and are probably errors, and should not be mentioned. I n some rare
-# instances (134 times), both the variant allele and the alternate
-# allele are seen multiple times.
-#
-# total_coverage -- the total number of reads at a given SNP position.
-#
-# "genotype" -- "het" if the reference allele is seen at least
-# once. "." (null) if not. These are the sites that are confidently
-# heterozygotes. The others provisionally homozygote s, and in cases
-# where the coverage is deep enough probably they are.
+	# The columns are:
+	#
+	# BCM_local_SNP_ID -- unique ID for referring to the SNPs ahead of
+	# submission to dbSNP (we can talk about what and when to submit to
+	# dbSNP).
+	#
+	# chromosome --  (self explanatory)
+	#
+	# coordinate -- (self explanatory)
+	#
+	# reference_allele -- plus strand reference base
+	#
+	# variant_allele -- plus strand variant base
+	#
+	# match_status -- a Y, N or "." if a dbSNP allele, Y if the variant
+	# matches the dbSNP allele, or N if it doesn't; a "." if it's a novel
+	# SNP.
+	#
+	# rs# -- the rsid if dbSNP, "novel" otherwise.
+	#
+	# alternate_allele -- usually a "." (surrogate for null). A, C, T or G
+	# if a third allele is seen in the reads at the given position, it's
+	# listed here.  I'm don't expect you to dis play 3d allele
+	# information.
+	#
+	# variant_count -- number of reads in which variant allele was
+	# seen. Can be 1 variants matching dbSNP alleles ("Y" in match_status
+	# column), must be 2 for novel alleles, for dbSNP positions that don't
+	# match the dbSNP alleles ("N" in match_status column) or for dbSNP
+	# positions where there is an alternate allele.
+	#
+	# alternate_allele_count -- number of reads in which an
+	# alternate_allele is seen. Generally these are seen in only one read
+	# and are probably errors, and should not be mentioned. I n some rare
+	# instances (134 times), both the variant allele and the alternate
+	# allele are seen multiple times.
+	#
+	# total_coverage -- the total number of reads at a given SNP position.
+	#
+	# "genotype" -- "het" if the reference allele is seen at least
+	# once. "." (null) if not. These are the sites that are confidently
+	# heterozygotes. The others provisionally homozygote s, and in cases
+	# where the coverage is deep enough probably they are.
 
 	$self->fields([qw(id chromosome coordinate reference_allele
 			  variant_allele match_status rsid alternate_allele
 			  variant_count alternate_allele_count
 			  total_coverage genotype)]);
-
-	$self->set_attributes($args, @valid_attributes);
-
 }
 
 #-----------------------------------------------------------------------------

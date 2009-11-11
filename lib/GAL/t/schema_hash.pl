@@ -22,10 +22,10 @@ while (my $feature = $feature_rs->next) {
 	my $id         = $feature->{feature_id};
 
 	my $ref_allele_rs = $attributes_rs->search({feature_id => $id,
-						    att_key    => 'reference_allele'});
+						    key    => 'reference_allele'});
 	$ref_allele_rs->result_class('DBIx::Class::ResultClass::HashRefInflator');
 	my $ref_allele_hash = $ref_allele_rs->first;
-	my $ref_allele = $ref_allele_hash->{att_value};
+	my $ref_allele = $ref_allele_hash->{value};
 
 	print "$id\t$ref_allele\n";
 }

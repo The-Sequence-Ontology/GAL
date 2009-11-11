@@ -35,7 +35,7 @@ This document describes GAL::Base version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : GAL::Base->new();
@@ -55,7 +55,9 @@ sub new {
 #-----------------------------------------------------------------------------
 
 sub _initialize_args {
-
+	my ($self, @args) = @_;
+        my $args = $self->prepare_args(\@args);
+	return $args;
 }
 
 #-----------------------------------------------------------------------------
@@ -136,10 +138,10 @@ sub warn {
 
 #-----------------------------------------------------------------------------
 
-=head2 wrap
+=head2 wrap_text
 
- Title   : wrap
- Usage   : $text = $self->wrap($text, 50);
+ Title   : wrap_text
+ Usage   : $text = $self->wrap_text($text, 50);
  Function: Wrap text to the specified column width.
  Returns : Wrapped text
  Args    : A string of text and an integer value.
@@ -225,18 +227,6 @@ sub prepare_args {
 	}
 	my @args = @{$args};
 
-	if ($valid_attributes) {
-		if (ref $valid_attributes ne 'ARRAY') {
-			my $message = 'Second argument to prepare_args must be an array reference';
-			$self->throw(message => $message);
-		}
-		my %valid_attributes = map {$_, 1} @{$valid_attributes};
-		my $invalid_attributes = join ', ', grep {! $valid_attributes{$_}} @args;
-		if ($invalid_attributes) {
-			$self->throw(message => "Invalid attributes: $invalid_attributes");
-		}
-	}
-
 	if (scalar @args == 1 && ref $args[0] eq 'ARRAY') {
 		%args_hash = @{$args[0]};
 	}
@@ -256,6 +246,19 @@ sub prepare_args {
 		   @args);
 		$self->throw(message => $error);
 	}
+
+	if ($valid_attributes) {
+		if (ref $valid_attributes ne 'ARRAY') {
+			my $message = 'Second argument to prepare_args must be an array reference';
+			$self->throw(message => $message);
+		}
+		my %valid_attributes = map {$_, 1} @{$valid_attributes};
+		my $invalid_attributes = join ', ', grep {! $valid_attributes{$_}} keys %args_hash;
+		if ($invalid_attributes) {
+			$self->throw(message => "Invalid attributes: $invalid_attributes");
+		}
+	}
+
 	return wantarray ? %args_hash : \%args_hash;
 }
 
@@ -308,10 +311,10 @@ sub set_attributes {
 
 #-----------------------------------------------------------------------------
 
-=head2 expand_nucleotide_ambiguity
+=head2 expand_iupac_nt_codes
 
- Title   : expand_nucleotide_ambiguity
- Usage   : @nucleotides = $self->expand_nucleotide_ambiguity('W');
+ Title   : expand_iupac_nt_codes
+ Usage   : @nucleotides = $self->expand_iupac_nt_codes('W');
  Function: Expands and IUPAC ambiguity codes to an array of nucleotides
  Returns : An array or array ref of nucleotides
  Args    : An IUPAC Nucleotide ambiguity code
@@ -359,7 +362,7 @@ sub expand_iupac_nt_codes {
 sub load_module {
 
 	my ($self, $module_name) = @_;
-	eval{require $module_name};
+	eval "require $module_name";
 	$self->throw("Failed to load $module_name in " .
 		     ref $self .
 		     ":\n$@\n") if $@;

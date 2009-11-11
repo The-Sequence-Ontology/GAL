@@ -1,12 +1,12 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More 'no_plan'; # tests => 10;
+use Test::More tests => 3;
 
 BEGIN {
-	use lib '../';
+	use lib '../../';
 	#TEST 1
-	use_ok('GAL::DB');
+	use_ok('GAL::Class');
 }
 
 my $path = $0;
@@ -14,7 +14,17 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $obj = GAL::DB->new();
+# TEST 2
+my $object = GAL::Class->new();
+isa_ok($object, 'GAL::Class');
+
+# To get a list of all of the subs and throws:
+# Select an empty line and then: C-u M-| grep -nP '^sub ' ../Class.pm
+# Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Class.pm
+
+# TEST 3
+
+
 
 ################################################################################
 ################################# Ways to Test #################################
@@ -22,6 +32,9 @@ my $obj = GAL::DB->new();
 
 __END__
 
+
+
+=head3
 # Various other ways to say "ok"
 ok($this eq $that, $test_name);
 
@@ -45,3 +58,4 @@ pass($test_name);
 fail($test_name);
 
 BAIL_OUT($why);
+=cut

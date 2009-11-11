@@ -1,8 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 
-use Test::More 'no_plan'; # tests => 10;
-
+use Test::More tests => 4;
 
 BEGIN {
 	use lib '../../';
@@ -20,8 +19,11 @@ my $parser = GAL::Parser::solid->new(file => 'data/solid.gff');
 # TEST 2
 isa_ok($parser, 'GAL::Parser::solid');
 
-# TEST 3
-ok($parser->get_features, 'parser->get_features');
+# Test 3
+ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
+
+# TEST 4
+ok($parser->parse_record($record), '$parser->parse_record');
 
 ################################################################################
 ################################# Ways to Test #################################

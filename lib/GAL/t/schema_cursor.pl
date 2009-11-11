@@ -18,7 +18,7 @@ my $feature_cursor = $feature_rs->cursor;
 while (my @feature_columns = $feature_cursor->next) {
 	my $id = $feature_columns[0];
 	my $ref_allele_rs = $attributes_rs->search({feature_id => $id,
-						    att_key    => 'reference_allele'});
+						    key    => 'reference_allele'});
 	my $ref_allele_cursor = $ref_allele_rs->cursor;
 	my @ref_allele_columns = $ref_allele_cursor->next;
 	my $ref_allele = $ref_allele_columns[3];

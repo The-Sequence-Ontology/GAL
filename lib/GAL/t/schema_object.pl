@@ -15,6 +15,6 @@ my $feature_rs    = $schema->resultset('Feature');
 
 while (my $feature = $feature_rs->next) {
 	my $id         = $feature->id;
-	my $ref_allele = $feature->attributes->find({att_key => 'reference_allele'})->att_value;
+	my $ref_allele = $feature->attributes->find({key => 'reference_allele'})->value;
 	print "$id\t$ref_allele\n";
 }

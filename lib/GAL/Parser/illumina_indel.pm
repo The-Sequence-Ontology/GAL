@@ -36,7 +36,7 @@ This document describes GAL::Parser::illumina_indel version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : GAL::Parser::illumina_indel->new();
@@ -58,17 +58,19 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-	$self->SUPER::_initialize_args(@args);
-
-	my $args = $self->prepare_args(@args);
-
-	my @valid_attributes = qw();
+	######################################################################
+	# This block of code handels class attributes.  Use the
+	# @valid_attributes below to define the valid attributes for
+	# this class.  You must have identically named get/set methods
+	# for each attribute.  Leave the rest of this block alone!
+	######################################################################
+	my $args = $self->SUPER::_initialize_args(@args);
+	my @valid_attributes = qw(); # Set valid class attributes here.
+	$self->set_attributes($args, @valid_attributes);
+	######################################################################
 
 	$self->fields([qw(transcript_id chromosome location total_reads allele context1
-                          context2 genotype gene_name gene_part)]);
-
-	$self->set_attributes($args, @valid_attributes);
-
+			  context2 genotype gene_name gene_part)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -124,14 +126,14 @@ sub parse_record {
 	# N/A chr1 806790 32  1:C     TGTATCAACATTTGTTGTGTTCTCATAAACTT TGTAATACATGGAGATTTCTGGTCCACATATG	HET Non_genic Other
 
 	# $self->fields([qw(transcript_id chromosome location allele context1
-        #                   context2 genotype gene_name gene_part)]);
+	#                   context2 genotype gene_name gene_part)]);
 
 	# Assign the reference and variant allele sequences:
 	# reference_allele=A
 	# variant_allele=G
 	my $reference_allele = $allele_size < 0 ? $allele : '-';
 	my @variant_alleles;
-	push @variant_alleles, ($allele_size < 0 ? $allele : '-') if $record->{genotype} = 'HET';
+	push @variant_alleles, ($allele_size < 0 ? $allele : '-') if $record->{genotype} eq 'HET';
 	push @variant_alleles,  $allele_size < 0 ? '-'     : $allele;
 
 	# Assign the reference and variant allele read counts;

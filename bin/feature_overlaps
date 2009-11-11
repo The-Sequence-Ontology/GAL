@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use DBI;
 use Getopt::Long;
+use GAL::Annotation;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -90,59 +91,40 @@ die $usage unless ($feature_dsn && $query_dsn);
 
 $compact = $expanded ? 0 : 1;
 
-my $feature_dbh = DBI->connect($feature_dsn, $user, $password);
-my $query_dbh   = DBI->connect($query_dsn, $user, $password);
+my $feature_schema = GAL::Annotion->new(dsn      => $feature_dsn,
+					user     => $user,
+					password => $password,
+				       );
 
-my $feature_type_text = join ', ', map {"'$_'"} @feature_types;
-my $feature_where = $feature_type_text ? "WHERE type IN ($feature_type_text)" : '';
-my $feature_sth = $feature_dbh->prepare("SELECT seqid, feature_id, type, start, end FROM feature $feature_where");
+my $features = $feature_schema->resultset('Feature');
 
-my $query_type_text   = join ', ', map {"'$_'"} @query_types;
-my $query_where = $query_type_text ? "type IN ($query_type_text) AND" : '';
-my $query_sth  = $query_dbh->prepare("SELECT DISTINCT(type) FROM feature WHERE seqid = ? AND $query_where ((start >= ? AND start <= ?) OR (start <= ? AND end >= ?))");
-my $ids_sth  = $query_dbh->prepare("SELECT feature_id FROM feature WHERE seqid = ? AND $query_where ((start >= ? AND start <= ?) OR (start <= ? AND end >= ?))");
+my $query_schema = GAL::Annotion->new(dsn      => $query_dsn,
+				      user     => $user,
+				      password => $password,
+				     );
 
-my $features = $feature_dbh->selectall_arrayref($feature_sth);
-
-for my $feature (@{$features}) {
+while (my $feature = $feature_schema->resultset('Feature')->next) {
 
 	my ($seqid, $feature_id, $feature_type, $feature_start, $feature_end) = @{$feature};
 
-	my $overlaps_ref;
-	if ($ids) {
-		$overlaps_ref = $query_dbh->selectall_arrayref($ids_sth, {}, ($seqid,
-									      $feature_start,
-									      $feature_end,
-									      $feature_start,
-									      $feature_start,
-									     )
-							      );
-	}
-	else {
-		$overlaps_ref = $query_dbh->selectall_arrayref($query_sth, {}, ($seqid,
-										$feature_start,
-										$feature_end,
-										$feature_start,
-										$feature_start,
-									       )
-							      );
-	}
+	my $where = {-or => {start => [{'>=' => $feature->start},
+				       {'<=' => $feature->end}
+				      ],
+			     {start => {'<=' => $feature->start},
+			      end   => {'>=' => $feature->start}
+			     }
+			    }
+		    };
 
-	my @overlaps;
-	map{push @overlaps, @{$_}} @{$overlaps_ref};
-	push @overlaps, 'NO_OVERLAP' unless scalar @overlaps;
+	my $overlap_features = $query_schema->resultset('Feature')->search($where);
 
-	if ($expanded) {
-		for my $overlap (@overlaps) {
-			print "$feature_id\t";
-			print "$feature_type\t" unless $ids;
-			print "$overlap\n";
-		}
-	}
-	else {
-		print "$feature_id\t";
-		print "$feature_type\t" unless $ids;
-		print join ' ', @overlaps;
+
+	while (my $overlap = $overlap_features->next ) {
+		print join "\t", ($feature->id,
+				  $feature->type,
+				  $overlap->id,
+				  $overlap->id,
+				 );
 		print "\n";
 	}
 }

@@ -36,7 +36,7 @@ This document describes GAL::Parser::gigabayes version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new 
      Usage   : GAL::Parser::gigabayes->new();

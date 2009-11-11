@@ -1,8 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 
-use Test::More tests => 3;
-
+use Test::More tests => 4;
 
 BEGIN {
 	use lib '../../';
@@ -20,8 +19,11 @@ my $parser = GAL::Parser::illumina_sanger_indel->new(file => 'data/illumina_sang
 # TEST 2
 isa_ok($parser, 'GAL::Parser::illumina_sanger_indel');
 
-# TEST 3
-ok($parser->get_features, 'parser->get_features');
+# Test 3
+ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
+
+# TEST 4
+ok($parser->parse_record($record), '$parser->parse_record');
 
 ################################################################################
 ################################# Ways to Test #################################

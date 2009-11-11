@@ -36,7 +36,7 @@ This document describes GAL::Parser::complete_genomics version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : GAL::Parser::complete_genomics->new();
@@ -57,13 +57,16 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-	$self->SUPER::_initialize_args(@args);
-
-	my $args = $self->prepare_args(@args);
-
-	my @valid_attributes = qw();
-
+	######################################################################
+	# This block of code handels class attributes.  Use the
+	# @valid_attributes below to define the valid attributes for
+	# this class.  You must have identically named get/set methods
+	# for each attribute.  Leave the rest of this block alone!
+	######################################################################
+	my $args = $self->SUPER::_initialize_args(@args);
+	my @valid_attributes = qw(); # Set attributes here.
 	$self->set_attributes($args, @valid_attributes);
+	######################################################################
 
 	# Set the column headers from your incoming data file here
 	# These will become the keys in your $record hash reference below.
@@ -102,10 +105,10 @@ sub parse_record {
 	delete $types{'='};
 	my ($type) = scalar keys %types == 1 ? keys %types : '';
 
-	my %type_map = (snp 		    => 'SNP',
-			ins 		    => 'nucleotide_insertion',
-			del 		    => 'nucleotide_deletion',
-			inv 		    => 'inversion',
+	my %type_map = (snp		    => 'SNP',
+			ins		    => 'nucleotide_insertion',
+			del		    => 'nucleotide_deletion',
+			inv		    => 'inversion',
 		       );
 	$type = $type_map{$type} || 'sequence_alteration';
 

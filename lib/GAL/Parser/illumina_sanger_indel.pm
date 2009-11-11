@@ -35,7 +35,7 @@ This document describes GAL::Parser::illumina_sanger_indel version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : GAL::Parser::illumina_sanger_indel->new();
@@ -56,19 +56,21 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-	$self->SUPER::_initialize_args(@args);
-
-	my $args = $self->prepare_args(@args);
-
-	my @valid_attributes = qw();
+	######################################################################
+	# This block of code handels class attributes.  Use the
+	# @valid_attributes below to define the valid attributes for
+	# this class.  You must have identically named get/set methods
+	# for each attribute.  Leave the rest of this block alone!
+	######################################################################
+	my $args = $self->SUPER::_initialize_args(@args);
+	my @valid_attributes = qw(); # Set valid class attributes here
+	$self->set_attributes($args, @valid_attributes);
+	######################################################################
 
 	# give lalbes for the fields in your file.
 	# note parser will automatically ignore lines begining with #
 
 	$self->fields([qw(chr location allele_text score)]);
-
-	$self->set_attributes($args, @valid_attributes);
-
 }
 
 #-----------------------------------------------------------------------------
@@ -108,7 +110,7 @@ sub parse_record {
 
 	my ($genotype, $reference_allele, $type, $start, $end);
 
-	my $genotype = scalar @variant_alleles == 1 ? 'heterozygous:with_reference_allele' : 'homozygous:no_reference_allele';
+	$genotype = scalar @variant_alleles == 1 ? 'heterozygous:with_reference_allele' : 'homozygous:no_reference_allele';
 
 	for my $variant_allele (@variant_alleles) {
 		if ($variant_allele =~ /^-/) {

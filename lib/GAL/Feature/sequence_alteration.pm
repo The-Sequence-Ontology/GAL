@@ -36,7 +36,7 @@ This document describes GAL::Feature::sequence_alteration version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : GAL::Feature::sequence_alteration->new();
@@ -57,11 +57,18 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-	$self->SUPER::_initialize_args(@args);
+	my $args = $self->SUPER::_initialize_args(@args);
 
-	my $args = $self->prepare_args(@args);
-
-	my @valid_attributes = qw(reference_allele
+	my @valid_attributes = qw(seqid
+                                  source
+				  type
+				  start
+				  end
+				  score
+				  strand
+				  phase
+				  attributes
+                                  reference_allele
 				  variant_allele
 				  reference_reads
 				  variant_reads

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 15;
+use Test::More tests => 12;
 
 BEGIN {
 	use lib '../../';
@@ -20,64 +20,35 @@ my $parser = GAL::Parser->new(file => 'data/soap_snp.gff');
 isa_ok($parser, 'GAL::Parser');
 
 # TEST 3
-ok($parser->next_feature, '$parser->next_feature');
-
-# TEST 4
-ok($parser->get_next_feature, '$parser->get_next_feature');
-
-# TEST 5
-my @ids;
-while (my $f = $parser->parse_next_feature) {
-	push @ids, $f->id;
-}
-ok(scalar @ids > 2, '$parser->parse_next_feature');
-$parser = undef;
-
-my $parser = GAL::Parser->new(file => 'data/soap_snp.gff');
-
-# TEST 6
-ok($parser->get_all_features, '$parser->parse->get_features');
-
-# TEST 7
-ok($parser->get_features, '$parser->parse->get_features');
-
-# TEST 8
 ok($parser->file, '$parser->file');
 
-# TEST 9
-ok($parser->record_separator, '$parser->record_separator');
-
-# TEST 10
-ok($parser->field_separator, '$parser->field_separator');
-
-# TEST 11
-ok($parser->comment_delimiter, '$parser->comment_delimiter');
-
-# TEST 12
-ok($parser->fields, '$parser->fields');
-
-# TEST 13
-ok($parser->feature_factory, '$parser->feature_factory');
-
-# TEST 14
+# TEST 4
 ok($parser->parser, '$parser->parser');
 
-#BAIL_OUT('Tests below here have not been written');
+# TEST 5
+ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
 
-# TEST 16
-#ok($parser->_read_next_record, '$parser->_read_next_record');
+# TEST 6
+ok($parser->record_separator, '$parser->record_separator');
 
-# TEST 17
-#ok($parser->parse, '$parser->parse');
+# TEST 7
+ok($parser->field_separator, '$parser->field_separator');
 
-# TEST 18
-#ok($parser->_parse_all_features, '$parser->_parse_all_features');
+# TEST 8
+ok($parser->comment_delimiter, '$parser->comment_delimiter');
 
-# TEST 19
-#ok($parser->parse_record, '$parser->parse_record');
+# TEST 9
+ok($parser->fields, '$parser->fields');
 
-# TEST 20
-#ok($parser->parse_attributes, '$parser->parse_attributes');
+# TEST 10
+ok($parser->parse_record($record), '$parser->parse_record');
+
+# TEST 11
+my $attribute_text = 'ID=12345; name=Gene1; Parent=6789,9876;';
+ok(my $att_hash = $parser->parse_attributes($attribute_text), '$parser->parse_attributes');
+
+# TEST 12
+ok(my $genotype = $parser->get_genotype('A', ['A', 'T']), '$parser->get_genotype');
 
 ################################################################################
 ################################# Ways to Test #################################

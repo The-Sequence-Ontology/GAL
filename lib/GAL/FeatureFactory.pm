@@ -36,7 +36,7 @@ This document describes GAL::FeatureFactory version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : GAL::FeatureFactory->new();
@@ -161,7 +161,8 @@ sub type {
 
 sub create {
 	my ($self, @args) = @_;
-	my @valid_attributes = qw(type);
+	my @valid_attributes = qw(seqid source type start end score strand
+                                  phase attributes);
 	my $args = $self->prepare_args(\@args, \@valid_attributes);
 	my $type = "GAL::Feature::" . $self->type($args->{type});
 	$self->load_module($type);

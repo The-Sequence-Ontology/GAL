@@ -50,7 +50,7 @@ Maybe allow using any feature_factory
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : GAL::Parser->new();
@@ -71,7 +71,7 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-	$self->SUPER::_initialize_args(@args);
+	my $args = $self->SUPER::_initialize_args(@args);
 
 	my @valid_attributes = qw(file
 				  record_separator
@@ -80,9 +80,9 @@ sub _initialize_args {
 				  fields
 				 );
 
-	my $args = $self->prepare_args(\@args, \@valid_attributes);
-
 	$self->set_attributes($args, @valid_attributes);
+
+	return $args;
 
 }
 
@@ -168,13 +168,20 @@ sub _read_next_record {
 
 =cut
 
-sub get_features {shift->get_all_features(@_)}
 
-sub get_all_features {
-	my $self = shift;
-	$self->_parse_all_features unless $self->{features};
-	return wantarray ? @{$self->{features}} : $self->{features};
-}
+#sub get_all_features {
+#	my $self = shift;
+#	$self->_parse_all_features unless $self->{features};
+#	return wantarray ? @{$self->{features}} : $self->{features};
+#}
+
+=head2 get_features
+
+ Alias for get_all_features
+
+=cut
+
+#sub get_features {shift->get_all_features(@_)}
 
 #-----------------------------------------------------------------------------
 
@@ -189,31 +196,37 @@ sub get_all_features {
 
 =cut
 
-sub parse {
-	my $self = shift;
-	$self->warn(message => ("The method GAL::Parser::parse is " .
-				"depricated.  Please use " .
-				"GAL::Parser::_parse_all_features " .
-				"instead.")
-		   );
-	return $self->_parse_all_features(@_);
-}
+#sub _parse_all_features {
+#
+#	my $self = shift;
+#
+#	while (my $record = $self->_read_next_record) {
+#
+#		my $feature_hash = $self->parse_record($record);
+#		next unless defined $feature_hash;
+#		my $type = $feature_hash->{type};
+#		my $feature = $self->feature_factory->create($feature_hash);
+#		push @{$self->{features}}, $feature;
+#
+#	}
+#	return $self;
+#}
 
-sub _parse_all_features {
+=head2 parse
 
-	my $self = shift;
+ Depricated alias for _parse_all_features
 
-	while (my $record = $self->_read_next_record) {
+=cut
 
-		my $feature_hash = $self->parse_record($record);
-		next unless defined $feature_hash;
-		my $type = $feature_hash->{type};
-		my $feature = $self->feature_factory->create($feature_hash);
-		push @{$self->{features}}, $feature;
-
-	}
-	return $self;
-}
+#sub parse {
+#	my $self = shift;
+#	$self->warn(message => ("The method GAL::Parser::parse is " .
+#				"depricated.  Please use " .
+#				"GAL::Parser::_parse_all_features " .
+#				"instead.")
+#		   );
+#	return $self->_parse_all_features(@_);
+#}
 
 #-----------------------------------------------------------------------------
 
@@ -229,27 +242,40 @@ sub _parse_all_features {
 
 =cut
 
-sub next_feature     {shift->parse_next_feature(@_)}
-sub get_next_feature {shift->parse_next_feature(@_)}
+#sub parse_next_feature {
+#
+#	my $self = shift;
+#
+#	my $feature_hash;
+#	until (defined $feature_hash) {
+#		my $record = $self->_read_next_record;
+#		last unless $record;
+#
+#		$feature_hash = $self->parse_record($record);
+#	}
+#	return undef unless defined $feature_hash;
+#
+#	my $type = $feature_hash->{type};
+#	my $feature = $self->feature_factory->create($feature_hash);
+#
+#	return $feature;
+#}
 
-sub parse_next_feature {
+=head2 next_feature
 
-	my $self = shift;
+ Alias for parse_next_feature
 
-	my $feature_hash;
-	until (defined $feature_hash) {
-		my $record = $self->_read_next_record;
-		last unless $record;
+=cut
 
-		$feature_hash = $self->parse_record($record);
-	}
-	return undef unless defined $feature_hash;
+#sub next_feature     {shift->parse_next_feature(@_)}
 
-	my $type = $feature_hash->{type};
-	my $feature = $self->feature_factory->create($feature_hash);
+=head2 get_next_feature
 
-	return $feature;
-}
+ Alias for parse_next_feature
+
+=cut
+
+#sub get_next_feature {shift->parse_next_feature(@_)}
 
 #-----------------------------------------------------------------------------
 
@@ -365,12 +391,14 @@ sub parse_attributes {
 	my @attrbs = split /\s*;\s*/, $attrb_text;
 	my %attrb_hash;
 	for my $attrb (@attrbs) {
-		my ($key, $value_text) = split /=/, $attrb;
+		my ($tag, $value_text) = split /=/, $attrb;
 		my @values = split /,/, $value_text;
-		push @{$attrb_hash{$key}}, @values;
+		push @{$attrb_hash{$tag}}, @values;
 	}
 	return \%attrb_hash;
 }
+
+
 
 #-----------------------------------------------------------------------------
 

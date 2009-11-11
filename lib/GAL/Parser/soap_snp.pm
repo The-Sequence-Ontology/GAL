@@ -36,7 +36,7 @@ This document describes GAL::Parser::soap_snp version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : GAL::Parser::soap_snp->new();
@@ -57,13 +57,16 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-	$self->SUPER::_initialize_args(@args);
-
-	my $args = $self->prepare_args(@args);
-
-	my @valid_attributes = qw();
-
+	######################################################################
+	# This block of code handels class attributes.  Use the
+	# @valid_attributes below to define the valid attributes for
+	# this class.  You must have identically named get/set methods
+	# for each attribute.  Leave the rest of this block alone!
+	######################################################################
+	my $args = $self->SUPER::_initialize_args(@args);
+	my @valid_attributes = qw(); # Set valid class attributes here
 	$self->set_attributes($args, @valid_attributes);
+	######################################################################
 
 	# Set the column headers from your incoming data file here
 	# These will become the keys in your $record hash reference below.
@@ -134,19 +137,19 @@ sub parse_record {
 
 	# reference_reads;
 	# if ($reference_allele eq $variant_alleles[0]) {
-	# 	$reference_reads = $reference_allele . ':' . $original_atts->{support1}[0];
-	# 	# Remove a variant if it is equal to the reference.
-	# 	shift @variant_alleles;
-	# 	shift @variant_reads;
+	#	$reference_reads = $reference_allele . ':' . $original_atts->{support1}[0];
+	#	# Remove a variant if it is equal to the reference.
+	#	shift @variant_alleles;
+	#	shift @variant_reads;
 	# }
 	# elsif ($reference_allele eq $variant_alleles[1]) {
-	# 	# Remove a variant if it is equal to the reference.
-	# 	$reference_reads = $reference_allele . ':' . $original_atts->{support2}[0];
-	# 	pop @variant_alleles;
-	# 	pop @variant_reads;
+	#	# Remove a variant if it is equal to the reference.
+	#	$reference_reads = $reference_allele . ':' . $original_atts->{support2}[0];
+	#	pop @variant_alleles;
+	#	pop @variant_reads;
 	# }
 	# else {
-	# 	$reference_reads = 0;
+	#	$reference_reads = 0;
 	# }
 
 	if (scalar @variant_alleles == 2 &&
@@ -198,10 +201,9 @@ sub parse_record {
 			  variant_reads    => \@variant_reads,
 			  total_reads      => [$total_reads],
 			  genotype         => [$genotype],
-			  ID               => [$id],
 			 };
 
-	my $feature_data = {id         => $id,
+	my $feature_data = {feature_id => $id,
 			    seqid      => $seqid,
 			    source     => $source,
 			    type       => $type,

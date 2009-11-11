@@ -36,7 +36,7 @@ This document describes GAL::Parser::illumina_snp version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : GAL::Parser::illumina_snp->new();
@@ -58,17 +58,19 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-	$self->SUPER::_initialize_args(@args);
-
-	my $args = $self->prepare_args(@args);
-
-	my @valid_attributes = qw();
+	######################################################################
+	# This block of code handels class attributes.  Use the
+	# @valid_attributes below to define the valid attributes for
+	# this class.  You must have identically named get/set methods
+	# for each attribute.  Leave the rest of this block alone!
+	######################################################################
+	my $args = $self->SUPER::_initialize_args(@args);
+	my @valid_attributes = qw(); # Set valid class attributes here
+	$self->set_attributes($args, @valid_attributes);
+	######################################################################
 
 	$self->fields([qw(chromosome location ref_allele var_alleles id
-                          total_reads read_alleles ref_reads var_reads)]);
-
-	$self->set_attributes($args, @valid_attributes);
-
+			  total_reads read_alleles ref_reads var_reads)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -149,20 +151,20 @@ sub parse_record {
 	my @variant_reads = map {"$_:" . ($read_counts{$_} || $total_reads - $record->{var_reads})} @variant_alleles;
 
 	# if (scalar @variant_alleles > 1) {
-	# 	my @read_alleles = split m|/|, $record->{read_alleles};
-	# 	my $alt_allele;
-	# 	for my $this_allele (@variant_alleles) {
-	# 		next if grep {$_ eq $this_allele} @read_alleles;
-	# 		$alt_allele = $this_allele;
-	# 	}
-	# 	my $var_allele = $variant_alleles[0] ne $alt_allele ? $variant_alleles[0] : $variant_alleles[1];
-	# 	my $var_reads = $record->{var_reads};
-	# 	my $alt_reads  = $total_reads - $record->{ref_reads} - $record->{var_reads};
-	# 	push @variant_reads, "$var_allele:$var_reads";
-	# 	push @variant_reads, "$alt_allele:$alt_reads";
+	#	my @read_alleles = split m|/|, $record->{read_alleles};
+	#	my $alt_allele;
+	#	for my $this_allele (@variant_alleles) {
+	#		next if grep {$_ eq $this_allele} @read_alleles;
+	#		$alt_allele = $this_allele;
+	#	}
+	#	my $var_allele = $variant_alleles[0] ne $alt_allele ? $variant_alleles[0] : $variant_alleles[1];
+	#	my $var_reads = $record->{var_reads};
+	#	my $alt_reads  = $total_reads - $record->{ref_reads} - $record->{var_reads};
+	#	push @variant_reads, "$var_allele:$var_reads";
+	#	push @variant_reads, "$alt_allele:$alt_reads";
 	# }
 	# else {
-	# 	push @variant_reads, ($variant_alleles[0] . ':' . $record->{var_reads});
+	#	push @variant_reads, ($variant_alleles[0] . ':' . $record->{var_reads});
 	# }
 
 	# Assign the total number of reads covering this position:

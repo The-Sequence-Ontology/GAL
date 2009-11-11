@@ -36,7 +36,7 @@ This document describes GAL::DB version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : GAL::DB->new();

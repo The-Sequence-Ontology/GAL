@@ -1,11 +1,14 @@
 package GAL::Annotation;
 
 use strict;
-use vars qw($VERSION);
+use warnings;
 
-
-$VERSION = '0.01';
+use DBI;
+use GAL::Schema;
 use base qw(GAL::Base);
+
+use vars qw($VERSION);
+$VERSION = '0.01';
 
 =head1 NAME
 
@@ -36,7 +39,7 @@ This document describes Annotation::GAL version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : Annotation::GAL->new();
@@ -48,21 +51,20 @@ This document describes Annotation::GAL version 0.01
 
 sub new {
 	my ($class, @args) = @_;
-	my $self = $class->SUPER::new;
-	$self->_initialize_args(@args);
-	$self->parse;
+	my $self = $class->SUPER::new(@args);
 	return $self;
 }
 
 #-----------------------------------------------------------------------------
 
 sub _initialize_args {
-	my $self = shift;
+	my ($self, @args) = @_;
 
-	$self->SUPER::_initialize_args(@_);
+	$self->SUPER::_initialize_args(@args);
 
 	my @valid_attributes = qw(dsn
-                                  parser
+				  usr
+				  password
 				 );
 
 	my $args = $self->prepare_args(\@args, \@valid_attributes);
@@ -84,35 +86,176 @@ sub _initialize_args {
 =cut
 
 sub dsn {
-	my ($self, $value) = @_;
-	$self->{dsn} = $value if defined $value;
+	my ($self, $dsn) = @_;
+
+	if ($self->{dsn} && ! $dsn) {
+		return $self->{dsn};
+	}
+
+	$dsn ||= '';
+	my ($db_name, $driver, $storage) = reverse split ':', $dsn;
+	$storage = $self->storage($storage);
+	$driver  = $self->driver($driver);
+	$db_name = $self->db_name($db_name);
+	$self->{dsn} = join ':', ($storage, $driver, $db_name);
 	return $self->{dsn};
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 _parser
+=head2 user
 
- Title   : _parser
- Usage   : $a = $self->_parser();
- Function: Get/Set the parser.
- Returns : The parser object.
- Args    : A GAL::Parser subclass object or sublcass name.
+ Title   : user
+ Usage   : $a = $self->user();
+ Function: Get/Set the value of user.
+ Returns : The value of user.
+ Args    : A value to set user to.
 
 =cut
 
-sub _parser {
-	my $self = shift;
-	my @valid_args = qw(file class);
-	my $args = $self->prepare_args(\@_, \@valid_args);
-	my $class = $args->{class};
-	if ($parser && ! ref $parser) {
-		my $parser_class = $parser;
-		$self->load_module($class);
-		$parser = $parser_class->new;
+sub user {
+	my ($self, $user) = @_;
+	$self->{user} = $user if $user;
+	return $self->{user};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 password
+
+ Title   : password
+ Usage   : $a = $self->password();
+ Function: Get/Set the value of password.
+ Returns : The value of password.
+ Args    : A value to set password to.
+
+=cut
+
+sub password {
+	my ($self, $password) = @_;
+	$self->{password} = $password if $password;
+	return $self->{password};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 db_name
+
+ Title   : db_name
+ Usage   : $a = $self->db_name();
+ Function: Get/Set the value of db_name.
+ Returns : The value of db_name.
+ Args    : A value to set db_name to.
+
+=cut
+
+sub db_name {
+	my ($self, $db_name) = @_;
+
+	if (! $self->{db_name} && ! $db_name) {
+		# Generate a date stamp
+		my ($sec,$min,$hour,$mday,$mon,$year,$wday,
+		    $yday,$isdst) = localtime(time);
+		my $time_stamp = sprintf("%02d%02d%02d", $year + 1900,
+					 $mon, $mday);
+		# Generate a 8 charachter not-really-random hex extension
+		# for the db_name.
+		my @symbols = (0..9);
+		push @symbols, qw(a b c d e f);
+		my $extension = join '', map {(@symbols[rand(16)])} (1..8);
+		$db_name = join '_', ('gal_database', $time_stamp,
+				      $extension);
+		$self->warn(message => ("Incomplete Data Source Name (DSN) ",
+					"given. ", __PACKAGE__,
+					' created $db_name as a database ',
+					'name for you.')
+			   );
 	}
-	$self->{_parser} = $value if defined $parser;
-	return $self->{_parser};
+	$self->{db_name} = $db_name if $db_name;
+	return $self->{db_name};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 driver
+
+ Title   : driver
+ Usage   : $a = $self->driver();
+ Function: Get/Set the value of driver.
+ Returns : The value of driver.
+ Args    : A value to set driver to.
+
+=cut
+
+sub driver {
+	my ($self, $driver) = @_;
+
+	if (! $self->{driver} && ! $driver) {
+		$driver = 'mysql';
+		$self->warn(message => ("Incomplete Data Source Name (DSN) ",
+					"given. ", __PACKAGE__,
+					' created $driver as a database ',
+					'driver for you.')
+			   );
+	}
+	$self->{driver} = $driver if $driver;
+	return $self->{driver};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 storage
+
+ Title   : storage
+ Usage   : $a = $self->storage();
+ Function: Just returns DBI
+ Returns : DBI
+ Args    : Whatever you want, but it'll be ignored!
+
+=cut
+
+sub storage {
+	my ($self, $storage) = @_;
+
+	# This will probably never change, but you could abstract the
+	# storage here.  Just hard coded here for symetry with driver
+	# and db_name methods.
+	$self->{storage} = 'DBI';
+	return $self->{storage};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 parser
+
+ Title   : parser
+ Usage   : $a = $self->parser();
+ Function: Get/Set the parser.
+ Returns : The parser object.
+ Args    : file  => data_file_name
+	   class => GAL::Parser::subclass.
+
+=cut
+
+sub parser {
+	my ($self, @args) = @_;
+
+	my @valid_args = qw(file class);
+	my $args = $self->prepare_args(\@args, \@valid_args);
+
+	my $class = $args->{class};
+	my $file  = $args->{file};
+
+	my $parser;
+	if ($class && $file) {
+		$class =~ s/GAL::Parser:://;
+		$class = 'GAL::Parser::' . $class;
+		$self->load_module($class);
+		$parser = $class->new(file => $file);
+	}
+
+	$self->{parser} = $parser if defined $parser;
+	return $self->{parser};
 }
 
 #-----------------------------------------------------------------------------
@@ -123,67 +266,103 @@ sub _parser {
  Usage   : $a = $self->load_file();
  Function: Parse and store all of the features in a file
  Returns : N/A
- Args    : A file
+ Args    : file  => data_file_name
+	   class => GAL::Parser::subclass.
 
 =cut
 
 sub load_file {
 
 	my $self = shift;
-	$self->_parser(@_);
+	my $parser = $self->parser(@_);
+	my $feature_rs   = $self->schema->resultset('Feature');
+	my $attribute_rs = $self->schema->resultset('Attribute');
 
-	while (my $record = $self->_read_next_record) {
+	my @features;
+	my @attributes;
+	my $count = 1;
+	my $bulk_load_count = 10; #$self->bulk_load_count;
+	while (my $record = $parser->_read_next_record) {
 
-		my $feature_hash = $self->parse_record($record);
+		my $feature_hash = $parser->parse_record($record);
 		next unless defined $feature_hash;
-		my $type = $feature_hash->{type};
-
-		################################################################################
-		#
-		# Here we should dump to the database via add_feature
-		# rather than create a feature
-		#
-		################################################################################
-		my $feature = $self->feature_factory->create($feature_hash);
-		push @{$self->{features}}, $feature;
-		################################################################################
-
+		my ($feature, $attribute_array) = 
+		  $self->_split_feature_and_attributes($feature_hash);
+		push @features, $feature;
+		push @attributes, @{$attribute_array};
+		if ($count++ >= $bulk_load_count) {
+			$feature_rs->populate(\@features);
+			$attribute_rs->populate(\@attributes);
+			$count = 1;
+			@features = ();
+			@attributes = ();
 		}
+	}
+	$feature_rs->insert_bulk(@features) if scalar @features;;
+	$attribute_rs->populate(\@attributes) if scalar @attributes;
+
 	return $self;
 }
 
 #-----------------------------------------------------------------------------
 
-################################################################################
-#
-# This should use the code _parse_all_features from above
-#
-################################################################################
+=head2 _split_feature_and_attributes
 
-=head2 parse_file
-
- Title   : parse_file
- Usage   : $self->parse_file();
- Function: Get/Set value of parse_file.
- Returns : Value of parse_file.
- Args    : Value to set parse_file to.
+ Title   : _split_feature_and_attributes
+ Usage   : $self->_split_feature_and_attributes();
+ Function: Normalizes a feature hash produced by the parsers
+           and seperate the attributes for bulk insert into the database;
+ Returns : A feature hash reference and an array reference of hash references
+           of attributes.  Both normalized for insert statements
+ Args    : Value to set _split_feature_and_attributes to.
 
 =cut
 
-sub parse_file {
-  my ($self, $value) = @_;
-  $self->{parse_file} = $value if defined $value;
-  return $self->{parse_file};
+sub _split_feature_and_attributes {
+
+	my ($self, $feature_hash) = @_;
+	my @attributes;
+	for my $tag (keys %{$feature_hash->{attributes}}) {
+		for my $value (@{$feature_hash->{attributes}{$tag}}) {
+			push @attributes, {feature_id 	=> $feature_hash->{feature_id},
+					   tag        	=> $tag,
+					   value      	=> $value,
+					  };
+		}
+	}
+	delete $feature_hash->{attributes};
+	return ($feature_hash, \@attributes);
 }
 
 #-----------------------------------------------------------------------------
 
-################################################################################
-#
-# A subroutine for process_file that will parse and inflate features without
-# loading them to the database.
-#
-################################################################################
+=head2 _normalize_feature
+
+ Title   : _normalize_feature
+ Usage   : $self->_normalize_feature();
+ Function: Normalizes a feature hash produced by the parsers
+           for insert into the database;
+ Returns : A feature hash reference with the attributes turned into an array
+           of hash references.
+ Args    : Value to set _normalize_feature to.
+
+=cut
+
+sub _normalize_feature {
+
+	my ($self, $feature_hash) = @_;
+	my @attributes;
+	for my $tag (keys %{$feature_hash->{attributes}}) {
+		for my $value (@{$feature_hash->{attributes}{$tag}}) {
+			push @attributes, {feature_id 	=> $feature_hash->{feature_id},
+					   tag        	=> $tag,
+					   value      	=> $value,
+					  };
+		}
+	}
+	$feature_hash->{attributes} = \@attributes;
+	return ($feature_hash);
+}
 
 #-----------------------------------------------------------------------------
 
@@ -198,10 +377,157 @@ sub parse_file {
 =cut
 
 sub add_feature {
-  my ($self, $value) = @_;
-  $self->{add_feature} = $value if defined $value;
-  return $self->{add_feature};
+  my ($self, $feature_hash) = @_;
+
+  my $feature_rs   = $self->schema->resultset('Feature');
+  my $normal_feature = $self->_normalize_feature($feature_hash);
+  return $feature_rs->create($feature_hash);
 }
+
+#-----------------------------------------------------------------------------
+
+=head2 add_attributes
+
+ Title   : add_attributes
+ Usage   : $self->add_attributes();
+ Function: Get/Set value of add_attributes.
+ Returns : Value of add_attributes.
+ Args    : Value to set add_attributes to.
+
+=cut
+
+#sub add_attributes {
+#  my ($self, $attributes) = @_;
+#
+#  my $attribute_rs = $self->schema->resultset('Attribute');
+#
+#  $attribute_rs->new($attributes)->update_or_insert;
+#
+#  $self->add_attributes($attribute_array);
+#
+#  return if $success;
+#  my $hash_text = join ', ', %{$feature_hash};
+#  $self->warn(message => ('Failed to update or add a feature with this ',
+#			  "data: $hash_text")
+#	     );
+#}
+
+#-----------------------------------------------------------------------------
+
+=head2 schema
+
+ Title   : schema
+ Usage   : $self->schema();
+ Function: Return the cached DBIx::Class::Schema object
+ Returns : DBIx::Class::Schema object
+ Args    : N/A
+
+=cut
+
+sub schema {
+	my $self = shift;
+
+	# Create the schema if it doesn't exist
+	if (! $self->{schema}) {
+		$self->create_database;
+		$self->{schema} = GAL::Schema->connect($self->dsn,
+						       $self->user,
+						       $self->password);
+	}
+	return $self->{schema};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 create_database
+
+ Title   : create_database
+ Usage   : $self->create_database();
+ Function: Create the database if it doesn't exists.
+ Returns : Success
+ Args    : N/A
+
+=cut
+
+sub create_database {
+	my $self = shift;
+
+	my @databases = DBI->data_sources($self->driver,
+					  {user     => $self->user,
+					   password => $self->password,
+					  }
+					 );
+
+	my $dsn = $self->dsn;
+	my $db_name = $self->db_name;
+	if (! grep {$_ eq $dsn} @databases) {
+		my $drh = DBI->install_driver("mysql");
+		my $host = ''; # Defaults to localhost, abstract this later.
+		my $rc = $drh->func('createdb',
+				    $db_name,
+				    $host,
+				    $self->user,
+				    $self->password,
+				    'admin');
+		my $dbh = DBI->connect($self->dsn, $self->user,
+				       $self->password);
+		$dbh->do("DROP TABLE IF EXISTS feature");
+		$dbh->do("DROP TABLE IF EXISTS attribute");
+		my @feature_columns = (feature_id => 'VARCHAR(100),',
+				       seqid      => 'VARCHAR(100),',
+				       source     => 'VARCHAR(100),',
+				       type       => 'VARCHAR(100),',
+				       start      => 'INT,',
+				       end        => 'INT,',
+				       score      => 'varchar(20),',
+				       strand     => 'VARCHAR(1),',
+				       phase      => 'VARCHAR(1),',
+				      );
+		my $feature_columns_text = join ' ', @feature_columns;
+		$feature_columns_text =~ s/,\s*$//;
+		my $feature_create_stmt =
+		  "CREATE TABLE feature ($feature_columns_text)";
+		$dbh->do($feature_create_stmt);
+
+		my @att_columns =
+			       (attribute_id => 'INT NOT NULL AUTO_INCREMENT,',
+				feature_id   => 'VARCHAR(100),',
+				tag      => 'VARCHAR(100),',
+				value    => 'TEXT,',
+			       );
+		my $att_columns_text = join ' ', @att_columns;
+		my $att_create_stmt =
+		  "CREATE TABLE attribute ($att_columns_text " .
+		    "PRIMARY KEY (attribute_id))";
+		#CREATE TABLE attribute (attribute_id INT NOT NULL AUTO_INCREMENT, feature_id VARCHAR(100), tag VARCHAR(100), value TEXT, PRIMARY KEY (attribute_id))
+		$dbh->do($att_create_stmt);
+	}
+	else {
+		$self->warn(message => "Using exsiting database $db_name");
+	}
+
+	return 1;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 create_schema
+
+ Title   : create_schema
+ Usage   : $self->create_schema();
+ Function: Creates a DBIx::Class::Schema object
+ Returns : DBIx::Class::Schema object
+ Args    : N/A
+
+=cut
+
+#sub create_schema {
+#	my $self = shift;
+#	my $dsn = $self->dsn;
+
+#	$self->{schema} ||= $self->create_schema;
+#	return $self->{schema};
+#}
 
 #-----------------------------------------------------------------------------
 

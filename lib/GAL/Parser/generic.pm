@@ -1,4 +1,4 @@
-package GAL::Parser::celera;
+package GAL::Parser::generic;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::celera - <One line description of module's purpose here>
+GAL::Parser::generic - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::celera version 0.01
+This document describes GAL::Parser::generic version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::celera;
+     use GAL::Parser::generic;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -36,12 +36,12 @@ This document describes GAL::Parser::celera version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
-     Usage   : GAL::Parser::celera->new();
-     Function: Creates a celera object;
-     Returns : A celera object
+     Usage   : GAL::Parser::generic->new();
+     Function: Creates a generic object;
+     Returns : A generic object
      Args    :
 
 =cut
@@ -57,16 +57,18 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-	$self->SUPER::_initialize_args(@args);
-
-	my $args = $self->prepare_args(@args);
-
-	my @valid_attributes = qw();
+	######################################################################
+	# This block of code handels class attributes.  Use the
+	# @valid_attributes below to define the valid attributes for
+	# this class.  You must have identically named get/set methods
+	# for each attribute.  Leave the rest of this block alone!
+	######################################################################
+	my $args = $self->SUPER::_initialize_args(@args);
+	my @valid_attributes = qw(); # Set valid class attributes here.
+	$self->set_attributes($args, @valid_attributes);
+	######################################################################
 
 	$self->fields([qw(chromosome variant_id variant_type start end score orientation alleles processing)]);
-
-	$self->set_attributes($args, @valid_attributes);
-
 }
 
 #-----------------------------------------------------------------------------
@@ -143,7 +145,7 @@ sub parse_record {
 	# Fill in the first 8 columns for GFF3
 	my $id         = $record->{variant_id};
 	my $seqid      = 'chr' . $record->{chromosome};
-	my $source     = 'Celera';
+	my $source     = 'Generic';
 	my $type       = ''; # Assigned below
 	my $start      = $record->{start};
 	my $end        = $record->{end};
@@ -198,7 +200,7 @@ sub parse_record {
 	# Any quality score given for this variant should be assigned
 	# to $score above.  Here you can assign a name for the type of
 	# score or algorithm used to calculate the sscore.
-	my $score_type = 'celera';
+	my $score_type = 'generic';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -273,7 +275,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::celera> requires no configuration files or environment variables.
+<GAL::Parser::generic> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

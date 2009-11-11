@@ -36,7 +36,7 @@ This document describes GAL::Feature version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : GAL::Feature->new();
@@ -57,7 +57,7 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-        $self->SUPER::_initialize_args(@args);
+        my $args = $self->SUPER::_initialize_args(@args);
 
 	my @valid_attributes = qw(seqid
 				  source
@@ -70,10 +70,9 @@ sub _initialize_args {
 				  attributes
 				 );
 
-	my $args = $self->prepare_args(\@args, \@valid_attributes);
-
 	$self->set_attributes($args, @valid_attributes);
 
+	return $args;
 }
 
 #-----------------------------------------------------------------------------
@@ -302,20 +301,20 @@ sub parents {
 
 #-----------------------------------------------------------------------------
 
-=head2 get_attribute_keys
+=head2 get_attribute_tags
 
- Title   : get_attribute_keys
- Usage   : $self->get_attribute_keys();
- Function: Get keys of attributes.
- Returns : List of attribute keys.
+ Title   : get_attribute_tags
+ Usage   : $self->get_attribute_tags();
+ Function: Get tags of attributes.
+ Returns : List of attribute tags.
  Args    : N/A
 
 =cut
 
-sub get_attribute_keys {
+sub get_attribute_tags {
   my $self = shift;
-  my @keys = keys %{$self->{attributes}};
-  return wantarray ? @keys : \@keys;
+  my @tags = keys %{$self->{attributes}};
+  return wantarray ? @tags : \@tags;
 }
 
 #-----------------------------------------------------------------------------
@@ -323,19 +322,19 @@ sub get_attribute_keys {
 =head2 get_attribute_values
 
  Title   : get_attribute_values
- Usage   : $self->get_attribute_values($key);
- Function: Get the values of the attribute $key
+ Usage   : $self->get_attribute_values($tag);
+ Function: Get the values of the attribute $tag
  Returns : A list of values.
  Args    : N/A
 
 =cut
 
 sub get_attribute_values {
-  my ($self, $key) = @_;
+  my ($self, $tag) = @_;
   my @values = ();
-  if (exists $self->{attributes}{$key} &&
-      ref($self->{attributes}{$key}) eq 'ARRAY') {
-	  @values = @{$self->{attributes}{$key}};
+  if (exists $self->{attributes}{$tag} &&
+      ref($self->{attributes}{$tag}) eq 'ARRAY') {
+	  @values = @{$self->{attributes}{$tag}};
   }
   return wantarray ? @values : \@values;
 }
@@ -374,11 +373,11 @@ sub to_gff3 {
 	if ($self->name) {
 		$att_text .= 'Name=' . $self->name . ';';
 	}
-	for my $key ($self->get_attribute_keys) {
-		next if $key =~ /^(ID|Parent|Name)$/;
-		my @values = $self->get_attribute_values($key);
+	for my $tag ($self->get_attribute_tags) {
+		next if $tag =~ /^(ID|Parent|Name)$/;
+		my @values = $self->get_attribute_values($tag);
 		my $value_text = join ',', @values;
-		$att_text .= "$key=$value_text;";
+		$att_text .= "$tag=$value_text;";
 	}
 	$gff3_text .= "\t$att_text";
 

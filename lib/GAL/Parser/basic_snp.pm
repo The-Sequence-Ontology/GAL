@@ -36,7 +36,7 @@ This document describes GAL::Parser::basic_snp version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2
+=head2 new
 
      Title   : new
      Usage   : GAL::Parser::basic_snp->new();
@@ -57,13 +57,16 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-	$self->SUPER::_initialize_args(@args);
-
-	my $args = $self->prepare_args(@args);
-
-	my @valid_attributes = qw();
-
+	######################################################################
+	# This block of code handels class attributes.  Use the
+	# @valid_attributes below to define the valid attributes for
+	# this class.  You must have identically named get/set methods
+	# for each attribute.  Leave the rest of this block alone!
+	######################################################################
+	my $args = $self->SUPER::_initialize_args(@args);
+	my @valid_attributes = qw(); # Set valid class attributes here
 	$self->set_attributes($args, @valid_attributes);
+	######################################################################
 
 	# Set the column headers from your incoming data file here
 	# These will become the keys in your $record hash reference below.
@@ -131,7 +134,7 @@ sub parse_record {
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
 	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested keys include
+	# Features.pm and it's subclasses.  Suggested tags include
 	# (from the GFF3 spec), but are not limited to: ID, Name,
 	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
 	# Ontology_term. Note that attribute names are case
@@ -140,7 +143,7 @@ sub parse_record {
 	# for later use. Attributes that begin with a lowercase letter
 	# can be used freely by applications.
 
-	# For sequence_alteration features the suggested keys include:
+	# For sequence_alteration features the suggested tags include:
 	# reference_allele, variant_allele, reference_reads, variant_reads
 	# total_reads, genotype, genotype_probability and score type.
 	my $attributes = {#reference_allele => [$reference_allele],
