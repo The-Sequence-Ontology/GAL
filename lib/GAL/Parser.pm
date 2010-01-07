@@ -157,125 +157,76 @@ sub _read_next_record {
 
 #-----------------------------------------------------------------------------
 
-=head2 get_all_features
+=head2 next_feature_hash
 
- Title   : get_all_features
- Alias   : get_features
- Usage   : $features = $self->get_all_features();
- Function: Get all the features objects created by this parser.
- Returns : A list of Feature objects.
+ Title   : next_feature_hash
+ Usage   : $a = $self->next_feature_hash;
+ Function: Return the next record from the parser as a 'feature hash'.
+ Returns : A hash or hash reference.
  Args    : N/A
 
 =cut
 
+sub next_feature_hash {
+	my $self = shift;
 
-#sub get_all_features {
-#	my $self = shift;
-#	$self->_parse_all_features unless $self->{features};
-#	return wantarray ? @{$self->{features}} : $self->{features};
-#}
+	my $record = $self->_read_next_record;
+	return undef if ! defined $record;
 
-=head2 get_features
+	my $feature_hash = $self->parse_record($record);
 
- Alias for get_all_features
-
-=cut
-
-#sub get_features {shift->get_all_features(@_)}
+	return wantarray ? %{$feature_hash} : $feature_hash;
+}
 
 #-----------------------------------------------------------------------------
 
-=head2 _parse_all_features
+=head2  to_gff3
 
- Title   : _parse_all_features
- Alias   : parse # Depricated but kept for backwards compatibility
- Usage   : $a = $self->_parse_all_features();
- Function: Parse and store all of the features in a file
- Returns : N/A
- Args    : N/A
-
-=cut
-
-#sub _parse_all_features {
-#
-#	my $self = shift;
-#
-#	while (my $record = $self->_read_next_record) {
-#
-#		my $feature_hash = $self->parse_record($record);
-#		next unless defined $feature_hash;
-#		my $type = $feature_hash->{type};
-#		my $feature = $self->feature_factory->create($feature_hash);
-#		push @{$self->{features}}, $feature;
-#
-#	}
-#	return $self;
-#}
-
-=head2 parse
-
- Depricated alias for _parse_all_features
+ Title   : to_gff3
+ Usage   : $self->to_gff3($feature_hash)
+ Function: Returns a string of GFF3 formatted text for a given feature hash
+ Returns : A string in GFF3 format.
+ Args    : A feature hash reference in the form returned by next_feature_hash
 
 =cut
 
-#sub parse {
-#	my $self = shift;
-#	$self->warn(message => ("The method GAL::Parser::parse is " .
-#				"depricated.  Please use " .
-#				"GAL::Parser::_parse_all_features " .
-#				"instead.")
-#		   );
-#	return $self->_parse_all_features(@_);
-#}
+sub to_gff3 {
+	my $feature = shift;
 
-#-----------------------------------------------------------------------------
+	my $attrb_text;
 
-=head2 parse_next_feature
+	my $gff3_text = join "\t", ($feature->{seqid},
+				    $feature->{source},
+				    $feature->{type},
+				    $feature->{start},
+				    $feature->{end},
+				    $feature->{score},
+				    $feature->{strand},
+				    $feature->{phase},
+				   );
 
- Title   : parse_next_feature
- Alias   : next_feature
- Alias   : get_next_feature
- Usage   : $a = $self->parse_next_feature();
- Function: Get/Set the value of parse.
- Returns : The value of parse.
- Args    : A value to set parse to.
+	my $att_text = 'ID=' . $feature->{feature_id} . ';';
+	if ($feature->{attributes}{Parent}) {
+		my @parents = @{$feature->{attributes}{Parent}};
+		$att_text .= 'Parent=' . join ',', @parents . ';';
+	}
+	if ($feature->{attributes}{Name}[0]) {
+		my $name_text = join ',', @{$feature->{attributes}{Name}};
+		$att_text .= "Name=$name_text;";
+	}
+	for my $tag (keys %{$feature->{attributes}}) {
+		next if $tag =~ /^(ID|Parent|Name)$/;
+		my @values = @{$feature->{attributes}{$tag}};
+		my $value_text = '';
+		if (scalar @values) {
+			$value_text = join ',', @values;
+		}
+		$att_text .= "$tag=$value_text;";
+	}
+	$gff3_text .= "\t$att_text\n";
 
-=cut
-
-#sub parse_next_feature {
-#
-#	my $self = shift;
-#
-#	my $feature_hash;
-#	until (defined $feature_hash) {
-#		my $record = $self->_read_next_record;
-#		last unless $record;
-#
-#		$feature_hash = $self->parse_record($record);
-#	}
-#	return undef unless defined $feature_hash;
-#
-#	my $type = $feature_hash->{type};
-#	my $feature = $self->feature_factory->create($feature_hash);
-#
-#	return $feature;
-#}
-
-=head2 next_feature
-
- Alias for parse_next_feature
-
-=cut
-
-#sub next_feature     {shift->parse_next_feature(@_)}
-
-=head2 get_next_feature
-
- Alias for parse_next_feature
-
-=cut
-
-#sub get_next_feature {shift->parse_next_feature(@_)}
+	return $gff3_text;
+}
 
 #-----------------------------------------------------------------------------
 
@@ -368,9 +319,24 @@ sub fields {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	$record->{attributes} = $self->parse_attributes($record->{attributes});
+	my $attributes = $self->parse_attributes($record->{attributes});
 
-	return $record;
+	my $feature_id = $record->{attributes}{id} || join ':',
+	  @{$record}{qw(seqid source type start end)};
+
+	my $feature_hash = {feature_id => $feature_id,
+			    seqid      => $record->{seqid},
+			    source     => $record->{source},
+			    type       => $record->{type},
+			    start      => $record->{start},
+			    end        => $record->{end},
+			    score      => $record->{score},
+			    strand     => $record->{strand},
+			    phase      => $record->{phase},
+			    attributes => $attributes,
+			   };
+
+	return $feature_hash;
 }
 
 #-----------------------------------------------------------------------------
@@ -519,3 +485,127 @@ SUCH DAMAGES.
 =cut
 
 1;
+
+__END__
+
+=head2 get_all_features
+
+ Title   : get_all_features
+ Alias   : get_features
+ Usage   : $features = $self->get_all_features();
+ Function: Get all the features objects created by this parser.
+ Returns : A list of Feature objects.
+ Args    : N/A
+
+=cut
+
+
+#sub get_all_features {
+#	my $self = shift;
+#	$self->_parse_all_features unless $self->{features};
+#	return wantarray ? @{$self->{features}} : $self->{features};
+#}
+
+=head2 get_features
+
+ Alias for get_all_features
+
+=cut
+
+#sub get_features {shift->get_all_features(@_)}
+
+#-----------------------------------------------------------------------------
+
+=head2 _parse_all_features
+
+ Title   : _parse_all_features
+ Alias   : parse # Depricated but kept for backwards compatibility
+ Usage   : $a = $self->_parse_all_features();
+ Function: Parse and store all of the features in a file
+ Returns : N/A
+ Args    : N/A
+
+=cut
+
+#sub _parse_all_features {
+#
+#	my $self = shift;
+#
+#	while (my $record = $self->_read_next_record) {
+#
+#		my $feature_hash = $self->parse_record($record);
+#		next unless defined $feature_hash;
+#		my $type = $feature_hash->{type};
+#		my $feature = $self->feature_factory->create($feature_hash);
+#		push @{$self->{features}}, $feature;
+#
+#	}
+#	return $self;
+#}
+
+=head2 parse
+
+ Depricated alias for _parse_all_features
+
+=cut
+
+#sub parse {
+#	my $self = shift;
+#	$self->warn(message => ("The method GAL::Parser::parse is " .
+#				"depricated.  Please use " .
+#				"GAL::Parser::_parse_all_features " .
+#				"instead.")
+#		   );
+#	return $self->_parse_all_features(@_);
+#}
+
+#-----------------------------------------------------------------------------
+
+=head2 parse_next_feature
+
+ Title   : parse_next_feature
+ Alias   : next_feature
+ Alias   : get_next_feature
+ Usage   : $a = $self->parse_next_feature();
+ Function: Get/Set the value of parse.
+ Returns : The value of parse.
+ Args    : A value to set parse to.
+
+=cut
+
+#sub parse_next_feature {
+#
+#	my $self = shift;
+#
+#	my $feature_hash;
+#	until (defined $feature_hash) {
+#		my $record = $self->_read_next_record;
+#		last unless $record;
+#
+#		$feature_hash = $self->parse_record($record);
+#	}
+#	return undef unless defined $feature_hash;
+#
+#	my $type = $feature_hash->{type};
+#	my $feature = $self->feature_factory->create($feature_hash);
+#
+#	return $feature;
+#}
+
+=head2 next_feature
+
+ Alias for parse_next_feature
+
+=cut
+
+#sub next_feature     {shift->parse_next_feature(@_)}
+
+=head2 get_next_feature
+
+ Alias for parse_next_feature
+
+=cut
+
+#sub get_next_feature {shift->parse_next_feature(@_)}
+
+#-----------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-package GAL::Parser::soap_snp;
+package GAL::Parser::dbsnp_flat;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::soap_snp - <One line description of module's purpose here>
+GAL::Parser::template - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::soap_snp version 0.01
+This document describes GAL::Parser::template version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::soap_snp;
+     use GAL::Parser::template;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::soap_snp version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::soap_snp->new();
-     Function: Creates a GAL::Parser::soap_snp object;
-     Returns : A GAL::Parser::soap_snp object
+     Usage   : GAL::Parser::template->new();
+     Function: Creates a GAL::Parser::template object;
+     Returns : A GAL::Parser::template object
      Args    :
 
 =cut
@@ -70,7 +70,11 @@ sub _initialize_args {
 
 	# Set the column headers from your incoming data file here
 	# These will become the keys in your $record hash reference below.
-	$self->fields([qw(seqid source type start end score strand phase attributes)]);
+	$self->record_separator("\n\n");
+	$self->field_separator(undef);
+	# $self->comment_delimiter(qr/^[^\d]/);
+	$self->fields([qw(data)]);
+
 }
 
 #-----------------------------------------------------------------------------
@@ -88,84 +92,50 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
+	my $record = _parse_dbsnp_flat($record->{data});
+
 	# $record is a hash reference that contains the keys assigned
 	# in the $self->fields call in _initialize_args above
 
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
-	my $original_atts = $self->parse_attributes($record->{attributes});
-
-	my $id         = $original_atts->{ID}[0];
-	my $seqid      = $record->{seqid};
-	my $source     = $record->{source};
-	my $type       = $record->{type};
+	my $id         = $record->{id};
+	my $seqid      = $record->{chromosome};
+	my $source     = 'Template';
+	my $type       = 'SNP';
 	my $start      = $record->{start};
 	my $end        = $record->{end};
-	my $score      = $record->{score};
+	my $score      = '.';
 	my $strand     = $record->{strand};
-	my $phase      = $record->{phase};
+	my $phase      = '.';
 
-	$type = $type eq 'SNP' ? 'SNV' : $type;
-
-	# chr1SoapSnpSNPSNP4793479325+.ID=YHSNP0128643; status=novel; ref=A; allele=A/G; support1=48; support2=26;
-	# chr1SoapSNPSNP6434643448+.ID=YHSNP0128644; status=novel; ref=G; allele=A/G; support1=10; support2=11;
-	# chr1SoapSNPSNP938969389651+.ID=rs4287120; status=dbSNP; ref=T; allele=C/T; support1=5; support2=4; location=MSTB1:LTR/MaLR;
-	# chr1SoapSNPSNP22570722570743+.ID=rs6603780; status=dbSNP; ref=C; allele=C/G; support1=23; support2=12;
-	# chr1SoapSNPSNP22583922583931+.ID=rs6422503; status=dbSNP; ref=C; allele=A/C; support1=13; support2=5; location=L1P2:LINE/L1;
-	# chr1SoapSNPSNP52684952684976+.ID=YHSNP0128645; status=novel; ref=G; allele=G/T; support1=14; support2=12; location=L1MD3:LINE/L1;
-	# chr1SoapSNPSNP55473155473130+.ID=rs1832728; status=dbSNP; ref=T; allele=C/T; support1=37; support2=12; location=Mitochondrial:Mt-tRNA;
-	# chr1SoapSNPSNP55535355535328+.ID=rs7349153; status=dbSNP; ref=T; allele=C/T; support1=37; support2=9;
-	# chr1SoapSNPSNP55537155537122+.ID=rs9283150; status=dbSNP; ref=G; allele=A/G; support1=46; support2=27;
-	# chr1SoapSNPSNP55677955677945+.ID=rs3949348; status=dbSNP; ref=A; allele=A/G; support1=37; support2=13;
-	# chr1    SoapSNP SNP     774913  774913  74      +       .       ID=rs2905062; status=dbSNP; ref=G; allele=A/A; support1=26; location=MSTD:LTR/MaLR;
-	# chr1    SoapSNP SNP     775852  775852  93      +       .       ID=rs2980300; status=dbSNP; ref=T; allele=C/C; support1=29;
-	# chr1    SoapSNP SNP     777262  777262  43      +       .       ID=rs2905055; status=dbSNP; ref=G; allele=T/T; support1=12;
 	# Create the attributes hash
 
-	# Assign the reference and variant sequences:
-	# reference_sequence=A
-	# variant_sequence=G
-	my $reference_sequence = $original_atts->{ref}[0];
-	my @variant_sequences  = split m|/|, $original_atts->{allele}[0];
+	# Assign the reference and variant allele sequences:
+	# reference_allele=A
+	# variant_allele=G
+	my ($reference_allele, @variant_alleles) = split m|/|, $record->{alleles};
 
-	shift @variant_sequences if $variant_sequences[0] eq $variant_sequences[1];
-
-	# Assign the reference and variant sequence read counts:
+	# Assign the reference and variant allele read counts:
 	# reference_reads=A:7
 	# variant_reads=G:8
-
-	my $support1 = (ref $original_atts->{support1} eq 'ARRAY' ?
-			$original_atts->{support1}[0]             :
-			0
-		       );
-	my $support2 = (ref $original_atts->{support2} eq 'ARRAY' ?
-			$original_atts->{support2}[0]             :
-			0
-		       );
-
-	$variant_sequences[0] .= ":$support1";
-	if ($variant_sequences[1]) {
-		$variant_sequences[1] .= ":$support2";
-	}
 
 	# Assign the total number of reads covering this position:
 	# total_reads=16
 
-	my $total_reads = $support1 + $support2;
-
 	# Assign the genotype:
 	# genotype=homozygous
 
-	my $genotype = scalar @variant_sequences > 1 ? 'homozygous' : 'heterozygous';
-
 	# Assign the probability that the genotype call is correct:
 	# genotype_probability=0.667
+
+	my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
 
 	# Any quality score given for this variant should be assigned
 	# to $score above (column 6 in GFF3).  Here you can assign a
 	# name for the type of score or algorithm used to calculate
 	# the sscore (e.g. phred_like, clcbio, illumina).
-	# score_type=soap
+	my $score_type = 'template';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -180,15 +150,16 @@ sub parse_record {
 	# can be used freely by applications.
 
 	# For sequence_alteration features the suggested keys include:
-	# reference_sequence, variant_sequence, reference_reads, variant_reads
+	# reference_allele, variant_allele, reference_reads, variant_reads
 	# total_reads, genotype, genotype_probability and score type.
-	my $attributes = {reference_sequence => [$reference_sequence],
-			  variant_sequence   => \@variant_sequences,
-			  total_reads      => [$total_reads],
+	my $attributes = {reference_allele => [$reference_allele],
+			  variant_allele   => \@variant_alleles,
 			  genotype         => [$genotype],
+			  score_type       => [$score_type],
+			  ID               => [$id],
 			 };
 
-	my $feature_data = {feature_id => $id,
+	my $feature_data = {id         => $id,
 			    seqid      => $seqid,
 			    source     => $source,
 			    type       => $type,
@@ -205,20 +176,62 @@ sub parse_record {
 
 #-----------------------------------------------------------------------------
 
-=head2 foo
+=head2 _parse_dbsnp_flat
 
- Title   : foo
- Usage   : $a = $self->foo();
- Function: Get/Set the value of foo.
- Returns : The value of foo.
- Args    : A value to set foo to.
+ Title   : _parse_dbsnp_flat
+ Usage   : $record = $self->_parse_dbsnp_flat($record->{data});
+ Function: Parses one record from a dbSNP ASN1 flatfile format.
+ Returns : Returns a hashref in a format more typical of GAL/Parser subclasses
+ Args    : The data from one record in a dbSNP ASN1 flat file
 
 =cut
 
-sub foo {
-	my ($self, $value) = @_;
-	$self->{foo} = $value if defined $value;
-	return $self->{foo};
+sub _parse_dbsnp_flat {
+	my ($self, $data) = @_;
+
+	# rs241 | human | 9606 | snp | genotype=YES | submitterlink=YES | updated 2009-02-15 06:31
+	# ss241 | KWOK | D10S1188 | orient=+ | ss_pick=NO
+	# ss818 | WIAF | WIAF-4209 | orient=+ | ss_pick=NO
+	# ss19405 | WIAF | WIAF-4519 | orient=+ | ss_pick=NO
+	# SNP | alleles='A/C' | het=0.5 | se(het)=0.0287
+	# VAL | validated=YES | min_prob=? | max_prob=? | notwithdrawn | byCluster | byFrequency | by2Hit2Allele | byHapMap
+	# CTG | assembly=Celera | chr=10 | chr-pos=71729080 | NW_924796.1 | ctg-start=25923323 | ctg-end=25923323 | loctype=2 | orient=-
+	# CTG | assembly=HuRef | chr=10 | chr-pos=72439347 | NW_001837987.2 | ctg-start=3016811 | ctg-end=3016811 | loctype=2 | orient=+
+	# CTG | assembly=reference | chr=10 | chr-pos=78114462 | NT_008583.16 | ctg-start=26995611 | ctg-end=26995611 | loctype=2 | orient=-
+
+	my @lines = split /\n/, $data;
+	chomp @lines;
+
+	my $this_assembly = $self->assembly;
+
+	my ($assembly, $chromosome, $start, $contig, $contig_start, $contig_end,
+	    $loctype, $strand, $alleles, $heterozygosity, $std_error_heterozygosity,
+	    $id, $common, $tax_id, $type, $genotype, $submitter, $update);
+
+	my %record;
+	for my $line (@lines) {
+		my ($head, @fields) = split /\s*|\s*/, $line;
+		if ($head eq 'CTG') {
+			next unless $fields[0] eq "assembly=$this_assembly";
+			($assembly, $chromosome, $start, $contig, $contig_start,
+			 $contig_end, $loctype, $strand) = @fields;
+			$assembly  =~ s/assembly=//;
+			$chomosome =~ s/chr=//;
+			$start     =~ s/chr-pos=//;
+			$contig    =~ 
+		}
+		elsif ($head eq 'SNP') {
+			($alleles, $heterozygosity,
+			 $std_error_heterozygosity) = @fields;
+		}
+		if ($head =~ /^rs\d+/) {
+			($id, $common, $tax_id, $type, $genotype,
+			 $submitter, $update) = ($head, @fields);
+		}
+	}
+
+
+	return \%record;
 }
 
 #-----------------------------------------------------------------------------
@@ -247,7 +260,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::soap_snp> requires no configuration files or environment variables.
+<GAL::Parser::template> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
