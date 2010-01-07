@@ -43,11 +43,12 @@ for my $file (@files) {
 	die $@ if $@;
 
 	my $parser = $class->new(file => $file, coverage => $coverage);
-	#my @features = $parser->get_features;
 
-	#for my $feature (@features) {
-	while (my $feature = $parser->parse_next_feature) {
-		print $feature->to_gff3;
-		print "\n";
+	while (my $feature = $parser->next_feature_hash) {
+		print $parser->to_gff3($feature);
 	}
 }
+
+#-----------------------------------------------------------------------------
+#------------------------------- SUBROUTINES ---------------------------------
+#-----------------------------------------------------------------------------
