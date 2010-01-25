@@ -170,12 +170,36 @@ sub _read_next_record {
 sub next_feature_hash {
 	my $self = shift;
 
-	my $record = $self->_read_next_record;
-	return undef if ! defined $record;
+	my $feature;
 
-	my $feature_hash = $self->parse_record($record);
+	# If a previous record has returned multiple features then 
+	# grab them off the stack first instead of reading a new one
+	# from the file.
+	if (ref $self->{_feature_stack} eq 'ARRAY' &&
+	    scalar @{$self->{_feature_stack}} > 0) {
+		$feature = shift @{$self->{_feature_stack}};
+		return wantarray ? %{$feature} : $feature;
+	}
 
-	return wantarray ? %{$feature_hash} : $feature_hash;
+	until ($feature) {
+		# Get the next record from the file.
+		my $record = $self->_read_next_record;
+		return undef if ! defined $record;
+
+		# Parser the record - probably overridden by a subclass.
+		$feature = $self->parse_record($record);
+	}
+
+	# Allow parsers to return more than one feature.
+	# This allows the parser to expand a single record into
+	# multiple features.
+	if (ref $feature eq 'ARRAY') {
+		my $this_feature = shift @{$feature};
+		push @{$self->{_feature_stack}}, @{$feature};
+		$feature = $this_feature;
+	}
+
+	return wantarray ? %{$feature} : $feature;
 }
 
 #-----------------------------------------------------------------------------
@@ -191,7 +215,7 @@ sub next_feature_hash {
 =cut
 
 sub to_gff3 {
-	my $feature = shift;
+	my ($self, $feature) = @_;
 
 	my $attrb_text;
 

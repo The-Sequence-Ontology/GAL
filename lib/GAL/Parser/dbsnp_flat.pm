@@ -64,7 +64,7 @@ sub _initialize_args {
 	# for each attribute.  Leave the rest of this block alone!
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
-	my @valid_attributes = qw(); # Set valid class attributes here
+	my @valid_attributes = qw(assembly); # Set valid class attributes here
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 
@@ -75,6 +75,30 @@ sub _initialize_args {
 	# $self->comment_delimiter(qr/^[^\d]/);
 	$self->fields([qw(data)]);
 
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 assembly
+
+ Title   : assembly
+ Usage   : $assembly = $self->assembly();
+ Function: Get/set the assembly.  For these dbSNP records, each variant is 
+           mapped to multiple assemblies - here you specify which assembly
+           you want to use.
+ Returns : A text string representing the assembly (i.e. reference HuRef
+           etc. for human).
+ Args    : A text string representing the assembly (i.e. reference HuRef
+           etc. for human).
+
+=cut
+
+sub assembly {
+	my ($self, $assembly) = @_;
+
+	$self->{assembly} = $assembly if $assembly;
+
+	return $self->{assembly};
 }
 
 #-----------------------------------------------------------------------------
@@ -92,29 +116,43 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	my $record = _parse_dbsnp_flat($record->{data});
+	my ($record, $errors) = $self->_parse_dbsnp_flat($record->{data});
 
-	# $record is a hash reference that contains the keys assigned
-	# in the $self->fields call in _initialize_args above
+	return undef unless $record;
+
+	# $record is a hash reference that contains the following keys:
+	# assembly chr chr_start chr_end ctg ctg_start ctg_end loctype
+	# orient alleles het se_het id organism tax_id type
+	# genotype submit_link update
 
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
 	my $id         = $record->{id};
-	my $seqid      = $record->{chromosome};
-	my $source     = 'Template';
-	my $type       = 'SNP';
-	my $start      = $record->{start};
-	my $end        = $record->{end};
+	my $source     = 'dbSNP';
+	my $type       = $record->{type};
+	my $start      = $record->{chr_start};
+	my $end        = $record->{chr_end};
 	my $score      = '.';
-	my $strand     = $record->{strand};
+	my $strand     = '+';
 	my $phase      = '.';
+
+	my @error_codes;
+	for my $error (@{$errors}) {
+		push @error_codes, $error->[0];
+		my $error_message = join "\t", ('ERROR',
+						$id,
+						$error->[0],
+						$error->[1],
+						);
+
+		$self->warn(message => $error_message);
+	}
 
 	# Create the attributes hash
 
 	# Assign the reference and variant allele sequences:
 	# reference_allele=A
 	# variant_allele=G
-	my ($reference_allele, @variant_alleles) = split m|/|, $record->{alleles};
 
 	# Assign the reference and variant allele read counts:
 	# reference_reads=A:7
@@ -129,13 +167,10 @@ sub parse_record {
 	# Assign the probability that the genotype call is correct:
 	# genotype_probability=0.667
 
-	my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
-
 	# Any quality score given for this variant should be assigned
 	# to $score above (column 6 in GFF3).  Here you can assign a
 	# name for the type of score or algorithm used to calculate
 	# the sscore (e.g. phred_like, clcbio, illumina).
-	my $score_type = 'template';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -149,29 +184,56 @@ sub parse_record {
 	# for later use. Attributes that begin with a lowercase letter
 	# can be used freely by applications.
 
-	# For sequence_alteration features the suggested keys include:
-	# reference_allele, variant_allele, reference_reads, variant_reads
-	# total_reads, genotype, genotype_probability and score type.
-	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => \@variant_alleles,
-			  genotype         => [$genotype],
-			  score_type       => [$score_type],
-			  ID               => [$id],
-			 };
+	# Now we will resolve variants that map to multiple locations in
+	# the genome by creating a feature for each one and returning an array
+	# of features - even if there is only one.
+	my @ctgs = @{$record->{ctgs}};
 
-	my $feature_data = {id         => $id,
-			    seqid      => $seqid,
-			    source     => $source,
-			    type       => $type,
-			    start      => $start,
-			    end        => $end,
-			    score      => $score,
-			    strand     => $strand,
-			    phase      => $phase,
-			    attributes => $attributes,
-			   };
+	my @features;
+	for my $ctg (@ctgs) {
 
-	return $feature_data;
+		my @alleles = @{$record->{alleles}};
+
+		my @ctg_error_codes;
+		for my $error (@{$ctg->{errors}}) {
+			push @ctg_error_codes, $error->[0];
+			my $error_message = join "\t", ('ERROR',
+							$id,
+							$error->[0],
+							$error->[1],
+						       );
+			  $self->warn(message => $error_message);
+		}
+
+
+#		map {tr/ACGTRYMKSWHBVDNX/TGCAYRKMSWDVBHNX/i} @alleles if ($ctg->{orient} eq '-');
+
+		# For sequence_alteration features the suggested keys include:
+		# reference_allele, variant_allele, reference_reads, variant_reads
+		# total_reads, genotype, genotype_probability and score type.
+		my $attributes = {ID            => $id,
+				  Variant_seq   => \@alleles,
+				  Errors        => [@error_codes, @ctg_error_codes],
+				 };
+
+		delete $attributes->{Errors} unless scalar @{$attributes->{Errors}};
+
+		my $feature = {feature_id => $id,
+			       seqid      => 'chr' . $ctg->{chr},
+			       source     => $source,
+			       type       => $type,
+			       start      => $ctg->{chr_start},
+			       end        => $ctg->{chr_end},
+			       score      => $score,
+			       strand     => $strand,
+			       phase      => $phase,
+			       attributes => $attributes,
+			      };
+
+		push @features, $feature;
+	}
+
+	return \@features;
 }
 
 #-----------------------------------------------------------------------------
@@ -187,51 +249,218 @@ sub parse_record {
 =cut
 
 sub _parse_dbsnp_flat {
-	my ($self, $data) = @_;
+	my ($self, $text_data) = @_;
 
-	# rs241 | human | 9606 | snp | genotype=YES | submitterlink=YES | updated 2009-02-15 06:31
-	# ss241 | KWOK | D10S1188 | orient=+ | ss_pick=NO
-	# ss818 | WIAF | WIAF-4209 | orient=+ | ss_pick=NO
-	# ss19405 | WIAF | WIAF-4519 | orient=+ | ss_pick=NO
-	# SNP | alleles='A/C' | het=0.5 | se(het)=0.0287
-	# VAL | validated=YES | min_prob=? | max_prob=? | notwithdrawn | byCluster | byFrequency | by2Hit2Allele | byHapMap
-	# CTG | assembly=Celera | chr=10 | chr-pos=71729080 | NW_924796.1 | ctg-start=25923323 | ctg-end=25923323 | loctype=2 | orient=-
-	# CTG | assembly=HuRef | chr=10 | chr-pos=72439347 | NW_001837987.2 | ctg-start=3016811 | ctg-end=3016811 | loctype=2 | orient=+
-	# CTG | assembly=reference | chr=10 | chr-pos=78114462 | NT_008583.16 | ctg-start=26995611 | ctg-end=26995611 | loctype=2 | orient=-
 
-	my @lines = split /\n/, $data;
-	chomp @lines;
-
-	my $this_assembly = $self->assembly;
-
-	my ($assembly, $chromosome, $start, $contig, $contig_start, $contig_end,
-	    $loctype, $strand, $alleles, $heterozygosity, $std_error_heterozygosity,
-	    $id, $common, $tax_id, $type, $genotype, $submitter, $update);
+	#Skip junk that's not really an rs record.
+	return undef if $text_data !~ /^rs\d+\s+\|\s+/;
 
 	my %record;
+	my @errors;
+
+	my @lines = split /\n/, $text_data;
+
+	my $selected_assembly = $self->assembly;
+
+      LINE:
 	for my $line (@lines) {
-		my ($head, @fields) = split /\s*|\s*/, $line;
-		if ($head eq 'CTG') {
-			next unless $fields[0] eq "assembly=$this_assembly";
-			($assembly, $chromosome, $start, $contig, $contig_start,
-			 $contig_end, $loctype, $strand) = @fields;
-			$assembly  =~ s/assembly=//;
-			$chomosome =~ s/chr=//;
-			$start     =~ s/chr-pos=//;
-			$contig    =~ 
+		my ($class, @data) = split /\s+\|\s+/, $line;
+		next LINE if $class =~ /^ss\d+$/;
+
+		if ($class eq 'CTG') {
+
+			my ($assembly, $chr, $chr_start, $ctg, $ctg_start, $ctg_end, $loctype, $orient) = @data;
+			$assembly =~ s/assembly=//    or push @errors, ['CTG_invalid_assemly_tag', $line];
+			next LINE unless $assembly eq $selected_assembly;
+
+			my @ctg_errors;
+			$chr         =~ s/chr=//       or push @errors, ['CTG_invalid_chr_tag', $line];
+			$chr_start   =~ s/chr-pos=//   or push @errors, ['CTG_invalid_chr_pos_tag', $line];
+			$ctg_start   =~ s/ctg-start=// or push @errors, ['CTG_invalid_ctg-start_tag', $line];
+			$ctg_end     =~ s/ctg-end=//   or push @errors, ['CTG_invalid_ctg-end_tag', $line];
+			$loctype     =~ s/loctype=//   or push @errors, ['CTG_invalid_loctype_tag', $line];
+			$orient      =~ s/orient=//    or push @errors, ['CTG_invalid_orient_tag', $line];
+
+			my $chr_end;
+			if ($chr_start !~ /^[0-9]+$/) {
+				$chr_start = '.';
+				push @ctg_errors, ['CTG_invalid_chr-pos_value', $line];
+			}
+			elsif ($ctg_start =~ /^[0-9]+$/ &&
+			       $ctg_end   =~ /^[0-9]+$/
+			      ) {
+				$chr_end = $chr_start + abs($ctg_start - $ctg_end);
+			}
+			else {
+				push @ctg_errors, ['CTG_invalid_ctg-start/end_value', $line];
+				$chr_end = '.';
+			}
+
+			my %ctg = (assembly  => $assembly,
+				   chr       => $chr,
+				   chr_start => $chr_start,
+				   chr_end   => $chr_end,
+				   ctg       => $ctg,
+				   ctg_start => $ctg_start,
+				   ctg_end   => $ctg_end,
+				   loctype   => $loctype,
+				   orient    => $orient,
+				   errors    => \@ctg_errors,
+				  );
+
+			push @{$record{ctgs}}, \%ctg;
+
+			# CTG | assembly=Celera | chr=1 | chr-pos=19193787 | NW_927841.1 | ctg-start=3670230 | ctg-end=3670230 | loctype=2 | orient=+
+			# CTG | assembly=HuRef | chr=1 | chr-pos=19115539 | NW_001838573.1 | ctg-start=2491270 | ctg-end=2491270 | loctype=2 | orient=+
+			# CTG | assembly=reference | chr=1 | chr-pos=20742048 | NT_004610.18 | ctg-start=3693803 | ctg-end=3693803 | loctype=2 | orient=+
+
+			# BUT NOTE multiple locations on the reference assembly!!!!!
+			# CTG | assembly=reference | chr=1 | chr-pos=1327197 | NT_004350.18 | ctg-start=815966 | ctg-end=815966 | loctype=2 | orient=+
+			# CTG | assembly=reference | chr=1 | chr-pos=? | NT_113871.1 | ctg-start=111608 | ctg-end=111608 | loctype=2 | orient=+
+
+
 		}
-		elsif ($head eq 'SNP') {
-			($alleles, $heterozygosity,
-			 $std_error_heterozygosity) = @fields;
+		elsif ($class eq 'LOC') {
+
+			# I'm going to skip the LOC info for now - we do a better job of this with our own code.
+
+			# LOC | KCNAB2 | locus_id=8514 | fxn-class=near-gene-3 | mrna_acc=NM_003636.2
+			# LOC | KCNAB2 | locus_id=8514 | fxn-class=near-gene-3 | mrna_acc=NM_172130.1
+			# LOC | TMED5 | locus_id=50999 | fxn-class=utr-3 | mrna_acc=NM_016040.3
+			# LOC | TMEM51 | locus_id=55092 | fxn-class=utr-3 | mrna_acc=NM_018022.2
+			# LOC | TMEM51 | locus_id=55092 | fxn-class=utr-3 | mrna_acc=NM_001136216.1
+			# LOC | TMEM51 | locus_id=55092 | fxn-class=utr-3 | mrna_acc=NM_001136217.1
+			# LOC | TMEM51 | locus_id=55092 | fxn-class=utr-3 | mrna_acc=NM_001136218.1
+			# LOC | ATP2B4 | locus_id=493 | fxn-class=utr-3 | mrna_acc=NM_001001396.1
+
 		}
-		if ($head =~ /^rs\d+/) {
-			($id, $common, $tax_id, $type, $genotype,
-			 $submitter, $update) = ($head, @fields);
+		elsif ($class eq 'VAL') {
+
+			# I'm going to skip the VAL info for now.
+
+			# VAL | validated=YES | min_prob=? | max_prob=? | notwithdrawn | byFrequency
+			# VAL | validated=NO | min_prob=? | max_prob=? | notwithdrawn
+			# VAL | validated=YES | min_prob=? | max_prob=? | notwithdrawn | byHapMap
+			# VAL | validated=YES | min_prob=? | max_prob=? | notwithdrawn | byCluster | by2Hit2Allele
+			# VAL | validated=YES | min_prob=95 | max_prob=99 | notwithdrawn | byCluster | byFrequency | byOtherPop | by2Hit2Allele | byHapMap
+		}
+		elsif ($class eq 'SNP') {
+
+			my ($allele_text, $het, $se_het) = @data;
+			$allele_text =~ s/alleles=// or push @errors, ['SNP_invalid_alleles_tag', $line];
+			$allele_text =~ s/\'//g;
+			$het         =~ s/het=//         or push @errors, ['SNP_invalid_het_tag', $line];
+			$se_het      =~ s/se\(het\)=//   or push @errors, ['SNP_invalid_se(het)_tag', $line];
+
+			$record{het}     = $het;
+			$record{se_het}  = $se_het;
+
+			# SNP | alleles='-/T' | het=0.18 | se(het)=0.24
+			# SNP | alleles='-/T' | het=0.18 | se(het)=0.24
+			# SNP | alleles='C/T' | het=? | se(het)=?
+			# SNP | alleles='C/T' | het=0.2 | se(het)=0.2443
+			# SNP | alleles='A/G' | het=0.39 | se(het)=0.2098
+			# SNP | alleles='A/G' | het=0.3 | se(het)=0.2458
+			# SNP | alleles='A/G' | het=0.01 | se(het)=0.0839
+
+			# alleles='(LARGEDELETION)/-' Here the sequence deleted is sequence found on the reference
+			# alleles='(LARGEINSERTION)-' Here the sequence inserted is not sequence found on the reference
+			# alleles='(TG)17/18/19/21/22/23/24/G/T' TG is repeated 17, 18, 19 etc. times as well as a G and a T as variants.
+			# alleles='(HETEROZYGOUS)/C/T' Just remove the HETEROZYGOUS
+			# alleles='(147 BP INSERTION)/-'
+			# alleles='(1110 BP DELETION)/-'
+
+			my @alleles  = split /\//, $allele_text;
+			if ($allele_text =~ /[^ATGC-]/) {
+				if ($allele_text =~ /\(LARGEDELETION\)/) {
+					unshift @alleles,  '-';
+					$record{type} = 'deletion';
+				}
+				if ($allele_text =~ /\(LARGEINSERTION\)/) {
+					unshift @alleles, '~';
+					$record{type} = 'insertion';
+				}
+
+
+
+				FIX THIS !!!!!!!!!!!!!!!!
+
+				if ($allele_text =~ /\(\d+ BP DELETION\)/) {
+					unshift @alleles,  '-';
+					$record{type} = 'deletion';
+				}
+				if (/\(([ATGC]+)\)(\d+)/) {
+					my $repeat_seq = $1;
+					my $count = $2;
+					unshift @alleles, $count;
+					map {$_ = $repeat_seq x $count if /^\d+$/} @alleles;
+				}
+				@alleles = grep {/^[ATGC-]+$/} @alleles;
+			}
+
+			$record{alleles} = \@alleles;
+		}
+		elsif ($class eq 'SEQ') {
+
+			# I'm going to skip the SEQ info for now.
+
+			# SEQ | 47271455 | source-db=remap | seq-pos=3818 | orient=-
+			# SEQ | 8922276 | source-db=remap | seq-pos=1762 | orient=+
+			# SEQ | 209977050 | source-db=remap | seq-pos=1763 | orient=+
+			# SEQ | 209977051 | source-db=remap | seq-pos=1867 | orient=+
+			# SEQ | 209977053 | source-db=remap | seq-pos=1794 | orient=+
+			# SEQ | 209977055 | source-db=remap | seq-pos=1836 | orient=+
+
+		}
+		elsif ($class =~ /^rs\d+$/) {
+
+			# $type needs to have the option of being set somewhere else.
+			my ($id, $organism, $tax_id, $this_type, $genotype, $submit_link, $update);
+			($id, $organism, $tax_id, $this_type, $genotype, $submit_link, $update) = ($class, @data);
+
+			# Here we allow some other line to set the type and preserve that.
+			$record{type} ||= $this_type;
+
+			my %type_map = ('in-del'                       => 'sequence_alteration',
+					'microsatellite'               => 'microsatellite',
+					'mixed'                        => 'sequence_alteration',
+					'multinucleotide-polymorphism' => 'MNP',
+					'named-locus'                  => 'sequence_alteration',
+					'snp'                          => 'SNV',
+					'no-variation'                 => 'no_variation', # Add no_variation to SO
+					'heterozygous'                 => 'sequence_alteration',
+				       );
+
+			# If we can't map it (maybe because some other line set it) we leave it alone.
+			$record{type} = $type_map{$record{type}} || $record{type};
+
+			$genotype    =~ s/genotype=//      or push @errors, ['rs_invalid_genotype_tag', $line];
+			$submit_link =~ s/submitterlink=// or push @errors, ['rs_invalid_submitterlink_tag', $line];
+			$update      =~ s/updated //       or push @errors, ['rs_invalid_update_tag', $line];
+
+			$record{id}          = $id;
+			$record{organism}    = $organism;
+			$record{tax_id}      = $tax_id;
+			$record{genotype}    = $genotype;
+			$record{submit_link} = $submit_link;
+			$record{update}      = $update;
+
+			# rs242 | human | 9606 | in-del | genotype=NO | submitterlink=YES | updated 2008-03-28 13:52
+
+		}
+		else {
+			push @errors, ['Uknown_line_type', $line];
 		}
 	}
 
+	# If we didn't pick up any contigs the user probably failed to
+	# specify one or misspelled it.
+	unless (ref $record{ctgs} && scalar @{$record{ctgs}}) {
+		$self->warn(message => ("Error\tNo_CTGs_tags_parsed\t",
+					$record{id}));
+		}
 
-	return \%record;
+	return \%record, \@errors;
 }
 
 #-----------------------------------------------------------------------------
