@@ -292,7 +292,7 @@ sub build_features {
 			}
 		}
 		if ($feature_count > 1) {
-			warn "Error : rs_id_not_uniqe : $ssId\n";
+			warn "Error : rs_id_not_unique : $ssId\n";
 		}
 	}
 	return \@features;
