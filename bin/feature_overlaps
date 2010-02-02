@@ -19,11 +19,11 @@ feature_overlaps --feature_dsn 'dbi:mysql:feature_db' --feature_type 'SNP' \
 
 Description:
 
-This script will take two GFF based databases of feature (They could
-be the same database), iterate over all the features in feature_dsn
-and query the query_dsn for overlapping features of type query_type.
-The feature_type and query_type arguments can be given multiple times
-to include multiple features.  Leaving either blank will include all
+This script will take two GAL feature databases (They could be the
+same database), iterate over all the features in feature_dsn and query
+the query_dsn for overlapping features of type query_type.  The
+feature_type and query_type arguments can be given multiple times to
+include multiple features.  Leaving either blank will include all
 features in that database.  Output is tab separated and comes in two
 forms.  In the compact output every feature from feature_dsn is
 printed once in the first column and all features from query_dsn are
