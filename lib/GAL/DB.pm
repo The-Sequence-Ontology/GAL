@@ -1,4 +1,4 @@
-package GAL::DB;
+package GAL::Storage;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Base);
 
 =head1 NAME
 
-GAL::DB - <One line description of module's purpose here>
+GAL::Storage - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::DB version 0.01
+This document describes GAL::Storage version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::DB;
+     use GAL::Storage;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::DB version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::DB->new();
-     Function: Creates a DB object;
-     Returns : A DB object
+     Usage   : GAL::Storage->new();
+     Function: Creates a Storage object;
+     Returns : A Storage object
      Args    :
 
 =cut
@@ -115,7 +115,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::DB> requires no configuration files or environment variables.
+<GAL::Storage> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
