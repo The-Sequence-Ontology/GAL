@@ -74,6 +74,7 @@ sub _initialize_args {
 	my $args = $self->SUPER::_initialize_args(@args);
 
 	my @valid_attributes = qw(file
+                                  fh
 				  record_separator
 				  field_separator
 				  comment_delimiter
@@ -106,6 +107,24 @@ sub file {
 
 #-----------------------------------------------------------------------------
 
+=head2 fh
+
+ Title   : fh
+ Usage   : $a = $self->fh();
+ Function: Get/Set the filehandle.
+ Returns : The filehandle.
+ Args    : A filehandle.
+
+=cut
+
+sub fh {
+	my ($self, $value) = @_;
+	$self->{fh} = $value if defined $value;
+	return $self->{fh};
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 parser
 
  Title   : parser
@@ -123,14 +142,24 @@ sub parser {
 	my ($self, $value) = @_;
 	$self->{parser} = $value if defined $value;
 	if (! $self->{parser}) {
-		if (! $self->file) {
-			$self->throw('Tried to create a ' . ref $self . 'without a file to parse');
+		if (! $self->file && ! $self->fh) {
+			$self->throw('Tried to create a ' . ref $self . 'without a file or filehandle to parse');
 		}
-		my $parser = Text::RecordParser->new({filename         => $self->file,
-						      record_separator => $self->record_separator,
-						      field_separator  => $self->field_separator,
-						      comment          => $self->comment_delimiter,
-						     });
+		my $parser;
+		if ($self->{fh}) {
+			$parser = Text::RecordParser->new({fh               => $self->fh,
+							   record_separator => $self->record_separator,
+							   field_separator  => $self->field_separator,
+							   comment          => $self->comment_delimiter,
+							  });
+		}
+		else {
+			$parser = Text::RecordParser->new({filename         => $self->file,
+							   record_separator => $self->record_separator,
+							   field_separator  => $self->field_separator,
+							   comment          => $self->comment_delimiter,
+							  });
+		}
 		$parser->bind_fields($self->fields);
 		$self->{parser} = $parser;
 	}
@@ -368,7 +397,7 @@ sub parse_record {
 =head2 parse_attributes
 
  Title   : parse_attributes
- Usage   : $a = $self->parse_attributes();
+ Usage   : $a = $self->parse_attributes($attrb_text);
  Function: Parse the attributes from column 9 in a GFF3 style file.
  Returns : The value of parse_attributes.
  Args    : A value to set parse_attributes to.

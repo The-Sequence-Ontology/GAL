@@ -1,0 +1,363 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Parser;
+use List::Util;
+use List::MoreUtils;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+gff_tool --format gff3 file.gff3
+
+Description:
+
+A script to do a lot of different operations on a GFF3 file (or any file
+for which GAL has a parser for).
+
+
+Options:
+
+  ids        Load a list of IDs (or other values) into the hash ref \$ids
+             which will be used by include and exclude and is also
+             available to code refs for custom includes and excludes.
+  include    Include only those features who's IDs match the ids has href.
+  exclude    Exclude those features who's IDs match the ids has href.
+  sort       Use the given code ref for sorting. (Not yet implimented)
+  grep       Print only those features that match the given pattern. (Not yet implimented)
+  filter     Print only those features that return true from the
+	     given code ref.
+  alter      Apply the given code ref to each feature and then print.
+  validate   Simple validation for the file. (Not yet implimented)
+  hash_ag    Give a code ref that will be used to stuff features into \%hash_ag.
+  list_ag    Give a code ref that will be used to stuff features into \@list_ag. (Not yet implimented)
+  ag_code    A code reference that will be applied to each key or element in
+             \%hash_ag or \@list_ag.
+  stat       Return simple stats on the file. (Not yet implimented)
+  fasta      Parse the given fasta file making it available to code
+             references.  If a value is given that is not a readable file then
+             the script will attempt to parse a ##FASTA section from the GFF3
+             file before any features are processed. (Not yet implimented)
+  to_fasta   Print a fasta sequence for each feature. (Not yet implimented)
+  add_fasta  Add a fasta file to a GFF3 file ##FASTA section. (Not yet implimented)
+  no_fasta   Remove the ##FASTA section from a GFF3 file. (Not yet implimented)
+  add_ID     Add ID attributes where they don't already exist. (Not yet implimented)
+  format     The format of the input file. [gff3] (Not yet implimented)
+  in_place   Do an in-place edit to the file. [false] (Not yet implimented)
+
+Notes:
+
+All code refs have available to them the current GAL::Parser object
+(\$parser), the feature hash reference (\$f) and the attributes of
+that feature as a separate hash reference (\$a).  Operations
+that shouldn't change the feature - like grep and filter - won't
+change it.  The \$a are the same as the ones located in
+\$f->{attributes} but \$a will clobber the
+\$f->{attributes} before printing in alter operations.
+Regardless of what you do to those variables, the original version of
+the feature will be printed.  Operations that should change the
+feature, like alter and ag_code will print the altered versions of
+those variables.  If you want to filter and alter at the same time you
+should use list_ag to filter and then ag_code to alter.
+
+The structure of the feature hash references discussed above are:
+
+\$f = {feature_id => \$feature_id, # Same as the value of the ID attribute
+       seqid      => \$seqid,
+       source     => \$source,
+       type       => \$type,
+       start      => \$start,
+       end        => \$end,
+       score      => \$score,
+       strand     => \$strand,
+       phase      => \$phase,
+       attributes => \$a,
+      }
+
+\$a = {tag1 => [value1],
+       tag2 => [value1, value2],
+      }
+
+
+";
+
+
+my ($help, $ids_file, $include, $exclude, $sort_code, $grep_code, $filter_code,
+    $alter_code, $validate, $hash_ag, $list_ag, $ag_code, $stat, $fasta, $to_fasta,
+    $add_fasta, $no_fasta, $add_ID, $format, $in_place);
+
+my $opt_success = GetOptions('help'        => \$help,
+			     'ids=s'       => \$ids_file,
+			     'include'     => \$include,
+			     'exclude'     => \$exclude,
+			     'sort=s'      => \$sort_code,
+			     'grep=s'      => \$grep_code,
+			     'filter=s'    => \$filter_code,
+			     'alter=s'     => \$alter_code,
+			     'validate=s'  => \$validate,
+			     'hash_ag=s'   => \$hash_ag,
+			     'list_ag=s'   => \$list_ag,
+			     'ag_code=s'   => \$ag_code,
+			     'stat=s'      => \$stat,
+			     'fasta=s'     => \$fasta,
+			     'to_fasta=s'  => \$to_fasta,
+			     'add_fasta=s' => \$add_fasta,
+			     'no_fasta=s'  => \$no_fasta,
+			     'add_ID=s'    => \$add_ID,
+			     'format=s'    => \$format,
+			     'in_place'    => \$in_place,
+			      );
+
+die $usage if $help || ! $opt_success;
+
+$format ||= 'gff3';
+my $parser_class = "GAL::Parser::$format";
+eval "require $parser_class";
+die "Failed to load $parser_class" if $@;
+
+die $usage if ($ids_file && ! -r $ids_file);
+
+my $ids = parse_ids($ids_file) if ($ids_file && -r $ids_file);
+
+my $file = shift;
+die $usage unless scalar -r $file;
+
+my ($IN, $OUT);
+
+if (! -t STDIN) {
+	open ($IN, "<&=STDIN")   or die "Can't open STDIN:\n$!\n";
+}
+else {
+	open ($IN, "<", $file)   or die "Can't open $file for reading: $!\n";
+}
+
+if ($in_place) {
+	unlink $file;
+	open ($OUT, ">", $file)   or die "Can't open $file for writing:\n$!\n";
+}
+else {
+	open ($OUT, ">&=STDOUT") or die "Can't open STDOUT for writing:\n$!\n";
+}
+
+my $parser = $parser_class->new(fh     => $IN,
+				format => $format,
+			       );
+
+filter_gff($parser, $filter_code) if $filter_code;
+alter_gff($parser, $alter_code)   if $alter_code;
+hash_aggregate_gff($parser, $hash_ag, $ag_code) if $hash_ag && $ag_code;
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub parse_ids {
+
+	my $file = shift;
+
+	open ($IN, "<", $file)   or die "Can't open $file for reading: $!\n";
+
+	my %ids = map {chomp;$_ => 1} (<$IN>);
+
+	return \%ids;
+}
+
+
+#-----------------------------------------------------------------------------
+
+sub fails_filters {
+
+	my $feature = shift;
+
+	my $fail;
+
+	if ($ids) {
+		$fail++ if ($include && ! $ids->{$feature->{feature_id}});
+		$fail++ if ($exclude &&   $ids->{$feature->{feature_id}});
+	}
+
+	return $fail;
+
+}
+
+#-----------------------------------------------------------------------------
+
+sub sort_gff {
+
+	die "gff_tool (sort) not yet implimented!\n";
+
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_gff {
+
+	while (my $feature = $parser->next_feature_hash) {
+		next if fails_filters($feature);
+
+		print $parser->to_gff3($feature);
+
+	}
+}
+
+#-----------------------------------------------------------------------------
+
+sub grep_gff {
+
+	die "gff_tool (grep) not yet implimented!\n";
+
+
+}
+
+#-----------------------------------------------------------------------------
+
+sub filter_gff {
+
+	my ($parser, $code) = @_;
+
+	while (my $f_original = $parser->next_feature_hash) {
+
+		my $f = $f_original;
+		my $a = $f->{attributes};
+
+		my $return_value = eval $code;
+                die "Fatal Error in code ref: $code\n$@\n" if $@;
+                next unless $return_value;
+
+		print $parser->to_gff3($f_original);
+	}
+}
+
+#-----------------------------------------------------------------------------
+
+sub alter_gff {
+
+	my ($parser, $code) = @_;
+
+	while (my $f = $parser->next_feature_hash) {
+
+		my $a = $f->{attributes};
+
+		my $return_value = eval $code;
+                die "Fatal Error in code ref: $code\n$@\n" if $@;
+
+		$f->{attributes} = $a;
+
+		print $parser->to_gff3($f);
+	}
+}
+
+#-----------------------------------------------------------------------------
+
+sub validate_gff {
+
+	die "gff_tool (validate) not yet implimented!\n";
+
+
+}
+
+#-----------------------------------------------------------------------------
+
+sub hash_aggregate_gff {
+
+	my ($parser, $hash_ag, $ag_code) = @_;
+
+
+	my %hash_ag;
+	while (my $f = $parser->next_feature_hash) {
+
+		my $a = $f->{attributes};
+
+		my $return_value = eval $hash_ag;
+                die "Fatal Error in code ref: $hash_ag\n$@\n" if $@;
+	}
+
+	for my $key (keys %hash_ag) {
+
+		my $value = $hash_ag{$key};
+
+		my $f = eval $ag_code;
+                die "Fatal Error in code ref: $ag_code\n$@\n" if $@;
+                next unless $f;
+
+		print $parser->to_gff3($f);
+	}
+}
+
+#-----------------------------------------------------------------------------
+
+sub list_aggregate_gff {
+
+	my ($parser, $list_ag, $ag_code) = @_;
+
+
+	my @list_ag;
+	while (my $f = $parser->next_feature_hash) {
+
+		my $a = $f->{attributes};
+
+		my $return_value = eval $list_ag;
+                die "Fatal Error in code ref: $list_ag\n$@\n" if $@;
+	}
+
+	for my $element (@list_ag) {
+
+		my $f = eval $ag_code;
+                die "Fatal Error in code ref: $ag_code\n$@\n" if $@;
+                next unless $f;
+
+		print $parser->to_gff3($f);
+	}
+}
+
+#-----------------------------------------------------------------------------
+
+sub stats {
+
+	die "gff_tool (stats) not yet implimented!\n";
+
+
+}
+
+#-----------------------------------------------------------------------------
+
+sub to_fasta {
+
+	die "gff_tool (to_fasta) not yet implimented!\n";
+
+
+}
+
+#-----------------------------------------------------------------------------
+
+sub add_fasta {
+
+	die "gff_tool (add_fasta) not yet implimented!\n";
+
+
+}
+
+#-----------------------------------------------------------------------------
+
+sub no_fasta {
+
+	die "gff_tool (no_fasta) not yet implimented!\n";
+
+
+}
+
+#-----------------------------------------------------------------------------
+
+sub add_ID {
+
+	die "gff_tool (add_ID) not yet implimented!\n";
+
+
+}
+
+#-----------------------------------------------------------------------------
