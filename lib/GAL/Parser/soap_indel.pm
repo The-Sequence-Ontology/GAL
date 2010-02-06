@@ -169,9 +169,9 @@ sub parse_record {
 	# For sequence_alteration features the suggested keys include:
 	# reference_allele, variant_allele, reference_reads, variant_reads
 	# total_reads, genotype, genotype_probability and score type.
-	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => [$variant_allele],
-			  ID               => [$id],
+	my $attributes = {Reference_seq => [$reference_allele],
+			  Variant_seq   => [$variant_allele],
+			  ID            => [$id],
 			 };
 
 	my $feature_data = {id         => $id,

@@ -116,17 +116,13 @@ sub assembly {
 sub parse_record {
 	my ($self, $record) = @_;
 
+
+	my $self->throw(message => 'This module needs testing an verification before use.  In particular Variant_seq may be on the wrong strand');
+
 	my ($record, $errors) = $self->_parse_dbsnp_flat($record->{data});
 
 	return undef unless $record;
 
-	# $record is a hash reference that contains the following keys:
-	# assembly chr chr_start chr_end ctg ctg_start ctg_end loctype
-	# orient alleles het se_het id organism tax_id type
-	# genotype submit_link update
-
-	# Fill in the first 8 columns for GFF3
-	# See http://www.sequenceontology.org/resources/gff3.html for details.
 	my $id         = $record->{id};
 	my $source     = 'dbSNP';
 	my $type       = $record->{type};
@@ -148,45 +144,6 @@ sub parse_record {
 		$self->warn(message => $error_message);
 	}
 
-	# Create the attributes hash
-
-	# Assign the reference and variant allele sequences:
-	# reference_allele=A
-	# variant_allele=G
-
-	# Assign the reference and variant allele read counts:
-	# reference_reads=A:7
-	# variant_reads=G:8
-
-	# Assign the total number of reads covering this position:
-	# total_reads=16
-
-	# Assign the genotype:
-	# genotype=homozygous
-
-	# Assign the probability that the genotype call is correct:
-	# genotype_probability=0.667
-
-	# Any quality score given for this variant should be assigned
-	# to $score above (column 6 in GFF3).  Here you can assign a
-	# name for the type of score or algorithm used to calculate
-	# the sscore (e.g. phred_like, clcbio, illumina).
-
-	# Create the attribute hash reference.  Note that all values
-	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested keys include
-	# (from the GFF3 spec), but are not limited to: ID, Name,
-	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
-	# Ontology_term. Note that attribute names are case
-	# sensitive. "Parent" is not the same as "parent". All
-	# attributes that begin with an uppercase letter are reserved
-	# for later use. Attributes that begin with a lowercase letter
-	# can be used freely by applications.
-
-	# Now we will resolve variants that map to multiple locations in
-	# the genome by creating a feature for each one and returning an array
-	# of features - even if there is only one.
 	my @ctgs = @{$record->{ctgs}};
 
 	my @features;
@@ -206,11 +163,6 @@ sub parse_record {
 		}
 
 
-#		map {tr/ACGTRYMKSWHBVDNX/TGCAYRKMSWDVBHNX/i} @alleles if ($ctg->{orient} eq '-');
-
-		# For sequence_alteration features the suggested keys include:
-		# reference_allele, variant_allele, reference_reads, variant_reads
-		# total_reads, genotype, genotype_probability and score type.
 		my $attributes = {ID            => $id,
 				  Variant_seq   => \@alleles,
 				  Errors        => [@error_codes, @ctg_error_codes],

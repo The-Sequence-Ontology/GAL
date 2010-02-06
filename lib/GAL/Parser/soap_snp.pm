@@ -143,10 +143,7 @@ sub parse_record {
 			0
 		       );
 
-	$variant_sequences[0] .= ":$support1";
-	if ($variant_sequences[1]) {
-		$variant_sequences[1] .= ":$support2";
-	}
+	my @variant_reads = ($support_1, $support_2);
 
 	# Assign the total number of reads covering this position:
 	# total_reads=16
@@ -156,7 +153,7 @@ sub parse_record {
 	# Assign the genotype:
 	# genotype=homozygous
 
-	my $genotype = scalar @variant_sequences > 1 ? 'homozygous' : 'heterozygous';
+	my $genotype = scalar @variant_sequences > 1 ? 'heterozygous' : 'homozygous';
 
 	# Assign the probability that the genotype call is correct:
 	# genotype_probability=0.667
@@ -182,10 +179,11 @@ sub parse_record {
 	# For sequence_alteration features the suggested keys include:
 	# reference_sequence, variant_sequence, reference_reads, variant_reads
 	# total_reads, genotype, genotype_probability and score type.
-	my $attributes = {reference_sequence => [$reference_sequence],
-			  variant_sequence   => \@variant_sequences,
-			  total_reads      => [$total_reads],
-			  genotype         => [$genotype],
+	my $attributes = {Reference_seq => [$reference_sequence],
+			  Variant_seq   => \@variant_sequences,
+			  Variant_reads => \@variant_reads,
+			  Total_reads      => [$total_reads],
+			  Genotype         => [$genotype],
 			 };
 
 	my $feature_data = {feature_id => $id,
