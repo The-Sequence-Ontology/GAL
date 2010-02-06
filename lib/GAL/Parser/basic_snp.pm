@@ -88,11 +88,8 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# $record is a hash reference that contains the keys assigned
-	# in the $self->fields call in _initialize_args above
+	$self->throw(message => 'This parser should be tested and evaluated before use');
 
-	# Fill in the first 8 columns for GFF3
-	# See http://www.sequenceontology.org/resources/gff3.html for details.
 	my $id         = join ':', ('CH', $record->{chromosome}, $record->{location});
 	my $seqid      = $record->{chromosome};
 	my $source     = 'Chad_Huff';
@@ -103,53 +100,9 @@ sub parse_record {
 	my $strand     = '+';
 	my $phase      = '.';
 
-	# Create the attributes hash
-
-	# Assign the reference and variant allele sequences:
-	# reference_allele=A
-	# variant_allele=G
 	my $variant_allele = $record->{variant};
 
-	# Assign the reference and variant allele read counts:
-	# reference_reads=A:7
-	# variant_reads=G:8
-
-	# Assign the total number of reads covering this position:
-	# total_reads=16
-
-	# Assign the genotype:
-	# genotype=homozygous
-
-	# Assign the probability that the genotype call is correct:
-	# genotype_probability=0.667
-
-	#my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
-
-	# Any quality score given for this variant should be assigned
-	# to $score above (column 6 in GFF3).  Here you can assign a
-	# name for the type of score or algorithm used to calculate
-	# the sscore (e.g. phred_like, clcbio, illumina).
-	# my $score_type = 'template';
-
-	# Create the attribute hash reference.  Note that all values
-	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested tags include
-	# (from the GFF3 spec), but are not limited to: ID, Name,
-	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
-	# Ontology_term. Note that attribute names are case
-	# sensitive. "Parent" is not the same as "parent". All
-	# attributes that begin with an uppercase letter are reserved
-	# for later use. Attributes that begin with a lowercase letter
-	# can be used freely by applications.
-
-	# For sequence_alteration features the suggested tags include:
-	# reference_allele, variant_allele, reference_reads, variant_reads
-	# total_reads, genotype, genotype_probability and score type.
-	my $attributes = {#reference_allele => [$reference_allele],
-			  variant_allele   => [$variant_allele],
-			  #genotype         => [$genotype],
-			  #score_type       => [$score_type],
+	my $attributes = {Variant_seq   => [$variant_allele],
 			  ID               => [$id],
 			 };
 
