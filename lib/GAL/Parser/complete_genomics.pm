@@ -91,8 +91,15 @@ sub parse_record {
 	my ($self, $record) = @_;
 
 	return undef unless $record->{locus} =~ /^\d+$/;
-	# $record is a hash reference that contains the keys assigned
-	# in the $self->fields call in _initialize_args above
+
+	# locus,contig,begin,end,vartype1,vartype2,reference,allele1,allele2,totalScore
+	# 6,chr1,31843,31844,snp,snp,A,G,G,235
+	# 21,chr1,36532,36533,snp,snp,A,G,G,36
+	# 23,chr1,36970,36971,snp,snp,G,C,C,109
+	# 24,chr1,37154,37155,snp,snp,T,G,G,181
+	# 25,chr1,37354,37355,=,snp,C,C,G,73
+	# 26,chr1,37623,37624,snp,snp,T,C,C,29
+	# 27,chr1,38033,38034,=,snp,A,A,G,54
 
 	# $self->fields([qw(locus contig begin end vartype1 vartype2 reference allele1 allele2 totalScore)]);
 	# Fill in the first 8 columns for GFF3
@@ -102,7 +109,10 @@ sub parse_record {
 	my $source     = 'Complete_Genomics';
 
 	my %types = map {$_, 1} ($record->{vartype1}, $record->{vartype2});
+	my $has_ref_allele;
+	$has_ref_allele++ if $types{=};
 	delete $types{'='};
+
 	my ($type) = scalar keys %types == 1 ? keys %types : '';
 
 	my %type_map = (snp		    => 'SNP',
@@ -118,59 +128,16 @@ sub parse_record {
 	my $strand     = '+';
 	my $phase      = '.';
 
-	# Create the attributes hash
-
-	# Assign the reference and variant allele sequences:
-	# reference_allele=A
-	# variant_allele=G
 	my $reference_allele = $record->{reference} || '-';
-	my @variant_alleles  = ($record->{allele1} eq $record->{allele2} ?
-				($record->{allele1})                     :
-				($record->{allele1}, $record->{allele2})
-				);
-	map {$_ ||= '-'} @variant_alleles;
-	#@variant_alleles = grep {$_ ne $reference_allele} @variant_alleles;
+	my %variant_hash  = map {$_ => 1} ($record->{allele1}, $record->{allele2});
+	$variant_hash{$reference_allele}++ if $has_ref_allele;
+	my @variant_alleles = map {$_ ||= '-'} keys %variant_hash;
 
-	# Assign the reference and variant allele read counts:
-	# reference_reads=A:7
-	# variant_reads=G:8
+	my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
 
-	# Assign the total number of reads covering this position:
-	# total_reads=16
-
-	# Assign the genotype:
-	# genotype=homozygous
-
-	my $genotype = $self->get_genotype($reference_allele, \@variant_alleles);
-
-	# Assign the probability that the genotype call is correct:
-	# genotype_probability=0.667
-
-	# Any quality score given for this variant should be assigned
-	# to $score above (column 6 in GFF3).  Here you can assign a
-	# name for the type of score or algorithm used to calculate
-	# the sscore (e.g. phred_like, clcbio, illumina).
-	my $score_type = 'complete_genomics';
-
-	# Create the attribute hash reference.  Note that all values
-	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested keys include
-	# (from the GFF3 spec), but are not limited to: ID, Name,
-	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
-	# Ontology_term. Note that attribute names are case
-	# sensitive. "Parent" is not the same as "parent". All
-	# attributes that begin with an uppercase letter are reserved
-	# for later use. Attributes that begin with a lowercase letter
-	# can be used freely by applications.
-
-	# For sequence_alteration features the suggested keys include:
-	# reference_allele, variant_allele, reference_reads, variant_reads
-	# total_reads, genotype, genotype_probability and score type.
-	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => \@variant_alleles,
-			  genotype         => [$genotype],
-			  score_type       => [$score_type],
+	my $attributes = {Reference_seq => [$reference_allele],
+			  Variant_seq   => \@variant_alleles,
+			  Genotype         => [$genotype],
 			  ID               => [$id],
 			 };
 
