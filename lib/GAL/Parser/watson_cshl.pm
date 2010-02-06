@@ -168,16 +168,17 @@ sub parse_record {
 
 	my $total_reads = $record->{total_coverage};
 
+        my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
 	my $their_genotype = $record->{genotype} eq 'het' ? 'heterozygous' : undef;
-	my $our_genotype   = $self->get_genotype($reference_allele, \@variant_alleles);
 
 	my $rs_id = $record->{rs} =~ /rs\d+/ ? 'dbSNP:' . $record->{rs} : undef;
 
 	my $attributes = {Reference_seq => [$reference_allele],
 			  Variant_seq   => \@variant_alleles,
-			  ID               => [$id],
-			  Variant_reads    => \@variant_reads,
-			  Total_reads      => [$total_reads],
+			  ID            => [$id],
+			  Variant_reads => \@variant_reads,
+			  Total_reads   => [$total_reads],
+			  Genotype      => [$genotype];
 			 };
 
 	push @{$attributes->{Intersected_feature}}, $rs_id if $rs_id;

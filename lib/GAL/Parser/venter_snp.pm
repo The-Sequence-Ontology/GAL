@@ -159,8 +159,7 @@ sub parse_record {
 	#@variant_alleles = grep {$_ ne $reference_allele} @variant_alleles;
 	unshift @variant_alleles, $reference_allele if $record->{variant_type} =~ /^heterozygous/;
 
-	my $our_genotype;
-	$our_genotype = $self->get_genotype($reference_allele, \@variant_alleles);
+        my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
 
 	# sort | uniq -c | sort -nr
 	# 1624998 heterozygous_SNP
@@ -183,7 +182,7 @@ sub parse_record {
 
 	my $attributes = {Reference_seq => [$reference_allele],
 			  Variant_seq   => \@variant_alleles,
-			  Genotype      => [$our_genotype],
+			  Genotype      => [$genotype],
 			  ID            => [$id],
 			 };
 

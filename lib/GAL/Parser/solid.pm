@@ -135,7 +135,7 @@ sub parse_record {
 
 	# Assign the genotype:
 	# genotype=homozygous;
-	my $genotype = $self->get_genotype($reference_allele, \@variant_alleles);
+        my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
 
 	# Assign the probability that the genotype call is correct:
 	# genotype_probability=0.667;

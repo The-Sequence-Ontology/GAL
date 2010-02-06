@@ -88,30 +88,6 @@ grep {$_ ne $reference_allele} Function: Parse the data from a record.
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# $record is a hash reference that contains the keys assigned
-	# in the $self->fields call in _initialize_args above
-
-	# Fill in the first 8 columns for GFF3
-	# See http://www.sequenceontology.org/resources/gff3.html for details.
-
-	my ($allele_size, $allele) =  split /:/, $record->{allele};
-
-	my $seqid      = $record->{chromosome};
-	my $source     = 'Illumina';
-	my $type       = $allele_size < 0 ? 'nucleotide_deletion' : 'nucleotide_insertion';
-	my $start      = $allele_size < 0 ? $record->{location} : $record->{location} - 1;
-	my $end        = $allele_size < 0 ? $record->{location} - $allele_size - 1 : $record->{location} - 1;
-	my $score      = '.';
-	my $strand     = '.';
-	my $phase      = '.';
-
-	my $id = join ":", ('KOREF',
-			    'indel',
-			    $seqid,
-			    $start,
-			    $end,
-			   );
-
 	# Create the attributes hash
 
 	# N/A chr1 713662 13 -2:AG    AGGGAGAGAGAAAGGAAGAGACGATGAGAGAC AGAGAGAAGGAGAGAGAAAGTACAAAAGAACG	HET Non_genic Other
@@ -125,63 +101,72 @@ sub parse_record {
 	# N/A chr1 806276 26 -1:T     TTATTTTTGAGTTTGGTAATTTGAGTATTCCC TTTTTTTCTTAGTCAATCTAGATAAAATTTTG	HET Non_genic Other
 	# N/A chr1 806790 32  1:C     TGTATCAACATTTGTTGTGTTCTCATAAACTT TGTAATACATGGAGATTTCTGGTCCACATATG	HET Non_genic Other
 
-	# $self->fields([qw(transcript_id chromosome location allele context1
+	# $self->fields([qw(transcript_id chromosome location total_reads allele context1
 	#                   context2 genotype gene_name gene_part)]);
 
-	# Assign the reference and variant allele sequences:
-	# reference_allele=A
-	# variant_allele=G
+	my ($allele_size, $allele) =  split /:/, $record->{allele};
+
+	my $seqid      = $record->{chromosome};
+	my $source     = 'Illumina_GA';
+	my $type       = $allele_size < 0 ? 'nucleotide_deletion' : 'nucleotide_insertion';
+	my $start      = $allele_size < 0 ? $record->{location} : $record->{location} - 1;
+	my $end        = $allele_size < 0 ? $record->{location} - $allele_size - 1 : $record->{location} - 1;
+	my $score      = '.';
+	my $strand     = '+';
+	my $phase      = '.';
+
+	my $id = join ":", ($source,
+			    $type,
+			    $seqid,
+			    $start,
+			    $end,
+			   );
+
 	my $reference_allele = $allele_size < 0 ? $allele : '-';
 	my @variant_alleles;
-	push @variant_alleles, ($allele_size < 0 ? $allele : '-') if $record->{genotype} eq 'HET';
-	push @variant_alleles,  $allele_size < 0 ? '-'     : $allele;
-
-	# Assign the reference and variant allele read counts;
-	# reference_reads=A:7
-	# variant_reads=G:8
-
-	# Assign the total number of reads covering this position:
-	# total_reads=16
+	if ($record->{genotype} eq 'HET') {
+		push @variant_alleles, ($allele_size < 0 ? $allele : '-')
+	}
+	else {
+		push @variant_alleles, ($allele_size < 0 ? '-'     : $allele);
+	}
 
 	my $total_reads = $record->{total_reads};
 
-	# Assign the genotype:
-	# genotype=homozygous
+	my $genotype = $record->{genotype} eq 'HET' ? 'heterozygous' : 'homozygous';
 
-	my $genotype = $record->{genotype} eq 'HET' ? 'heterozygous:with_reference' : 'homozygous:no_reference';
+	my $intersected_gene;
+	$intersected_gene = $record->gene_name ne 'Non_genic' ? 'gene:HGNC:' . $record->gene_name : undef;
 
-	# Assign the probability that the genotype call is correct:
-	# genotype_probability=0.667
+	#perl -lane 'print $F[9] unless $F[9] eq "Other"' KOREF-solexa-indel-X30_d3D50E20.gff | sort | uniq -c | sort -nr
+	#  127516 Intron
+	#     319 3UTR
+	#      49 CDS
+	#      27 5UTR
 
-	# my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
+	my %type_map = {Intron => 'intron',
+			3UTR   => 'three_prime_UTR',
+			CDS    => 'CDS',
+			5UTR   => 'five_prime_UTR',
+			Other  =>  undef,
+		       };
 
-	# Any quality score given for this variant should be assigned
-	# to $score above (column 6 in GFF3).  Here you can assign a
-	# name for the type of score or algorithm used to calculate
-	# the sscore (e.g. phred_like, clcbio, illumina).
-	# score_type = 'illumina_indel';
+	my $intersected_gene_part;
+	$intersected_gene_part = $record->{gene_part};
 
-	# Create the attribute hash reference.  Note that all values
-	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested keys include
-	# (from the GFF3 spec), but are not limited to: ID, Name,
-	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
-	# Ontology_term. Note that attribute names are case
-	# sensitive. "Parent" is not the same as "parent". All
-	# attributes that begin with an uppercase letter are reserved
-	# for later use. Attributes that begin with a lowercase letter
-	# can be used freely by applications.
+	my @intersected_features;
 
-	# For sequence_alteration features the suggested keys include:
-	# reference_allele, variant_allele, reference_reads, variant_reads
-	# total_reads, genotype, genotype_probability and score type.
-	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => \@variant_alleles,
-			  total_reads      => [$total_reads],
-			  genotype         => [$genotype],
+	push @intersected_features, $intersected_gene      if $intersected_gene;
+	push @intersected_features, $intersected_gene_part if $intersected_gene_part;
+
+	my $attributes = {Reference_allele => [$reference_allele],
+			  Variant_allele   => \@variant_alleles,
+			  Total_reads      => [$total_reads],
+			  Genotype         => [$genotype],
 			  ID               => [$id],
 			 };
+
+	$attributes{Intersected_feature} = \@intersected_features if scalar @intersected_features;
 
 	my $feature_data = {id         => $id,
 			    seqid      => $seqid,

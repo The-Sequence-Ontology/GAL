@@ -88,9 +88,6 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# $record is a hash reference that contains the keys assigned
-	# in the $self->fields call in _initialize_args above
-
 	my ($chromosome, $position) = split /_/, $record->{location};
 
 	map {s/^0+//} ($chromosome, $position);
@@ -98,8 +95,6 @@ sub parse_record {
 	$chromosome = 'X' if $chromosome eq '24';
 	$chromosome = 'Y' if $chromosome eq '25';
 
-	# Fill in the first 8 columns for GFF3
-	# See http://www.sequenceontology.org/resources/gff3.html for details.
 	my $seqid = 'chr' . $chromosome;
 	my $source     = 'Quake';
 	my $type       = 'SNP';
@@ -110,50 +105,12 @@ sub parse_record {
 	my $phase      = '.';
 	my $id         = join ':', ($seqid, $source, $type, $start);
 
-	# Create the attributes hash
-
-	# Assign the reference and variant allele sequences:
-	# reference_allele=A
-	# variant_allele=G
 	my $reference_allele  = $record->{reference};
 	my %variant_hash = map {$_, 1} split //, $record->{variant};
-	my @variant_alleles = keys %variant_hash; # grep {$_ ne $reference_allele}
+	my @variant_alleles = keys %variant_hash;
 
-	# Assign the reference and variant allele read counts:
-	# reference_reads=A:7
-	# variant_reads=G:8
+        my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
 
-	# Assign the total number of reads covering this position:
-	# total_reads=16
-
-	# Assign the genotype:
-	# genotype=homozygous
-	my $genotype = $self->get_genotype($reference_allele, \@variant_alleles);
-
-	# Assign the probability that the genotype call is correct:
-	# genotype_probability=0.667
-
-	# Any quality score given for this variant should be assigned
-	# to $score above (column 6 in GFF3).  Here you can assign a
-	# name for the type of score or algorithm used to calculate
-	# the sscore (e.g. phred_like, clcbio, illumina).
-	# score_type = 'quake';
-
-	# Create the attribute hash reference.  Note that all values
-	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested keys include
-	# (from the GFF3 spec), but are not limited to: ID, Name,
-	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
-	# Ontology_term. Note that attribute names are case
-	# sensitive. "Parent" is not the same as "parent". All
-	# attributes that begin with an uppercase letter are reserved
-	# for later use. Attributes that begin with a lowercase letter
-	# can be used freely by applications.
-
-	# For sequence_alteration features the suggested keys include:
-	# reference_allele, variant_allele, reference_reads, variant_reads
-	# total_reads, genotype, genotype_probability and score type.
 	my $attributes = {reference_allele => [$reference_allele],
 			  variant_allele   => \@variant_alleles,
 			  genotype         => [$genotype],

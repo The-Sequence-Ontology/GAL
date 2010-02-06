@@ -88,22 +88,15 @@ grep {$_ ne $reference_allele} Function: Parse the data from a record.
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# $record is a hash reference that contains the keys assigned
-	# in the $self->fields call in _initialize_args above
-
-	# Fill in the first 8 columns for GFF3
-	# See http://www.sequenceontology.org/resources/gff3.html for details.
 	my $id         = $record->{id};
 	my $seqid      = $record->{chromosome};
-	my $source     = 'Illumina';
+	my $source     = 'Illumina_GA';
 	my $type       = 'SNP';
 	my $start      = $record->{location};
 	my $end        = $record->{location};
 	my $score      = '.';
-	my $strand     = '.';
+	my $strand     = '+';
 	my $phase      = '.';
-
-	# Create the attributes hash
 
 	# Het with ref: get var_alleles and remove ref.  ref_reads and var_reads OK
 	# chr10   56397   C       CT      rs12262442      28      C/T     17      11
@@ -128,19 +121,11 @@ sub parse_record {
 
 	# $self->fields([qw(chromosome location ref_allele var_alleles id total_reads read_alleles ref_reads var_reads)]);
 
-	# Assign the reference and variant allele sequences:
-	# reference_allele=A
-	# variant_allele=G
 	my $reference_allele = $record->{ref_allele};
 	my %variant_alleles  = map {$_, 1} split //, $record->{var_alleles};
-	my @variant_alleles = keys %variant_alleles; # grep {$_ ne $reference_allele}
-
-	# Assign the reference and variant allele read counts;
-	# reference_reads=A:7
-	# variant_reads=G:8
+	my @variant_alleles = keys %variant_alleles;
 
 	my $total_reads = $record->{total_reads};
-	my $reference_reads = "$reference_allele:" . $record->{ref_reads};
 
 	# chr10   56397   C       CT      rs12262442      28      C/T     17      11
 	my @read_alleles = split m|/|, $record->{read_alleles};
@@ -148,64 +133,15 @@ sub parse_record {
 			   $read_alleles[1] => $record->{var_reads},
 			   );
 
-	my @variant_reads = map {"$_:" . ($read_counts{$_} || $total_reads - $record->{var_reads})} @variant_alleles;
+	my @variant_reads = map {$read_counts{$_} || $total_reads - $record->{var_reads}} @variant_alleles;
 
-	# if (scalar @variant_alleles > 1) {
-	#	my @read_alleles = split m|/|, $record->{read_alleles};
-	#	my $alt_allele;
-	#	for my $this_allele (@variant_alleles) {
-	#		next if grep {$_ eq $this_allele} @read_alleles;
-	#		$alt_allele = $this_allele;
-	#	}
-	#	my $var_allele = $variant_alleles[0] ne $alt_allele ? $variant_alleles[0] : $variant_alleles[1];
-	#	my $var_reads = $record->{var_reads};
-	#	my $alt_reads  = $total_reads - $record->{ref_reads} - $record->{var_reads};
-	#	push @variant_reads, "$var_allele:$var_reads";
-	#	push @variant_reads, "$alt_allele:$alt_reads";
-	# }
-	# else {
-	#	push @variant_reads, ($variant_alleles[0] . ':' . $record->{var_reads});
-	# }
+	my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
 
-	# Assign the total number of reads covering this position:
-	# total_reads=16
-
-	# Assign the genotype:
-	# genotype=homozygous
-	my $genotype = $self->get_genotype($reference_allele, \@variant_alleles);
-
-	# Assign the probability that the genotype call is correct:
-	# genotype_probability=0.667
-
-	# my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
-
-	# Any quality score given for this variant should be assigned
-	# to $score above (column 6 in GFF3).  Here you can assign a
-	# name for the type of score or algorithm used to calculate
-	# the sscore (e.g. phred_like, clcbio, illumina).
-	# score_type = 'illumina_snp';
-
-	# Create the attribute hash reference.  Note that all values
-	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested keys include
-	# (from the GFF3 spec), but are not limited to: ID, Name,
-	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
-	# Ontology_term. Note that attribute names are case
-	# sensitive. "Parent" is not the same as "parent". All
-	# attributes that begin with an uppercase letter are reserved
-	# for later use. Attributes that begin with a lowercase letter
-	# can be used freely by applications.
-
-	# For sequence_alteration features the suggested keys include:
-	# reference_allele, variant_allele, reference_reads, variant_reads
-	# total_reads, genotype, genotype_probability and score type.
-	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => \@variant_alleles,
-			  reference_reads  => [$reference_reads],
-			  variant_reads    => \@variant_reads,
-			  total_reads      => [$total_reads],
-			  genotype         => [$genotype],
+	my $attributes = {Reference_allele => [$reference_allele],
+			  Variant_allele   => \@variant_alleles,
+			  Variant_reads    => \@variant_reads,
+			  Total_reads      => [$total_reads],
+			  Genotype         => [$genotype],
 			  ID               => [$id],
 			 };
 
