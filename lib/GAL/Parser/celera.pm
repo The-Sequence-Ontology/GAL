@@ -153,32 +153,16 @@ sub parse_record {
 	my $strand     = $record->{orientation};
 	my $phase      = '.';
 
-	# Create the attributes hash
 
-	# Assign the reference and variant allele sequences:
-	# reference_allele=A
-	# variant_allele=G
 	my ($allele_text) = split /;/, $record->{alleles};
 	my ($reference_allele, @variant_alleles) = split m|/|, $allele_text;
 	#@variant_alleles = grep {$_ ne $reference_allele} @variant_alleles;
 	unshift @variant_alleles, $reference_allele if $record->{variant_type} =~ /^heterozygous/;
 
-	# Assign the reference and variant allele read counts:
-
-	# reference_reads=A:7
-	# variant_reads=G:8
-
-	# Assign the total number of reads covering this position:
-	# total_reads=16
-
-	# Assign the genotype:
-	# genotype=homozygous
 	my $our_genotype;
 	$our_genotype = $self->get_genotype($reference_allele, \@variant_alleles);
 
-	# Assign the probability that the genotype call is correct:
-	# genotype_probability=0.667
-
+	# sort | uniq -c | sort -nr
 	# 1624998 heterozygous_SNP
 	# 1450860 homozygous_SNP
 	#  128111 heterozygous_insertion
@@ -186,10 +170,6 @@ sub parse_record {
 	#   22525 heterozygous_MNP
 	#   21480 heterozygous_mixed_sequence_variant
 	#   14838 homozygous_MNP
-
-	# The mixed sequence variants above have things like TT/C-
-	# where their is a contiguous substiution and deletion or
-	# insertion.
 
 	my ($their_genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
 	my %type_map = (deletion               => 'nucleotide_deletion',
@@ -201,23 +181,10 @@ sub parse_record {
 
 	$type = $type_map{$variant_type};
 
-	# Any quality score given for this variant should be assigned
-	# to $score above.  Here you can assign a name for the type of
-	# score or algorithm used to calculate the sscore.
-	my $score_type = 'celera';
-
-	# Create the attribute hash reference.  Note that all values
-	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.
-	# For sequence_alteration features the suggested keys include:
-	# reference_allele, variant_allele, reference_reads, variant_reads
-	# total_reads, genotype, genotype_probability and score type
-	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => \@variant_alleles,
-			  genotype         => [$our_genotype],
-			  score_type       => [$score_type],
-			  ID               => [$id],
+	my $attributes = {Reference_seq => [$reference_allele],
+			  Variant_seq   => \@variant_alleles,
+			  Genotype      => [$our_genotype],
+			  ID            => [$id],
 			 };
 
 	my $feature_data = {id         => $id,

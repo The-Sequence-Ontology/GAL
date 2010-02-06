@@ -98,8 +98,8 @@ sub parse_record {
 	# 1 1104685097452 homozygous_indel 778884 778933 . + . . AAACTGATGAACCCCGACCCTGATGAACGTGAGATGACCGCCGTGTGGT Homozygous_Deletion
 
 
-	# Headers use by parser
-	# chromosome variant_id variant_type start end orientation alleles processing
+	# $self->fields([qw(chromosome variant_id variant_type start end score
+	# strand phase null allele genotype)]);
 
 	my ($genotype, $type) = split /_/, $record->{genotype};
 
@@ -120,14 +120,6 @@ sub parse_record {
 	my $strand     = $record->{strand};
 	my $phase      = '.';
 
-#	$self->fields([qw(chromosome variant_id variant_type start end score
-#                          strand phase null allele genotype)]);
-
-	# Create the attributes hash
-
-	# Assign the reference and variant allele sequences:
-	# reference_allele=A
-	# variant_allele=G
 	my ($reference_allele, $variant_allele);
 	if ($type eq 'Deletion') {
 		$reference_allele = $record->{allele};
@@ -137,50 +129,15 @@ sub parse_record {
 		$reference_allele = '-';
 		$variant_allele   = $record->{allele};
 	}
-	# Assign the reference and variant allele read counts:
 
-	# reference_reads=A:7
-	# variant_reads=G:8
-
-	# Assign the total number of reads covering this position:
-	# total_reads=16
-
-	# Assign the genotype:
-	# genotype=homozygous
-	$genotype = 'homozygous:no_reference';
-
-	# Assign the probability that the genotype call is correct:
-	# genotype_probability=0.667
-
-	# 1624998 heterozygous_SNP
-	# 1450860 homozygous_SNP
-	#  128111 heterozygous_insertion
-	#   92647 heterozygous_deletion
-	#   22525 heterozygous_MNP
-	#   21480 heterozygous_mixed_sequence_variant
-	#   14838 homozygous_MNP
-
-	# The mixed sequence variants above have things like TT/C-
-	# where their is a contiguous substiution and deletion or
-	# insertion.
+	$genotype = lc $genotype;
 
 	$type = $type eq 'Deletion' ? 'nucleotide_deletion' : 'nucleotide_insertion';
 
-	# Any quality score given for this variant should be assigned
-	# to $score above.  Here you can assign a name for the type of
-	# score or algorithm used to calculate the sscore.
-
-	# Create the attribute hash reference.  Note that all values
-	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.
-	# For sequence_alteration features the suggested keys include:
-	# reference_allele, variant_allele, reference_reads, variant_reads
-	# total_reads, genotype, genotype_probability and score type
-	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => [$variant_allele],
-			  genotype         => [$genotype],
-			  ID               => [$id],
+	my $attributes = {Reference_seq => [$reference_allele],
+			  Variant_seq   => [$variant_allele],
+			  Genotype      => [$genotype],
+			  ID            => [$id],
 			 };
 
 	my $feature_data = {id         => $id,
