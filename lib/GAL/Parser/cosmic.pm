@@ -86,6 +86,8 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
+	my $self->throw(message => 'This parser needs to be evaluated and validated before use');
+
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
 	my $id         = $record->{id};

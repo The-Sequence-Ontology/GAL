@@ -116,7 +116,6 @@ sub assembly {
 sub parse_record {
 	my ($self, $record) = @_;
 
-
 	my $self->throw(message => 'This module needs testing an verification before use.  In particular Variant_seq may be on the wrong strand');
 
 	my ($record, $errors) = $self->_parse_dbsnp_flat($record->{data});
