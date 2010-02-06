@@ -98,9 +98,8 @@ sub parse_record {
 	my $phase      = '.';
 
 	my $reference_allele    = $record->{ref_base};
-	my $variant_allele_code = $record->{con_base};
 
-	my @variant_alleles = $self->expand_iupac_nt_codes($variant_allele_code);
+	my @variant_alleles = $self->expand_iupac_nt_codes($record->(con_base));
 
 	my $total_reads = $record->{read_depth};
 
@@ -113,7 +112,7 @@ sub parse_record {
 			  Total_reads      => [$total_reads],
 			 };
 
-	my $feature_data = {id         => $id,
+	my $feature_data = {feature_id => $id,
 			    seqid      => $seqid,
 			    source     => $source,
 			    type       => $type,

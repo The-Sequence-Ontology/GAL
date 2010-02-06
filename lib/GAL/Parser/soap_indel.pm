@@ -115,9 +115,6 @@ sub parse_record {
 
 	# Create the attributes hash
 
-	# Assign the reference and variant allele sequences:
-	# reference_allele=A
-	# variant_allele=G
 	my $indel_type = $original_atts->{Type}[0];
 	my ($reference_allele, $variant_allele);
 	if ($indel_type > 0) {
@@ -135,46 +132,12 @@ sub parse_record {
 		$end              = $record->{end};
 	}
 
-	# Assign the reference and variant allele read counts:
-	# reference_reads=A:7
-	# variant_reads=G:8
-
-	# Assign the total number of reads covering this position:
-	# total_reads=16
-
-	# Assign the genotype:
-	# genotype=homozygous
-
-	# Assign the probability that the genotype call is correct:
-	# genotype_probability=0.667
-
-	# Any quality score given for this variant should be assigned
-	# to $score above (column 6 in GFF3).  Here you can assign a
-	# name for the type of score or algorithm used to calculate
-	# the sscore (e.g. phred_like, clcbio, illumina).
-	# score_type=soap
-
-	# Create the attribute hash reference.  Note that all values
-	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested keys include
-	# (from the GFF3 spec), but are not limited to: ID, Name,
-	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
-	# Ontology_term. Note that attribute names are case
-	# sensitive. "Parent" is not the same as "parent". All
-	# attributes that begin with an uppercase letter are reserved
-	# for later use. Attributes that begin with a lowercase letter
-	# can be used freely by applications.
-
-	# For sequence_alteration features the suggested keys include:
-	# reference_allele, variant_allele, reference_reads, variant_reads
-	# total_reads, genotype, genotype_probability and score type.
 	my $attributes = {Reference_seq => [$reference_allele],
 			  Variant_seq   => [$variant_allele],
 			  ID            => [$id],
 			 };
 
-	my $feature_data = {id         => $id,
+	my $feature_data = {feature_id => $id,
 			    seqid      => $seqid,
 			    source     => $source,
 			    type       => $type,

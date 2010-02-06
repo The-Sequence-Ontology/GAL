@@ -124,7 +124,7 @@ sub parse_record {
 			  Parent => \@parents;
 			 };
 
-	my $feature_data = {id         => $id,
+	my $feature_data = {feature_id => $id,
 			    seqid      => $seqid,
 			    source     => $source,
 			    type       => $type,

@@ -186,7 +186,7 @@ sub parse_record {
 			  ID            => [$id],
 			 };
 
-	my $feature_data = {id         => $id,
+	my $feature_data = {feature_id => $id,
 			    seqid      => $seqid,
 			    source     => $source,
 			    type       => $type,

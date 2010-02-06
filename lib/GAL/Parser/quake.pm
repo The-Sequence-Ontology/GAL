@@ -111,13 +111,13 @@ sub parse_record {
 
         my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
 
-	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => \@variant_alleles,
-			  genotype         => [$genotype],
-			  ID               => [$id],
+	my $attributes = {Reference_seq => [$reference_allele],
+			  Variant_seq   => \@variant_alleles,
+			  Genotype      => [$genotype],
+			  ID            => [$id],
 			 };
 
-	my $feature_data = {id         => $id,
+	my $feature_data = {feature_id => $id,
 			    seqid      => $seqid,
 			    source     => $source,
 			    type       => $type,

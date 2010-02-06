@@ -183,7 +183,7 @@ sub parse_record {
 
 	push @{$attributes->{Intersected_feature}}, $rs_id if $rs_id;
 
-	my $feature_data = {id         => $id,
+	my $feature_data = {feature_id => $id,
 			    seqid      => $seqid,
 			    source     => $source,
 			    type       => $type,
