@@ -133,13 +133,6 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# $record is a hash reference keyed to the fields of the
-	# incoming data These key names are set in the $self->fields
-	# call in _initialize_args above
-
-	# Fill in the first 8 columns for GFF3
-	# See http://www.sequenceontology.org/resources/gff3.html for details.
-
 	# id chromosome coordinate reference_allele variant_allele
 	# match_status rsid alternate_allele variant_count
 	# alternate_allele_count total_coverage genotype
@@ -155,27 +148,16 @@ sub parse_record {
 	my $strand     = '.';
 	my $phase      = '.';
 
-	# Create the attributes hash
-
-	# Assign the reference and variant allele sequences:
-	# reference_allele=A;
-	# variant_allele=G;
 	my $reference_allele = $record->{reference_allele};
 	my @variant_alleles;
 	push @variant_alleles, $record->{variant_allele};
 
-	# Assign the reference and variant allele read counts:
-	# reference_reads=A:7;
-	# variant_reads=G:8;
-	my $reference_reads = $reference_allele . ":" . ($record->{total_coverage} -
-							 $record->{variant_count}  -
-							 $record->{alternate_count});
 	my @variant_reads;
-	push @variant_reads, ($record->{variant_allele}   . ":" . $record->{variant_count});
+	push @variant_reads, $record->{variant_count});
 
 	if ($record->{alternate_allele} ne '.') {
-		push @variant_reads, ($record->{alternate_allele} . ":" . $record->{alternate_allele_count});
 		push @variant_alleles, $record->{alternate_allele};
+		push @variant_reads,   $record->{alternate_allele_count};
 	}
 
 	# If we have reference_reads then push that allele to the variants
@@ -184,48 +166,21 @@ sub parse_record {
 		push @variant_alleles, $reference_allele;
 	}
 
-	# Assign the total number of reads covering this position:
-	# total_reads=16;
 	my $total_reads = $record->{total_coverage};
 
-	# Assign the genotype:
-	# genotype=homozygous;
 	my $their_genotype = $record->{genotype} eq 'het' ? 'heterozygous' : undef;
 	my $our_genotype   = $self->get_genotype($reference_allele, \@variant_alleles);
 
-	# Assign the probability that the genotype call is correct:
-	# genotype_probability=0.667;
+	my $rs_id = $record->{rs} =~ /rs\d+/ ? 'dbSNP:' . $record->{rs} : undef;
 
-	# Any quality score given for this variant should be assigned
-	# to $score above (column 6 in GFF3).  Here you can assign a
-	# name for the type of score or algorithm used to calculate
-	# the sscore (e.g. phred_like, clcbio, illumina).
-	# score_type=baylor;
-
-	# Create the attribute hash reference.  Note that all values
-	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested keys include
-	# (from the GFF3 spec), but are not limited to: ID, Name,
-	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
-	# Ontology_term. Note that attribute names are case
-	# sensitive. "Parent" is not the same as "parent". All
-	# attributes that begin with an uppercase letter are reserved
-	# for later use. Attributes that begin with a lowercase letter
-	# can be used freely by applications.
-
-	# For sequence_alteration features the suggested keys include:
-	# reference_allele, variant_allele, reference_reads, variant_reads
-	# total_reads, genotype, genotype_probability and score type.
-	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => \@variant_alleles,
-			  genotype         => [$our_genotype],
+	my $attributes = {Reference_seq => [$reference_allele],
+			  Variant_seq   => \@variant_alleles,
 			  ID               => [$id],
-			  reference_reads  => [$reference_reads],
-			  variant_reads    => \@variant_reads,
-			  total_reads      => [$total_reads],
-			  genotype         => [$our_genotype],
+			  Variant_reads    => \@variant_reads,
+			  Total_reads      => [$total_reads],
 			 };
+
+	push @{$attributes->{Intersected_feature}}, $rs_id if $rs_id;
 
 	my $feature_data = {id         => $id,
 			    seqid      => $seqid,
