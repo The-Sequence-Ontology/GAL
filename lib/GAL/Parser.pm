@@ -71,20 +71,19 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
+	######################################################################
+	# This block of code handels class attributes.  Use the
+	# @valid_attributes below to define the valid attributes for
+	# this class.  You must have identically named get/set methods
+	# for each attribute.  Leave the rest of this block alone!
+	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
-
-	my @valid_attributes = qw(file
-                                  fh
-				  record_separator
-				  field_separator
-				  comment_delimiter
-				  fields
-				 );
-
+	# Set valid class attributes here
+	my @valid_attributes = qw(file fh record_separator field_separator
+				  comment_delimiter fields);
 	$self->set_attributes($args, @valid_attributes);
-
+	######################################################################
 	return $args;
-
 }
 
 #-----------------------------------------------------------------------------
@@ -418,45 +417,6 @@ sub parse_attributes {
 }
 
 
-
-#-----------------------------------------------------------------------------
-
-=head2 get_genotype
-
- Title   : get_genotype
- Usage   : $a = $self->get_genotype($reference_allele, \@variant_alleles);
- Function: Determine the genotype.
- Returns : A genotype name
- Args    : The reference allele and an array reference of variant alleles.
-
-=cut
-
-sub get_genotype {
-	my ($self, $reference_allele, $variant_alleles) = @_;
-
-	my $variant_count = scalar @{$variant_alleles};
-
-	if ($variant_count == 1) {
-		if ($variant_alleles->[0] ne $reference_allele) {
-			return 'homozygous';
-		}
-		else {
-			self->warn(message => 'You appear to have a variant that is homozygous for the reference allele:');
-		}
-	}
-	elsif ($variant_count > 1) {
-		if (grep {$_ eq $reference_allele} @{$variant_alleles}) {
-			return 'heterozygous:with_reference_allele';
-		}
-		else {
-			return 'heterozygous:no_reference_allele';
-		}
-	}
-
-	$self->throw(message => ("Uncaught combination ref:$reference_allele vars:" .
-				 join(q{,}, @{$variant_alleles}) .
-				 ' in GAL::Parser::get_genotype!'));
-}
 
 #-----------------------------------------------------------------------------
 

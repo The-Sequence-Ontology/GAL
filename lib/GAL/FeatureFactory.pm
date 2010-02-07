@@ -58,12 +58,16 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-	my @valid_attributes = qw(type
-				 );
-
-	my $args = $self->prepare_args(\@args, \@valid_attributes);
-
+	######################################################################
+	# This block of code handels class attributes.  Use the
+	# @valid_attributes below to define the valid attributes for
+	# this class.  You must have identically named get/set methods
+	# for each attribute.  Leave the rest of this block alone!
+	######################################################################
+	my $args = $self->SUPER::_initialize_args(@args);
+	my @valid_attributes = qw(type); # Set valid class attributes here
 	$self->set_attributes($args, @valid_attributes);
+	######################################################################
 
 	$self->{type_map} = {sequence_alteration                           => 'sequence_alteration',
 			     SNP 					   => 'sequence_alteration',

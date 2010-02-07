@@ -57,30 +57,21 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
+	######################################################################
+	# This block of code handels class attributes.  Use the
+	# @valid_attributes below to define the valid attributes for
+	# this class.  You must have identically named get/set methods
+	# for each attribute.  Leave the rest of this block alone!
+	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
-
-	my @valid_attributes = qw(seqid
-                                  source
-				  type
-				  start
-				  end
-				  score
-				  strand
-				  phase
-				  attributes
-                                  reference_allele
-				  variant_allele
-				  reference_reads
-				  variant_reads
-				  total_reads
-				  genotype
-				  genotype_probability
-				  variant_locations
-				  variant_effects
-				 );
-
+	# Set valid class attributes here
+	my @valid_attributes = qw(seqid source type start end score strand
+				  phase attributes reference_allele
+				  variant_allele reference_reads variant_reads
+				  total_reads genotype genotype_probability
+				  variant_locations variant_effects);
 	$self->set_attributes($args, @valid_attributes);
-
+	######################################################################
 }
 
 #-----------------------------------------------------------------------------

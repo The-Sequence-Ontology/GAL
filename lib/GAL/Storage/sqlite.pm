@@ -1,26 +1,23 @@
-package GAL::Annotation;
+package GAL::Storage::sqlite;
 
 use strict;
-use warnings;
-
-use DBI;
-use GAL::Schema;
-use base qw(GAL::Base);
-
 use vars qw($VERSION);
+
+
 $VERSION = '0.01';
+use base qw(GAL::Storage);
 
 =head1 NAME
 
-Annotation::GAL - <One line description of module's purpose here>
+GAL::Storage::sqlite - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes Annotation::GAL version 0.01
+This document describes GAL::Storage::sqlite version 0.01
 
 =head1 SYNOPSIS
 
-     use Annotation::GAL;
+     use GAL::Storage::sqlite;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -42,9 +39,9 @@ This document describes Annotation::GAL version 0.01
 =head2 new
 
      Title   : new
-     Usage   : Annotation::GAL->new();
-     Function: Creates a Annotation::GAL object;
-     Returns : A Annotation::GAL object
+     Usage   : GAL::Storage::sqlite->new();
+     Function: Creates a Storage object;
+     Returns : A Storage object
      Args    :
 
 =cut
@@ -68,124 +65,208 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(dsn usr password);
+	my @valid_attributes = qw(dsn user password storage);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 dsn
+=head2 dbh
 
- Title   : dsn
- Usage   : $a = $self->dsn();
- Function: Get/Set the value of dsn.
- Returns : The value of dsn.
- Args    : A value to set dsn to.
-
-=cut
-
-sub dsn {
-	my ($self, $dsn) = @_;
-	$self->{dsn} = $dsn if $dsn;
-	return $self->{dsn};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 storage
-
- Title   : storage
- Usage   : $a = $self->storage();
- Function: Just returns DBI
- Returns : DBI
- Args    : Whatever you want, but it'll be ignored!
+ Title   : dbh
+ Usage   : $a = $self->dbh();
+ Function: Get/Set the value of dbh.
+ Returns : The value of dbh.
+ Args    : A value to set dbh to.
 
 =cut
 
-sub storage {
-	my ($self, $dsn) = @_;
+sub dbh {
+	my $self = shift;
 
-	my $storage;
-	if ($dsn) {
-		$self->load_module('GAL::Storage');
-		$storage = GAL::Storage->new(dsn => $dsn);
+	if (! defined $self->{dbh}) {
+		my $db_name = $self->db_name;
+		if (! defined $db_name) {
+			$db_name = join "",
+			  map { unpack "H*", chr(rand(256)) } 1..16;
+			$db_name .= '.sqlite';
+		}
+		my $user = $self->user;
+		my $password = $self->password;
+		my $dbh = DBI->connect("dbi:SQLite:dbname=$db_name",
+				       $user,
+				       $password);
+		$self->load_schema($dbh);
+		# http://search.cpan.org/~adamk/DBD-SQLite-1.29/lib/DBD/SQLite.pm#Transactions
+		$dbh->{AutoCommit} = 1;
+		$self->{dbh} = $dbh;
 	}
-
-	$self->{storage} = $storage if defined $storage;
-	return $self->{parser};
+	return $self->{dbh};
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 parser
+=head2 load_schema
 
- Title   : parser
- Usage   : $a = $self->parser();
- Function: Get/Set the parser.
- Returns : The parser object.
- Args    : file  => data_file_name
-	   class => GAL::Parser::subclass.
+ Title   : load_schema
+ Usage   : $a = $self->load_schema();
+ Function: Get/Set the value of load_schema.
+ Returns : The value of load_schema.
+ Args    : A value to set load_schema to.
 
 =cut
 
-sub parser {
-	my ($self, @args) = @_;
+sub load_schema {
+	my ($self, $dbh) = @_;
 
-	my @valid_args = qw(file class);
-	my $args = $self->prepare_args(\@args, \@valid_args);
+	$dbh->do("DROP TABLE IF EXISTS feature");
+	$dbh->do("DROP TABLE IF EXISTS attribute");
+	my @feature_columns = (feature_id => 'VARCHAR(100),',
+			       seqid      => 'VARCHAR(100),',
+			       source     => 'VARCHAR(100),',
+			       type       => 'VARCHAR(100),',
+			       start      => 'INT,',
+			       end        => 'INT,',
+			       score      => 'varchar(20),',
+			       strand     => 'VARCHAR(1),',
+			       phase      => 'VARCHAR(1)',
+			      );
+	my $feature_columns_text = join ' ', @feature_columns;
+	my $feature_create_stmt =
+	  "CREATE TABLE feature ($feature_columns_text)";
+	$dbh->do($feature_create_stmt);
 
-	my $class = $args->{class};
-	my $file  = $args->{file};
-
-	my $parser;
-	if ($class && $file) {
-		$class =~ s/GAL::Parser:://;
-		$class = 'GAL::Parser::' . $class;
-		$self->load_module($class);
-		$parser = $class->new(file => $file);
-	}
-
-	$self->{parser} = $parser if defined $parser;
-	return $self->{parser};
+	my @att_columns =
+	  (feature_id   => 'VARCHAR(100),',
+	   tag          => 'VARCHAR(100),',
+	   value        => 'TEXT',
+	  );
+	my $att_columns_text = join ' ', @att_columns;
+	my $att_create_stmt =
+	  "CREATE TABLE attribute ($att_columns_text)";
+	$dbh->do($att_create_stmt);
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 load_file
+=head2 add_features
 
- Title   : load_file
- Usage   : $a = $self->load_file();
- Function: Parse and store all of the features in a file
- Returns : N/A
- Args    : file  => data_file_name
-	   class => GAL::Parser::subclass.
-
-=cut
-
-sub load_file {
-
-	my ($self, $file) = @_;
-	$self->stroage->load_file($file);
-	return $self;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 add_feature
-
- Title   : add_feature
- Usage   : $self->add_feature();
- Function: Get/Set value of add_feature.
- Returns : Value of add_feature.
+ Title   : add_features
+ Usage   : $self->add_features();
+ Function: Get/Set value of add_features.
+ Returns : Value of add_features.
  Args    : Value to set add_feature to.
 
 =cut
 
-sub add_feature {
-	my ($self, $feature_hash) = @_;
-	my $feature = $self->storage->add_feature($feature_hash);
-	return $feature;
+sub add_features {
+	my ($self, $features) = @_;
+
+	my ($features, $attributes) = $self->prepare_features($features);
+
+	my $insert_stmt = "INSERT INTO feature VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+	my $dbh = $self->dbh;
+	my $sth = $dbh->prepare($insert_stmt);
+
+	# http://search.cpan.org/~adamk/DBD-SQLite-1.29/lib/DBD/SQLite.pm#Transactions
+	$dbh->begin_work;
+	for my $feature (@{$features}) {
+		my $rv = $sth->execute(@{$feature});
+		unless ($rv) {
+			my $warn_message = "WARN: bad_insert : ";
+			$warn_message .= join ', ', @{$feature};
+			$self->warn(message => $warn_message);
+		}
+	}
+	$dbh->commit;
+
+	my $insert_stmt = "INSERT INTO attribute VALUES (?, ?, ?)";
+
+	my $dbh = $self->dbh;
+	my $sth = $dbh->prepare($insert_stmt);
+
+	$dbh->begin_work;
+	for my $attribute_set (@{$attributes}) {
+		for my $pair (@{$attribute_set}) {
+			my $rv = $sth->execute(@{$pair});
+			unless ($rv) {
+				my $warn_message = "WARN: bad_insert : ";
+				$warn_message .= join ', ', @{$pair};
+				$self->warn(message => $warn_message);
+			}
+		}
+	}
+	$dbh->commit;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 get_children
+
+ Title   : get_children
+ Usage   : $self->get_children();
+ Function: Get/Set value of get_children.
+ Returns : Value of get_children.
+ Args    : Value to set get_children to.
+
+=cut
+
+sub get_children {
+	my $self = shift;
+	$self->not_implemented('get_children');
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 get_children_recursively
+
+ Title   : get_children_recursively
+ Usage   : $self->get_children_recursively();
+ Function: Get/Set value of get_children_recursively.
+ Returns : Value of get_children_recursively.
+ Args    : Value to set get_children_recursively to.
+
+=cut
+
+sub get_children_recursively {
+  my $self = shift;
+  $self->not_implemented('get_children_recursively');
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 get_parents
+
+ Title   : get_parents
+ Usage   : $self->get_parents();
+ Function: Get/Set value of get_parents.
+ Returns : Value of get_parents.
+ Args    : Value to set get_parents to.
+
+=cut
+
+sub get_parents {
+  my $self = shift;
+  $self->not_implemented('get_parents');
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 get_parents_recursively
+
+ Title   : get_parents_recursively
+ Usage   : $self->get_parents_recursively();
+ Function: Get/Set value of get_parents_recursively.
+ Returns : Value of get_parents_recursively.
+ Args    : Value to set get_parents_recursively to.
+
+=cut
+
+sub get_parents_recursively {
+  my $self = shift;
+  $self->not_implemented('get_parents_recursively');
 }
 
 #-----------------------------------------------------------------------------
@@ -201,9 +282,8 @@ sub add_feature {
 =cut
 
 sub get_all_features {
-	my $self = shift;
-	my $features = $self->storage->get_all_features;
-	return wantarray ? @{$features} : $features;
+  my $self = shift;
+  $self->not_implemented('get_all_features');
 }
 
 #-----------------------------------------------------------------------------
@@ -219,9 +299,8 @@ sub get_all_features {
 =cut
 
 sub get_features_by_type {
-	my ($self, $type) = @_;
-	my $features = $self->storage->get_features_by_type($type);
-	return wantarray ? @{$features} : $features;
+  my $self = shift;
+  $self->not_implemented('get_features_by_type');
 }
 
 #-----------------------------------------------------------------------------
@@ -237,9 +316,8 @@ sub get_features_by_type {
 =cut
 
 sub get_recursive_features_by_type {
-	my ($self, $type) = @_;
-	my $features = $self->storage->get_features_by_type_recursive;
-	return wantarray ? @{$features} : $features;
+  my $self = shift;
+  $self->not_implemented('get_recursive_features_by_type');
 }
 
 #-----------------------------------------------------------------------------
@@ -255,9 +333,8 @@ sub get_recursive_features_by_type {
 =cut
 
 sub get_feature_by_id {
-	my ($self, $id) = @_;
-	my $feature = $self->storage->get_feature_by_id($id);
-	return $feature;
+  my $self = shift;
+  $self->not_implemented('get_feature_by_id');
 }
 
 #-----------------------------------------------------------------------------
@@ -273,11 +350,9 @@ sub get_feature_by_id {
 =cut
 
 sub filter_features {
-	my ($self, $filter) = @_;
-	my $features = $self->storage->filter_features($filter);
-	return wantarray ? @{$features} : $features;
+  my $self = shift;
+  $self->not_implemented('filter_features');
 }
-
 
 #-----------------------------------------------------------------------------
 
@@ -323,7 +398,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<Annotation::GAL> requires no configuration files or environment variables.
+<GAL::Storage::sqlite> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

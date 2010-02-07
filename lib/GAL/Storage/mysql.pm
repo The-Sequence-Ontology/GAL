@@ -214,7 +214,6 @@ sub driver {
 
 sub load_file {
 
-	my $self = shift;
 	$self->not_implemented('load_file');
 
 # This all needs to be re-worked to not use DBIx::Class;
@@ -252,99 +251,32 @@ sub load_file {
 
 #-----------------------------------------------------------------------------
 
-=head2 add_features_to_buffer
+=head2 _split_feature_and_attributes
 
- Title   : add_features_to_buffer
- Usage   : $self->add_features_to_buffer();
- Function: Get/Set value of add_features_to_buffer.
- Returns : Value of add_features_to_buffer.
- Args    : Value to set add_feature to.
-
-=cut
-
-sub add_features_to_buffer {
-
-	my ($self, $features) = @_;
-
-	$features = ref $features ? $features : [$features];
-
-	#$self->config('MAX_FEATURE_BUFFER')
-	if (scalar @{$self->{_feature_buffer}} + scalar @{$features} > 10000) {
-		push @{$self->{_feature_buffer}}, @{$features};
-		$self->add_features($self->{_feature_buffer});
-	}
-	else {
-		push @{$self->{_feature_buffer}}, @{$features};
-		}
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 flush_feature_buffer
-
- Title   : flush_feature_buffer
- Usage   : $self->flush_feature_buffer();
- Function: Get/Set value of flush_feature_buffer.
- Returns : Value of flush_feature_buffer.
- Args    : Value to set add_feature to.
-
-=cut
-
-sub flush_feature_buffer {
-
-	my $self = shift;
-
-	if (scalar @{$self->{_feature_buffer}}) {
-		$self->add_features($self->{_feature_buffer});
-	}
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 prepare_features
-
- Title   : prepare_features
- Usage   : $self->prepare_features();
- Function: Normalizes feature hashes produced by the parsers
+ Title   : _split_feature_and_attributes
+ Usage   : $self->_split_feature_and_attributes();
+ Function: Normalizes a feature hash produced by the parsers
 	   and seperates the attributes for bulk insert into the database;
  Returns : A feature hash reference and an array reference of hash references
 	   of attributes.  Both normalized for insert statements
- Args    : A feature hash or array of feature hashes
+ Args    : Value to set _split_feature_and_attributes to.
 
 =cut
 
-sub prepare_features {
+sub _split_feature_and_attributes {
 
-	my ($self, $feature_hashes) = @_;
-
-	$feature_hashes = ref $feature_hashes ? $feature_hashes :
-	  [$feature_hashes];
-
-	my (@features, @attributes);
-
-	for my $feature_hash (@{$feature_hashes}) {
-		my $feature_id = $feature_hash->{attributes}{ID}[0];
-		my @feature_row = ($feature_id,
-				   $feature_hash->{seqid},
-				   $feature_hash->{source},
-				   $feature_hash->{type},
-				   $feature_hash->{start},
-				   $feature_hash->{end},
-				   $feature_hash->{score},
-				   $feature_hash->{strand},
-				   $feature_hash->{phase},
-				  );
-		push @features, \@feature_row;
-		for my $tag (keys %{$feature_hash->{attributes}}) {
-			for my $value (@{$feature_hash->{attributes}{$tag}}) {
-				push @attributes, [$feature_id,
-						   $tag,
-						   $value,
-						  ];
-			}
+	my ($self, $feature_hash) = @_;
+	my @attributes;
+	for my $tag (keys %{$feature_hash->{attributes}}) {
+		for my $value (@{$feature_hash->{attributes}{$tag}}) {
+			push @attributes, {feature_id => $feature_hash->{feature_id},
+					   tag        => $tag,
+					   value      => $value,
+					  };
 		}
 	}
-	return (\@features, \@attributes);
+	delete $feature_hash->{attributes};
+	return ($feature_hash, \@attributes);
 }
 
 #-----------------------------------------------------------------------------
@@ -456,9 +388,8 @@ sub create_database {
 		my $att_create_stmt =
 		  "CREATE TABLE attribute ($att_columns_text " .
 		    "PRIMARY KEY (attribute_id))";
-		#CREATE TABLE attribute (attribute_id INT NOT NULL
-		# AUTO_INCREMENT, feature_id VARCHAR(100),
-		# tag VARCHAR(100), value TEXT, PRIMARY KEY (attribute_id))
+		#CREATE TABLE attribute (attribute_id INT NOT NULL AUTO_INCREMENT, feature_id VARCHAR(100), tag VARCHAR(100), value TEXT, PRIMARY KEY (attri\
+bute_id))
 		$dbh->do($att_create_stmt);
 	}
 	else {

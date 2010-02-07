@@ -57,22 +57,18 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-        my $args = $self->SUPER::_initialize_args(@args);
-
-	my @valid_attributes = qw(seqid
-				  source
-				  type
-				  start
-				  end
-				  score
-				  strand
-				  phase
-				  attributes
-				 );
-
+        ######################################################################
+	# This block of code handels class attributes.  Use the
+	# @valid_attributes below to define the valid attributes for
+	# this class.  You must have identically named get/set methods
+	# for each attribute.  Leave the rest of this block alone!
+	######################################################################
+	my $args = $self->SUPER::_initialize_args(@args);
+	# Set valid class attributes here
+	my @valid_attributes = qw(seqid source type start end score strand
+				  phase attributes);
 	$self->set_attributes($args, @valid_attributes);
-
-	return $args;
+	######################################################################
 }
 
 #-----------------------------------------------------------------------------
@@ -252,8 +248,7 @@ sub attributes {
 
 sub id {
   my $self = shift;
-  my @ids = $self->get_attribute_values('ID');
-  my $id = shift @ids;
+  my $id =   $self->{attributes}{ID}[0];
   $id ||= join ':', ($self->{seqid},
 		     $self->{source},
 		     $self->{type},
@@ -283,20 +278,146 @@ sub name {
 
 #-----------------------------------------------------------------------------
 
-=head2 parents
+=head2 alias
 
- Title   : parents
- Usage   : $self->parents();
- Function: Get the parents.
+ Title   : alias
+ Usage   : $self->alias();
+ Function: Get value of alias.
+ Returns : Value of alias.
+ Args    : N/A
+
+=cut
+
+sub alias {
+  my $self = shift;
+  my @aliases = $self->get_attribute_values('Alias');
+  return shift @aliases;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 parent
+
+ Title   : parent
+ Usage   : $self->parent();
+ Function: Get the parent.
  Returns : List of parent IDs.
  Args    : N/A
 
 =cut
 
-sub parents {
+sub parent {
   my $self = shift;
   my @parents = $self->get_attribute_values('Parent');
   return wantarray ? @parents : \@parents;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 target
+
+ Title   : target
+ Usage   : $self->target();
+ Function: Get value of target.
+ Returns : Value of target.
+ Args    : N/A
+
+=cut
+
+sub target {
+  my $self = shift;
+  my @targets = $self->get_attribute_values('Target');
+  return shift @targets;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 gap
+
+ Title   : gap
+ Usage   : $self->gap();
+ Function: Get value of gap.
+ Returns : Value of gap.
+ Args    : N/A
+
+=cut
+
+sub gap {
+  my $self = shift;
+  my @gaps = $self->get_attribute_values('Gap');
+  return shift @gaps;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 derives_from
+
+ Title   : derives_from
+ Usage   : $self->derives_from();
+ Function: Get value of derives_from.
+ Returns : Value of derives_from.
+ Args    : N/A
+
+=cut
+
+sub derives_from {
+  my $self = shift;
+  my @derives_from = $self->get_attribute_values('Derives_from');
+  return shift @derives_from;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 note
+
+ Title   : note
+ Usage   : $self->note();
+ Function: Get value of note.
+ Returns : Value of note.
+ Args    : N/A
+
+=cut
+
+sub note {
+  my $self = shift;
+  my @notes = $self->get_attribute_values('Note');
+  return shift @notes;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 dbxref
+
+ Title   : dbxref
+ Usage   : $self->dbxref();
+ Function: Get value of dbxref.
+ Returns : Value of dbxref.
+ Args    : N/A
+
+=cut
+
+sub dbxref {
+  my $self = shift;
+  my @dbxrefs = $self->get_attribute_values('Dbxref');
+  return shift @dbxrefs;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 ontology_term
+
+ Title   : ontology_term
+ Usage   : $self->ontology_term();
+ Function: Get value of ontology_term.
+ Returns : Value of ontology_term.
+ Args    : N/A
+
+=cut
+
+sub ontology_term {
+  my $self = shift;
+  my @ontology_terms = $self->get_attribute_values('Ontology_term');
+  return shift @ontology_terms;
 }
 
 #-----------------------------------------------------------------------------
@@ -341,6 +462,28 @@ sub get_attribute_values {
 
 #-----------------------------------------------------------------------------
 
+=head2 has_attribute_value
+
+ Title   : has_attribute_value
+ Usage   : $self->has_attribute_value($tag, $value);
+ Function: Get the values of the attribute $tag
+ Returns : A list of values.
+ Args    : N/A
+
+=cut
+
+sub has_attribute_value {
+  my ($self, $tag, $value) = @_;
+  my @values = ();
+  if (exists $self->{attributes}{$tag} &&
+      ref($self->{attributes}{$tag}) eq 'ARRAY') {
+	  @values = @{$self->{attributes}{$tag}};
+  }
+  return 1 if grep {$value eq $_} @values;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 to_gff3
 
  Title   : to_gff3
@@ -350,6 +493,12 @@ sub get_attribute_values {
  Args    : N/A
 
 =cut
+
+
+#
+# MOVE ME TO BASE.PM AND DELETE ME FROM PARSER ALSO
+#
+
 
 sub to_gff3 {
 	my $self = shift;
@@ -383,6 +532,64 @@ sub to_gff3 {
 
 	return $gff3_text;
 }
+
+#-----------------------------------------------------------------------------
+
+=head2 children
+
+ Title   : children
+ Usage   : $self->children($type);
+ Function: Get this feature's immediate children
+ Returns : A list of Feature objects
+ Args    : Optionally a valid SO term(s) (scalar or array ref) defining what
+           type(s) of children to return.
+
+=cut
+
+sub children {
+  my ($self, $type) = @_;
+  my $children = $self->storage->get_children($self->feature_id, $type);
+  return wantarray ? @{$children} : $children;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 children_recursive
+
+ Title   : children_recursive
+ Usage   : $self->children_recursive($type);
+ Function: Get this feature's children recursively.
+ Returns : A list of Feature objects
+ Args    : Optionally a valid SO term(s) (scalar or array ref) defining what
+           type(s) of children to return.
+
+=cut
+
+sub children_recursive {
+  my ($self, $type) = @_;
+  my $children = $self->storage->get_children_recursive($self->feature_id, $type);
+  return wantarray ? @{$children} : $children;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 parents_recursive
+
+ Title   : parents_recursive
+ Usage   : $self->parents_recursive($type);
+ Function: Get this feature's parents recursively.
+ Returns : A list of Feature objects
+ Args    : Optionally a valid SO term(s) (scalar or array ref) defining what
+           type(s) of parent to return.
+
+=cut
+
+sub parents_recursive {
+  my ($self, $type) = @_;
+  my $parents = $self->storage->get_parents($self->feature_id, $type);
+  return wantarray ? @{$parents} : $parents;
+}
+
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
