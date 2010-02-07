@@ -90,7 +90,6 @@ sub parse_record {
 
 	$self->throw(message => 'This parser should be tested and evaluated before use');
 
-	my $id         = join ':', ('CH', $record->{chromosome}, $record->{location});
 	my $seqid      = $record->{chromosome};
 	my $source     = 'Chad_Huff';
 	my $type       = 'SNP';
@@ -99,6 +98,7 @@ sub parse_record {
 	my $score      = '.';
 	my $strand     = '+';
 	my $phase      = '.';
+	my $id         = join ':', ($seqid, $source, $type, $start);
 
 	my $variant_allele = $record->{variant};
 

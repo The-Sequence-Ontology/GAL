@@ -115,12 +115,7 @@ sub parse_record {
 	my $strand     = '+';
 	my $phase      = '.';
 
-	my $id = join ":", ($source,
-			    $type,
-			    $seqid,
-			    $start,
-			    $end,
-			   );
+	my $id = join ":", ($source, $type, $seqid, $start);
 
 	my $reference_allele = $allele_size < 0 ? $allele : '-';
 	my @variant_alleles;

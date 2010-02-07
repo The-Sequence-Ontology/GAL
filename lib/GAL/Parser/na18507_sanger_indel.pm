@@ -123,12 +123,12 @@ sub parse_record {
 		}
 	}
 
-	my $id         = join ':', ('NA18507_Sanger', 'chr' . $record->{chr}, $type,  $start);
 	my $seqid      = 'chr' . $record->{chr};
 	my $source     = 'NA18507_Sanger';
 	my $score      = $record->{score};
 	my $strand     = '+';
 	my $phase      = '.';
+	my $id         = join ':', ($seqid, $source, $type, $start);
 
 	my $attributes = {Reference_seq => [$reference_allele],
 			  Variant_seq   => \@variant_alleles,

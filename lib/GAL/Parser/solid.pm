@@ -88,20 +88,15 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# $record is a hash reference that contains the keys assigned
-	# in the $self->fields call in _initialize_args above
-
-	# Fill in the first 8 columns for GFF3
-	# See http://www.sequenceontology.org/resources/gff3.html for details.
-	my $id         = 'solid:'.$record->{chr}.':snp:'.$record->{pos};
 	my $seqid      = $record->{chr};
-	my $source     = 'Solid';
+	my $source     = 'ABI_SOLiD';
 	my $type       = 'SNP';
 	my $start      = $record->{pos};
 	my $end        = $record->{pos};
 	my $score      = '.';
 	my $strand     = '.';
 	my $phase      = '.';
+	my $id         = join ':', ($seqid, $source, $type, $start);
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have

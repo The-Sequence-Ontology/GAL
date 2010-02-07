@@ -93,7 +93,7 @@ sub parse_record {
         my $attributes = $self->parse_attributes($record->{attributes});
 
         my $feature_id = $attributes->{ID}[0] || join ':',
-          @{$record}{qw(seqid source type start end)};
+          @{$record}{qw(seqid source type start)};
 
         my $feature_hash = {feature_id => $feature_id,
                             seqid      => $record->{seqid},

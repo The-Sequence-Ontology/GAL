@@ -67,9 +67,22 @@ sub _initialize_args {
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 
-	# give lalbes for the fields in your file.
+	# give lables for the fields in your file.
 	# note parser will automatically ignore lines begining with #
-	$self->fields([qw(chr pos ref_base con_base con_qual read_depth ave_hits_elsewhere)]);
+	$self->fields([qw(chr pos ref_base con_base con_qual read_depth
+                          ave_hits_elsewhere highest_map_qual
+                          min_con_qual_3b_flank second_best_call
+                          log_likelihood_2nd_3rd_call
+                          third_best_call)]);
+
+	# Each line consists of chromosome, position, reference base,
+	# consensus base, Phred-like consensus quality, read depth,
+	# the average number of hits of reads covering this position,
+	# the highest mapping quality of the reads covering the
+	# position, the minimum consensus quality in the 3bp flanking
+	# regions at each side of the site (6bp in total), the second
+	# best call, log likelihood ratio of the second best and the
+	# third best call, and the third best call.
 }
 
 #-----------------------------------------------------------------------------
@@ -87,7 +100,6 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	my $id         = join ':', ('NA18507_Sanger', 'chr' . $record->{chr}, 'SNP', $record->{pos});
 	my $seqid      = 'chr'.$record->{chr};
 	my $source     = 'NA18507_Sanger';
 	my $type       = 'SNP';
@@ -96,6 +108,7 @@ sub parse_record {
 	my $score      = $record->{con_qual};
 	my $strand     = '.';
 	my $phase      = '.';
+	my $id         = join ':', ($seqid, $source, $type, $start);
 
 	my $reference_allele    = $record->{ref_base};
 
