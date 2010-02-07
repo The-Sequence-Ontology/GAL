@@ -106,15 +106,14 @@ sub parse_record {
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested keys include
-	# (from the GFF3 spec), but are not limited to: ID, Name,
-	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
-	# Ontology_term. Note that attribute names are case
-	# sensitive. "Parent" is not the same as "parent". All
-	# attributes that begin with an uppercase letter are reserved
-	# for later use. Attributes that begin with a lowercase letter
-	# can be used freely by applications.
+	# one value.  This is for consistency in the interface.
+	# Suggested keys include (from the GFF3 spec), but are not
+	# limited to: ID, Name, Alias, Parent, Target, Gap,
+	# Derives_from, Note, Dbxref and Ontology_term. Note that
+	# attribute names are case sensitive. "Parent" is not the same
+	# as "parent". All attributes that begin with an uppercase
+	# letter are reserved for later use. Attributes that begin
+	# with a lowercase letter can be used freely by applications.
 
 	my $name    = $record->{name};
 	my @parents = split /;/, $record->{parents};

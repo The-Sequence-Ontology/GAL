@@ -98,57 +98,18 @@ sub parse_record {
 	my $phase      = '.';
 	my $id         = join ':', ($seqid, $source, $type, $start);
 
-	# Create the attribute hash reference.  Note that all values
-	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested keys include
-	# (from the GFF3 spec), but are not limited to: ID, Name,
-	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
-	# Ontology_term. Note that attribute names are case
-	# sensitive. "Parent" is not the same as "parent". All
-	# attributes that begin with an uppercase letter are reserved
-	# for later use. Attributes that begin with a lowercase letter
-	# can be used freely by applications.
+	my $reference_seq      = $record->{ref_base};
+	my @variant_seqs = $self->expand_iupac_nt_codes($record->{con_base});
 
-	# $self->fields([qw(chr pos ref_base con_base coverage)]);
-
-	# Assign the reference and variant allele sequences:
-	# reference_allele=A;
-	# variant_allele=G;
-	my $reference_allele      = $record->{ref_base};
-	my $variant_allele_code   = $record->{con_base};
-
-	my @variant_alleles = $self->expand_iupac_nt_codes($variant_allele_code); # grep {$_ ne $reference_allele}
-
-	# Assign the reference and variant allele read counts:
-	# reference_reads=A:7;
-	# variant_reads=G:8;
-
-	# Assign the total number of reads covering this position:
-	# total_reads=16;
 	my $total_reads = $record->{coverage};
 
-	# Assign the genotype:
-	# genotype=homozygous;
-        my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
+        my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
-	# Assign the probability that the genotype call is correct:
-	# genotype_probability=0.667;
-
-	# Any quality score given for this variant should be assigned
-	# to $score above (column 6 in GFF3).  Here you can assign a
-	# name for the type of score or algorithm used to calculate
-	# the sscore (e.g. phred_like, clcbio, illumina).
-	# score_type=watson_snp;
-
-	# For sequence_alteration features the suggested keys include:
-	# reference_allele, variant_allele, reference_reads, variant_reads
-	# total_reads, genotype, genotype_probability and score type.
-	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => \@variant_alleles,
-			  genotype         => [$genotype],
-			  ID               => [$id],
-			  total_reads      => [$total_reads],
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
+			  Genotype      => [$genotype],
+			  ID            => [$id],
+			  Total_reads   => [$total_reads],
 			 };
 
 	my $feature_data = {feature_id => $id,

@@ -105,14 +105,14 @@ sub parse_record {
 	my $phase      = '.';
 	my $id         = join ':', ($seqid, $source, $type, $start);
 
-	my $reference_allele  = $record->{reference};
+	my $reference_seq  = $record->{reference};
 	my %variant_hash = map {$_, 1} split //, $record->{variant};
-	my @variant_alleles = keys %variant_hash;
+	my @variant_seqs = keys %variant_hash;
 
-        my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
+        my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
-	my $attributes = {Reference_seq => [$reference_allele],
-			  Variant_seq   => \@variant_alleles,
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
 			  Genotype      => [$genotype],
 			  ID            => [$id],
 			 };

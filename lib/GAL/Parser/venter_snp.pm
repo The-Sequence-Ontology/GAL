@@ -68,7 +68,7 @@ sub _initialize_args {
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 
-	$self->fields([qw(chromosome variant_id variant_type start end score orientation alleles processing)]);
+	$self->fields([qw(chromosome variant_id variant_type start end score orientation seqs processing)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -140,7 +140,7 @@ sub parse_record {
 # 1       1103675000195   heterozygous_SNP        817115  817116  .       +       A/C;RMR=1;TR=0  Method1
 
 	# Headers use by parser
-	# chromosome variant_id variant_type start end orientation alleles processing
+	# chromosome variant_id variant_type start end orientation seqs processing
 
 	# Fill in the first 8 columns for GFF3
 	my $id         = $record->{variant_id};
@@ -154,12 +154,11 @@ sub parse_record {
 	my $phase      = '.';
 
 
-	my ($allele_text) = split /;/, $record->{alleles};
-	my ($reference_allele, @variant_alleles) = split m|/|, $allele_text;
-	#@variant_alleles = grep {$_ ne $reference_allele} @variant_alleles;
-	unshift @variant_alleles, $reference_allele if $record->{variant_type} =~ /^heterozygous/;
+	my ($seq_text) = split /;/, $record->{seqs};
+	my ($reference_seq, @variant_seqs) = split m|/|, $seq_text;
+	unshift @variant_seqs, $reference_seq if $record->{variant_type} =~ /^heterozygous/;
 
-        my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
+        my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 	# sort | uniq -c | sort -nr
 	# 1624998 heterozygous_SNP
@@ -180,8 +179,8 @@ sub parse_record {
 
 	$type = $type_map{$variant_type};
 
-	my $attributes = {Reference_seq => [$reference_allele],
-			  Variant_seq   => \@variant_alleles,
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
 			  Genotype      => [$genotype],
 			  ID            => [$id],
 			 };

@@ -69,7 +69,7 @@ sub _initialize_args {
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 
-	$self->fields([qw(transcript_id chromosome location total_reads allele context1
+	$self->fields([qw(transcript_id chromosome location total_reads seq context1
 			  context2 genotype gene_name gene_part)]);
 }
 
@@ -79,7 +79,7 @@ sub _initialize_args {
 
  Title   : parse_record
  Usage   : $a = $self->parse_record();
-grep {$_ ne $reference_allele} Function: Parse the data from a record.
+ Function: Parse the data from a record.
  Returns : A hash ref needed by Feature.pm to create a Feature object
  Args    : A hash ref of fields that this sub can understand (In this case GFF3).
 
@@ -101,29 +101,29 @@ sub parse_record {
 	# N/A chr1 806276 26 -1:T     TTATTTTTGAGTTTGGTAATTTGAGTATTCCC TTTTTTTCTTAGTCAATCTAGATAAAATTTTG	HET Non_genic Other
 	# N/A chr1 806790 32  1:C     TGTATCAACATTTGTTGTGTTCTCATAAACTT TGTAATACATGGAGATTTCTGGTCCACATATG	HET Non_genic Other
 
-	# $self->fields([qw(transcript_id chromosome location total_reads allele context1
+	# $self->fields([qw(transcript_id chromosome location total_reads seq context1
 	#                   context2 genotype gene_name gene_part)]);
 
-	my ($allele_size, $allele) =  split /:/, $record->{allele};
+	my ($seq_size, $seq) =  split /:/, $record->{seq};
 
 	my $seqid      = $record->{chromosome};
 	my $source     = 'Illumina_GA';
-	my $type       = $allele_size < 0 ? 'nucleotide_deletion' : 'nucleotide_insertion';
-	my $start      = $allele_size < 0 ? $record->{location} : $record->{location} - 1;
-	my $end        = $allele_size < 0 ? $record->{location} - $allele_size - 1 : $record->{location} - 1;
+	my $type       = $seq_size < 0 ? 'nucleotide_deletion' : 'nucleotide_insertion';
+	my $start      = $seq_size < 0 ? $record->{location} : $record->{location} - 1;
+	my $end        = $seq_size < 0 ? $record->{location} - $seq_size - 1 : $record->{location} - 1;
 	my $score      = '.';
 	my $strand     = '+';
 	my $phase      = '.';
 
 	my $id = join ":", ($source, $type, $seqid, $start);
 
-	my $reference_allele = $allele_size < 0 ? $allele : '-';
-	my @variant_alleles;
+	my $reference_seq = $seq_size < 0 ? $seq : '-';
+	my @variant_seqs;
 	if ($record->{genotype} eq 'HET') {
-		push @variant_alleles, ($allele_size < 0 ? $allele : '-')
+		push @variant_seqs, ($seq_size < 0 ? $seq : '-')
 	}
 	else {
-		push @variant_alleles, ($allele_size < 0 ? '-'     : $allele);
+		push @variant_seqs, ($seq_size < 0 ? '-'     : $seq);
 	}
 
 	my $total_reads = $record->{total_reads};
@@ -154,11 +154,11 @@ sub parse_record {
 	push @intersected_features, $intersected_gene      if $intersected_gene;
 	push @intersected_features, $intersected_gene_part if $intersected_gene_part;
 
-	my $attributes = {Reference_allele => [$reference_allele],
-			  Variant_allele   => \@variant_alleles,
-			  Total_reads      => [$total_reads],
-			  Genotype         => [$genotype],
-			  ID               => [$id],
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
+			  Total_reads   => [$total_reads],
+			  Genotype      => [$genotype],
+			  ID            => [$id],
 			 };
 
 	$attributes{Intersected_feature} = \@intersected_features if scalar @intersected_features;

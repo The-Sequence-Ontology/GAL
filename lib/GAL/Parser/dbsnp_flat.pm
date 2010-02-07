@@ -148,7 +148,7 @@ sub parse_record {
 	my @features;
 	for my $ctg (@ctgs) {
 
-		my @alleles = @{$record->{alleles}};
+		my @seqs = @{$record->{seqs}};
 
 		my @ctg_error_codes;
 		for my $error (@{$ctg->{errors}}) {
@@ -163,7 +163,7 @@ sub parse_record {
 
 
 		my $attributes = {ID            => $id,
-				  Variant_seq   => \@alleles,
+				  Variant_seq   => \@seqs,
 				  Errors        => [@error_codes, @ctg_error_codes],
 				 };
 
@@ -297,9 +297,9 @@ sub _parse_dbsnp_flat {
 		}
 		elsif ($class eq 'SNP') {
 
-			my ($allele_text, $het, $se_het) = @data;
-			$allele_text =~ s/alleles=// or push @errors, ['SNP_invalid_alleles_tag', $line];
-			$allele_text =~ s/\'//g;
+			my ($seq_text, $het, $se_het) = @data;
+			$seq_text =~ s/alleles=// or push @errors, ['SNP_invalid_seqs_tag', $line];
+			$seq_text =~ s/\'//g;
 			$het         =~ s/het=//         or push @errors, ['SNP_invalid_het_tag', $line];
 			$se_het      =~ s/se\(het\)=//   or push @errors, ['SNP_invalid_se(het)_tag', $line];
 
@@ -321,14 +321,14 @@ sub _parse_dbsnp_flat {
 			# alleles='(147 BP INSERTION)/-'
 			# alleles='(1110 BP DELETION)/-'
 
-			my @alleles  = split /\//, $allele_text;
-			if ($allele_text =~ /[^ATGC-]/) {
-				if ($allele_text =~ /\(LARGEDELETION\)/) {
-					unshift @alleles,  '-';
+			my @seqs  = split /\//, $seq_text;
+			if ($seq_text =~ /[^ATGC-]/) {
+				if ($seq_text =~ /\(LARGEDELETION\)/) {
+					unshift @seqs,  '-';
 					$record{type} = 'deletion';
 				}
-				if ($allele_text =~ /\(LARGEINSERTION\)/) {
-					unshift @alleles, '~';
+				if ($seq_text =~ /\(LARGEINSERTION\)/) {
+					unshift @seqs, '~';
 					$record{type} = 'insertion';
 				}
 
@@ -336,20 +336,20 @@ sub _parse_dbsnp_flat {
 
 				FIX THIS !!!!!!!!!!!!!!!!
 
-				if ($allele_text =~ /\(\d+ BP DELETION\)/) {
-					unshift @alleles,  '-';
+				if ($seq_text =~ /\(\d+ BP DELETION\)/) {
+					unshift @seqs,  '-';
 					$record{type} = 'deletion';
 				}
 				if (/\(([ATGC]+)\)(\d+)/) {
 					my $repeat_seq = $1;
 					my $count = $2;
-					unshift @alleles, $count;
-					map {$_ = $repeat_seq x $count if /^\d+$/} @alleles;
+					unshift @seqs, $count;
+					map {$_ = $repeat_seq x $count if /^\d+$/} @seqs;
 				}
-				@alleles = grep {/^[ATGC-]+$/} @alleles;
+				@seqs = grep {/^[ATGC-]+$/} @seqs;
 			}
 
-			$record{alleles} = \@alleles;
+			$record{seqs} = \@seqs;
 		}
 		elsif ($class eq 'SEQ') {
 

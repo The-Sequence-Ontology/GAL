@@ -70,7 +70,7 @@ sub _initialize_args {
 	# give lalbes for the fields in your file.
 	# note parser will automatically ignore lines begining with #
 
-	$self->fields([qw(chr location allele_text score)]);
+	$self->fields([qw(chr location seq_text score)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -97,27 +97,27 @@ sub parse_record {
 
 	# $self->fields([qw(chr pos ref_base con_base con_qual read_depth ave_hits_elsewhere)]);
 
-	my @variant_alleles = grep {$_ ne '*'} split m|/|, $record->{allele_text};
+	my @variant_seqs = grep {$_ ne '*'} split m|/|, $record->{seq_text};
 
 	# Ignore records that are compound heterozygous.
-	return undef if (scalar @variant_alleles == 2 && $variant_alleles[0] ne $variant_alleles[1]);
+	return undef if (scalar @variant_seqs == 2 && $variant_seqs[0] ne $variant_seqs[1]);
 
-	my ($genotype, $reference_allele, $type, $start, $end);
+	my ($genotype, $reference_seq, $type, $start, $end);
 
-	$genotype = scalar @variant_alleles == 1 ? 'heterozygous' : 'homozygous';
+	$genotype = scalar @variant_seqs == 1 ? 'heterozygous' : 'homozygous';
 
-	for my $variant_allele (@variant_alleles) {
-		if ($variant_allele =~ /^-/) {
+	for my $variant_seq (@variant_seqs) {
+		if ($variant_seq =~ /^-/) {
 			$type = 'nucleotide_deletion';
-			($reference_allele = $variant_allele) =~ s/^-//;
-			$variant_allele = '-';
+			($reference_seq = $variant_seq) =~ s/^-//;
+			$variant_seq = '-';
 			$start = $record->{location};
-			$end   = $record->{location} + length($reference_allele) - 1;
+			$end   = $record->{location} + length($reference_seq) - 1;
 		}
 		else {
 			$type = 'nucleotide_insertion';
-			$variant_allele =~ s/^\+//;
-			$reference_allele = '-';
+			$variant_seq =~ s/^\+//;
+			$reference_seq = '-';
 			$start = $record->{location};
 			$end   = $record->{location};
 		}
@@ -130,8 +130,8 @@ sub parse_record {
 	my $phase      = '.';
 	my $id         = join ':', ($seqid, $source, $type, $start);
 
-	my $attributes = {Reference_seq => [$reference_allele],
-			  Variant_seq   => \@variant_alleles,
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
 			  Genotype      => [$genotype],
 			  ID            => [$id],
 			 };

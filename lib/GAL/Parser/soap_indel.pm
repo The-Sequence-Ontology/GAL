@@ -116,24 +116,24 @@ sub parse_record {
 	# Create the attributes hash
 
 	my $indel_type = $original_atts->{Type}[0];
-	my ($reference_allele, $variant_allele);
+	my ($reference_seq, $variant_seq);
 	if ($indel_type > 0) {
-		$reference_allele = '-';
-		$variant_allele   = $original_atts->{Base}[0];
+		$reference_seq = '-';
+		$variant_seq   = $original_atts->{Base}[0];
 		$type             = 'nucleotide_insertion';
 		$start            = $record->{start} - 1;
 		$end              = $record->{start} - 1;
 	}
 	elsif ($indel_type < 0) {
-		$reference_allele = $original_atts->{Base}[0];
-		$variant_allele   = '-';
+		$reference_seq = $original_atts->{Base}[0];
+		$variant_seq   = '-';
 		$type             = 'nucleotide_deletion';
 		$start            = $record->{start} + 1;
 		$end              = $record->{end};
 	}
 
-	my $attributes = {Reference_seq => [$reference_allele],
-			  Variant_seq   => [$variant_allele],
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => [$variant_seq],
 			  ID            => [$id],
 			 };
 

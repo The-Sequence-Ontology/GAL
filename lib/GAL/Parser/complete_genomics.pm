@@ -70,7 +70,7 @@ sub _initialize_args {
 
 	# Set the column headers from your incoming data file here
 	# These will become the keys in your $record hash reference below.
-	$self->fields([qw(locus contig begin end vartype1 vartype2 reference allele1 allele2 totalScore)]);
+	$self->fields([qw(locus contig begin end vartype1 vartype2 reference seq1 seq2 totalScore)]);
 	$self->field_separator(',');
 	$self->comment_delimiter(qr/^[^\d]/);
 }
@@ -92,7 +92,7 @@ sub parse_record {
 
 	return undef unless $record->{locus} =~ /^\d+$/;
 
-	# locus,contig,begin,end,vartype1,vartype2,reference,allele1,allele2,totalScore
+	# locus,contig,begin,end,vartype1,vartype2,reference,seq1,seq2,totalScore
 	# 6,chr1,31843,31844,snp,snp,A,G,G,235
 	# 21,chr1,36532,36533,snp,snp,A,G,G,36
 	# 23,chr1,36970,36971,snp,snp,G,C,C,109
@@ -101,7 +101,7 @@ sub parse_record {
 	# 26,chr1,37623,37624,snp,snp,T,C,C,29
 	# 27,chr1,38033,38034,=,snp,A,A,G,54
 
-	# $self->fields([qw(locus contig begin end vartype1 vartype2 reference allele1 allele2 totalScore)]);
+	# $self->fields([qw(locus contig begin end vartype1 vartype2 reference seq1 seq2 totalScore)]);
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
 	my $id         = sprintf 'CG_%09d', $record->{locus};
@@ -109,8 +109,8 @@ sub parse_record {
 	my $source     = 'Complete_Genomics';
 
 	my %types = map {$_, 1} ($record->{vartype1}, $record->{vartype2});
-	my $has_ref_allele;
-	$has_ref_allele++ if $types{=};
+	my $has_ref_seq;
+	$has_ref_seq++ if $types{=};
 	delete $types{'='};
 
 	my ($type) = scalar keys %types == 1 ? keys %types : '';
@@ -128,15 +128,15 @@ sub parse_record {
 	my $strand     = '+';
 	my $phase      = '.';
 
-	my $reference_allele = $record->{reference} || '-';
-	my %variant_hash  = map {$_ => 1} ($record->{allele1}, $record->{allele2});
-	$variant_hash{$reference_allele}++ if $has_ref_allele;
-	my @variant_alleles = map {$_ ||= '-'} keys %variant_hash;
+	my $reference_seq = $record->{reference} || '-';
+	my %variant_hash  = map {$_ => 1} ($record->{seq1}, $record->{seq2});
+	$variant_hash{$reference_seq}++ if $has_ref_seq;
+	my @variant_seqs = map {$_ ||= '-'} keys %variant_hash;
 
-	my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
+	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
-	my $attributes = {Reference_seq => [$reference_allele],
-			  Variant_seq   => \@variant_alleles,
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
 			  Genotype         => [$genotype],
 			  ID               => [$id],
 			 };

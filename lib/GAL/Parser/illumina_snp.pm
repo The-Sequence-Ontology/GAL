@@ -69,8 +69,8 @@ sub _initialize_args {
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 
-	$self->fields([qw(chromosome location ref_allele var_alleles id
-			  total_reads read_alleles ref_reads var_reads)]);
+	$self->fields([qw(chromosome location ref_seq var_seqs id
+			  total_reads read_seqs ref_reads var_reads)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -79,7 +79,7 @@ sub _initialize_args {
 
  Title   : parse_record
  Usage   : $a = $self->parse_record();
-grep {$_ ne $reference_allele} Function: Parse the data from a record.
+ Function: Parse the data from a record.
  Returns : A hash ref needed by Feature.pm to create a Feature object
  Args    : A hash ref of fields that this sub can understand (In this case GFF3).
 
@@ -119,30 +119,30 @@ sub parse_record {
 	# chr10   175171  G       TT      rs7898275       25      G/T     0       25
 	# chr10   175358  C       TT      rs7910845       26      C/T     0       26
 
-	# $self->fields([qw(chromosome location ref_allele var_alleles id total_reads read_alleles ref_reads var_reads)]);
+	# $self->fields([qw(chromosome location ref_seq var_seqs id total_reads read_seqs ref_reads var_reads)]);
 
-	my $reference_allele = $record->{ref_allele};
-	my %variant_alleles  = map {$_, 1} split //, $record->{var_alleles};
-	my @variant_alleles = keys %variant_alleles;
+	my $reference_seq = $record->{ref_seq};
+	my %variant_seqs  = map {$_, 1} split //, $record->{var_seqs};
+	my @variant_seqs = keys %variant_seqs;
 
 	my $total_reads = $record->{total_reads};
 
 	# chr10   56397   C       CT      rs12262442      28      C/T     17      11
-	my @read_alleles = split m|/|, $record->{read_alleles};
-	my %read_counts = ($read_alleles[0] => $record->{ref_reads},
-			   $read_alleles[1] => $record->{var_reads},
+	my @read_seqs = split m|/|, $record->{read_seqs};
+	my %read_counts = ($read_seqs[0] => $record->{ref_reads},
+			   $read_seqs[1] => $record->{var_reads},
 			   );
 
-	my @variant_reads = map {$read_counts{$_} || $total_reads - $record->{var_reads}} @variant_alleles;
+	my @variant_reads = map {$read_counts{$_} || $total_reads - $record->{var_reads}} @variant_seqs;
 
-	my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
+	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
-	my $attributes = {Reference_allele => [$reference_allele],
-			  Variant_allele   => \@variant_alleles,
-			  Variant_reads    => \@variant_reads,
-			  Total_reads      => [$total_reads],
-			  Genotype         => [$genotype],
-			  ID               => [$id],
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
+			  Variant_reads => \@variant_reads,
+			  Total_reads   => [$total_reads],
+			  Genotype      => [$genotype],
+			  ID            => [$id],
 			 };
 
 	my $feature_data = {feature_id => $id,

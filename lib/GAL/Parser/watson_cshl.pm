@@ -112,9 +112,9 @@ sub _initialize_args {
 	# heterozygotes. The others provisionally homozygote s, and in cases
 	# where the coverage is deep enough probably they are.
 
-	$self->fields([qw(id chromosome coordinate reference_allele
-			  variant_allele match_status rsid alternate_allele
-			  variant_count alternate_allele_count
+	$self->fields([qw(id chromosome coordinate reference_seq
+			  variant_seq match_status rsid alternate_seq
+			  variant_count alternate_seq_count
 			  total_coverage genotype)]);
 }
 
@@ -133,9 +133,9 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# id chromosome coordinate reference_allele variant_allele
-	# match_status rsid alternate_allele variant_count
-	# alternate_allele_count total_coverage genotype
+	# id chromosome coordinate reference_seq variant_seq
+	# match_status rsid alternate_seq variant_count
+	# alternate_seq_count total_coverage genotype
 
 	my $id         = $record->{id};
 	my $seqid      = $record->{chromosome};
@@ -148,33 +148,33 @@ sub parse_record {
 	my $strand     = '.';
 	my $phase      = '.';
 
-	my $reference_allele = $record->{reference_allele};
-	my @variant_alleles;
-	push @variant_alleles, $record->{variant_allele};
+	my $reference_seq = $record->{reference_seq};
+	my @variant_seqs;
+	push @variant_seqs, $record->{variant_seq};
 
 	my @variant_reads;
 	push @variant_reads, $record->{variant_count});
 
-	if ($record->{alternate_allele} ne '.') {
-		push @variant_alleles, $record->{alternate_allele};
-		push @variant_reads,   $record->{alternate_allele_count};
+	if ($record->{alternate_seq} ne '.') {
+		push @variant_seqs, $record->{alternate_seq};
+		push @variant_reads,   $record->{alternate_seq_count};
 	}
 
-	# If we have reference_reads then push that allele to the variants
+	# If we have reference_reads then push that seq to the variants
 	if ($record->{total_coverage} - $record->{variant_count}  - $record->{alternate_count} > 0) {
 		push @variant_reads, $reference_reads;
-		push @variant_alleles, $reference_allele;
+		push @variant_seqs, $reference_seq;
 	}
 
 	my $total_reads = $record->{total_coverage};
 
-        my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
+        my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 	my $their_genotype = $record->{genotype} eq 'het' ? 'heterozygous' : undef;
 
 	my $rs_id = $record->{rs} =~ /rs\d+/ ? 'dbSNP:' . $record->{rs} : undef;
 
-	my $attributes = {Reference_seq => [$reference_allele],
-			  Variant_seq   => \@variant_alleles,
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
 			  ID            => [$id],
 			  Variant_reads => \@variant_reads,
 			  Total_reads   => [$total_reads],

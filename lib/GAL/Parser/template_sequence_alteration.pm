@@ -92,7 +92,7 @@ sub parse_record {
 	# in the $self->fields call in _initialize_args above
 
 	# Fill in the first 8 columns for GFF3
-	# See http://www.sequenceontology.org/resources/gff3.html for details.
+	# See http://www.sequenceontology.org/gff3.html for details.
 	my $id         = $record->{id};
 	my $seqid      = $record->{chromosome};
 	my $source     = 'Template';
@@ -104,32 +104,21 @@ sub parse_record {
 	my $phase      = '.';
 
 	# Create the attributes hash
+	# See http://www.sequenceontology.org/gvf.html
 
-	# Assign the reference and variant allele sequences:
-	# reference_allele=A
-	# variant_allele=G
-	my ($reference_allele, @variant_alleles) = split m|/|, $record->{alleles};
+	# Assign the reference and variant sequences:
+	# Reference_seq=A
+	# Variant_seq=G:1,A:2
+	my ($reference_seq, @variant_seqs) = split m|/|, $record->{variant_seq};
 
-	# Assign the reference and variant allele read counts:
-	# reference_reads=A:7
-	# variant_reads=G:8
+	# Assign the variant seq read counts if available:
+	# Variant_reads=8:1,6:2
 
 	# Assign the total number of reads covering this position:
-	# total_reads=16
+	# Total_reads=16
 
-	# Assign the genotype:
-	# genotype=homozygous
-
-	# Assign the probability that the genotype call is correct:
-	# genotype_probability=0.667
-
-	my ($genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
-
-	# Any quality score given for this variant should be assigned
-	# to $score above (column 6 in GFF3).  Here you can assign a
-	# name for the type of score or algorithm used to calculate
-	# the sscore (e.g. phred_like, clcbio, illumina).
-	my $score_type = 'template';
+	# Assign the genotype and probability if available:
+	# Genotype=homozygous:0.96
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -144,13 +133,12 @@ sub parse_record {
 	# can be used freely by applications.
 
 	# For sequence_alteration features the suggested keys include:
-	# reference_allele, variant_allele, reference_reads, variant_reads
-	# total_reads, genotype, genotype_probability and score type.
-	my $attributes = {reference_allele => [$reference_allele],
-			  variant_allele   => \@variant_alleles,
-			  genotype         => [$genotype],
-			  score_type       => [$score_type],
-			  ID               => [$id],
+	# ID, Reference_seq, Variant_seq, Variant_reads
+	# Total_reads, Genotype
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
+			  Genotype      => [$genotype],
+			  ID            => [$id],
 			 };
 
 	my $feature_data = {feature_id => $id,

@@ -100,9 +100,9 @@ sub parse_record {
 	my $phase      = '.';
 	my $id         = join ':', ($seqid, $source, $type, $start);
 
-	my $variant_allele = $record->{variant};
+	my $variant_seq = $record->{variant};
 
-	my $attributes = {Variant_seq   => [$variant_allele],
+	my $attributes = {Variant_seq   => [$variant_seq],
 			  ID               => [$id],
 			 };
 

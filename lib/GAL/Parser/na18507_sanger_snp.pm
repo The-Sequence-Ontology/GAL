@@ -110,16 +110,16 @@ sub parse_record {
 	my $phase      = '.';
 	my $id         = join ':', ($seqid, $source, $type, $start);
 
-	my $reference_allele    = $record->{ref_base};
+	my $reference_seq    = $record->{ref_base};
 
-	my @variant_alleles = $self->expand_iupac_nt_codes($record->(con_base));
+	my @variant_seqs = $self->expand_iupac_nt_codes($record->(con_base));
 
 	my $total_reads = $record->{read_depth};
 
-        my $genotype = scalar @variant_alleles > 1 ? 'heterozygous' : 'homozygous';
+        my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
-	my $attributes = {Reference_seq => [$reference_allele],
-			  Variant_seq   => \@variant_alleles,
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
 			  Genotype         => [$genotype],
 			  ID               => [$id],
 			  Total_reads      => [$total_reads],

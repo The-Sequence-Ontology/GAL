@@ -116,10 +116,10 @@ sub parse_record {
 	# chr1    SoapSNP SNP     775852  775852  93      +       .       ID=rs2980300; status=dbSNP; ref=T; allele=C/C; support1=29;
 	# chr1    SoapSNP SNP     777262  777262  43      +       .       ID=rs2905055; status=dbSNP; ref=G; allele=T/T; support1=12;
 
-	my $reference_sequence = $original_atts->{ref}[0];
-	my @variant_sequences  = split m|/|, $original_atts->{allele}[0];
+	my $reference_seq = $original_atts->{ref}[0];
+	my @variant_seqs  = split m|/|, $original_atts->{allele}[0];
 
-	shift @variant_sequences if $variant_sequences[0] eq $variant_sequences[1];
+	shift @variant_seqs if $variant_seqs[0] eq $variant_seqs[1];
 
 	my $support1 = (ref $original_atts->{support1} eq 'ARRAY' ?
 			$original_atts->{support1}[0]             :
@@ -134,10 +134,10 @@ sub parse_record {
 
 	my $total_reads = $support1 + $support2;
 
-	my $genotype = scalar @variant_sequences > 1 ? 'heterozygous' : 'homozygous';
+	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
-	my $attributes = {Reference_seq => [$reference_sequence],
-			  Variant_seq   => \@variant_sequences,
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
 			  Variant_reads => \@variant_reads,
 			  Total_reads      => [$total_reads],
 			  Genotype         => [$genotype],

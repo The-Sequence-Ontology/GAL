@@ -69,7 +69,7 @@ sub _initialize_args {
 	######################################################################
 
 	$self->fields([qw(chromosome variant_id variant_type start end score
-			  strand phase null allele genotype)]);
+			  strand phase null seq genotype)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -99,7 +99,7 @@ sub parse_record {
 
 
 	# $self->fields([qw(chromosome variant_id variant_type start end score
-	# strand phase null allele genotype)]);
+	# strand phase null seq genotype)]);
 
 	my ($genotype, $type) = split /_/, $record->{genotype};
 
@@ -120,22 +120,22 @@ sub parse_record {
 	my $strand     = $record->{strand};
 	my $phase      = '.';
 
-	my ($reference_allele, $variant_allele);
+	my ($reference_seq, $variant_seq);
 	if ($type eq 'Deletion') {
-		$reference_allele = $record->{allele};
-		$variant_allele   = '-';
+		$reference_seq = $record->{seq};
+		$variant_seq   = '-';
 	}
 	else {
-		$reference_allele = '-';
-		$variant_allele   = $record->{allele};
+		$reference_seq = '-';
+		$variant_seq   = $record->{seq};
 	}
 
 	$genotype = lc $genotype;
 
 	$type = $type eq 'Deletion' ? 'nucleotide_deletion' : 'nucleotide_insertion';
 
-	my $attributes = {Reference_seq => [$reference_allele],
-			  Variant_seq   => [$variant_allele],
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => [$variant_seq],
 			  Genotype      => [$genotype],
 			  ID            => [$id],
 			 };
