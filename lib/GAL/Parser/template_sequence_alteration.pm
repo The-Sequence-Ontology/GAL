@@ -133,8 +133,9 @@ sub parse_record {
 	# can be used freely by applications.
 
 	# For sequence_alteration features the suggested keys include:
-	# ID, Reference_seq, Variant_seq, Variant_reads
-	# Total_reads, Genotype
+	# ID, Reference_seq, Variant_seq, Variant_reads Total_reads,
+	# Genotype, Intersected_feature, Variant_effect, Copy_number
+
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
 			  Genotype      => [$genotype],

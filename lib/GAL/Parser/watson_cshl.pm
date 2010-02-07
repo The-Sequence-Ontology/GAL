@@ -145,7 +145,7 @@ sub parse_record {
 	my $start      = $record->{coordinate};
 	my $end        = $record->{coordinate};
 	my $score      = '.';
-	my $strand     = '.';
+	my $strand     = '+';
 	my $phase      = '.';
 
 	my $reference_seq = $record->{reference_seq};
@@ -153,7 +153,7 @@ sub parse_record {
 	push @variant_seqs, $record->{variant_seq};
 
 	my @variant_reads;
-	push @variant_reads, $record->{variant_count});
+	push @variant_reads, $record->{variant_count};
 
 	if ($record->{alternate_seq} ne '.') {
 		push @variant_seqs, $record->{alternate_seq};
@@ -168,10 +168,10 @@ sub parse_record {
 
 	my $total_reads = $record->{total_coverage};
 
-        my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 	my $their_genotype = $record->{genotype} eq 'het' ? 'heterozygous' : undef;
 
-	my $rs_id = $record->{rs} =~ /rs\d+/ ? 'dbSNP:' . $record->{rs} : undef;
+	my $intersected_snp = $record->{rs} =~ /rs\d+/ ? 'dbSNP:' . $record->{rs} : undef;
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
@@ -181,7 +181,8 @@ sub parse_record {
 			  Genotype      => [$genotype];
 			 };
 
-	push @{$attributes->{Intersected_feature}}, $rs_id if $rs_id;
+	push @{$attributes->{Intersected_feature}}, $intersected_snp
+	  if $intersected_id;
 
 	my $feature_data = {feature_id => $id,
 			    seqid      => $seqid,

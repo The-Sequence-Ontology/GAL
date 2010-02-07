@@ -68,7 +68,8 @@ sub _initialize_args {
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 
-	$self->fields([qw(chromosome variant_id variant_type start end score orientation seqs processing)]);
+	$self->fields([qw(chromosome variant_id variant_type start end score
+                          orientation seqs processing)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -156,7 +157,8 @@ sub parse_record {
 
 	my ($seq_text) = split /;/, $record->{seqs};
 	my ($reference_seq, @variant_seqs) = split m|/|, $seq_text;
-	unshift @variant_seqs, $reference_seq if $record->{variant_type} =~ /^heterozygous/;
+	unshift @variant_seqs, $reference_seq
+	  if $record->{variant_type} =~ /^heterozygous/;
 
         my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
@@ -169,7 +171,9 @@ sub parse_record {
 	#   21480 heterozygous_mixed_sequence_variant
 	#   14838 homozygous_MNP
 
-	my ($their_genotype, $variant_type) = $record->{variant_type} =~ /(.*?)_(.*)/;
+	my ($their_genotype, $variant_type) =
+	  $record->{variant_type} =~ /(.*?)_(.*)/;
+
 	my %type_map = (deletion               => 'nucleotide_deletion',
 			insertion              => 'nucleotide_insertion',
 			mixed_sequence_variant => 'sequence_alteration',

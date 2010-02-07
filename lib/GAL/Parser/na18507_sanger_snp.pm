@@ -106,7 +106,7 @@ sub parse_record {
 	my $start      = $record->{pos};
 	my $end        = $record->{pos};
 	my $score      = $record->{con_qual};
-	my $strand     = '.';
+	my $strand     = '+';
 	my $phase      = '.';
 	my $id         = join ':', ($seqid, $source, $type, $start);
 
