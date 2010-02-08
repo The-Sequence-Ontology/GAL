@@ -1,4 +1,4 @@
-package GAL::Parser::illumina_sanger_indel;
+package GAL::Parser::na18507_sanger_indel;
 
 use strict;
 use vars qw($VERSION);
@@ -8,15 +8,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::illumina_sanger_indel - <One line description of module's purpose here>
+GAL::Parser::na18507_sanger_indel - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::illumina_sanger_indel version 0.01
+This document describes GAL::Parser::na18507_sanger_indel version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::illumina_sanger_indel;
+     use GAL::Parser::na18507_sanger_indel;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -38,9 +38,9 @@ This document describes GAL::Parser::illumina_sanger_indel version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::illumina_sanger_indel->new();
-     Function: Creates a illumina_sanger_indel object;
-     Returns : A illumina_sanger_indel object
+     Usage   : GAL::Parser::na18507_sanger_indel->new();
+     Function: Creates a na18507_sanger_indel object;
+     Returns : A na18507_sanger_indel object
      Args    :
 
 =cut
@@ -194,7 +194,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::illumina_sanger_indel> requires no configuration files or environment variables.
+<GAL::Parser::na18507_sanger_indel> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

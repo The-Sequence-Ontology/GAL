@@ -1,4 +1,4 @@
-package GAL::Parser::template;
+package GAL::Parser::cosmic;
 
 use strict;
 use vars qw($VERSION);

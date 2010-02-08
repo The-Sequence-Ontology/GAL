@@ -120,7 +120,7 @@ sub parse_record {
 
 	my $attributes = {ID     => [$id],
 			  Name   => [$name],
-			  Parent => \@parents;
+			  Parent => \@parents,
 			 };
 
 	my $feature_data = {feature_id => $id,

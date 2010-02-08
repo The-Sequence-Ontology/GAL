@@ -1,4 +1,4 @@
-package GAL::Parser::baylor;
+package GAL::Parser::watson_cshl;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::baylor - <One line description of module's purpose here>
+GAL::Parser::watson_cshl - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::baylor version 0.01
+This document describes GAL::Parser::watson_cshl version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::baylor;
+     use GAL::Parser::watson_cshl;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::baylor version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::baylor->new();
-     Function: Creates a GAL::Parser::baylor object;
-     Returns : A GAL::Parser::baylor object
+     Usage   : GAL::Parser::watson_cshl->new();
+     Function: Creates a GAL::Parser::watson_cshl object;
+     Returns : A GAL::Parser::watson_cshl object
      Args    :
 
 =cut
@@ -161,7 +161,9 @@ sub parse_record {
 	}
 
 	# If we have reference_reads then push that seq to the variants
-	if ($record->{total_coverage} - $record->{variant_count}  - $record->{alternate_count} > 0) {
+	my $reference_reads = $record->{total_coverage} - $record->{variant_count}  -
+	  $record->{alternate_count};
+	if ($reference_reads > 0) {
 		push @variant_reads, $reference_reads;
 		push @variant_seqs, $reference_seq;
 	}
@@ -178,11 +180,11 @@ sub parse_record {
 			  ID            => [$id],
 			  Variant_reads => \@variant_reads,
 			  Total_reads   => [$total_reads],
-			  Genotype      => [$genotype];
+			  Genotype      => [$genotype],
 			 };
 
 	push @{$attributes->{Intersected_feature}}, $intersected_snp
-	  if $intersected_id;
+	  if $intersected_snp;
 
 	my $feature_data = {feature_id => $id,
 			    seqid      => $seqid,
@@ -243,7 +245,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::baylor> requires no configuration files or environment variables.
+<GAL::Parser::watson_cshl> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

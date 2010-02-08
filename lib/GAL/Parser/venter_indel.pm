@@ -1,4 +1,4 @@
-package GAL::Parser::celera_indel;
+package GAL::Parser::venter_indel;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::celera_indel - <One line description of module's purpose here>
+GAL::Parser::venter_indel - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::celera_indel version 0.01
+This document describes GAL::Parser::venter_indel version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::celera_indel;
+     use GAL::Parser::venter_indel;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::celera_indel version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::celera_indel->new();
-     Function: Creates a celera_indel object;
-     Returns : A celera_indel object
+     Usage   : GAL::Parser::venter_indel->new();
+     Function: Creates a venter_indel object;
+     Returns : A venter_indel object
      Args    :
 
 =cut
@@ -199,7 +199,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::celera_indel> requires no configuration files or environment variables.
+<GAL::Parser::venter_indel> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

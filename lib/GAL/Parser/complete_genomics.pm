@@ -110,7 +110,7 @@ sub parse_record {
 
 	my %types = map {$_, 1} ($record->{vartype1}, $record->{vartype2});
 	my $has_ref_seq;
-	$has_ref_seq++ if $types{=};
+	$has_ref_seq++ if $types{'='};
 	delete $types{'='};
 
 	my ($type) = scalar keys %types == 1 ? keys %types : '';
@@ -120,6 +120,7 @@ sub parse_record {
 			del		    => 'nucleotide_deletion',
 			inv		    => 'inversion',
 		       );
+
 	$type = $type_map{$type} || 'sequence_alteration';
 
 	my $start      = $record->{begin} + 1;

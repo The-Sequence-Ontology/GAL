@@ -1,4 +1,4 @@
-package GAL::Parser::celera;
+package GAL::Parser::venter_snp;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::celera - <One line description of module's purpose here>
+GAL::Parser::venter_snp - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::celera version 0.01
+This document describes GAL::Parser::venter_snp version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::celera;
+     use GAL::Parser::venter_snp;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::celera version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::celera->new();
-     Function: Creates a celera object;
-     Returns : A celera object
+     Usage   : GAL::Parser::venter_snp->new();
+     Function: Creates a venter_snp object;
+     Returns : A venter_snp object
      Args    :
 
 =cut
@@ -248,7 +248,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::celera> requires no configuration files or environment variables.
+<GAL::Parser::venter_snp> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

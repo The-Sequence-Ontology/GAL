@@ -131,7 +131,7 @@ sub parse_record {
 	my $genotype = $record->{genotype} eq 'HET' ? 'heterozygous' : 'homozygous';
 
 	my $intersected_gene;
-	$intersected_gene = $record->gene_name ne 'Non_genic' ? 'gene:HGNC:' . $record->gene_name : undef;
+	$intersected_gene = $record->{gene_name} ne 'Non_genic' ? 'gene:HGNC:' . $record->gene_name : undef;
 
 	#perl -lane 'print $F[9] unless $F[9] eq "Other"' KOREF-solexa-indel-X30_d3D50E20.gff | sort | uniq -c | sort -nr
 	#  127516 Intron
@@ -139,12 +139,12 @@ sub parse_record {
 	#      49 CDS
 	#      27 5UTR
 
-	my %type_map = {Intron => 'intron',
-			3UTR   => 'three_prime_UTR',
-			CDS    => 'CDS',
-			5UTR   => 'five_prime_UTR',
-			Other  =>  undef,
-		       };
+	my %type_map = ('Intron' => 'intron',
+			'3UTR'   => 'three_prime_UTR',
+			'CDS'    => 'CDS',
+			'5UTR'   => 'five_prime_UTR',
+			'Other'  =>  undef,
+		       );
 
 	my $intersected_gene_part;
 	$intersected_gene_part = $record->{gene_part};
@@ -161,7 +161,7 @@ sub parse_record {
 			  ID            => [$id],
 			 };
 
-	$attributes{Intersected_feature} = \@intersected_features if scalar @intersected_features;
+	$attributes->{Intersected_feature} = \@intersected_features if scalar @intersected_features;
 
 	my $feature_data = {feature_id => $id,
 			    seqid      => $seqid,

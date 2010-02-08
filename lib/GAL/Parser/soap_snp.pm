@@ -130,7 +130,7 @@ sub parse_record {
 			0
 		       );
 
-	my @variant_reads = ($support_1, $support_2);
+	my @variant_reads = ($support1, $support2);
 
 	my $total_reads = $support1 + $support2;
 

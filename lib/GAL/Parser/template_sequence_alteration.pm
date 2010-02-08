@@ -1,4 +1,4 @@
-package GAL::Parser::template;
+package GAL::Parser::template_sequence_alteration;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::template - <One line description of module's purpose here>
+GAL::Parser::template_sequence_alteration - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::template version 0.01
+This document describes GAL::Parser::template_sequence_alteration version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::template;
+     use GAL::Parser::template_sequence_alteration;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::template version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::template->new();
-     Function: Creates a GAL::Parser::template object;
-     Returns : A GAL::Parser::template object
+     Usage   : GAL::Parser::template_sequence_alteration->new();
+     Function: Creates a GAL::Parser::template_sequence_alteration object;
+     Returns : A GAL::Parser::template_sequence_alteration object
      Args    :
 
 =cut
@@ -119,6 +119,8 @@ sub parse_record {
 
 	# Assign the genotype and probability if available:
 	# Genotype=homozygous:0.96
+
+	my $genotype = 'heterozygous';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -201,7 +203,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::template> requires no configuration files or environment variables.
+<GAL::Parser::template_sequence_alteration> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
