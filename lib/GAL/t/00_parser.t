@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 12;
+use Test::More tests => 11;
 
 BEGIN {
 	use lib '../../';
@@ -46,9 +46,6 @@ ok($parser->parse_record($record), '$parser->parse_record');
 # TEST 11
 my $attribute_text = 'ID=12345; name=Gene1; Parent=6789,9876;';
 ok(my $att_hash = $parser->parse_attributes($attribute_text), '$parser->parse_attributes');
-
-# TEST 12
-ok(my $genotype = $parser->get_genotype('A', ['A', 'T']), '$parser->get_genotype');
 
 ################################################################################
 ################################# Ways to Test #################################

@@ -14,6 +14,8 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
+BAIL_OUT('This module needs work before it can be tested');
+
 my $parser = GAL::Parser::dbsnp_flat->new(file => 'data/dbsnp_flat.txt');
 
 # TEST 2

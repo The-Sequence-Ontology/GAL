@@ -14,7 +14,7 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $parser = GAL::Parser::na18507_sanger_snp->new(file => 'data/na18507_sanger.gff');
+my $parser = GAL::Parser::na18507_sanger_snp->new(file => 'data/na18507_sanger_snp.gff');
 
 # TEST 2
 isa_ok($parser, 'GAL::Parser::na18507_sanger_snp');

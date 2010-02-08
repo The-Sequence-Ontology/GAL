@@ -9,6 +9,8 @@ BEGIN {
 	use_ok('GAL::Parser::basic_snp');
 }
 
+BAIL_OUT('This module needs work before it can be tested');
+
 my $path = $0;
 $path =~ s/[^\/]+$//;
 $path ||= '.';
