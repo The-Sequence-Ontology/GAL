@@ -6,7 +6,7 @@ use Test::More tests => 4;
 BEGIN {
 	use lib '../../';
 	#TEST 1
-	use_ok('GAL::Parser::baylor');
+	use_ok('GAL::Parser::watson_cshl.t');
 }
 
 my $path = $0;
@@ -14,10 +14,10 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $parser = GAL::Parser::baylor->new(file => 'data/baylor.tsv');
+my $parser = GAL::Parser::watson_cshl.t->new(file => 'data/watson_cshl.t.tsv');
 
 # TEST 2
-isa_ok($parser, 'GAL::Parser::baylor');
+isa_ok($parser, 'GAL::Parser::watson_cshl.t');
 
 # Test 3
 ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
