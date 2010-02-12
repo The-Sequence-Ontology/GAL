@@ -115,7 +115,7 @@ sub parse_record {
 
 	my ($type) = scalar keys %types == 1 ? keys %types : '';
 
-	my %type_map = (snp		    => 'SNP',
+	my %type_map = (snp		    => 'SNV',
 			ins		    => 'nucleotide_insertion',
 			del		    => 'nucleotide_deletion',
 			inv		    => 'inversion',

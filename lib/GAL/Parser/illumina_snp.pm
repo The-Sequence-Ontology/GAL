@@ -91,7 +91,7 @@ sub parse_record {
 	my $id         = $record->{id};
 	my $seqid      = $record->{chromosome};
 	my $source     = 'Illumina_GA';
-	my $type       = 'SNP';
+	my $type       = 'SNV';
 	my $start      = $record->{location};
 	my $end        = $record->{location};
 	my $score      = '.';

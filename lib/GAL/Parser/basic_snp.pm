@@ -91,8 +91,8 @@ sub parse_record {
 	$self->throw(message => 'This parser should be tested and evaluated before use');
 
 	my $seqid      = $record->{chromosome};
-	my $source     = 'Chad_Huff';
-	my $type       = 'SNP';
+	my $source     = 'Unknown';
+	my $type       = 'SNV';
 	my $start      = $record->{location};
 	my $end        = $record->{location};
 	my $score      = '.';

@@ -97,7 +97,7 @@ sub parse_record {
 
 	my $seqid = 'chr' . $chromosome;
 	my $source     = 'Quake';
-	my $type       = 'SNP';
+	my $type       = 'SNV';
 	my $start      = $position;
 	my $end        = $position;
 	my $score      = '.';

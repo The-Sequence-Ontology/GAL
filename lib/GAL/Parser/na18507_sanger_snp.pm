@@ -102,7 +102,7 @@ sub parse_record {
 
 	my $seqid      = 'chr'.$record->{chr};
 	my $source     = 'NA18507_Sanger';
-	my $type       = 'SNP';
+	my $type       = 'SNV';
 	my $start      = $record->{pos};
 	my $end        = $record->{pos};
 	my $score      = $record->{con_qual};

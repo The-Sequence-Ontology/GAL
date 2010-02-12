@@ -141,7 +141,7 @@ sub parse_record {
 	my $seqid      = $record->{chromosome};
 	my $source     = 'JDW_CSHL';
 
-	my $type       = 'SNP';
+	my $type       = 'SNV';
 	my $start      = $record->{coordinate};
 	my $end        = $record->{coordinate};
 	my $score      = '.';

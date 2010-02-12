@@ -90,7 +90,7 @@ sub parse_record {
 
 	my $seqid      = $record->{chr};
 	my $source     = 'ABI_SOLiD';
-	my $type       = 'SNP';
+	my $type       = 'SNV';
 	my $start      = $record->{pos};
 	my $end        = $record->{pos};
 	my $score      = '.';

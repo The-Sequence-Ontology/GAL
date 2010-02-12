@@ -178,7 +178,7 @@ sub parse_record {
 			insertion              => 'nucleotide_insertion',
 			mixed_sequence_variant => 'sequence_alteration',
 			MNP                    => 'MNP',
-			SNP                    => 'SNP',
+			SNP                    => 'SNV',
 		       );
 
 	$type = $type_map{$variant_type};
