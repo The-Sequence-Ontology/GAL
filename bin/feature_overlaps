@@ -4,6 +4,7 @@ use warnings;
 use DBI;
 use Getopt::Long;
 use GAL::Annotation;
+use DBIx::Class::ResultClass::HashRefInflator;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -15,7 +16,7 @@ Synopsis:
 
 feature_overlaps --feature_dsn 'dbi:mysql:feature_db' --feature_type 'SNP' \
 		 --query_dsn   'dbi:mysql:feature_db'   --query_type 'CDS' \
-		 --expanded
+		 --expanded --limit 10000 --offset 0
 
 Description:
 
@@ -39,16 +40,21 @@ Options:
   feature_dsn:   The database source name of the database that contains
 		 the features that will be iterated over.
   feature_type:  The type of feature that will be selected from feature_dsn.
-                 Default is all types.
+		 Default is all types.
   query_dsn:     The database source name of the database that contains
 		 the features that will be iterated over.
   query_type:    The type of feature that will be selected from query_dsn.
-                 Default is all types.
+		 Default is all types.
   expanded:      Print output in expanded form.
   ids:           Print the IDs of all pair of overlapping features.
   user:          The user name of the database owner. [system username]
   password:      The password for the database (if the database is password
-                 protected).
+		 protected).
+  offset         In the select statement for the feature database an offset
+                 to begin from
+  limit          In the select statement for the feature database an limit
+                 on the number of records returned.
+
 
 Notes:
 
@@ -67,7 +73,7 @@ Notes:
 ";
 
 my ($help, $feature_dsn, @feature_types, $query_dsn, @query_types,
-    $expanded, $ids, $user, $password);
+    $expanded, $ids, $user, $password, $offset, $limit);
 my $opt_success = GetOptions('help'           => \$help,
 			     'feature_dsn=s'  => \$feature_dsn,
 			     'feature_type=s' => \@feature_types,
@@ -77,6 +83,8 @@ my $opt_success = GetOptions('help'           => \$help,
 			     'user=s'         => \$user,
 			     'password=s'     => \$password,
 			     'ids'            => \$ids,
+			     'offset=i'        => \$offset,
+			     'limit=i'         => \$limit,
 			    );
 
 die $usage if $help || ! $opt_success;
@@ -84,64 +92,49 @@ die $usage if $help || ! $opt_success;
 die $usage unless ($feature_dsn && $query_dsn);
 
 my $feature_schema = GAL::Annotation->new(dsn      => $feature_dsn,
-#					  user     => $user,
-#					  password => $password,
+					  user     => $user,
+					  password => $password,
 					 )->schema;
 
 my $query_schema = GAL::Annotation->new(dsn      => $query_dsn,
-#					user     => $user,
-#					password => $password,
+					user     => $user,
+					password => $password,
 				       )->schema;
 
-my $features = $feature_schema->resultset('Feature');
+my $features = $feature_schema->resultset('Feature')->slice($offset, $offset + $limit);
+$features->result_class('DBIx::Class::ResultClass::HashRefInflator');
 
-while (my $feature = $features->next) {
+my $query_where = 'seqid = ? AND ((start <= ? AND end >= ?) OR (start >= ? AND start <= ?))';
 
-	my $where = '(seqid = ? AND start <= ? AND end >= ?) OR (seqid = ? AND start >= ? AND start <= ?)';
+
+ FEATURE:
+    while (my $feature = $features->next) {
+
 	my @bind = (
-		    $feature->seqid,
-		    $feature->start,
-		    $feature->start,
-		    $feature->seqid,
-		    $feature->start,
-		    $feature->end,
-		   );
-#	  {
+		    $feature->{seqid},
+		    $feature->{start},
+		    $feature->{start},
+		    $feature->{start},
+		    $feature->{end},
+		    );
 
-	next if $feature->type eq 'contig';
+	next if $feature->{type} eq 'contig';
 
-#	   seqid    => $feature->seqid,
-	   
-#			     {start => [{'>=' => $feature->start},
-#					{'<=' => $feature->end}
-#				       ]
-#			     },
+	my $overlaps = $query_schema->resultset('Feature')->search_literal($query_where, @bind);
+	$overlaps->result_class('DBIx::Class::ResultClass::HashRefInflator');
 
-#	  {
-#	   start => {'<=' => $feature->start},
-#	   end   => {'>=' => $feature->start},
-#	  };
-#			     ];
-#
-#			    )
-#		    ];
-
-	my $overlaps = $query_schema->resultset('Feature')->search_literal($where, @bind);
-
-	print '# ' . $feature->id . "\n";
+	print '# ' . $feature->{feature_id} . "\n";
 
 	while (my $overlap = $overlaps->next ) {
-		print join "\t", ($feature->id,
-				  $feature->type,
-				  $overlap->id,
-				  $overlap->type,
+		print join "\t", ($feature->{feature_id},
+				  $feature->{type},
+				  $overlap->{feature_id},
+				  $overlap->{type},
 				 );
 		print "\n";
-		print '';
 	}
 }
 
 #-----------------------------------------------------------------------------
 #-------------------------------- SUBROUTINES --------------------------------
 #-----------------------------------------------------------------------------
-

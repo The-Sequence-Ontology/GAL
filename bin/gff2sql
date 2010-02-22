@@ -126,11 +126,11 @@ sub create_db {
 	my $drh = DBI->install_driver("mysql");
 
 	if (grep {$_ eq "DBI:mysql:$db_name"} DBI->data_sources("mysql")) {
-		$drh->func("dropdb"  , $db_name, 'admin') or die "Can't drop database $db_name\n";
+		$drh->func("dropdb"  , $db_name, ['localhost', $user, $password], 'admin') or die "Can't drop database $db_name\n";
 		$drh->func("createdb", $db_name, 'admin') or die "Can't create database $db_name\n";
 	}
 	else {
-		$drh->func("createdb", $db_name, 'admin') or die "Can't create database $db_name\n";
+		$drh->func("createdb", $db_name, ['localhost', $user, $password], 'admin') or die "Can't create database $db_name\n";
 	}
 
 	my $dbh = DBI->connect($dsn, $user, $password);

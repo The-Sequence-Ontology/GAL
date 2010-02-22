@@ -66,8 +66,8 @@ my $type_text = join ', ', map {"'$_'"} @type;
 
 my $dbh     = DBI->connect($dsn, $user, $psswd);
 my $sth_snp = $dbh->prepare("SELECT feature_id, start, end FROM feature WHERE type IN ($type_text) AND seqid = ? AND ((start >= ? AND start <= ?) OR (end >= ? AND end <= ?))");
-my $sth_ref = $dbh->prepare("SELECT a.att_value as reference_allele FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'reference_allele'");
-my $sth_var = $dbh->prepare("SELECT a.att_value as reference_allele FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'variant_allele'");
+my $sth_ref = $dbh->prepare("SELECT a.att_value as reference_allele FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'Reference_seq'");
+my $sth_var = $dbh->prepare("SELECT a.att_value as reference_allele FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'Variant_seq'");
 
 my $ds = parse_datastore($ds_index_file);
 
