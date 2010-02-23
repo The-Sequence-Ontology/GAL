@@ -2,7 +2,6 @@ package GAL::Schema::Result::Feature;
 
 use strict;
 use warnings;
-
 use base qw/DBIx::Class/;
 
 __PACKAGE__->load_components(qw/Core/);
@@ -80,7 +79,7 @@ sub _inflate_result {
 			   T_to_A_transversion                           => 'sequence_alteration',
 			   C_to_A_transversion                           => 'sequence_alteration',
 			   C_to_G_transversion                           => 'sequence_alteration',
-			  };
+		       };
 
 	my $subtype = $feature_map->{$feature->type};
 

@@ -1,4 +1,4 @@
-package GAL::Parser::maq_csn2snp;
+package GAL::Parser::maq_cns2snp;
 
 use strict;
 use vars qw($VERSION);
@@ -8,15 +8,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::maq_csn2snp - <One line description of module's purpose here>
+GAL::Parser::maq_cns2snp - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::maq_csn2snp version 0.01
+This document describes GAL::Parser::maq_cns2snp version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::maq_csn2snp;
+     use GAL::Parser::maq_cns2snp;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -38,9 +38,9 @@ This document describes GAL::Parser::maq_csn2snp version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::maq_csn2snp->new();
-     Function: Creates a maq_csn2snp object;
-     Returns : A maq_csn2snp object
+     Usage   : GAL::Parser::maq_cns2snp->new();
+     Function: Creates a maq_cns2snp object;
+     Returns : A maq_cns2snp object
      Args    :
 
 =cut
@@ -101,7 +101,7 @@ sub parse_record {
 	my ($self, $record) = @_;
 
 	my $seqid      = 'chr'.$record->{chr};
-	my $source     = 'NA18507_Sanger';
+	my $source     = 'maq_cns2snp';
 	my $type       = 'SNV';
 	my $start      = $record->{pos};
 	my $end        = $record->{pos};
@@ -183,7 +183,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::maq_csn2snp> requires no configuration files or environment variables.
+<GAL::Parser::maq_cns2snp> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

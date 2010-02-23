@@ -1,0 +1,153 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use DBI;
+use Getopt::Long;
+use GAL::Annotation;
+use Time::HiRes qw(gettimeofday tv_interval);
+use DB_File;
+use GAL::Parser::gff3;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+feature_overlaps [--dsn_to_index 'dbi:mysql:gal_database']
+                 [--create --update --add_xref annotations.gff3]
+                 [--tab_out annotations.gff3]
+                 file.index
+
+Description:
+
+This script has three functions: First it can take a GAL feature
+database and build a rapid lookup index of features keyed off of
+position.  It can take a GAL feature database and update such an index
+with new features, and finally, it can take a GFF3 file and add
+Dbxrefs for features from the index overlap each sequence alteration.
+
+Options:
+
+  dsn        The database source name of the database that contains
+	     the features that will be iterated over.
+  create     Create a new index.
+  update     Update an existing index.
+  add_xref   Add Dbxrefs to a GFF3 file.
+  tab_out    Write overlaps to a tab delimited file.
+  gff3       The GFF3 file to classify.
+  user:      The user name of the database owner. [system username]
+  password:  The password for the database (if the database is password
+	     protected).
+
+";
+
+my ($help, $dsn, $create, $update, $add_xref, $tab_out, $gff3,
+    $user, $password);
+
+my $opt_success = GetOptions('help'       => \$help,
+			     'dsn=s'      => \$dsn,
+			     'create'     => \$create,
+			     'update'     => \$update,
+			     'gff3=s'     => \$gff3,
+			     'user=s'     => \$user,
+			     'password=s' => \$password,
+			    );
+
+die $usage if $help || ! $opt_success;
+
+my $index_file = shift;
+die $usage unless -r $index_file;
+
+my %hash;
+my $B_TREE = new DB_File::BTREEINFO ;
+$B_TREE->{flags} = R_DUP;
+$B_TREE->{'cachesize'} = 10_000_000_000;
+
+my $mode = '0777';
+my $flags = $create ? O_CREAT : $update ? O_RDWR : O_RDONLY;
+my $index = tie %hash, 'DB_File', $index_file, $flags, $mode, $B_TREE
+	or die "Can't open $index_file: $!\n";
+
+
+if    ($create || $update) {create_or_update ($dsn, $index)}
+elsif ($update) {update_index ($dsn, $index)}
+
+if ($gff3) {classify($gff3)};
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub create_or_update {
+    my ($dsn, $index) = @_;
+
+    my $feature_dbh = DBI->connect($dsn);
+
+    my $count_stmt = ("SELECT COUNT(*) FROM feature where type != 'gene'");
+    my ($feature_count) = $feature_dbh->selectrow_array($count_stmt);
+
+    my $count = 1;
+    my $t0 = [gettimeofday];
+
+    my $feature_stmt = ("SELECT feature_id, seqid, type, start, end " .
+			"FROM feature"
+			);
+
+    my $feature_sth = $feature_dbh->prepare($feature_stmt);
+    my $feature_rv  = $feature_sth->execute;
+    
+    while (my ($feature_id, $seqid, $type, $start, $end) =
+	   $feature_sth->fetchrow_array) {
+	
+	for my $position ($start .. $end) {
+	    if ($update) {
+		# Check first to be sure we're not already entered
+		die "Update not implimented yet\n";
+	    }
+    	    $index->put("$seqid:$_", "$type\t$feature_id");
+	}
+	unless ($count % 10000) {
+	    my $elapsed = tv_interval($t0);
+	    my $total = (($elapsed /$count) * $feature_count) / 60 / 60;
+	    my $pct = int($count / $feature_count * 100);
+	    $elapsed = $elapsed / 60 / 60;
+	    print STDERR "$count ($pct)\t$elapsed\t$total\n";
+	}
+	$count++;
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub classify {
+
+    my $gff3 = shift;
+
+    my $parser = GAL::Parser::gff3->new(file => $gff3);
+
+    while (my $feature = $parser->next_feature_hash) {
+	
+	my $feature_id = $feature->{feature_id};
+	my $seqid = $feature->{seqid};
+	my $start = $feature->{start};
+
+	my @overlaps = $index->get_dup("$seqid:$start");
+	print '# ' . $feature_id . "\n";
+	    
+	for my $overlap (@overlaps) {
+	    next unless $overlap;
+	    my ($overlap_id, $type) = split /\t/, $overlap;
+	    
+	    print join "\t", ($feature_id,
+			      $overlap_id,
+			      $type,
+			      );
+	    print "\n";
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------

@@ -68,7 +68,7 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(dsn usr password);
+	my @valid_attributes = qw(dsn user password);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }
@@ -99,7 +99,7 @@ sub dsn {
  Usage   : $a = $self->storage();
  Function: Just returns DBI
  Returns : DBI
- Args    : Whatever you want, but it'll be ignored!
+ Args    : Whatever you want, but it_ll be ignored!
 
 =cut
 
@@ -114,6 +114,67 @@ sub storage {
 
 	$self->{storage} = $storage if defined $storage;
 	return $self->{parser};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 schema
+
+ Title   : schema
+ Usage   : $self->schema();
+ Function: Return the cached DBIx::Class::Schema object
+ Returns : DBIx::Class::Schema object
+ Args    : N/A
+
+=cut
+
+sub schema {
+       my $self = shift;
+
+       # Create the schema if it doesn't exist
+       if (! $self->{schema}) {
+	   #$self->create_database;
+	   $self->{schema} = GAL::Schema->connect($self->dsn,
+						  $self->user,
+						  $self->password);
+       }
+       return $self->{schema};
+}
+
+ #-----------------------------------------------------------------------------
+ 
+=head2 user
+
+ Title   : user
+ Usage   : $a = $self->user();
+ Function: Get/Set the value of user.
+ Returns : The value of user.
+ Args    : A value to set user to.
+
+=cut
+
+sub user {
+       my ($self, $user) = @_;
+       $self->{user} = $user if $user;
+       return $self->{user};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 password
+
+ Title   : password
+ Usage   : $a = $self->password();
+ Function: Get/Set the value of password.
+ Returns : The value of password.
+ Args    : A value to set password to.
+
+=cut
+
+sub password {
+       my ($self, $password) = @_;
+       $self->{password} = $password if $password;
+       return $self->{password};
 }
 
 #-----------------------------------------------------------------------------
