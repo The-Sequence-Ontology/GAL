@@ -1,4 +1,4 @@
-package GAL::Storage::sqlite;
+package GAL::Storage::SQLite;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Storage);
 
 =head1 NAME
 
-GAL::Storage::sqlite - <One line description of module's purpose here>
+GAL::Storage::SQLite - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Storage::sqlite version 0.01
+This document describes GAL::Storage::SQLite version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Storage::sqlite;
+     use GAL::Storage::SQLite;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,7 +39,7 @@ This document describes GAL::Storage::sqlite version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Storage::sqlite->new();
+     Usage   : GAL::Storage::SQLite->new();
      Function: Creates a Storage object;
      Returns : A Storage object
      Args    :
@@ -90,7 +90,7 @@ sub dbh {
 		if (! defined $db_name) {
 			$db_name = join "",
 			  map { unpack "H*", chr(rand(256)) } 1..16;
-			$db_name .= '.sqlite';
+			$db_name .= '.SQLite';
 		}
 		my $user = $self->user;
 		my $password = $self->password;
@@ -398,7 +398,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Storage::sqlite> requires no configuration files or environment variables.
+<GAL::Storage::SQLite> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

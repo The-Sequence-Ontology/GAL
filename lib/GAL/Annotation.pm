@@ -3,9 +3,9 @@ package GAL::Annotation;
 use strict;
 use warnings;
 
-use DBI;
-use GAL::Schema;
 use base qw(GAL::Base);
+use DBI;
+use GAL::Storage;
 
 use vars qw($VERSION);
 $VERSION = '0.01';
@@ -68,7 +68,7 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(dsn user password);
+	my @valid_attributes = qw(dsn parser);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }
@@ -104,16 +104,17 @@ sub dsn {
 =cut
 
 sub storage {
-	my ($self, $dsn) = @_;
+	my ($self, $storage) = shift;
 
-	my $storage;
-	if ($dsn) {
-		$self->load_module('GAL::Storage');
-		$storage = GAL::Storage->new(dsn => $dsn);
+	if (! $self->{storage}) {
+	  my %args;
+	  $args{dsn} = $self->dsn || '';
+	  my $class = 'GAL::Storage' . $self->storage
+	  my $storage = GAL::Storage->new(\%args);
+	  $self->{storage} = $storage;
 	}
 
-	$self->{storage} = $storage if defined $storage;
-	return $self->{parser};
+	return $self->{storage};
 }
 
 #-----------------------------------------------------------------------------
@@ -185,26 +186,29 @@ sub password {
  Usage   : $a = $self->parser();
  Function: Get/Set the parser.
  Returns : The parser object.
- Args    : file  => data_file_name
-	   class => GAL::Parser::subclass.
+ Args    : The subclass name of a GAL::Parser, or an already created
+           GAL::Parser object.
 
 =cut
 
 sub parser {
-	my ($self, @args) = @_;
-
-	my @valid_args = qw(file class);
-	my $args = $self->prepare_args(\@args, \@valid_args);
-
-	my $class = $args->{class};
-	my $file  = $args->{file};
+	my ($self, $class_or_parser) = @_;
 
 	my $parser;
-	if ($class && $file) {
-		$class =~ s/GAL::Parser:://;
-		$class = 'GAL::Parser::' . $class;
-		$self->load_module($class);
-		$parser = $class->new(file => $file);
+	if ($parser && ref $parser =~ /^GAL::Parser::\w+/) {
+	  $parser = $class_or_parser;
+	}
+	elsif ($class_or_parser) {
+	  my $class;
+	  ($class = $class_or_parser) =~ s/GAL::Parser:://;
+	  $class = 'GAL::Parser::' . $class;
+	  $self->load_module($class);
+	  $parser = $class->new();
+	}
+	elsif (! $self->{parser}) {
+	  my $class = 'GAL::Parser::gff3';
+	  $self->load_module($class);
+	  $parser = $class->(new);
 	}
 
 	$self->{parser} = $parser if defined $parser;
@@ -219,15 +223,14 @@ sub parser {
  Usage   : $a = $self->load_file();
  Function: Parse and store all of the features in a file
  Returns : N/A
- Args    : file  => data_file_name
-	   class => GAL::Parser::subclass.
+ Args    : data_file_name
 
 =cut
 
 sub load_file {
 
 	my ($self, $file) = @_;
-	$self->stroage->load_file($file);
+	$self->storage->load_file($file);
 	return $self;
 }
 

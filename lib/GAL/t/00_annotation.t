@@ -26,28 +26,15 @@ isa_ok($annotation, 'GAL::Annotation');
 ok(my $dsn = $annotation->dsn('DBI:mysql:gal_test'), '$annotation->dsn');
 
 # TEST 4
-ok(my $user = $annotation->user(''), '$annotation->user');
+ok(my $storage = $annotation->storage(''), '$annotation->storage');
 
 # TEST 5
-ok(my $password = $annotation->password(''), '$annotation->password');
+ok(my $parser = $annotation->parser(''), '$annotation->parser');
 
 # TEST 6
-ok(my $db_name = $annotation->db_name('gal_test'), '$annotation->db_name');
-
-# TEST 7
-ok(my $driver = $annotation->driver('mysql'), '$annotation->driver');
-
-# TEST 8
-ok(my $storage = $annotation->storage('DBI'), '$annotation->storage');
-
-# TEST 9
-ok($annotation->create_database, '$annotation->create_database');
-
-# TEST 10
 ok($annotation->load_file(file => './data/soap_snp.gff', class => 'soap_snp'), '$annotation->load_file');
 
-# TEST 11
-ok(my $parser = $annotation->parser, '$annotation->parser');
+# TEST 7
 
 my $feature_hash = 
   {'source'     => 'SoapSNP',
@@ -68,75 +55,22 @@ my $feature_hash =
    'seqid'      => 'chr1'
   };
 
+ok($annotation->add_feature($feature_hash), '$annotation->add_feature');
+
+# TEST 8
+ok($annotation->get_all_features(), '$annotation->get_all_features');
+
+# TEST 9
+ok($annotation->get_features_by_type(), '$annotation->get_features_by_type');
+
+# TEST 10
+ok($annotation->get_recursive_features_by_type(), '$annotation->get_recursive_features_by_type');
+
+# TEST 11
+ok($annotation->get_feature_by_id(), '$annotation->get_feature_by_id');
+
 # TEST 12
-ok(my ($normal_feature, $attribute_array) =
-   $annotation->_split_feature_and_attributes($feature_hash),
-   '$annotation->_normalize_and_split_feature');
-# Test that $feature_hash and $attribute_array are a hashref and an
-# arrayref of hashrefs respectively.
-
-$feature_hash = 
-  {'source'     => 'SoapSNP',
-   'feature_id' => 'YHSNP0128643',
-   'phase'      => '.',
-   'strand'     => '+',
-   'score'      => '25',
-   'type'       => 'SNP',
-   'attributes' => {'reference_reads'  => ['A:48'],
-		    'reference_allele' => ['A'],
-		    'variant_allele'   => ['A','G'],
-		    'variant_reads'    => ['A:48','G:26'],
-		    'genotype'         => ['heterozygous:with_reference_allele'],
-		    'total_reads'      => [74]
-		   },
-   'end'        => '4793',
-   'start'      => '4793',
-   'seqid'      => 'chr1'
-  };
-
-# TEST 13
-ok($normal_feature =
-   $annotation->_normalize_feature($feature_hash),
-   '$annotation->_normalize_feature');
-# Test that $feature_hash is a hashref.
-
-$feature_hash = 
-  {'source'     => 'SoapSNP',
-   'feature_id' => 'YHSNP0128643',
-   'phase'      => '.',
-   'strand'     => '+',
-   'score'      => '25',
-   'type'       => 'SNP',
-   'attributes' => {'reference_reads'  => ['A:48'],
-		    'reference_allele' => ['A'],
-		    'variant_allele'   => ['A','G'],
-		    'variant_reads'    => ['A:48','G:26'],
-		    'genotype'         => ['heterozygous:with_reference_allele'],
-		    'total_reads'      => [74]
-		   },
-   'end'        => '4793',
-   'start'      => '4793',
-   'seqid'      => 'chr1'
-  };
-
-# TEST 14
-ok(my $feature = $annotation->add_feature($feature_hash), '$annotation->add_feature');
-
-# TEST 15
-isa_ok($feature, 'GAL::Schema::Result::Feature');
-
-# TEST 16
-ok(my $schema = $annotation->schema, '$annotation->schema');
-
-# TEST 17
-isa_ok($schema, 'GAL::Schema');
-
-#471:sub create_schema {
-#491:sub get_all_features {
-#509:sub get_features_by_type {
-#527:sub get_recursive_features_by_type {
-#545:sub get_feature_by_id {
-#563:sub filter_features {
+ok($annotation->filter_features(), '$annotation->filter_features');
 
 ################################################################################
 ################################# Ways to Test #################################

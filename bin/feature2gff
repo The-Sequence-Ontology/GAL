@@ -36,11 +36,11 @@ die $usage if $help || ! $opt_success;
 my @files = @ARGV;
 die $usage unless @files;
 
-for my $file (@files) {
+my $class = "GAL::Parser::$format";
+eval "require $class";
+die $@ if $@;
 
-	my $class = "GAL::Parser::$format";
-	eval "require $class";
-	die $@ if $@;
+for my $file (@files) {
 
 	my $parser = $class->new(file => $file, coverage => $coverage);
 

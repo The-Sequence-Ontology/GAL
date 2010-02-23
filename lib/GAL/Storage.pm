@@ -49,6 +49,9 @@ This document describes GAL::Storage version 0.01
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
+	$class = $class . '::' . $self->driver;
+	$self->load_module($class);
+	$self = $class->new(@args);
 	return $self;
 }
 
@@ -65,7 +68,7 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(dsn user password storage);
+	my @valid_attributes = qw(dsn user password);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }
@@ -89,12 +92,22 @@ sub dsn {
 		return $self->{dsn};
 	}
 
+	# If we don't have a dsn, then create one
 	$dsn ||= '';
-	my ($db_name, $driver, $storage) = reverse split ':', $dsn;
-	$storage = $self->storage($storage);
+	my @parts = split ':', $dsn;
+	shift @parts if $parts[0] =~ /^dbi$/i;
+	my ($driver, @attribute_parts) = @parts;
+	my $attribute_txt = join '', @attribute_parts;
+	my %attributes = map {split /=/} split /;/, $attribute_txt;
+
 	$driver  = $self->driver($driver);
-	$db_name = $self->db_name($db_name);
-	$self->{dsn} = join ':', ($storage, $driver, $db_name);
+	$attributes{database} = $self->database($attributes{database});
+	$attribute_txt = '';
+	for my $key (keys %attributes) {
+	  $attribute_txt .= $key . '=' . $attributes{$key} . ';';
+	}
+	$self->{dsn} = join ':', ('DBI', $driver, $attribute_txt);
+
 	return $self->{dsn};
 }
 
@@ -136,40 +149,40 @@ sub password {
 
 #-----------------------------------------------------------------------------
 
-=head2 db_name
+=head2 database
 
- Title   : db_name
- Usage   : $a = $self->db_name();
- Function: Get/Set the value of db_name.
- Returns : The value of db_name.
- Args    : A value to set db_name to.
+ Title   : database
+ Usage   : $a = $self->database();
+ Function: Get/Set the value of database.
+ Returns : The value of database.
+ Args    : A value to set database to.
 
 =cut
 
-sub db_name {
-	my ($self, $db_name) = @_;
+sub database {
+	my ($self, $database) = @_;
 
-	if (! $self->{db_name} && ! $db_name) {
+	if (! $self->{database} && ! $database) {
 		# Generate a date stamp
 		my ($sec,$min,$hour,$mday,$mon,$year,$wday,
 		    $yday,$isdst) = localtime(time);
 		my $time_stamp = sprintf("%02d%02d%02d", $year + 1900,
 					 $mon, $mday);
 		# Generate a 8 charachter semi-random hex extension
-		# for the db_name.
+		# for the database.
 		my @symbols = (0..9);
 		push @symbols, qw(a b c d e f);
 		my $extension = join "", map { unpack "H*", chr(rand(256)) } (1..8);
-		$db_name = join '_', ('gal_database', $time_stamp,
+		$database = join '_', ('gal_database', $time_stamp,
 				      $extension);
 		$self->warn(message => ("Incomplete Data Source Name (DSN) ",
 					"given. ", __PACKAGE__,
-					' created $db_name as a database ',
+					' created $database as a database ',
 					'name for you.')
 			   );
 	}
-	$self->{db_name} = $db_name if $db_name;
-	return $self->{db_name};
+	$self->{database} = $database if $database;
+	return $self->{database};
 }
 
 #-----------------------------------------------------------------------------
@@ -214,8 +227,20 @@ sub driver {
 
 sub load_file {
 
-	my $self = shift;
-	$self->not_implemented('load_file');
+	my ($self, @files) = @_;
+	$self->throw('Not Implimented : load_file');
+
+
+	for my $file (@files) {
+
+	  my $parser = $self->parser;
+
+	  while (my $feature = $parser->next_feature_hash) {
+
+	    $self->add_feature_to_buffer($feature);
+	  }
+	}
+	$self->flush_feature_buffer;
 
 # This all needs to be re-worked to not use DBIx::Class;
 
@@ -270,12 +295,12 @@ sub add_features_to_buffer {
 
 	#$self->config('MAX_FEATURE_BUFFER')
 	if (scalar @{$self->{_feature_buffer}} + scalar @{$features} > 10000) {
-		push @{$self->{_feature_buffer}}, @{$features};
-		$self->add_features($self->{_feature_buffer});
+	  push @{$self->{_feature_buffer}}, @{$features};
+	  $self->flush_feature_buffer;
 	}
 	else {
-		push @{$self->{_feature_buffer}}, @{$features};
-		}
+	  push @{$self->{_feature_buffer}}, @{$features};
+	}
 }
 
 #-----------------------------------------------------------------------------
@@ -323,17 +348,11 @@ sub prepare_features {
 	my (@features, @attributes);
 
 	for my $feature_hash (@{$feature_hashes}) {
-		my $feature_id = $feature_hash->{attributes}{ID}[0];
-		my @feature_row = ($feature_id,
-				   $feature_hash->{seqid},
-				   $feature_hash->{source},
-				   $feature_hash->{type},
-				   $feature_hash->{start},
-				   $feature_hash->{end},
-				   $feature_hash->{score},
-				   $feature_hash->{strand},
-				   $feature_hash->{phase},
-				  );
+		my $feature_id = $feature_hash->{feature_id};
+		my @feature_row = @{$feature_id}{qw(feature_id seqid source
+						    type start end score
+						    strand phase)
+					       };
 		push @features, \@feature_row;
 		for my $tag (keys %{$feature_hash->{attributes}}) {
 			for my $value (@{$feature_hash->{attributes}{$tag}}) {
@@ -349,36 +368,6 @@ sub prepare_features {
 
 #-----------------------------------------------------------------------------
 
-=head2 _normalize_feature
-
- Title   : _normalize_feature
- Usage   : $self->_normalize_feature();
- Function: Normalizes a feature hash produced by the parsers
-	   for insert into the database;
- Returns : A feature hash reference with the attributes turned into an array
-	   of hash references.
- Args    : Value to set _normalize_feature to.
-
-=cut
-
-sub _normalize_feature {
-
-	my ($self, $feature_hash) = @_;
-	my @attributes;
-	for my $tag (keys %{$feature_hash->{attributes}}) {
-		for my $value (@{$feature_hash->{attributes}{$tag}}) {
-			push @attributes, {feature_id   => $feature_hash->{feature_id},
-					   tag          => $tag,
-					   value        => $value,
-					  };
-		}
-	}
-	$feature_hash->{attributes} = \@attributes;
-	return ($feature_hash);
-}
-
-#-----------------------------------------------------------------------------
-
 =head2 add_feature
 
  Title   : add_feature
@@ -389,9 +378,12 @@ sub _normalize_feature {
 
 =cut
 
-sub add_feature {
-  my ($self, $feature_hash) = @_;
-  $self->not_implemented('add_feature');
+sub add_features {
+  my ($self, $features) = @_;
+
+  $features = ref $features ? $features : [$features];
+
+  my ($features, $attributes) = $self->prepare_features($features);
 }
 
 #-----------------------------------------------------------------------------
@@ -416,12 +408,12 @@ sub create_database {
 					 );
 
 	my $dsn = $self->dsn;
-	my $db_name = $self->db_name;
+	my $database = $self->database;
 	if (! grep {$_ eq $dsn} @databases) {
 		my $drh = DBI->install_driver("mysql");
 		my $host = ''; # Defaults to localhost, abstract this later.
 		my $rc = $drh->func('createdb',
-				    $db_name,
+				    $database,
 				    $host,
 				    $self->user,
 				    $self->password,
@@ -462,7 +454,7 @@ sub create_database {
 		$dbh->do($att_create_stmt);
 	}
 	else {
-		$self->warn(message => "Using exsiting database $db_name");
+		$self->warn(message => "Using exsiting database $database");
 	}
 
 	return 1;
@@ -482,7 +474,7 @@ sub create_database {
 
 sub get_children {
 	my $self = shift;
-	$self->not_implemented('get_children');
+	$self->throw('Not Implimented : get_children');
 }
 
 #-----------------------------------------------------------------------------
@@ -499,7 +491,7 @@ sub get_children {
 
 sub get_children_recursively {
   my $self = shift;
-  $self->not_implemented('get_children_recursively');
+  $self->throw('Not Implimented : get_children_recursively');
 }
 
 #-----------------------------------------------------------------------------
@@ -516,7 +508,7 @@ sub get_children_recursively {
 
 sub get_parents {
   my $self = shift;
-  $self->not_implemented('get_parents');
+  $self->throw('Not Implimented : get_parents');
 }
 
 #-----------------------------------------------------------------------------
@@ -533,7 +525,7 @@ sub get_parents {
 
 sub get_parents_recursively {
   my $self = shift;
-  $self->not_implemented('get_parents_recursively');
+  $self->throw('Not Implimented : get_parents_recursively');
 }
 
 #-----------------------------------------------------------------------------
@@ -550,7 +542,7 @@ sub get_parents_recursively {
 
 sub get_all_features {
   my $self = shift;
-  $self->not_implemented('get_all_features');
+  $self->throw('Not Implimented : get_all_features');
 }
 
 #-----------------------------------------------------------------------------
@@ -567,7 +559,7 @@ sub get_all_features {
 
 sub get_features_by_type {
   my $self = shift;
-  $self->not_implemented('get_features_by_type');
+  $self->throw('Not Implimented : get_features_by_type');
 }
 
 #-----------------------------------------------------------------------------
@@ -584,7 +576,7 @@ sub get_features_by_type {
 
 sub get_recursive_features_by_type {
   my $self = shift;
-  $self->not_implemented('get_recursive_features_by_type');
+  $self->throw('Not Implimented : get_recursive_features_by_type');
 }
 
 #-----------------------------------------------------------------------------
@@ -601,7 +593,7 @@ sub get_recursive_features_by_type {
 
 sub get_feature_by_id {
   my $self = shift;
-  $self->not_implemented('get_feature_by_id');
+  $self->throw('Not Implimented : get_feature_by_id');
 }
 
 #-----------------------------------------------------------------------------
@@ -618,7 +610,7 @@ sub get_feature_by_id {
 
 sub filter_features {
   my $self = shift;
-  $self->not_implemented('filter_features');
+  $self->throw('Not Implimented : filter_features');
 }
 
 #-----------------------------------------------------------------------------
