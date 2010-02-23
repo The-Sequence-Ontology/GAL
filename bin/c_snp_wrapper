@@ -1,0 +1,128 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+c_snp_wrapper --subject_file snp_experiments.txt datastore.index
+c_snp_wrapper --subject subject_001 snp_experiments.txt datastore.index
+
+Description:
+
+This script will take a datastore index and run c_snp_classifier on each
+entry in the datastore.  If given an subject_file it will do a seperate
+analysis for each individual organism in the subject_file.  A skip list
+will allow you to restart a failed job.
+
+Options:
+
+  --subject_file  A file with one or more individual IDs each on a seperate
+     	          line.  This ID will be used to find that individuals snp
+	          file.
+  --subject       The subject ID of a single individual to run.
+  --skip          A file with gene IDs to skip.
+  --shift         Shift SNP coordinates by a given amount (i.e. -1 or 1) to avoid
+                  off by one errors
+";
+
+
+my ($help, $subject_file, $subject, $skip_file, $shift);
+my $opt_success = GetOptions('help'           => \$help,
+			     'subject_file=s' => \$subject_file,
+			     'subject=s'      => \$subject,
+			     'skip=s'         => \$skip_file,
+			     'shift=i'        => \$shift,
+			    );
+
+die $usage if $help || ! $opt_success;
+
+$shift ||= 0;
+
+my @subjects;
+push @subjects, $subject || 'default';
+if ($subject_file) {
+
+	open(my $IN, '<', $subject_file) or
+	  die "Can't open $subject_file for reading\n$!\n";
+
+	@subjects = (<$IN>);
+	chomp @subjects;
+
+	close $IN;
+}
+
+my $file = shift;
+die $usage unless $file;
+
+my $ds = parse_ds($file);
+
+my $skip_list = parse_skip($skip_file) if $skip_file;
+
+for my $subject_id (@subjects) {
+
+	print STDERR "Subject\t$subject_id\n";
+	for my $id (keys %{$ds}) {
+
+
+		if ($skip_file && $skip_list->{$subject_id}{$id}) {
+			print STDERR "Skip\t$subject_id\t$id\n";
+			next;
+		}
+
+		print STDERR "Gene\t$subject_id\t$id\n";
+
+		my $gff_file = $ds->{$id};
+		my ($fasta_file, $snp_file);
+
+		($fasta_file = $gff_file) =~ s/\.gff3?$/.fasta/;
+		($snp_file   = $gff_file) =~ s/\.gff3?$/\_${subject_id}.snp/;
+
+		next unless -e $snp_file;
+
+		my $command = "c_snp_classifier --format gff3 --shift $shift --anno_file $gff_file --fasta_file $fasta_file --snp_file $snp_file";
+
+		print STDERR "SNP\t$subject_id\t$id\n";
+		print STDERR "$command\n";
+		print `$command 2>> c_snp_classifier.error`;
+	}
+
+}
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub parse_ds {
+
+	my $file = shift;
+
+	open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
+
+	my %ds;
+	while (<$IN>) {
+		chomp;
+		my ($id, $path) = split /\t/;
+		$ds{$id} = $path;
+	}
+	return \%ds;
+}
+#-----------------------------------------------------------------------------
+sub parse_skip {
+
+	my $file = shift;
+
+	open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
+
+	my %skip_list;
+	while (<$IN>) {
+		chomp;
+		my ($subject_id, $gene_id) = split;
+		$skip_list{$subject_id}{$gene_id}++;
+	}
+	return \%skip_list;
+}

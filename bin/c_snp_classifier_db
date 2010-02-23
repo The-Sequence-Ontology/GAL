@@ -1,0 +1,1027 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Getopt::Long;
+use FileHandle;
+use CGL::Annotation;
+use CGL::Annotation::Iterator;
+use CGL::TranslationMachine;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+c_snp_classsifer_db --gff file.gff --fasta file.fasta
+		    --dsn 'dbi:mysql:snp_db' --user user_name --pass password
+
+Description:
+
+This script will take a GFF3 file, the corresponding contig fasta file
+and a snp_database.  It will then classify the SNPs according to their
+impact on translation and write a report to STDOUT.
+
+\n";
+
+my ($help, $gff, $fasta, $dsn, $user, $pass);
+my $opt_results = GetOptions(help      => \$help,
+			     'gff=s'   => \$gff,
+			     'fasta=s' => \$fasta,
+			     'dsn=s'   => \$dsn,
+			     'user=s'  => \$user,
+			     'pass=s'  => \$pass,
+			    );
+
+die $usage if $help
+die $usage unless ($gff && $fasta && $dsn);
+
+our $MATRIX = load_matrix();
+
+my $cgl  = new CGL::Annotation(format     => $format,
+			       gff_file   => $gff,
+			       fasta_file => $fasta);
+
+#my $TM = new CGL::TranslationMachine();
+
+my $iterator = new CGL::Annotation::Iterator($cgl);
+
+while (my $g = $iterator->next_by_gene()){
+
+	my $snps = parse_snp_file($snp_file);
+	my $c_snps = get_c_snps($snps, $cgl, $g);
+
+	check_consistancy($cgl, $c_snps);
+	classify($cgl, $c_snps);
+
+	foreach my $snp (@{$c_snps->{snps}}){
+
+		print join "\t", (
+				  $snp->{contig_id},
+				  $snp->{gene_id},
+				  $snp->{gene_loc},
+				  $snp->{snp_id},
+				  $snp->{contig_pos},
+				  $snp->{class},
+				  $snp->{allele},
+				  $snp->{wt_allele},
+				  $snp->{mt_allele},
+				  $snp->{wt_aa},
+				  $snp->{mt_aa},
+				  $snp->{type},
+				  $snp->{p_pos},
+				  $snp->{snp_strand},
+				  $cgl->contig(0)->strand(),
+				  $snp->{multi},
+				 );
+		print "\n";
+	}
+}
+
+
+#-----------------------------------------------------------------------------
+#----------------------------------- SUBS ------------------------------------
+#-----------------------------------------------------------------------------
+sub parse_xml_datastore {
+	my $file = shift;
+
+	open (my $IN, '<', $file) or die "Can't open $file for reading\n";
+
+	my %genes;
+	while (<$IN>) {
+		chomp;
+		my ($status, $symbol, $synonyms, $path) = split;
+		next unless $status eq 'DOC_VALID';
+
+		$symbol =~ s/Homo_sapiens:(.*?):no_locus_tag/$1/;
+		$genes{$symbol} = $path;
+	}
+	return \%genes;
+}
+#-----------------------------------------------------------------------------
+sub parse_snp_datastore {
+	my $file = shift;
+
+	open (my $IN, '<', $file) or die "Can't open $file for reading\n";
+
+	my %snps;
+	while (<$IN>) {
+		chomp;
+		my ($symbol, $path) = split;
+		$symbol =~ s/^(.*?)\|N[TC]_\d+.*/$1/;
+		$snps{$symbol} = $path;
+	}
+	return \%snps;
+
+}
+#-----------------------------------------------------------------------------
+sub classify {
+	my $cgl  = shift;
+	my $c_snps = shift;
+
+	my $contig= $cgl->contig(0);
+
+	my $g = get_focus_gene($cgl);
+
+	my $transcript= $g->transcript(0);
+
+	my $protien= $transcript->translation(0);
+
+	my $tm = new CGL::TranslationMachine();
+
+	foreach my $snp (@{$c_snps->{snps}}){
+		my $pos_on_t = $snp->{t_pos};
+		my $pos_on_p = $snp->{p_pos};
+		my $wt       = $snp->{wt_allele};
+		my $mt       = $snp->{mt_allele};
+
+		my $wt_mod_3 = int(length($wt)/3) == length($wt)/3 ? 1 : 0;
+		my $mt_mod_3 = int(length($mt)/3) == length($mt)/3 ? 1 : 0;
+
+		my $wt_aa = '#';
+		my $mt_aa = '#';
+		my $type;
+		if ($wt eq 'not_handled' || $mt eq 'not_handled'){
+			$type = 'not_caught';
+		}
+		elsif  ($wt eq '-' && $mt_mod_3){
+			$type = 'in_frame_insertion';
+		}
+		elsif ($mt eq '-' && $wt_mod_3){
+			$type = 'in_frame_deletion';
+		}
+		elsif ($wt eq '-' && !$mt_mod_3){
+			$type = 'frame_shift'
+		}
+		elsif ($mt eq '-' && !$wt_mod_3){
+			$type = 'frame_shift'
+		}
+
+		elsif (length($wt) == length($wt) ){
+			($wt_aa, $mt_aa, $type) = characterize($tm, $snp, $transcript, $p);
+		}
+		else {
+			$type = 'not_caught';
+		}
+
+		$snp->{type}  = $type;
+		$snp->{wt_aa} = $wt_aa;
+		$snp->{mt_aa} = $mt_aa;
+	}
+}
+#-----------------------------------------------------------------------------
+sub characterize {
+	my $tm  = shift;
+	my $snp = shift;
+	my $transcript  = shift;
+	my $protien  = shift;
+
+	my $pos_on_t = $snp->{t_pos};
+	my $pos_on_p = $snp->{p_pos};
+	my $wt       = $snp->{wt_allele};
+	my $mt       = $snp->{mt_allele};
+
+	if ($wt eq 'not_handled' || $mt eq 'not_handled'){
+		return ('#', '#', 'not_handled');
+	}
+	my ($m, $r) = get_m_and_r($pos_on_p);
+
+	my $codon_on_t = $protein->metaPos($transcript, $m);
+	my $wt_codon   = substr($transcript->residues, $codon_on_t, 3);
+	my $mt_codon   = $wt_codon;
+	my $pos_in_c;
+	if ($r eq '0'){
+		substr($mt_codon, 0, 1) = $mt;
+		$pos_in_c = 0;
+	}
+	elsif ($r =~ /3+/){
+		substr($mt_codon, 1, 1) = $mt;
+		$pos_in_c = 1;
+	}
+	elsif ($r =~ /6+/){
+		substr($mt_codon, 2, 1) = $mt;
+		$pos_in_c = 2;
+	}
+	else {
+		die "logic error in sub characterize! r=$r\n";
+	}
+
+	my $aa_wt = $tm->translate_from_offset($wt_codon, 0);
+	my $aa_mt = $tm->translate_from_offset($mt_codon, 0);
+
+	my $score = $MATRIX->{$aa_wt}->{$aa_mt};
+
+	if ($aa_wt eq $aa_mt){
+		return ($aa_wt, $aa_mt, 'synonymous');
+	}
+	elsif ($aa_mt eq '*'){
+		return ($aa_wt, $aa_mt, 'nonsense_mutation');
+	}
+	elsif ($score < 0){
+		return ($aa_wt, $aa_mt, 'nonconservative_substitution');
+	}
+	else {
+		return ($aa_wt, $aa_mt, , 'conservative_substitution');
+	}
+
+}
+#-----------------------------------------------------------------------------
+sub rev_comp {
+	my $seq = shift;
+
+	$seq =~ tr/acgtrymkswhbvdnxACGTRYMKSWHBVDNX
+		  /tgcayrkmwsdvbhnxTGCAYRKMWSDVBHNX/;
+	$seq = reverse $seq;
+
+	return $seq
+}
+#-----------------------------------------------------------------------------
+sub get_alleles {
+	my ($snp_strand, $allel_txt) = @_;
+
+	my ($wt, $mut);
+	my ($wt_len, $mut_len);
+	my $allele_len;
+
+	if ($allel_txt =~ /^[ACGT-]+\/[ACGT-]+$/){
+		($wt, $mut) = $allel_txt =~/(\S+)\/(\S+)/;
+		$allele_len = length($wt);
+
+		$wt  = rev_comp($wt)  if $snp_strand == -1;
+		$mut = rev_comp($mut) if $snp_strand == -1;
+
+		return ($wt, $mut, $allele_len);
+	}
+	elsif ($allel_txt =~ /^\([ATGC]+\)\d+\/\d+$/){
+		($wt, $wt_len, $mut_len) = $allel_txt =~ /^\(([ATGC]+)\)(\d+)\/(\d+)$/;
+		my $wt      = $wt x $wt_len;
+		my $mt      = $wt x $mut_len;
+		$allele_len = length($wt);
+
+		$wt = rev_comp($wt) if $snp_strand == -1;
+		$mt = rev_comp($mt) if $snp_strand == -1;
+
+		return ($wt, $mt, $allele_len);
+	}
+	else {
+		warn "Allele not caught:$allel_txt!\n";
+		return undef;
+	}
+}
+#-----------------------------------------------------------------------------
+sub check_consistancy {
+	my $cgl  = shift;
+	my $c_snps = shift;
+
+	my $contig= $cgl->contig(0);
+	my $g = get_focus_gene($cgl);
+	my $transcript= $g->transcript(0);
+	my $protien= $transcript->translation(0);
+
+	my $cor = 0;
+	my $rev = 0;
+	foreach my $snp (@{$c_snps->{snps}}){
+		my $pos_on_t = $snp->{t_pos};
+
+		die "snp not on contig!".PostData($snp)."\n"
+		unless defined($pos_on_t);
+
+		my ($i, $j, $allele_len) = $get_alleles($contig->strand, $snp->{allele});
+
+		if (!defined($i)){
+			$snp->{mt_allele} = 'not_handled';
+			$snp->{wt_allele} = 'not_handled';
+			next;
+		}
+		my $nuc = substr($transcript->residues, $pos_on_t, $allele_len);
+
+		$snp->{wt_allele} = $nuc;
+		if ($nuc eq $i){
+			#print STDERR "N:$nuc data:".$snp->{allele}."\n";
+			$snp->{mt_allele} = $j;
+			$cor++;
+		}
+		elsif ($nuc eq $j){
+			#print STDERR "N:$nuc data:".$snp->{allele}."\n";
+			$snp->{mt_allele} = $i;
+			$rev++;
+		}
+		elsif ($i eq '-' || $j eq '-') {
+			$snp->{wt_allele} = '-';
+			$snp->{mt_allele} = $i eq '-' ? $j : $i;
+		}
+		else {
+			warn "SNP INCONSISTANT w/transc seq!\n";
+			warn "t_seq:$nuc data:".$snp->{allele}."\n";
+			$snp->{mt_allele} = 'not_handled';
+			$snp->{wt_allele} = 'not_handled';
+		}
+
+	}
+	#print STDERR "correct:$cor reversed:$rev\n";
+}
+#-----------------------------------------------------------------------------
+sub get_m_and_r {
+	my $pos = shift;
+
+	return ($pos, 0) if $pos == int $pos;
+
+	my ($m, $r) = $pos =~ /(\d+)\.(\d+)/;
+
+	return ($m, $r);
+}
+#-----------------------------------------------------------------------------
+sub get_c_snps {
+	my ($contig, $g) = @_;
+
+	my $transcript= $g->transcript(0);
+	my $protien= $transcript->translation(0);
+
+	my $snps = get_snps($p);
+
+	my %c_snps;
+	foreach my $snp (@{$snps}){
+#		my $contig_pos = $snp->{contig_pos};
+
+		my $pos_on_c = $snp->{contig_pos};#
+#		my $pos_on_c;
+#		if ($contig->strand() == 1){
+#			$pos_on_c = $contig_pos - $contig->nbeg() - 1;
+#		}
+#		else {
+#			$pos_on_c =  $contig->nbeg() - $contig_pos;
+#		}
+		my $pos_on_t = $contig->metaPos($transcript, $pos_on_c);
+		next unless defined($pos_on_t);
+
+		my $pos_on_p = $transcript->metaPos($protein, $pos_on_t);
+		next unless defined($pos_on_p);
+
+		push(@{$c_snps->{snps}}, {snp_id     => $snp->{snp_id};
+					  gene_id    => $snp->{gene_id};
+					  class      => $snp->{class};
+					  allele     => $snp->{allele};
+					  contig_id  => $snp->{contig_id};
+					  gene_loc   => $snp->{gene_loc};
+					  snp_strand => $snp->{snp_strand};
+					  multi      => $snp->{multi};
+					  contig_pos => $contig_pos,
+					  p_pos      => $pos_on_p,
+					  t_pos      => $pos_on_t,
+					  });
+
+		$c_snps->{locs}->{$pos_on_p}++;
+	}
+	return \%c_snps;
+}
+#-----------------------------------------------------------------------------
+sub get_snps {
+
+	my $protien = shift;
+
+	my @snps;
+	while (my $line = <$fh>){
+
+		chomp($line);
+		my ($contig_id, $gene_id, $gene_loc, $snp_id, $snp_pos,
+		    $class, $allele_txt, $snp_strand) = split(/\s+/, $line);
+		$snp_strand  = $snp_strand eq '+' ? 1 : -1;
+
+		next if $allele_txt eq 'lengthTooLong';
+
+		my $alleles = process_alleles($allele_txt);
+
+		my $x = 0;
+		foreach my $allele_txt (@{$alleles}){
+
+			if ($snp_strand  == -1){
+				my ($ref, $mutant, $allele_len) = $get_alleles($snp_strand, $allele_txt);
+
+				$allele = $i . '/' . $j;
+			}
+			$allele = $fields[6] unless defined($allele);
+
+			my $multi = scalar @{$alleles} > 1 ? 1 : 0;
+
+			push @snps, {snp_id     => $snp_id . '-' . $x++,
+				     gene_id    => $gene_id,
+				     contig_pos => $snp_pos,
+				     class      => $class,
+				     allele     => $allele,
+				     contig_id  => $contig_id,
+				     gene_loc   => $gene_loc,
+				     snp_strand => $snp_strand,
+				     multi      => $multi,
+				    };
+		}
+	}
+	return \@snps
+}
+#-----------------------------------------------------------------------------
+sub process_alleles {
+	my $allele_txt = shift;
+
+	my @alleles;
+
+	my @alleles = split('/', $allele_txt);
+
+	my $allele_count = @alleles;
+	for (my $i = 0; $i < $allele_count -1; $i++){
+
+		for (my $j = $i + 1; $j < $allele_count; $j++){
+
+			my $allele = $alleles[$i] . '/' . $alleles[$j];
+			push(@alleles, $allele);
+
+		}
+	}
+	return \@alleles;
+}
+#-----------------------------------------------------------------------------
+sub load_matrix {
+
+	my %matrix;
+
+	$matrix{'S'}{'S'} = 4;
+	$matrix{'S'}{'F'} = -2;
+	$matrix{'S'}{'T'} = 1;
+	$matrix{'S'}{'N'} = 1;
+	$matrix{'S'}{'K'} = 0;
+	$matrix{'S'}{'*'} = -4;
+	$matrix{'S'}{'Y'} = -2;
+	$matrix{'S'}{'E'} = 0;
+	$matrix{'S'}{'V'} = -2;
+	$matrix{'S'}{'Z'} = 0;
+	$matrix{'S'}{'Q'} = 0;
+	$matrix{'S'}{'M'} = -1;
+	$matrix{'S'}{'C'} = -1;
+	$matrix{'S'}{'L'} = -2;
+	$matrix{'S'}{'A'} = 1;
+	$matrix{'S'}{'W'} = -3;
+	$matrix{'S'}{'X'} = 0;
+	$matrix{'S'}{'P'} = -1;
+	$matrix{'S'}{'B'} = 0;
+	$matrix{'S'}{'H'} = -1;
+	$matrix{'S'}{'D'} = 0;
+	$matrix{'S'}{'R'} = -1;
+	$matrix{'S'}{'I'} = -2;
+	$matrix{'S'}{'G'} = 0;
+	$matrix{'F'}{'S'} = -2;
+	$matrix{'F'}{'F'} = 6;
+	$matrix{'F'}{'T'} = -2;
+	$matrix{'F'}{'N'} = -3;
+	$matrix{'F'}{'K'} = -3;
+	$matrix{'F'}{'*'} = -4;
+	$matrix{'F'}{'Y'} = 3;
+	$matrix{'F'}{'E'} = -3;
+	$matrix{'F'}{'V'} = -1;
+	$matrix{'F'}{'Z'} = -3;
+	$matrix{'F'}{'Q'} = -3;
+	$matrix{'F'}{'M'} = 0;
+	$matrix{'F'}{'C'} = -2;
+	$matrix{'F'}{'L'} = 0;
+	$matrix{'F'}{'A'} = -2;
+	$matrix{'F'}{'W'} = 1;
+	$matrix{'F'}{'X'} = -1;
+	$matrix{'F'}{'P'} = -4;
+	$matrix{'F'}{'B'} = -3;
+	$matrix{'F'}{'H'} = -1;
+	$matrix{'F'}{'D'} = -3;
+	$matrix{'F'}{'R'} = -3;
+	$matrix{'F'}{'I'} = 0;
+	$matrix{'F'}{'G'} = -3;
+	$matrix{'T'}{'S'} = 1;
+	$matrix{'T'}{'F'} = -2;
+	$matrix{'T'}{'T'} = 5;
+	$matrix{'T'}{'N'} = 0;
+	$matrix{'T'}{'K'} = -1;
+	$matrix{'T'}{'*'} = -4;
+	$matrix{'T'}{'Y'} = -2;
+	$matrix{'T'}{'E'} = -1;
+	$matrix{'T'}{'V'} = 0;
+	$matrix{'T'}{'Z'} = -1;
+	$matrix{'T'}{'Q'} = -1;
+	$matrix{'T'}{'M'} = -1;
+	$matrix{'T'}{'C'} = -1;
+	$matrix{'T'}{'L'} = -1;
+	$matrix{'T'}{'A'} = 0;
+	$matrix{'T'}{'W'} = -2;
+	$matrix{'T'}{'X'} = 0;
+	$matrix{'T'}{'P'} = -1;
+	$matrix{'T'}{'B'} = -1;
+	$matrix{'T'}{'H'} = -2;
+	$matrix{'T'}{'D'} = -1;
+	$matrix{'T'}{'R'} = -1;
+	$matrix{'T'}{'I'} = -1;
+	$matrix{'T'}{'G'} = -2;
+	$matrix{'N'}{'S'} = 1;
+	$matrix{'N'}{'F'} = -3;
+	$matrix{'N'}{'T'} = 0;
+	$matrix{'N'}{'N'} = 6;
+	$matrix{'N'}{'K'} = 0;
+	$matrix{'N'}{'*'} = -4;
+	$matrix{'N'}{'Y'} = -2;
+	$matrix{'N'}{'E'} = 0;
+	$matrix{'N'}{'V'} = -3;
+	$matrix{'N'}{'Z'} = 0;
+	$matrix{'N'}{'Q'} = 0;
+	$matrix{'N'}{'M'} = -2;
+	$matrix{'N'}{'C'} = -3;
+	$matrix{'N'}{'L'} = -3;
+	$matrix{'N'}{'A'} = -2;
+	$matrix{'N'}{'W'} = -4;
+	$matrix{'N'}{'X'} = -1;
+	$matrix{'N'}{'P'} = -2;
+	$matrix{'N'}{'B'} = 3;
+	$matrix{'N'}{'H'} = 1;
+	$matrix{'N'}{'D'} = 1;
+	$matrix{'N'}{'R'} = 0;
+	$matrix{'N'}{'I'} = -3;
+	$matrix{'N'}{'G'} = 0;
+	$matrix{'K'}{'S'} = 0;
+	$matrix{'K'}{'F'} = -3;
+	$matrix{'K'}{'T'} = -1;
+	$matrix{'K'}{'N'} = 0;
+	$matrix{'K'}{'K'} = 5;
+	$matrix{'K'}{'*'} = -4;
+	$matrix{'K'}{'Y'} = -2;
+	$matrix{'K'}{'E'} = 1;
+	$matrix{'K'}{'V'} = -2;
+	$matrix{'K'}{'Z'} = 1;
+	$matrix{'K'}{'Q'} = 1;
+	$matrix{'K'}{'M'} = -1;
+	$matrix{'K'}{'C'} = -3;
+	$matrix{'K'}{'L'} = -2;
+	$matrix{'K'}{'A'} = -1;
+	$matrix{'K'}{'W'} = -3;
+	$matrix{'K'}{'X'} = -1;
+	$matrix{'K'}{'P'} = -1;
+	$matrix{'K'}{'B'} = 0;
+	$matrix{'K'}{'H'} = -1;
+	$matrix{'K'}{'D'} = -1;
+	$matrix{'K'}{'R'} = 2;
+	$matrix{'K'}{'I'} = -3;
+	$matrix{'K'}{'G'} = -2;
+	$matrix{'*'}{'S'} = -4;
+	$matrix{'*'}{'F'} = -4;
+	$matrix{'*'}{'T'} = -4;
+	$matrix{'*'}{'N'} = -4;
+	$matrix{'*'}{'K'} = -4;
+	$matrix{'*'}{'*'} = 1;
+	$matrix{'*'}{'Y'} = -4;
+	$matrix{'*'}{'E'} = -4;
+	$matrix{'*'}{'V'} = -4;
+	$matrix{'*'}{'Z'} = -4;
+	$matrix{'*'}{'Q'} = -4;
+	$matrix{'*'}{'M'} = -4;
+	$matrix{'*'}{'C'} = -4;
+	$matrix{'*'}{'L'} = -4;
+	$matrix{'*'}{'A'} = -4;
+	$matrix{'*'}{'W'} = -4;
+	$matrix{'*'}{'X'} = -4;
+	$matrix{'*'}{'P'} = -4;
+	$matrix{'*'}{'B'} = -4;
+	$matrix{'*'}{'H'} = -4;
+	$matrix{'*'}{'D'} = -4;
+	$matrix{'*'}{'R'} = -4;
+	$matrix{'*'}{'I'} = -4;
+	$matrix{'*'}{'G'} = -4;
+	$matrix{'Y'}{'S'} = -2;
+	$matrix{'Y'}{'F'} = 3;
+	$matrix{'Y'}{'T'} = -2;
+	$matrix{'Y'}{'N'} = -2;
+	$matrix{'Y'}{'K'} = -2;
+	$matrix{'Y'}{'*'} = -4;
+	$matrix{'Y'}{'Y'} = 7;
+	$matrix{'Y'}{'E'} = -2;
+	$matrix{'Y'}{'V'} = -1;
+	$matrix{'Y'}{'Z'} = -2;
+	$matrix{'Y'}{'Q'} = -1;
+	$matrix{'Y'}{'M'} = -1;
+	$matrix{'Y'}{'C'} = -2;
+	$matrix{'Y'}{'L'} = -1;
+	$matrix{'Y'}{'A'} = -2;
+	$matrix{'Y'}{'W'} = 2;
+	$matrix{'Y'}{'X'} = -1;
+	$matrix{'Y'}{'P'} = -3;
+	$matrix{'Y'}{'B'} = -3;
+	$matrix{'Y'}{'H'} = 2;
+	$matrix{'Y'}{'D'} = -3;
+	$matrix{'Y'}{'R'} = -2;
+	$matrix{'Y'}{'I'} = -1;
+	$matrix{'Y'}{'G'} = -3;
+	$matrix{'E'}{'S'} = 0;
+	$matrix{'E'}{'F'} = -3;
+	$matrix{'E'}{'T'} = -1;
+	$matrix{'E'}{'N'} = 0;
+	$matrix{'E'}{'K'} = 1;
+	$matrix{'E'}{'*'} = -4;
+	$matrix{'E'}{'Y'} = -2;
+	$matrix{'E'}{'E'} = 5;
+	$matrix{'E'}{'V'} = -2;
+	$matrix{'E'}{'Z'} = 4;
+	$matrix{'E'}{'Q'} = 2;
+	$matrix{'E'}{'M'} = -2;
+	$matrix{'E'}{'C'} = -4;
+	$matrix{'E'}{'L'} = -3;
+	$matrix{'E'}{'A'} = -1;
+	$matrix{'E'}{'W'} = -3;
+	$matrix{'E'}{'X'} = -1;
+	$matrix{'E'}{'P'} = -1;
+	$matrix{'E'}{'B'} = 1;
+	$matrix{'E'}{'H'} = 0;
+	$matrix{'E'}{'D'} = 2;
+	$matrix{'E'}{'R'} = 0;
+	$matrix{'E'}{'I'} = -3;
+	$matrix{'E'}{'G'} = -2;
+	$matrix{'V'}{'S'} = -2;
+	$matrix{'V'}{'F'} = -1;
+	$matrix{'V'}{'T'} = 0;
+	$matrix{'V'}{'N'} = -3;
+	$matrix{'V'}{'K'} = -2;
+	$matrix{'V'}{'*'} = -4;
+	$matrix{'V'}{'Y'} = -1;
+	$matrix{'V'}{'E'} = -2;
+	$matrix{'V'}{'V'} = 4;
+	$matrix{'V'}{'Z'} = -2;
+	$matrix{'V'}{'Q'} = -2;
+	$matrix{'V'}{'M'} = 1;
+	$matrix{'V'}{'C'} = -1;
+	$matrix{'V'}{'L'} = 1;
+	$matrix{'V'}{'A'} = 0;
+	$matrix{'V'}{'W'} = -3;
+	$matrix{'V'}{'X'} = -1;
+	$matrix{'V'}{'P'} = -2;
+	$matrix{'V'}{'B'} = -3;
+	$matrix{'V'}{'H'} = -3;
+	$matrix{'V'}{'D'} = -3;
+	$matrix{'V'}{'R'} = -3;
+	$matrix{'V'}{'I'} = 3;
+	$matrix{'V'}{'G'} = -3;
+	$matrix{'Z'}{'S'} = 0;
+	$matrix{'Z'}{'F'} = -3;
+	$matrix{'Z'}{'T'} = -1;
+	$matrix{'Z'}{'N'} = 0;
+	$matrix{'Z'}{'K'} = 1;
+	$matrix{'Z'}{'*'} = -4;
+	$matrix{'Z'}{'Y'} = -2;
+	$matrix{'Z'}{'E'} = 4;
+	$matrix{'Z'}{'V'} = -2;
+	$matrix{'Z'}{'Z'} = 4;
+	$matrix{'Z'}{'Q'} = 3;
+	$matrix{'Z'}{'M'} = -1;
+	$matrix{'Z'}{'C'} = -3;
+	$matrix{'Z'}{'L'} = -3;
+	$matrix{'Z'}{'A'} = -1;
+	$matrix{'Z'}{'W'} = -3;
+	$matrix{'Z'}{'X'} = -1;
+	$matrix{'Z'}{'P'} = -1;
+	$matrix{'Z'}{'B'} = 1;
+	$matrix{'Z'}{'H'} = 0;
+	$matrix{'Z'}{'D'} = 1;
+	$matrix{'Z'}{'R'} = 0;
+	$matrix{'Z'}{'I'} = -3;
+	$matrix{'Z'}{'G'} = -2;
+	$matrix{'Q'}{'S'} = 0;
+	$matrix{'Q'}{'F'} = -3;
+	$matrix{'Q'}{'T'} = -1;
+	$matrix{'Q'}{'N'} = 0;
+	$matrix{'Q'}{'K'} = 1;
+	$matrix{'Q'}{'*'} = -4;
+	$matrix{'Q'}{'Y'} = -1;
+	$matrix{'Q'}{'E'} = 2;
+	$matrix{'Q'}{'V'} = -2;
+	$matrix{'Q'}{'Z'} = 3;
+	$matrix{'Q'}{'Q'} = 5;
+	$matrix{'Q'}{'M'} = 0;
+	$matrix{'Q'}{'C'} = -3;
+	$matrix{'Q'}{'L'} = -2;
+	$matrix{'Q'}{'A'} = -1;
+	$matrix{'Q'}{'W'} = -2;
+	$matrix{'Q'}{'X'} = -1;
+	$matrix{'Q'}{'P'} = -1;
+	$matrix{'Q'}{'B'} = 0;
+	$matrix{'Q'}{'H'} = 0;
+	$matrix{'Q'}{'D'} = 0;
+	$matrix{'Q'}{'R'} = 1;
+	$matrix{'Q'}{'I'} = -3;
+	$matrix{'Q'}{'G'} = -2;
+	$matrix{'M'}{'S'} = -1;
+	$matrix{'M'}{'F'} = 0;
+	$matrix{'M'}{'T'} = -1;
+	$matrix{'M'}{'N'} = -2;
+	$matrix{'M'}{'K'} = -1;
+	$matrix{'M'}{'*'} = -4;
+	$matrix{'M'}{'Y'} = -1;
+	$matrix{'M'}{'E'} = -2;
+	$matrix{'M'}{'V'} = 1;
+	$matrix{'M'}{'Z'} = -1;
+	$matrix{'M'}{'Q'} = 0;
+	$matrix{'M'}{'M'} = 5;
+	$matrix{'M'}{'C'} = -1;
+	$matrix{'M'}{'L'} = 2;
+	$matrix{'M'}{'A'} = -1;
+	$matrix{'M'}{'W'} = -1;
+	$matrix{'M'}{'X'} = -1;
+	$matrix{'M'}{'P'} = -2;
+	$matrix{'M'}{'B'} = -3;
+	$matrix{'M'}{'H'} = -2;
+	$matrix{'M'}{'D'} = -3;
+	$matrix{'M'}{'R'} = -1;
+	$matrix{'M'}{'I'} = 1;
+	$matrix{'M'}{'G'} = -3;
+	$matrix{'C'}{'S'} = -1;
+	$matrix{'C'}{'F'} = -2;
+	$matrix{'C'}{'T'} = -1;
+	$matrix{'C'}{'N'} = -3;
+	$matrix{'C'}{'K'} = -3;
+	$matrix{'C'}{'*'} = -4;
+	$matrix{'C'}{'Y'} = -2;
+	$matrix{'C'}{'E'} = -4;
+	$matrix{'C'}{'V'} = -1;
+	$matrix{'C'}{'Z'} = -3;
+	$matrix{'C'}{'Q'} = -3;
+	$matrix{'C'}{'M'} = -1;
+	$matrix{'C'}{'C'} = 9;
+	$matrix{'C'}{'L'} = -1;
+	$matrix{'C'}{'A'} = 0;
+	$matrix{'C'}{'W'} = -2;
+	$matrix{'C'}{'X'} = -2;
+	$matrix{'C'}{'P'} = -3;
+	$matrix{'C'}{'B'} = -3;
+	$matrix{'C'}{'H'} = -3;
+	$matrix{'C'}{'D'} = -3;
+	$matrix{'C'}{'R'} = -3;
+	$matrix{'C'}{'I'} = -1;
+	$matrix{'C'}{'G'} = -3;
+	$matrix{'L'}{'S'} = -2;
+	$matrix{'L'}{'F'} = 0;
+	$matrix{'L'}{'T'} = -1;
+	$matrix{'L'}{'N'} = -3;
+	$matrix{'L'}{'K'} = -2;
+	$matrix{'L'}{'*'} = -4;
+	$matrix{'L'}{'Y'} = -1;
+	$matrix{'L'}{'E'} = -3;
+	$matrix{'L'}{'V'} = 1;
+	$matrix{'L'}{'Z'} = -3;
+	$matrix{'L'}{'Q'} = -2;
+	$matrix{'L'}{'M'} = 2;
+	$matrix{'L'}{'C'} = -1;
+	$matrix{'L'}{'L'} = 4;
+	$matrix{'L'}{'A'} = -1;
+	$matrix{'L'}{'W'} = -2;
+	$matrix{'L'}{'X'} = -1;
+	$matrix{'L'}{'P'} = -3;
+	$matrix{'L'}{'B'} = -4;
+	$matrix{'L'}{'H'} = -3;
+	$matrix{'L'}{'D'} = -4;
+	$matrix{'L'}{'R'} = -2;
+	$matrix{'L'}{'I'} = 2;
+	$matrix{'L'}{'G'} = -4;
+	$matrix{'A'}{'S'} = 1;
+	$matrix{'A'}{'F'} = -2;
+	$matrix{'A'}{'T'} = 0;
+	$matrix{'A'}{'N'} = -2;
+	$matrix{'A'}{'K'} = -1;
+	$matrix{'A'}{'*'} = -4;
+	$matrix{'A'}{'Y'} = -2;
+	$matrix{'A'}{'E'} = -1;
+	$matrix{'A'}{'V'} = 0;
+	$matrix{'A'}{'Z'} = -1;
+	$matrix{'A'}{'Q'} = -1;
+	$matrix{'A'}{'M'} = -1;
+	$matrix{'A'}{'C'} = 0;
+	$matrix{'A'}{'L'} = -1;
+	$matrix{'A'}{'A'} = 4;
+	$matrix{'A'}{'W'} = -3;
+	$matrix{'A'}{'X'} = 0;
+	$matrix{'A'}{'P'} = -1;
+	$matrix{'A'}{'B'} = -2;
+	$matrix{'A'}{'H'} = -2;
+	$matrix{'A'}{'D'} = -2;
+	$matrix{'A'}{'R'} = -1;
+	$matrix{'A'}{'I'} = -1;
+	$matrix{'A'}{'G'} = 0;
+	$matrix{'W'}{'S'} = -3;
+	$matrix{'W'}{'F'} = 1;
+	$matrix{'W'}{'T'} = -2;
+	$matrix{'W'}{'N'} = -4;
+	$matrix{'W'}{'K'} = -3;
+	$matrix{'W'}{'*'} = -4;
+	$matrix{'W'}{'Y'} = 2;
+	$matrix{'W'}{'E'} = -3;
+	$matrix{'W'}{'V'} = -3;
+	$matrix{'W'}{'Z'} = -3;
+	$matrix{'W'}{'Q'} = -2;
+	$matrix{'W'}{'M'} = -1;
+	$matrix{'W'}{'C'} = -2;
+	$matrix{'W'}{'L'} = -2;
+	$matrix{'W'}{'A'} = -3;
+	$matrix{'W'}{'W'} = 11;
+	$matrix{'W'}{'X'} = -2;
+	$matrix{'W'}{'P'} = -4;
+	$matrix{'W'}{'B'} = -4;
+	$matrix{'W'}{'H'} = -2;
+	$matrix{'W'}{'D'} = -4;
+	$matrix{'W'}{'R'} = -3;
+	$matrix{'W'}{'I'} = -3;
+	$matrix{'W'}{'G'} = -2;
+	$matrix{'X'}{'S'} = 0;
+	$matrix{'X'}{'F'} = -1;
+	$matrix{'X'}{'T'} = 0;
+	$matrix{'X'}{'N'} = -1;
+	$matrix{'X'}{'K'} = -1;
+	$matrix{'X'}{'*'} = -4;
+	$matrix{'X'}{'Y'} = -1;
+	$matrix{'X'}{'E'} = -1;
+	$matrix{'X'}{'V'} = -1;
+	$matrix{'X'}{'Z'} = -1;
+	$matrix{'X'}{'Q'} = -1;
+	$matrix{'X'}{'M'} = -1;
+	$matrix{'X'}{'C'} = -2;
+	$matrix{'X'}{'L'} = -1;
+	$matrix{'X'}{'A'} = 0;
+	$matrix{'X'}{'W'} = -2;
+	$matrix{'X'}{'X'} = -1;
+	$matrix{'X'}{'P'} = -2;
+	$matrix{'X'}{'B'} = -1;
+	$matrix{'X'}{'H'} = -1;
+	$matrix{'X'}{'D'} = -1;
+	$matrix{'X'}{'R'} = -1;
+	$matrix{'X'}{'I'} = -1;
+	$matrix{'X'}{'G'} = -1;
+	$matrix{'P'}{'S'} = -1;
+	$matrix{'P'}{'F'} = -4;
+	$matrix{'P'}{'T'} = -1;
+	$matrix{'P'}{'N'} = -2;
+	$matrix{'P'}{'K'} = -1;
+	$matrix{'P'}{'*'} = -4;
+	$matrix{'P'}{'Y'} = -3;
+	$matrix{'P'}{'E'} = -1;
+	$matrix{'P'}{'V'} = -2;
+	$matrix{'P'}{'Z'} = -1;
+	$matrix{'P'}{'Q'} = -1;
+	$matrix{'P'}{'M'} = -2;
+	$matrix{'P'}{'C'} = -3;
+	$matrix{'P'}{'L'} = -3;
+	$matrix{'P'}{'A'} = -1;
+	$matrix{'P'}{'W'} = -4;
+	$matrix{'P'}{'X'} = -2;
+	$matrix{'P'}{'P'} = 7;
+	$matrix{'P'}{'B'} = -2;
+	$matrix{'P'}{'H'} = -2;
+	$matrix{'P'}{'D'} = -1;
+	$matrix{'P'}{'R'} = -2;
+	$matrix{'P'}{'I'} = -3;
+	$matrix{'P'}{'G'} = -2;
+	$matrix{'B'}{'S'} = 0;
+	$matrix{'B'}{'F'} = -3;
+	$matrix{'B'}{'T'} = -1;
+	$matrix{'B'}{'N'} = 3;
+	$matrix{'B'}{'K'} = 0;
+	$matrix{'B'}{'*'} = -4;
+	$matrix{'B'}{'Y'} = -3;
+	$matrix{'B'}{'E'} = 1;
+	$matrix{'B'}{'V'} = -3;
+	$matrix{'B'}{'Z'} = 1;
+	$matrix{'B'}{'Q'} = 0;
+	$matrix{'B'}{'M'} = -3;
+	$matrix{'B'}{'C'} = -3;
+	$matrix{'B'}{'L'} = -4;
+	$matrix{'B'}{'A'} = -2;
+	$matrix{'B'}{'W'} = -4;
+	$matrix{'B'}{'X'} = -1;
+	$matrix{'B'}{'P'} = -2;
+	$matrix{'B'}{'B'} = 4;
+	$matrix{'B'}{'H'} = 0;
+	$matrix{'B'}{'D'} = 4;
+	$matrix{'B'}{'R'} = -1;
+	$matrix{'B'}{'I'} = -3;
+	$matrix{'B'}{'G'} = -1;
+	$matrix{'H'}{'S'} = -1;
+	$matrix{'H'}{'F'} = -1;
+	$matrix{'H'}{'T'} = -2;
+	$matrix{'H'}{'N'} = 1;
+	$matrix{'H'}{'K'} = -1;
+	$matrix{'H'}{'*'} = -4;
+	$matrix{'H'}{'Y'} = 2;
+	$matrix{'H'}{'E'} = 0;
+	$matrix{'H'}{'V'} = -3;
+	$matrix{'H'}{'Z'} = 0;
+	$matrix{'H'}{'Q'} = 0;
+	$matrix{'H'}{'M'} = -2;
+	$matrix{'H'}{'C'} = -3;
+	$matrix{'H'}{'L'} = -3;
+	$matrix{'H'}{'A'} = -2;
+	$matrix{'H'}{'W'} = -2;
+	$matrix{'H'}{'X'} = -1;
+	$matrix{'H'}{'P'} = -2;
+	$matrix{'H'}{'B'} = 0;
+	$matrix{'H'}{'H'} = 8;
+	$matrix{'H'}{'D'} = -1;
+	$matrix{'H'}{'R'} = 0;
+	$matrix{'H'}{'I'} = -3;
+	$matrix{'H'}{'G'} = -2;
+	$matrix{'D'}{'S'} = 0;
+	$matrix{'D'}{'F'} = -3;
+	$matrix{'D'}{'T'} = -1;
+	$matrix{'D'}{'N'} = 1;
+	$matrix{'D'}{'K'} = -1;
+	$matrix{'D'}{'*'} = -4;
+	$matrix{'D'}{'Y'} = -3;
+	$matrix{'D'}{'E'} = 2;
+	$matrix{'D'}{'V'} = -3;
+	$matrix{'D'}{'Z'} = 1;
+	$matrix{'D'}{'Q'} = 0;
+	$matrix{'D'}{'M'} = -3;
+	$matrix{'D'}{'C'} = -3;
+	$matrix{'D'}{'L'} = -4;
+	$matrix{'D'}{'A'} = -2;
+	$matrix{'D'}{'W'} = -4;
+	$matrix{'D'}{'X'} = -1;
+	$matrix{'D'}{'P'} = -1;
+	$matrix{'D'}{'B'} = 4;
+	$matrix{'D'}{'H'} = -1;
+	$matrix{'D'}{'D'} = 6;
+	$matrix{'D'}{'R'} = -2;
+	$matrix{'D'}{'I'} = -3;
+	$matrix{'D'}{'G'} = -1;
+	$matrix{'R'}{'S'} = -1;
+	$matrix{'R'}{'F'} = -3;
+	$matrix{'R'}{'T'} = -1;
+	$matrix{'R'}{'N'} = 0;
+	$matrix{'R'}{'K'} = 2;
+	$matrix{'R'}{'*'} = -4;
+	$matrix{'R'}{'Y'} = -2;
+	$matrix{'R'}{'E'} = 0;
+	$matrix{'R'}{'V'} = -3;
+	$matrix{'R'}{'Z'} = 0;
+	$matrix{'R'}{'Q'} = 1;
+	$matrix{'R'}{'M'} = -1;
+	$matrix{'R'}{'C'} = -3;
+	$matrix{'R'}{'L'} = -2;
+	$matrix{'R'}{'A'} = -1;
+	$matrix{'R'}{'W'} = -3;
+	$matrix{'R'}{'X'} = -1;
+	$matrix{'R'}{'P'} = -2;
+	$matrix{'R'}{'B'} = -1;
+	$matrix{'R'}{'H'} = 0;
+	$matrix{'R'}{'D'} = -2;
+	$matrix{'R'}{'R'} = 5;
+	$matrix{'R'}{'I'} = -3;
+	$matrix{'R'}{'G'} = -2;
+	$matrix{'I'}{'S'} = -2;
+	$matrix{'I'}{'F'} = 0;
+	$matrix{'I'}{'T'} = -1;
+	$matrix{'I'}{'N'} = -3;
+	$matrix{'I'}{'K'} = -3;
+	$matrix{'I'}{'*'} = -4;
+	$matrix{'I'}{'Y'} = -1;
+	$matrix{'I'}{'E'} = -3;
+	$matrix{'I'}{'V'} = 3;
+	$matrix{'I'}{'Z'} = -3;
+	$matrix{'I'}{'Q'} = -3;
+	$matrix{'I'}{'M'} = 1;
+	$matrix{'I'}{'C'} = -1;
+	$matrix{'I'}{'L'} = 2;
+	$matrix{'I'}{'A'} = -1;
+	$matrix{'I'}{'W'} = -3;
+	$matrix{'I'}{'X'} = -1;
+	$matrix{'I'}{'P'} = -3;
+	$matrix{'I'}{'B'} = -3;
+	$matrix{'I'}{'H'} = -3;
+	$matrix{'I'}{'D'} = -3;
+	$matrix{'I'}{'R'} = -3;
+	$matrix{'I'}{'I'} = 4;
+	$matrix{'I'}{'G'} = -4;
+	$matrix{'G'}{'S'} = 0;
+	$matrix{'G'}{'F'} = -3;
+	$matrix{'G'}{'T'} = -2;
+	$matrix{'G'}{'N'} = 0;
+	$matrix{'G'}{'K'} = -2;
+	$matrix{'G'}{'*'} = -4;
+	$matrix{'G'}{'Y'} = -3;
+	$matrix{'G'}{'E'} = -2;
+	$matrix{'G'}{'V'} = -3;
+	$matrix{'G'}{'Z'} = -2;
+	$matrix{'G'}{'Q'} = -2;
+	$matrix{'G'}{'M'} = -3;
+	$matrix{'G'}{'C'} = -3;
+	$matrix{'G'}{'L'} = -4;
+	$matrix{'G'}{'A'} = 0;
+	$matrix{'G'}{'W'} = -2;
+	$matrix{'G'}{'X'} = -1;
+	$matrix{'G'}{'P'} = -2;
+	$matrix{'G'}{'B'} = -1;
+	$matrix{'G'}{'H'} = -2;
+	$matrix{'G'}{'D'} = -1;
+	$matrix{'G'}{'R'} = -2;
+	$matrix{'G'}{'I'} = -4;
+	$matrix{'G'}{'G'} = 6;
+
+	return \%matrix;
+}
+#------------------------------------------------------------------------------
