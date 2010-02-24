@@ -16,7 +16,7 @@ my $usage = "
 Synopsis:
 
 snp2gene --datastore datastore.index --cgl_format gff3 --type SNP
-	 --dsn dbi:mysql:db_name --user user_name --passwd password
+	 --dsn dbi:mysql:db_name --user user_name --password password
          --subject 123456 --test
 
 Description:
@@ -42,7 +42,7 @@ Options:
 ";
 
 my ($help, $ds_index_file, $cgl_format, @type, $subject, $dsn, $user,
-    $psswd, $continue, $test);
+    $password, $continue, $test);
 my $opt_success = GetOptions('help'         => \$help,
 			     'datastore=s'  => \$ds_index_file,
 			     'cgl_format=s' => \$cgl_format,
@@ -50,7 +50,7 @@ my $opt_success = GetOptions('help'         => \$help,
 			     'subject=s'    => \$subject,
 			     'dsn=s'        => \$dsn,
 			     'user=s'       => \$user,
-			     'psswd=s'      => \$psswd,
+			     'password=s'   => \$password,
 			     'continue'     => \$continue,
 			     'test'         => \$test,
 			      );
@@ -64,7 +64,7 @@ die $usage unless $dsn;
 
 my $type_text = join ', ', map {"'$_'"} @type;
 
-my $dbh     = DBI->connect($dsn, $user, $psswd);
+my $dbh     = DBI->connect($dsn, $user, $password);
 my $sth_snp = $dbh->prepare("SELECT feature_id, start, end FROM feature WHERE type IN ($type_text) AND seqid = ? AND ((start >= ? AND start <= ?) OR (end >= ? AND end <= ?))");
 my $sth_ref = $dbh->prepare("SELECT a.att_value as reference_allele FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'Reference_seq'");
 my $sth_var = $dbh->prepare("SELECT a.att_value as reference_allele FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'Variant_seq'");
