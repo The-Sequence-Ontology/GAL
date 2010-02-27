@@ -70,7 +70,7 @@ sub _initialize_args {
 
 	# Set the column headers from your incoming data file here
 	# These will become the keys in your $record hash reference below.
-	$self->fields([qw(chromosome location variant)]);
+	$self->fields([qw(chromosome start end reference_seq variant_seq)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -93,8 +93,8 @@ sub parse_record {
 	my $seqid      = $record->{chromosome};
 	my $source     = 'Unknown';
 	my $type       = 'SNV';
-	my $start      = $record->{location};
-	my $end        = $record->{location};
+	my $start      = $record->{end};
+	my $end        = $record->{end};
 	my $score      = '.';
 	my $strand     = '+';
 	my $phase      = '.';
