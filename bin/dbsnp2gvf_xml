@@ -35,6 +35,39 @@ my %TYPE_MAP = ('snp'            => 'SNV',
 		'multinucleotide-polymorphism' => 'MNP',
 	       );
 
+my %EFFECT_MAP = ('intron'	      => 'intron',
+		  'near-gene-3'	      => 'near-gene-3',
+		  'near-gene-5'	      => 'near-gene-5',
+		  'reference'	      => 'reference',
+		  'utr-3'	      => 'three_prime_UTR',
+		  'missense'	      => 'synonymous_substitution',
+		  'coding-synonymous' => 'non_synonymous_substitution',
+		  'frameshift'	      => 'frameshift',
+		  'utr-5'	      => 'five_prime_UTR',
+		  'nonsense'          => 'nonsense',
+		  );
+
+
+# coding-exception
+# coding-nonsynonymous
+# coding-synonymous
+# coding-unknown
+# frameshift
+# gene-segment
+# intron
+# missense
+# mrna-utr
+# near-gene-3
+# near-gene-5
+# nonsense
+# reference
+# splice-3
+# splice-5
+# splice-site
+# synonymy-unknown
+# utr-3
+# utr-5
+
 my ($help, $requested_assembly);
 my $opt_success = GetOptions('help'       => \$help,
 			     'assembly=s' => \$requested_assembly,
@@ -126,10 +159,18 @@ sub get_next_rs {
 
 			my $map_loc_data = get_attributes($map_loc);
 
+			@fxn_set_set = $map_loc->getChildrenByLocalName('FxnSet');
+
+			for my $fxn_set (@fxn_set_set) {
+
+				# FxnSet keys:
+				# qw(geneId symbol mrnaAcc mrnaVer protAcc protVer
+				#    fxnClass readingFrame allele residue aaPosition
+				my $fxn_set_data = get_attributes($fxn_set);
+
+				push @{$map_loc_data->{fxn_set}}, $fxn_set_data;
+			}
 			push @{$component_data->{map_loc_set}}, $map_loc_data;
-			#		my $ctg_start = $map_loc->getAttribute('asnFrom');
-			#		my $ctg_end   = $map_loc->getAttribute('asnTo');
-			#		my $chr_start = $map_loc->getAttribute('physMapInt') + 1;
 		}
 		push @{$assembly_data->{component_set}}, $component_data;
 	}
