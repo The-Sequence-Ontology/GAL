@@ -94,10 +94,32 @@ sub build_graph {
 
     my %graph;
 
-    for my $t1_id (keys %{$features}) {
-	    for my $exon_1 (@{$features->{$t1_id}{exon} }) {
-		    for my $t2_id (keys %{$features}) {
-			  EXON2:
+    # Improve the effciency here by sorting on the transcript start positions
+    # and doing a next TRNSC2 of the loop if we are in features/exons that can't
+    # possibly overlap.
+    my @t1_ids = sort {$feature->{$a}{end} <=> $feature->{b}{end}} keys %{$features};
+    my @t2_ids = sort {$feature->{$a}{start} <=> $feature->{b}{start}} keys %{$features};
+    my $t2_idx_pointer = 0;
+    my ($t1_end_max, $t2_start_min);
+  T1:
+    for my $t1_idx (0 .. scalar @t1_ids) {
+	    my $t1     = $features->{$t1_ids[$t1_idx]};
+	    $t1_end = $t1->{end};
+	    if ($t1_end_max < $t1_end) {$t1_max = $t1_end};
+	    $t1_end_idx_pointer = ? $t1_end > $t1
+	  E1:
+	    for my $exon_1 (@{$t1->{exon}}) {
+		  T2:
+		    for my $t2_idx ($t2_idx_pointer .. scalar @t2_ids) {
+			    my $t2 = $feature->{$t2_id};
+			    my $t2_start = $t2->{start};
+			    if ($t2_start_min > $t2_start) {$t2_start_min = $t2_start};
+			    if ($t2_start_min > $t1_end_max) {
+				    $t2_start_min = $t1_end_max;
+				    $t2_idx_pointer = $t2_idx;
+				    last T2;
+			    }
+			  E2:
 			    for my $exon_2 (@{$features->{$t2_id}{exon}}) {
 
 				    next if ($exon_1->{seq_id} ne $exon_2->{seq_id} ||
@@ -107,7 +129,7 @@ sub build_graph {
 					    $graph{$exon_1->{t_id}}{$exon_2->{t_id}}++;
 					    $graph{$exon_2->{t_id}}{$exon_1->{t_id}}++;
 
-					    last EXON2;
+					    last E2;
 				    }
 			    }
 		    }
@@ -124,18 +146,18 @@ sub overlaps {
 	$exon_1->{start} <= $exon_2->{stop})     {
 	return 1;
     }
-    elsif ($exon_1->{stop} >= $exon_2->{start} &&
-	   $exon_1->{stop} <= $exon_2->{stop})     {
-	return 1;
-    }
+#    elsif ($exon_1->{stop} >= $exon_2->{start} &&
+#	   $exon_1->{stop} <= $exon_2->{stop})     {
+#	return 1;
+#    }
     elsif ($exon_2->{start} >= $exon_1->{start} &&
 	   $exon_2->{start} <= $exon_1->{stop})     {
 	return 1;
     }
-    elsif ($exon_2->{stop} >= $exon_1->{start} &&
-	   $exon_2->{stop} <= $exon_1->{stop})     {
-	return 1;
-    }
+#   elsif ($exon_2->{stop} >= $exon_1->{start} &&
+#	   $exon_2->{stop} <= $exon_1->{stop})     {
+#	return 1;
+#    }
     return undef;
 }
 #------------------------------------------------------------------------------
