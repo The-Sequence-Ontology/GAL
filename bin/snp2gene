@@ -4,6 +4,7 @@ use warnings;
 use Getopt::Long;
 use Datastore::MD5;
 use URI::Escape;
+use IO::Prompt;
 use DBI;
 use CGL::Annotation;
 
@@ -30,9 +31,14 @@ Options:
   cgl_format The format of the gene annotation GFF3 file.
   type       The variant type to analyze (i.e. SNP MNP nucleotide_insertion)
   subject    An ID for the individual being analyzed.
-  dsn        The DBI connection string [dbi:mysql:database=pcode]
-  user       The user to connect to the database as [bmoore]
-  password   The password to connect to the database with ['']
+  dsn        The DBI connection string (e.g. dbi:mysql:database).
+             Currently only expected to work with MySQL. 
+  user       The database user.  Defaults first to \$ENV{\${driver}_user} where 
+             \$driver is the driver parsed from the dsn. ['']
+  password   The database password.   Defaults first to
+             \$ENV{\${driver}_password} where \$driver is the driver 
+             parsed from the dsn.
+  prompt     Prompt for the password on the command line.
   continue   Will not rewrite existing .snp files.  This allow you
 	     to continue a previously aborted run.  No validation is
 	     done to ensure that previous files were not corrupted in
@@ -42,7 +48,7 @@ Options:
 ";
 
 my ($help, $ds_index_file, $cgl_format, @type, $subject, $dsn, $user,
-    $password, $continue, $test);
+    $password, $prompt, $continue, $test);
 my $opt_success = GetOptions('help'         => \$help,
 			     'datastore=s'  => \$ds_index_file,
 			     'cgl_format=s' => \$cgl_format,
@@ -51,6 +57,7 @@ my $opt_success = GetOptions('help'         => \$help,
 			     'dsn=s'        => \$dsn,
 			     'user=s'       => \$user,
 			     'password=s'   => \$password,
+			     'prompt'       => sub {$password = prompt("Password: ",   -echo => '*')->{value}},
 			     'continue'     => \$continue,
 			     'test'         => \$test,
 			      );
@@ -62,16 +69,27 @@ die $usage if ( $help          ||
 
 die $usage unless $dsn;
 
-my $type_text = join ', ', map {"'$_'"} @type;
+my ($scheme, $driver) = split /:/, $dsn;
+
+$user     ||= $ENV{"${driver}_user"};
+$password ||= $ENV{"${driver}_password"};
+
+my $type_text;
+if (@type) {
+	$type_text = join ', ', map {"'$_'"} @type;
+	$type_text = "type IN ($type_text) AND";
+    }
 
 my $dbh     = DBI->connect($dsn, $user, $password);
-my $sth_snp = $dbh->prepare("SELECT feature_id, start, end FROM feature WHERE type IN ($type_text) AND seqid = ? AND ((start >= ? AND start <= ?) OR (end >= ? AND end <= ?))");
-my $sth_ref = $dbh->prepare("SELECT a.att_value as reference_allele FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'Reference_seq'");
-my $sth_var = $dbh->prepare("SELECT a.att_value as reference_allele FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'Variant_seq'");
+my $sth_snp = $dbh->prepare("SELECT feature_id, start, end FROM feature WHERE $type_text seqid = ? AND ((start >= ? AND start <= ?) OR (end >= ? AND end <= ?))");
+my $sth_ref = $dbh->prepare("SELECT a.att_value as reference_seq FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'Reference_seq'");
+my $sth_var = $dbh->prepare("SELECT a.att_value as variant_seq FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'Variant_seq'");
 
 my $ds = parse_datastore($ds_index_file);
 
 for my $gene_id (keys %{$ds}) {
+
+	print STDERR "Gene:\t$gene_id\t$subject\t\n";
 
 	my ($gff_file, $fasta_file);
 	$gff_file = $ds->{$gene_id};
@@ -120,6 +138,8 @@ for my $gene_id (keys %{$ds}) {
 
 	my $snps = $dbh->selectall_hashref($sth_snp, [qw(feature_id)], {}, ($ctg_id, $ctg_begin + 499, $ctg_end - 499, $ctg_begin + 499, $ctg_end - 499));
 
+	next unless keys %{$snps};
+
 	my $SNP;
 	if ($test) {
 		open ($SNP, ">&=STDOUT") or die "Can't open STDOUT\n";
@@ -129,30 +149,28 @@ for my $gene_id (keys %{$ds}) {
 		  die "Can't open $snp_file for writing\n";
 	}
 
-	print STDERR "Processed\t$gene_id\t$subject\t\n";
-	print STDERR "Wrote\t$gene_id\t$subject\t\n" if keys %{$snps};
+	print STDERR "SNV_File:\t$snp_file\n" if keys %{$snps};
 
 	for my $snp_id (keys %{$snps}) {
 
 		my $snp = $snps->{$snp_id};
 
-
-		my $ref_allele = $dbh->selectall_arrayref($sth_ref, {}, ($snp_id));
-		$ref_allele = $ref_allele->[0][0] || '';
+		my $ref_seq = $dbh->selectall_arrayref($sth_ref, {}, ($snp_id));
+		$ref_seq = $ref_seq->[0][0] || '';
 
 		my $var_reference = $dbh->selectall_arrayref($sth_var, {}, ($snp_id));;
 		my %var_hash = map {$_->[0], 1} @{$var_reference};
-		my @var_alleles = grep {$_ ne $ref_allele} keys %var_hash;
+		my @var_seqs = grep {$_ ne $ref_seq} keys %var_hash;
 
-		# my $alleles = join '/', ($ref_allele, @var_alleles);
-		my $alleles = join '/', (@var_alleles);
+		# my $seqs = join '/', ($ref_seq, @var_seqs);
+		my $seqs = join '/', (@var_seqs);
 
 		print  $SNP join "\t", ($subject,
 					$ctg_id,
 					$gene_id,
 					$snp->{feature_id},
 					$snp->{start},
-					$alleles,
+					$seqs,
 					'.',
 					'+',
 				       );
@@ -165,16 +183,28 @@ for my $gene_id (keys %{$ds}) {
 #-------------------------------- SUBROUTINES --------------------------------
 #-----------------------------------------------------------------------------
 sub parse_datastore {
-	my $ds_index = shift;
 
-	open (my $IN, '<', $ds_index) or
-	  die "Can't open file $ds_index for reading\n$!\n";
+    my $file = shift;
 
-	my %index;
-	while (<$IN>) {
-		chomp;
-		my ($key, $value) = split /\t/, $_;
-		$index{$key} = $value;
-	}
-	return \%index;
+    my $base_path;
+    ($base_path = $file) =~ s/[^\/]+$//;
+
+    open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
+
+    my %ds;
+    while (<$IN>) {
+	chomp;
+	my ($id, $path) = split /\t/;
+	$path = $base_path . 'datastore/' . $path unless $path =~ /^\//;
+	$ds{$id} = $path;
+    }
+    return \%ds;
+}
+
+#-----------------------------------------------------------------------------
+
+sub get_password {
+    my ($option, $value, $password) = @_;
+    $value ||= prompt("Password: ",   -echo => '*');
+    $password = $value;
 }
