@@ -1,4 +1,4 @@
-package GAL::Parser::template_sequence_alteration;
+package GAL::Parser::samtools_pileup;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Parser);
 
 =head1 NAME
 
-GAL::Parser::template_sequence_alteration - <One line description of module's purpose here>
+GAL::Parser::samtools_pileup - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::template_sequence_alteration version 0.01
+This document describes GAL::Parser::samtools_pileup version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::template_sequence_alteration;
+     use GAL::Parser::samtools_pileup;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::template_sequence_alteration version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::template_sequence_alteration->new();
-     Function: Creates a GAL::Parser::template_sequence_alteration object;
-     Returns : A GAL::Parser::template_sequence_alteration object
+     Usage   : GAL::Parser::samtools_pileup->new();
+     Function: Creates a GAL::Parser::samtools_pileup object;
+     Returns : A GAL::Parser::samtools_pileup object
      Args    :
 
 =cut
@@ -70,7 +70,10 @@ sub _initialize_args {
 
 	# Set the column headers from your incoming data file here
 	# These will become the keys in your $record hash reference below.
-	$self->fields([qw(these are the header names for your record hash)]);
+	$self->fields([qw(seqid start reference_seq variant_seq
+			  consensus_phred_qual snv_phred_qual rms
+			  variant_reads read_qual aln_map_qual)]);
+
 }
 
 #-----------------------------------------------------------------------------
@@ -88,39 +91,85 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# $record is a hash reference that contains the keys assigned
-	# in the $self->fields call in _initialize_args above
 
-	# Fill in the first 8 columns for GFF3
-	# See http://www.sequenceontology.org/gff3.html for details.
-	my $id         = $record->{id};
-	my $seqid      = $record->{chromosome};
-	my $source     = 'Template';
+	# This parser was written to convert variant output created
+	# with SAMtools like this:
+
+	# From a sorted BAM alignment, raw SNP and indel calls are acquired by:
+	#
+	# 1. samtools pileup -vcf ref.fa aln.bam > raw.pileup
+	# 
+	# samtools pileup -vcf ref.fa aln.bam > raw.pileup The resultant output
+	# should be further filtered by:
+	# 
+	# 1. samtools.pl varFilter raw.pileup | awk '$6>=20' > final.pileup  
+	# 
+	# samtools.pl varFilter raw.pileup | awk '$6>=20' > final.pileup to rule
+	# out error-prone variant calls caused by factors not considered in the
+	# statistical model.
+
+	# With output that looks like this
+
+	# chr1  10109  a  W  79  79   60  31  .$...t,.T.t,,tt.,tt..,,ttT,,,t,t  %%%%BB%%%ACC@=BB..%9AB<9>A'B9%7
+	# chr1	10177  a  C  18  33   60  3   c,C     		      		53@       
+	# chr1	13116  T  G  11  39   60  6   g.GgG,  		      		B39A>1
+	# chr1	13118  A  G  8   39   60  6   g.GgG,  		      		B?;AA(
+	# chr1	14464  A  W  22  41   60  5   t,Tt.   		      		AA@9A
+	# chr1	14653  C  T  28  36   60  4   .TtT    		      		%>%>            
+	# chr1	14907  A  R  85  147  60  18  ,,,g,.gGGGGggG.g^~G^~g  		ACB5BB7>@BB3>@<:A%
+	# chr1	14930  A  R  27  99   60  19  g,.gGGGGggG.gGg.ggg?    		BB<AB@<5@B6BA=A4=1
+	# chr1	15208  G  A  6   27   60  4   ,aa,    		      		>AB%
+	# chr1	15211  T  G  39  39   60  4   gggg    		      		>@B@            
+
+	# With columns described as this:
+
+	# http://samtools.sourceforge.net/samtools.shtml  See both main pileup
+	# docs and the details for the -c option.
+	# 1.  chromosome name
+	# 2.  coordinate
+	# 3.  reference base
+	# 4.  consensus base
+	# 5.  Phred-scaled consensus quality
+	# 6.  SNP quality (i.e. the Phred-scaled probability of the consensus
+	#     being identical to the reference)
+	# 7.  root mean square (RMS) mapping quality of the reads covering
+	#     the site
+	# 8.  read bases
+	# 9.  read qualities
+	# 10. alignment mapping qualities
+	
+	# Mapped to record keys:
+
+	# 1.  seqid
+	# 2.  start
+	# 3.  reference_seq
+	# 4.  variant_seq
+	# 5.  consensus_phred_qual
+	# 6.  snv_phred_qual
+	# 7.  rms
+	# 8.  variant_reads
+	# 9.  read_qual
+	# 10. aln_map_qual
+
+	my $seqid      = $record->{seqid};
+	my $source     = 'SAMtools';
 	my $type       = 'SNV';
 	my $start      = $record->{start};
-	my $end        = $record->{end};
-	my $score      = '.';
-	my $strand     = $record->{strand};
+	my $id         = join ':', ($seqid, $source, $type, $start);
+	my $end        = $record->{start};
+	my $score      = $record->{consensus_phred_qual};
+	my $strand     = '+';
 	my $phase      = '.';
 
 	# Create the attributes hash
 	# See http://www.sequenceontology.org/gvf.html
 
-	# Assign the reference and variant sequences:
-	# Reference_seq=A
-	# Variant_seq=G:1,A:2
-	my ($reference_seq, @variant_seqs) = split m|/|, $record->{variant_seq};
+	my $reference_seq = uc $record->{reference_seq};
+	my @variant_seqs  = $self->expand_iupac_nt_codes($record->{variant_seq});
 
-	# Assign the variant seq read counts if available:
-	# Variant_reads=8:1,6:2
+	my $total_reads = $record->{variant_reads};
 
-	# Assign the total number of reads covering this position:
-	# Total_reads=16
-
-	# Assign the genotype and probability if available:
-	# Genotype=homozygous:0.96
-
-	my $genotype = 'heterozygous';
+	my $genotype = scalar @variant_seqs == 1 ? 'homozygous' : 'heterozygous';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -140,6 +189,7 @@ sub parse_record {
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
+			  Total_reads   => [$total_reads],
 			  Genotype      => [$genotype],
 			  ID            => [$id],
 			 };
@@ -203,7 +253,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::template_sequence_alteration> requires no configuration files or environment variables.
+<GAL::Parser::samtools_pileup> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
