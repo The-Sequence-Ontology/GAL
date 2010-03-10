@@ -1,0 +1,392 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use URI::Escape;
+
+use Data::Dumper;
+$Data::Dumper::Maxdepth = 3;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+update_ucsc_gff --kg kgXref ucsc_clustered.gff3
+
+Description:
+
+This script will take a GFF3 file produced by ucsc_gtf2gff3 and update
+the names and IDs of the genes based on the UCSC MySQL table kgXref.
+
+  --kg  The text dump of the kgXref file from UCSC MySQL database.
+
+
+Notes: The kgXref table can be pulled from the UCSC mysql database
+
+mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A \
+      -e 'select * from kgXref' hg18 > kgXref.txt
+
+or downloaded from here
+
+http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/kgXref.txt.gz
+
+";
+
+my ($help, $kgXref_file);
+my $opt_success = GetOptions('help' => \$help,
+			     'kg=s' => \$kgXref_file,
+			     );
+
+die $usage if $help || ! $opt_success;
+
+my $gff_file = shift;
+die $usage unless $gff_file;
+
+my (%new_gene_id_map, %new_mRNA_ids);
+
+my ($kg_map, $refseq_map) = parse_kgXref($kgXref_file);
+my $genes    = parse_gff($gff_file);
+update_ids($genes);
+print_genes($genes);
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub parse_kgXref {
+
+    my $file = shift;
+
+    open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
+
+
+    my (%kg_map, %refseq_map);
+    while (<$IN>) {
+
+	next if /\s*^\#/;
+	next if $_ =~ /^kgID/;
+
+	chomp;
+	my ($kgID, $mRNA, $spID, $spDisplayID, $geneSymbol, $refseq,
+	    $protAcc, $description) = split /\t/, $_;
+
+	my $data = {kgID 	=> $kgID,
+		    mRNA 	=> $mRNA,
+		    spID 	=> $spID,
+		    spDisplayID => $spDisplayID,
+		    geneSymbol  => $geneSymbol,
+		    refseq      => $refseq,
+		    protAcc     => $protAcc,
+		    description => $description,
+		};
+
+	$kg_map{$kgID} = $data;
+	$refseq_map{$mRNA} = $data if $mRNA =~ /[NX][MR]_\d+/;
+    }
+    return (\%kg_map, \%refseq_map);
+}
+
+#-----------------------------------------------------------------------------
+
+sub parse_gff {
+
+    my $file = shift;
+
+    open(my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
+
+    my %genes;
+    my %mRNA;
+    while (<$IN>) {
+	
+	my ($seqid, $source, $type, $start, $end, $score, $strand, $phase,
+	    $att_text) = split /\t/, $_;
+	
+	my $attributes = parse_attributes($att_text);
+	
+	my $id      = $attributes->{ID}[0];
+	my $parents = $attributes->{Parent};
+	
+	my $feature = {seqid      => $seqid,
+		       source     => $source,
+		       type       => $type,
+		       start      => $start,
+		       end        => $end,
+		       score      => $score,
+		       strand     => $strand,
+		       phase      => $phase,
+		       attributes => $attributes
+		       };
+	
+	# Place features into the right buckets
+	if ($type eq 'gene') {
+	    $genes{$id} = $feature;
+	}
+	elsif ($type =~ 'mRNA|transcript|ncRNA') {
+	    if (ref($parents) && scalar @{$parents} != 1) {
+		die "\nMore or less than one parent per transcript\n$_\n";
+	    }
+	    $mRNA{$id} =$feature;
+	}
+	elsif ($type eq 'exon') {
+	    for my $parent (@{$parents}) {
+		$mRNA{$parent}{length} += abs($feature->{end} -
+					      $feature->{start});
+		$mRNA{$parent}{features}{$type}{$id} = $feature;
+	    }
+	}
+	else {
+	    for my $parent (@{$parents}) {
+		$mRNA{$parent}{features}{$type}{$id} = $feature;
+	    }
+	}
+    }
+
+    # Loop over mRNAs and place them on genes
+    my %seen_mRNA;
+    for my $mRNA_id (keys %mRNA) {
+	my $this_mRNA = $mRNA{$mRNA_id};
+	if (! $this_mRNA->{attributes}{Parent} || scalar @{$this_mRNA->{attributes}{Parent}} != 1) {
+	    die ("Should have one and only one parent for $mRNA_id:\n$0\n" .
+		 Dumper($this_mRNA) . "\n\n");
+	}
+	my $parent = $this_mRNA->{attributes}{Parent}[0];
+	$genes{$parent}{mRNA}{$mRNA_id} = $this_mRNA;
+    }
+
+    return \%genes;
+}
+
+#-----------------------------------------------------------------------------
+
+sub parse_attributes {
+
+    my $att_text = shift;
+
+    my %attributes;
+
+    my @att_pairs = split /\s*;\s*/, $att_text;
+    for my $att_pair (@att_pairs) {
+	my ($key, $value_text) = split /=/, $att_pair;
+	my @values = map {uri_unescape($_)} split /,/, $value_text;
+	push @{$attributes{$key}}, @values;
+    }
+    
+    return \%attributes;
+}
+
+#-----------------------------------------------------------------------------
+
+sub update_ids {
+
+    my $genes = shift;
+
+    my %new_gene_ids;
+
+    my (%seen_gene, %seen_mRNA);
+
+    # Loop all genes
+    for my $gene_id (keys %{$genes}) {
+	my $gene = $genes->{$gene_id};
+	my %new_ids_hash;
+
+	# Loop all mRNAs first to vote for gene ID and collect other
+	# gene trivia like descriptions and original UCSC IDs.
+	my (%gene_aliases, %gene_descrips);
+	for my $mRNA_id (keys %{$gene->{mRNA}}) {
+	    my $mRNA = $gene->{mRNA}{$mRNA_id};
+	    $gene_aliases{$mRNA_id}++;
+
+	    my $new_id;
+	    # Get gene symbol that this RNA maps to.
+	    if ($mRNA_id =~ /^[NX][MR]_\d+/) {
+		$new_id = $refseq_map->{$mRNA_id}{geneSymbol};
+		# UCSC defaults gene IDs to RNA names if no gene symbol
+		# is available.  We'd rather keep GENE_00001 style if
+		# no valid gene symbol exists, so don't use RNA names.
+		undef $new_id if ($refseq_map->{$mRNA_id}{mRNA} &&
+				  ($new_id eq
+				   $refseq_map->{$mRNA_id}{mRNA}
+				   )
+				  );
+		$gene_descrips{$refseq_map->{$mRNA_id}{description}}++
+		    if $refseq_map->{$mRNA_id}{description};
+	    }
+	    else {
+		$new_id = $kg_map->{$mRNA_id}{geneSymbol};
+		undef $new_id if ($kg_map->{$mRNA_id}{mRNA} &&
+				  ($new_id eq $kg_map->{$mRNA_id}{mRNA})
+				  );
+	    }
+	    # Vote for a new ID only if you map to one.
+	    $new_ids_hash{$new_id}++ if $new_id;
+	}
+	
+	# Choose the most popular kid in class as the gene ID.
+	my @new_ids_array = sort {$new_ids_hash{$a} <=>
+				  $new_ids_hash{$b}} keys %new_ids_hash;
+	my $new_gene_id = shift @new_ids_array;
+	$new_gene_id ||= $gene_id;
+
+	# Iterate the gene ID if we've seen it before.
+	if (exists $seen_gene{$new_gene_id}) {
+	    $new_gene_id = $new_gene_id . "-" . $seen_gene{$new_gene_id}++;
+	    print STDERR "Duplicate gene:\t$new_gene_id\n";
+	}
+	else {
+	    $seen_gene{$new_gene_id}++;
+	}
+
+	# Move the gene's 'stuff' over to the new gene ID and delete
+	# the old gene ID
+	$genes->{$new_gene_id} = $genes->{$gene_id};
+	delete $genes->{$gene_id} unless $gene_id eq $new_gene_id;
+
+	# Grab the gene again (probably don't need to since it a ref)
+	# and update it's ID.
+	$gene = $genes->{$new_gene_id};
+	$gene->{attributes}{ID}[0] = $new_gene_id;
+	push @{$gene->{attributes}{Note}},  grep {$_} keys %gene_descrips
+	    if  keys %gene_descrips;
+	push @{$gene->{attributes}{Alias}}, grep {$_} keys %gene_aliases
+	    if keys %gene_aliases;
+	
+	# Loop over all mRNAs (some are ncRNAs or transcripts too) to
+	# update their IDs, Parents, Features etc.
+      mRNA:
+	for my $mRNA_id (keys %{$gene->{mRNA}}) {
+	    my $mRNA = $gene->{mRNA}{$mRNA_id};
+	    $mRNA->{attributes}{Parent}[0] = $new_gene_id;
+	    
+	    # Get it's ID mapping.
+	    my $new_mRNA_id;
+	    if ($mRNA->{attributes}{ID}[0] !~ /^[NX][MR]_\d+/) {
+		$new_mRNA_id = $kg_map->{$mRNA->{attributes}{ID}[0]}{mRNA};
+	    }
+	    $new_mRNA_id ||= $mRNA->{attributes}{ID}[0];
+	    push @{$mRNA->{attributes}{Alias}}, $mRNA_id unless
+		$new_mRNA_id eq $mRNA_id;
+
+	    # Delete don't iterate an mRNA if we've seen it's name
+	    # before.  We do this because this is on a gene by gene
+	    # basis, and we don't want two mRNAs of the same name at
+	    # the same locus.
+	    if (exists $seen_mRNA{$new_mRNA_id} &&
+		$new_mRNA_id ne $mRNA_id) {
+		delete $gene->{mRNA}{$mRNA_id};
+		next mRNA;
+	    }
+	    else {
+		$seen_mRNA{$new_mRNA_id}++;
+	    }
+
+	    # Set the default SO type to transcript - overide later if
+	    # we see a CDS for this transcript.
+	    my $SO_type = 'transcript';
+
+	    # Loop over all the features of this transcript.
+	    for my $type (keys %{$mRNA->{features}}) {
+		$SO_type = 'mRNA' if $type eq 'CDS';
+
+		my $features = $mRNA->{features}{$type};
+		for my $feature_id (keys %{$features}) {
+		    my $feature = $features->{$feature_id};
+		    my $parents = $feature->{attributes}{Parent};
+
+		    # Loop over all parents and if they are this mRNAs
+		    # ID then update them to the new mRNA ID.  This
+		    # should always happen for the UCSC data set, but
+		    # some data sets, features could have multiple
+		    # parents and we only want to update the correct
+		    # one here.
+		    for my $parent (@{$parents}) {
+			$parent = ($parent eq $mRNA->{attributes}{ID}[0] ?
+				   $new_mRNA_id                          :
+				   $mRNA->{attributes}{ID}[0]);
+		    }
+
+		    # Update the mRNA ID part of the features ID
+		    $feature->{attributes}{ID}[0] =~
+			s/$mRNA_id/$new_mRNA_id/;
+		    my $new_feature_id;
+		    ($new_feature_id = $feature_id) =~
+			s/$mRNA_id/$new_mRNA_id/;
+
+		    # Move the feature's 'stuff' to it's new ID location in the
+		    # hash and delete the old location
+		    $mRNA->{features}{$type}{$new_feature_id} = 
+			$mRNA->{features}{$type}{$feature_id};
+		    delete $mRNA->{features}{$type}{$feature_id} unless
+			$feature_id eq $new_feature_id;
+		}
+	    }
+
+	    # Move the mRNA 'stuff' to it's new ID location and delete
+	    # the old location.
+
+	    $genes->{$new_gene_id}{mRNA}{$new_mRNA_id} =
+		$genes->{$new_gene_id}{mRNA}{$mRNA_id};
+	    delete $genes->{$new_gene_id}{mRNA}{$mRNA_id} unless
+		$mRNA_id eq $new_mRNA_id;
+
+	    # Get mRNA again just in case - probably don't need to it a
+	    # ref dumb ass.
+	    $mRNA = $genes->{$new_gene_id}{mRNA}{$new_mRNA_id};
+
+	    # Set some of the mRNA details.
+	    $mRNA->{attributes}{ID}[0] = $new_mRNA_id;
+	    $mRNA->{type} = $SO_type
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_genes {
+
+    my $genes = shift;
+
+    for my $gene_id (keys %{$genes}) {
+	my $gene = $genes->{$gene_id};
+	print_feature($gene);
+	for my $mRNA_id (keys %{$gene->{mRNA}}) {
+	    my $mRNA = $gene->{mRNA}{$mRNA_id};
+	    print_feature($mRNA);
+	    for my $type (keys %{$mRNA->{features}}) {
+		my $features = $mRNA->{features}{$type};
+		for my $feature_id (keys %{$features}) {
+		    my $feature = $features->{$feature_id};
+		    print_feature($feature);
+		}
+	    }
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_feature {
+    my $feature = shift;
+
+    print join "\t", @{$feature}{qw(seqid source type start end score
+				    strand phase)};
+
+    print "\t";
+    
+    my $att_text = "ID=" . $feature->{attributes}{ID}[0] . ';';
+    if (exists $feature->{attributes}{Parent}) {
+	$att_text .= "Parent=" . $feature->{attributes}{Parent}[0] . ';';
+    }
+
+    for my $key (keys %{$feature->{attributes}}) {
+	next if $key =~ /ID|Parent/;
+	my $value_text = join ',', map {uri_escape($_, ';=%&,')}
+	    @{$feature->{attributes}{$key}};
+	$att_text .= "$key=$value_text;";
+    }
+    print "$att_text\n";
+    print '';
+}
+				
