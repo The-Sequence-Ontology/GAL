@@ -1,0 +1,118 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use Time::HiRes qw(gettimeofday tv_interval);
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+binary_search --iter 1000 file.txt
+
+Description:
+
+Given a value and a sorted list of coordinates find the first element
+in the list who's start value is >= the given value
+
+Options:
+
+  --iter  The number of iterations to run
+
+";
+
+
+my ($help, $iter);
+my $opt_success = GetOptions('help'    => \$help,
+			     'iter=i'  => \$iter,
+			     );
+
+die $usage if $help || ! $opt_success;
+
+my $file = shift;
+die $usage unless $file;
+open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
+
+my %map;
+my @list;
+my ($min, $max);
+my $t0 = [gettimeofday];
+while (my $line = <$IN>) {
+    my ($start, $end, $id) = split /\s+/, $line;
+    push @{$map{"$start:$end"}}, $id;
+    push @list, [$start, $end];
+    $min = ! $min ? $start : ($min < $start) ? $min : $start;
+    $max = ! $max ? $end   : ($max > $end)   ? $max : $end;
+}
+
+my $t1 = [gettimeofday];
+for (1 .. $iter) {
+    my $value = int(rand($max - $min)) + $min;
+    my $low = 0;
+    my $high = scalar( @list );
+    my $t2 = [gettimeofday];
+
+
+}
+
+print tv_interval ( $t1 );
+print "\n";
+print tv_interval ( $t0 );
+print "\n";
+
+
+sub _find_first_overlap {
+    my ($list, $low, $high, $value);
+    while ( $low < $high ) {
+	my $mid = int( ( $low + $high ) / 2 );
+	if ( $value < $list[$mid][1] ) {
+	    $high = $mid;
+	}
+	elsif ( $value > $list[$mid][0] ) {
+	    $low = $mid + 1;
+	}
+	else {
+	    return $mid
+	    # my $idx = $list[$mid - 1][0] . ':' . $list[$mid - 1][1];
+	    # print join "\n",  ($value, $idx, @{$map{$idx}});
+	    # print "\n";
+	    # print tv_interval ( $t2 );
+	    # print "\n";
+	}
+    }
+    return $low;
+    # my $idx = $list[$low - 1][0] . ':' . $list[$low - 1][1];
+    # print join "\n",  ($value, $idx, @{$map{$idx}});
+    # print "\n";
+    # print tv_interval ( $t2 );
+    # print "\n";
+}
+
+sub _find_last_overlap {
+    my ($list, $low, $high, $value);
+    while ( $low < $high ) {
+	my $mid = int( ( $low + $high ) / 2 );
+	if ( $value < $list[$mid][0] ) {
+	    $high = $mid;
+	}
+	elsif ( $value > $list[$mid][0] ) {
+	    $low = $mid + 1;
+	}
+	else {
+	    # my $idx = $list[$mid - 1][0] . ':' . $list[$mid - 1][1];
+	    # print join "\n",  ($value, $idx, @{$map{$idx}});
+	    # print "\n";
+	    # print tv_interval ( $t2 );
+	    # print "\n";
+	    last;
+	}
+    }
+    # my $idx = $list[$low - 1][0] . ':' . $list[$low - 1][1];
+    # print join "\n",  ($value, $idx, @{$map{$idx}});
+    # print "\n";
+    # print tv_interval ( $t2 );
+    # print "\n";
+}

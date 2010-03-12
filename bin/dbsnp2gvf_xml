@@ -35,15 +35,15 @@ my %TYPE_MAP = ('snp'            => 'SNV',
 		'multinucleotide-polymorphism' => 'MNP',
 	       );
 
-my %EFFECT_MAP = ('intron'	      => 'intron',
-		  'near-gene-3'	      => 'near-gene-3',
-		  'near-gene-5'	      => 'near-gene-5',
-		  'reference'	      => 'reference',
-		  'utr-3'	      => 'three_prime_UTR',
+my %EFFECT_MAP = ('intron'	      => '.',
+		  'near-gene-3'	      => '.',
+		  'near-gene-5'	      => '.',
+		  'reference'	      => '.',
+		  'utr-3'	      => '.',
 		  'missense'	      => 'synonymous_substitution',
-		  'coding-synonymous' => 'non_synonymous_substitution',
+		  'coding-synonymous' => 'nonsynonymous_substitution',
 		  'frameshift'	      => 'frameshift',
-		  'utr-5'	      => 'five_prime_UTR',
+		  'utr-5'	      => '.',
 		  'nonsense'          => 'nonsense',
 		  );
 
@@ -74,6 +74,7 @@ my $opt_success = GetOptions('help'       => \$help,
 			    );
 
 die $usage if $help || ! $opt_success;
+die $usage unless $requested_assembly;
 
 my $file = shift;
 die $usage unless $file;
@@ -99,270 +100,355 @@ while (my $rs_data = get_next_rs($reader)) {
 
 sub get_next_rs {
 
-	my $reader = shift;
+    my $reader = shift;
 
-	$reader->nextElement('Rs');
-	my $rs = XML::LibXML::Reader::copyCurrentNode($reader, 1);
-
-	return undef unless $rs;
-
-	# Rs keys:
-	# qw(rsId snpClass snpType molType validProbMin validProbMax
-	#    genotype bitField)
-	my $rs_data = get_attributes($rs);
-
-	my @ss_set = $rs->getChildrenByLocalName('Ss');
-
-	for my $ss (@ss_set) {
-
-		# Ss keys:
-		# qw(ssId handle batchId locSnpId subSnpClass orient
-		#    strand molType buildId methodClass validated
-		#    linkoutUrl);
-		my $ss_data = get_attributes($ss);
-
-		my ($sequence) = $ss->getChildrenByLocalName('Sequence');
-		my ($observed) = $sequence->getChildrenByLocalName('Observed');
-		my $alleles = $observed->textContent;
-		my @alleles = split m|/|, $alleles;
-		$ss_data->{alleles} = \@alleles;
-		push @{$rs_data->{ss_set}}, $ss_data;
+    $reader->nextElement('Rs');
+    my $rs = XML::LibXML::Reader::copyCurrentNode($reader, 1);
+    
+    return undef unless $rs;
+    
+    # Rs keys:
+    # qw(rsId snpClass snpType molType validProbMin validProbMax
+    #    genotype bitField)
+    my $rs_data = get_attributes($rs);
+    
+    my @ss_set = $rs->getChildrenByLocalName('Ss');
+    
+    for my $ss (@ss_set) {
+	
+	# Ss keys:
+	# qw(ssId handle batchId locSnpId subSnpClass orient
+	#    strand molType buildId methodClass validated
+	#    linkoutUrl);
+	my $ss_data = get_attributes($ss);
+	
+	my ($sequence) = $ss->getChildrenByLocalName('Sequence');
+	my ($observed) = $sequence->getChildrenByLocalName('Observed');
+	my $alleles = $observed->textContent;
+	my @alleles = split m|/|, $alleles;
+	$ss_data->{alleles} = \@alleles;
+	push @{$rs_data->{ss_set}}, $ss_data;
+    }
+    
+    my ($assembly) = grep {$_->getAttribute('groupLabel') eq $requested_assembly}
+    $rs->getChildrenByLocalName('Assembly');
+    
+    # Assembly keys:
+    # qw(dbSnpBuild genomeBuild groupLabel assemblySource
+    #    current reference);
+    my $assembly_data = get_attributes($assembly);
+    
+    my @component_set = $assembly->getChildrenByLocalName('Component');
+    
+    for my $component (@component_set) {
+	
+	# Component keys:
+	# qw(componentType ctgID accession name chromosome start end
+	#    orientation gi groupTerm contigLable)
+	my $component_data = get_attributes($component);
+	
+	my @map_loc_set = $component->getChildrenByLocalName('MapLoc');
+	
+	for my $map_loc (@map_loc_set) {
+	    
+	    # MapLoc keys:
+	    # qw(asnFrom asnTo locType alnQuality orient
+	    #    physMapInt leftFlankNeighborPos
+	    #    rightFlankNeighborPos leftContigNeighborPos
+	    #    rightContigNeighborPos numberOfMismatches
+	    #    numberOfDeletions numberOfInsertions);
+	    
+	    my $map_loc_data = get_attributes($map_loc);
+	    
+	    my @fxn_set_set = $map_loc->getChildrenByLocalName('FxnSet');
+	    
+	    for my $fxn_set (@fxn_set_set) {
+		
+		# FxnSet keys:
+		# qw(geneId symbol mrnaAcc mrnaVer protAcc protVer
+		#    fxnClass readingFrame allele residue aaPosition
+		my $fxn_set_data = get_attributes($fxn_set);
+		
+		push @{$map_loc_data->{fxn_set}}, $fxn_set_data;
+	    }
+	    push @{$component_data->{map_loc_set}}, $map_loc_data;
 	}
-
-	my ($assembly) = grep {$_->getAttribute('groupLabel') eq $requested_assembly}
-	  $rs->getChildrenByLocalName('Assembly');
-
-	# Assembly keys:
-	# qw(dbSnpBuild genomeBuild groupLabel assemblySource
-	#    current reference);
-	my $assembly_data = get_attributes($assembly);
-
-	my @component_set = $assembly->getChildrenByLocalName('Component');
-
-	for my $component (@component_set) {
-
-		# Component keys:
-		# qw(componentType ctgID accession name chromosome start end
-		#    orientation gi groupTerm contigLable)
-		my $component_data = get_attributes($component);
-
-		my @map_loc_set = $component->getChildrenByLocalName('MapLoc');
-
-		for my $map_loc (@map_loc_set) {
-
-			# MapLoc keys:
-			# qw(asnFrom asnTo locType alnQuality orient
-			#    physMapInt leftFlankNeighborPos
-			#    rightFlankNeighborPos leftContigNeighborPos
-			#    rightContigNeighborPos numberOfMismatches
-			#    numberOfDeletions numberOfInsertions);
-
-			my $map_loc_data = get_attributes($map_loc);
-
-			@fxn_set_set = $map_loc->getChildrenByLocalName('FxnSet');
-
-			for my $fxn_set (@fxn_set_set) {
-
-				# FxnSet keys:
-				# qw(geneId symbol mrnaAcc mrnaVer protAcc protVer
-				#    fxnClass readingFrame allele residue aaPosition
-				my $fxn_set_data = get_attributes($fxn_set);
-
-				push @{$map_loc_data->{fxn_set}}, $fxn_set_data;
-			}
-			push @{$component_data->{map_loc_set}}, $map_loc_data;
-		}
-		push @{$assembly_data->{component_set}}, $component_data;
-	}
-
-	$rs_data->{assembly}  = $assembly_data;
-
-	return $rs_data;
+	push @{$assembly_data->{component_set}}, $component_data;
+    }
+    
+    $rs_data->{assembly}  = $assembly_data;
+    
+    return $rs_data;
 }
 
 #-----------------------------------------------------------------------------
 
 sub get_attributes {
-
-	my $element = shift;
-
-	my @attribute_set = $element->attributes;
-	my %attributes;
-	for my $attribute (@attribute_set) {
-		next if (ref($attribute) ne 'XML::LibXML::Attr');
-		my $name  = $attribute->localName;
-		my $value = $attribute->value;
-		$attributes{$name} = $value;
-	}
-	return \%attributes;
+    
+    my $element = shift;
+    
+    my @attribute_set = $element->attributes;
+    my %attributes;
+    for my $attribute (@attribute_set) {
+	next if (ref($attribute) ne 'XML::LibXML::Attr');
+	my $name  = $attribute->localName;
+	my $value = $attribute->value;
+	$attributes{$name} = $value;
+    }
+    return \%attributes;
 }
 
 #-----------------------------------------------------------------------------
 
 sub rs2gvf {
-
-	my $feature = shift;
-
-	my $attribute_txt = build_att_txt($feature);
-
-	my $gvf_line =  join "\t", (@{$feature}{qw (seqid source type start
-						    end score strand phase)},
-				    $attribute_txt
-				   );
-	return $gvf_line;
+    
+    my $feature = shift;
+    
+    my $attribute_txt = build_att_txt($feature);
+    
+    my $gvf_line =  join "\t", (@{$feature}{qw (seqid source type start
+						end score strand phase)},
+				$attribute_txt
+				);
+    return $gvf_line;
 }
 
 #-----------------------------------------------------------------------------
 
 sub build_features {
-
-	my $rs = shift;
-
-	my $Dbxref = 'dbSNP:rs' . $rs->{rsId};
-	my @rs_errors;
-	@rs_errors = @{$rs->{errors}} if (ref($rs->{errors}) eq 'ARRAY');
-	my $assembly = $rs->{assembly};
-
-	# Rs keys:
-	# qw(rsId snpClass snpType molType validProbMin validProbMax
-	#    genotype bitField)
-
-	# Ss keys:
-	# qw(ssId handle batchId locSnpId subSnpClass orient
-	#    strand molType buildId methodClass validated
-	#    linkoutUrl);
-
-	# Assembly keys:
-	# qw(dbSnpBuild genomeBuild groupLabel assemblySource
-	#    current reference);
-
-	# Component keys:
-	# qw(componentType ctgID accession name chromosome start end
-	#    orientation gi groupTerm contigLable)
-
-	# MapLoc keys:
-	# qw(asnFrom asnTo locType alnQuality orient physMapInt
-	#    leftFlankNeighborPos rightFlankNeighborPos
-	#    leftContigNeighborPos rightContigNeighborPos
-	#    numberOfMismatches numberOfDeletions numberOfInsertions);
-
-	my @features;
-	for my $ss (@{$rs->{ss_set}}) {
-
-		my ($alleles, $ssId, $handle, $locSnpId, $subSnpClass) =
-		  @{$ss}{qw(alleles ssId handle locSnpId subSnpClass)};
-
-		$ssId = 'ss' . $ssId;
-
-		my $type = $TYPE_MAP{$subSnpClass}
-		  || 'sequence_alteration';
-
-		my @ss_errors;
-		@ss_errors = @{$ss->{errors}}
-		  if (ref($ss->{errors}) eq 'ARRAY');
-
-		my $feature_count;
-		for my $component (@{$assembly->{component_set}}) {
-			my $int_feat   = 'RefSeq:' . $component->{accession};
-			my $chromosome = 'chr' . $component->{chromosome};
-			my $ctg_start  = $component->{start};
-			my $ctg_end    = $component->{end};
-			my @component_errors;
-			@component_errors = @{$component->{errors}}
-			  if (ref($component->{errors}) eq 'ARRAY');
-
-		      MAP_LOC:
-			for my $map_loc (@{$component->{map_loc_set}}) {
-
-				my ($asnFrom, $asnTo, $physMapInt, $alnQuality) =
-				  @{$map_loc}{qw(asnFrom asnTo physMapInt alnQuality)};
-
-				next MAP_LOC unless (defined $asnFrom &&
-						     defined $asnTo   &&
-						     defined $ctg_start);
-
-				my $start = $asnFrom + $ctg_start + 1;
-				my $end   = $asnTo   + $ctg_start + 1;
-
-				my $ss_strand  = $ss->{orient}
-				  eq 'forward' ? 1 : -1;
-				my $ctg_strand = $component->{orientation}
-				  eq 'fwd'     ? 1 : -1;
-				my $rs_strand  = $map_loc->{orient}
-				  eq 'forward' ? 1 : -1;
-
-				my $strand = $ss_strand * $ctg_strand * $rs_strand;
-				$strand = $strand == 1 ? '+' : '-';
-
-				my @map_loc_errors;
-				@map_loc_errors = @{$map_loc->{errors}}
-				  if (ref($map_loc->{errors}) eq 'ARRAY');
-
-				my @errors = (@rs_errors, @ss_errors,
-					      @component_errors,
-					      @map_loc_errors);
-
-				my %attributes =
-				  (ID                  => [$ssId],
-				   Variant_seq         => $alleles,
-				   Alias	       => [$locSnpId],
-				   Intersected_feature => [$int_feat],
-				   Dbxref              => [$Dbxref],
-				   dbSNP_handle        => [$handle],
-				   dbSNP_alnQuality    => [$alnQuality],
-				   Errors              => \@errors,
-				  );
-
-				delete $attributes{Errors}
-				  unless scalar @{$attributes{Errors}};
-
-				my $feature = {feature_id => $ssId,
-					       seqid      => $chromosome,
-					       source     => 'dbSNP',
-					       type       => $type,
-					       start      => $start,
-					       end        => $end,
-					       score      => '.',
-					       strand     => $strand,
-					       phase      => '.',
-					       attributes => \%attributes,
-					      };
-
-				push @features, $feature;
-				$feature_count++;
-			}
+    
+    my $rs = shift;
+    
+    my $Dbxref = 'dbSNP:rs' . $rs->{rsId};
+    my @rs_errors;
+    @rs_errors = @{$rs->{errors}} if (ref($rs->{errors}) eq 'ARRAY');
+    my $assembly = $rs->{assembly};
+    
+    # Rs keys:
+    # qw(rsId snpClass snpType molType validProbMin validProbMax
+    #    genotype bitField)
+    
+    # Ss keys:
+    # qw(ssId handle batchId locSnpId subSnpClass orient
+    #    strand molType buildId methodClass validated
+    #    linkoutUrl);
+    
+    # Assembly keys:
+    # qw(dbSnpBuild genomeBuild groupLabel assemblySource
+    #    current reference);
+    
+    # Component keys:
+    # qw(componentType ctgID accession name chromosome start end
+    #    orientation gi groupTerm contigLable)
+    
+    # MapLoc keys:
+    # qw(asnFrom asnTo locType alnQuality orient physMapInt
+    #    leftFlankNeighborPos rightFlankNeighborPos
+    #    leftContigNeighborPos rightContigNeighborPos
+    #    numberOfMismatches numberOfDeletions numberOfInsertions);
+    
+    my @features;
+    for my $ss (@{$rs->{ss_set}}) {
+	
+	my ($alleles, $ssId, $handle, $locSnpId, $subSnpClass) =
+	    @{$ss}{qw(alleles ssId handle locSnpId subSnpClass)};
+	
+	$ssId = 'ss' . $ssId;
+	
+	my $type = $TYPE_MAP{$subSnpClass}
+	|| 'sequence_alteration';
+	
+	my @ss_errors;
+	@ss_errors = @{$ss->{errors}}
+	if (ref($ss->{errors}) eq 'ARRAY');
+	
+	my %int_feat_hash;
+	my $feature_count;
+	for my $component (@{$assembly->{component_set}}) {
+	    my $contig_acc = 'contig:RefSeq:' . $component->{accession};
+	    $int_feat_hash{$contig_acc}++;
+	    my $chromosome = 'chr' . $component->{chromosome};
+	    my $ctg_start  = $component->{start};
+	    my $ctg_end    = $component->{end};
+	    my @component_errors;
+	    @component_errors = @{$component->{errors}}
+	    if (ref($component->{errors}) eq 'ARRAY');
+	    
+	  MAP_LOC:
+	    for my $map_loc (@{$component->{map_loc_set}}) {
+		
+		my ($asnFrom, $asnTo, $physMapInt, $alnQuality) =
+		    @{$map_loc}{qw(asnFrom asnTo physMapInt alnQuality)};
+		
+		next MAP_LOC unless (defined $asnFrom &&
+				     defined $asnTo   &&
+				     defined $ctg_start);
+		
+		my $start = $asnFrom + $ctg_start + 1;
+		my $end   = $asnTo   + $ctg_start + 1;
+		
+		my $ss_strand  = $ss->{orient}
+		eq 'forward' ? 1 : -1;
+		my $ctg_strand = $component->{orientation}
+		eq 'fwd'     ? 1 : -1;
+		my $rs_strand  = $map_loc->{orient}
+		eq 'forward' ? 1 : -1;
+		
+		my $strand = $ss_strand * $ctg_strand * $rs_strand;
+		$strand = $strand == 1 ? '+' : '-';
+		
+		my @map_loc_errors;
+		@map_loc_errors = @{$map_loc->{errors}}
+		if (ref($map_loc->{errors}) eq 'ARRAY');
+		
+		my $reference_seq;
+		my %variant_effects;
+		my @fxn_set_errors;
+		my @fxn_sets = ref $map_loc->{fxn_set} ? @{$map_loc->{fxn_set}} : (); 
+		for my $fxn_set (@fxn_sets) {
+		    
+		    push @fxn_set_errors, @{$fxn_set->{errors}}
+		    if (ref($fxn_set->{errors}) eq 'ARRAY');
+		    
+		    if ($fxn_set->{fxnClass} eq 'reference') {
+			$reference_seq = $fxn_set->{allele};
+			push @{$alleles}, $reference_seq;
+		    }
+		    
+		    my @these_int_feats;
+		    if ($fxn_set->{mrnaAcc}) {
+			my $mrna_acc = 'mRNA:RefSeq:' . $fxn_set->{mrnaAcc};
+			$mrna_acc .= '.' . $fxn_set->{mrnaVer}
+			if $fxn_set->{mrnaVer};
+			push @these_int_feats, $mrna_acc;
+		    }
+		    if ($fxn_set->{protAcc}) {
+			my $prot_acc = 'protein:RefSeq:' . $fxn_set->{protAcc};
+			$prot_acc .= '.' . $fxn_set->{protVer}
+			if $fxn_set->{protVer};
+			push @these_int_feats, $prot_acc;
+		    }
+		    if ($fxn_set->{geneId}) {
+			my $geneID   = 'gene:Gene:' . $fxn_set->{geneId};
+			push @these_int_feats, $geneID;
+		    }
+		    if ($fxn_set->{symbol}) {
+			my $symbol   = 'gene:HGNC:' . $fxn_set->{symbol};
+			push @these_int_feats, $symbol;
+		    }
+		    if ($fxn_set->{fxnClass} eq 'intron') {
+			my $intron = 'intron:RefSeq:' . $fxn_set->{mrnaAcc};
+			$intron .= '.' . $fxn_set->{mrnaVer}
+			if $fxn_set->{mrnaVer};
+			push @these_int_feats, $intron;
+		    }
+		    if ($fxn_set->{fxnClass} eq 'three_prime_UTR') {
+			my $three_prime_UTR = 'three_prime_UTR:RefSeq:' . $fxn_set->{mrnaAcc};
+			$three_prime_UTR .= '.' . $fxn_set->{mrnaVer}
+			if $fxn_set->{mrnaVer};
+			push @these_int_feats, $three_prime_UTR;
+		    }
+		    if ($fxn_set->{fxnClass} eq 'five_prime_UTR') {
+			my $five_prime_UTR = 'five_prime_UTR:RefSeq:' . $fxn_set->{mrnaAcc};
+			$five_prime_UTR .= '.' . $fxn_set->{mrnaVer}
+			if $fxn_set->{mrnaVer};
+			push @these_int_feats, $five_prime_UTR;
+		    }
+		    
+		    map {next unless $_;$int_feat_hash{$_}++} @these_int_feats;
+		    
+		    if ($fxn_set->{allele} && $variant_effects{$fxn_set->{allele}}) {
+			push @fxn_set_errors, "Error: multiple_variant_effects_for_one_allele : $ssId";
+		    }
+		    elsif ($fxn_set->{allele}) {
+			$variant_effects{$fxn_set->{allele}} = $EFFECT_MAP{$fxn_set->{fxnClass}} || '.';
+		    }
 		}
-		if ($feature_count > 1) {
-			warn "Error : ss_id_not_unique : $ssId\n";
+		
+		my @errors = (@rs_errors, @ss_errors,
+			      @component_errors,
+			      @map_loc_errors,
+			      @fxn_set_errors,
+			      );
+		
+		my @int_feats = (sort keys %int_feat_hash);
+		
+		my %uniq_alleles = map {$_ => 1} @{$alleles};
+		$alleles = [sort keys %uniq_alleles];
+		
+		my %attributes =
+		    (ID                  => [$ssId],
+		     Variant_seq         => $alleles,
+		     Alias	             => [$locSnpId],
+		     Intersected_feature => [@int_feats],
+		     Dbxref              => [$Dbxref],
+		     dbSNP_handle        => [$handle],
+		     dbSNP_alnQuality    => [$alnQuality],
+		     Errors              => \@errors,
+		     );
+		
+		if (values %variant_effects && grep {$_ ne '.'} values %variant_effects) {
+		    for my $allele (@{$alleles}) {
+			push @{$attributes{Variant_effect}}, $variant_effects{$allele} || '.';
+		    }
 		}
+		
+		if ($reference_seq) {
+		    $attributes{Reference_seq} = [$reference_seq];
+		}
+		
+		delete $attributes{Errors}
+		unless scalar @{$attributes{Errors}};
+		
+		my $feature = {feature_id => $ssId,
+			       seqid      => $chromosome,
+			       source     => 'dbSNP',
+			       type       => $type,
+			       start      => $start,
+			       end        => $end,
+			       score      => '.',
+			       strand     => $strand,
+			       phase      => '.',
+			       attributes => \%attributes,
+			   };
+		
+		push @features, $feature;
+		$feature_count++;
+	    }
 	}
-	return \@features;
+	if ($feature_count > 1) {
+	    warn "Error : ss_id_not_unique : $ssId\n";
+	}
+    }
+    return \@features;
 }
 
 #-----------------------------------------------------------------------------
 
 sub build_att_txt {
-
-	my $feature = shift;
-
-	my %order = (ID                  => 1,
-		     Variant_seq         => 2,
-		     Alias	 => 3,
-		     Dbxref              => 4,
-		     Intersected_feature => 5,
-		     dbSNP_handle        => 6,
-		     dbSNP_alnQuality    => 7,
-		     Errors              => 8,
-		    );
-
-	my %attributes = %{$feature->{attributes}};
-
-	my $attribute_txt;
-	for my $key (sort {$order{$a} <=> $order{$b}} keys %attributes) {
-
-		my @values = @{$attributes{$key}};
-		my $value_txt = join ',', @values;
-		$attribute_txt .= "$key=$value_txt;";
-	}
-	return $attribute_txt;
+    
+    my $feature = shift;
+    
+    my %order = (ID                  => 1,
+		 Variant_seq         => 2,
+		 Reference_seq       => 3,
+		 Alias	             => 4,
+		 Dbxref              => 5,
+		 Intersected_feature => 6,
+		 Variant_effect      => 7,
+		 dbSNP_handle        => 8,
+		 dbSNP_alnQuality    => 9,
+		 Errors              => 10,
+		 );
+    
+    my %attributes = %{$feature->{attributes}};
+    
+    my $attribute_txt;
+    for my $key (sort {$order{$a} <=> $order{$b}} keys %attributes) {
+	
+	my @values = @{$attributes{$key}};
+	my $value_txt = join ',', @values;
+	$attribute_txt .= "$key=$value_txt;";
+    }
+    return $attribute_txt;
 }

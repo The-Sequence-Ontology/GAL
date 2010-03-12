@@ -1,0 +1,224 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use Carp;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+ucsc_gene_table_2_gtf --table knownGene
+
+Description:
+
+This script will take knownGene or refGene tables from UCSC and build UCSC
+style GTF files from them.
+
+Options:
+
+  table   which UCSC table is this (knownGene|refGene).
+
+";
+
+
+my ($help, $table);
+my $opt_success = GetOptions('help'    => \$help,
+			     'table=s' => \$table,
+			      );
+
+die $usage if $help || ! $opt_success;
+
+my $file = shift;
+die $usage unless $file;
+open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
+
+while (<$IN>) { 
+    chomp;
+    my ($alignID, $bin, $cdsEnd, $cdsEndStat, $cdsStart,
+	$cdsStartStat, $chrom, $exonCount, $exonEnds, $exonFrames,
+	$exonStarts, $name, $name2, $proteinID, $score, $strand,
+	$txEnd, $txStart);
+
+
+    if ($table eq 'refGene') {
+	($bin, $name, $chrom, $strand, $txStart, $txEnd,
+	$cdsStart, $cdsEnd, $exonCount, $exonStarts, $exonEnds,
+	$score, $name2, $cdsStartStat, $cdsEndStat, $exonFrames) =
+	split /\t/, $_;
+    }
+    elsif ($table eq 'knownGene') {
+	($name, $chrom, $strand, $txStart, $txEnd, $cdsStart,
+	 $cdsEnd, $exonCount, $exonStarts, $exonEnds, $proteinID,
+	 $alignID) = split /\t/, $_;
+    }
+    else {
+	die "\n\n-format must be either knownGene or refGene\n\n";
+    }
+
+    carp "Error : invalid_strand : $name, $strand"   if $strand  !~ /\+|-/;
+    croak "Error : invalid_txStart : $name, $txStart" if $txStart !~ /^\d+$/;
+    croak "Error : invalid_txEnd : $name, $txEnd"     if $txEnd   !~ /^\d+$/;
+
+    my $transcript = {seqid      => $chrom,
+		      source     => 'UCSC_' . $table,
+		      type       => 'mRNA',
+		      start      => $txStart,
+		      end        => $txEnd,
+		      score      => '.',
+		      strand     => $strand,
+		      phase      => '.',
+		      attributes => {ID => [$name]}};
+
+    my @dbxrefs = grep ($name2, $proteinID);
+    $transcript->{attributes}{Dbxref} = \@dbxrefs if scalar @dbxrefs;
+
+    my @exon_starts = split ',', $exonStarts;
+    my @exon_ends   = split ',', $exonEnds;
+    
+    carp "Error : mis_matched_exon_start_ends : $name\n"
+	if (scalar @exon_starts != scalar @exon_ends);
+
+    my @exon_pairs;
+    for my $i (0 .. scalar @exon_starts - 1) {
+	my ($start, $end) = ($exon_starts[$i], $exon_ends[$i]);
+	carp "Error : negative_length_exon : $name, $start, $end\n" if $start > $end;
+	carp "Error : zero_length_exon : $name, $start, $end\n"     if $start == $end;
+	push @exon_pairs, [$start, $end];
+    }
+    
+    carp "Error : exons_overlap : $name\n" if any_overlaps(@exon_pairs);
+
+#     my @intron_starts;
+#     my $intron_ends;
+#     map {push @intron_ends, shift @{$_};push @intron_starts, shift @{$_}} @exon_pairs;
+#     shift @intron_ends;
+#     pop   @intron_starts;
+# 
+#     my @intron_pairs;
+#     while (my ($start, $end) = (shift @intron_starts, shift @intron_ends)) {
+# 	carp "Error : negative_length_intron : $name, $start, $end\n" if $start > $end;
+# 	carp "Error : zero_length_intron : $name, $start, $end\n"     if $start == $end;
+# 	push @intron_pairs, [$start, $end];
+#     }
+
+    my @cds_pairs;
+    for my $pair (@exon_pairs) {
+	last if $cdsEnd - $cdsStart < 3; #Dont allow a CDS < 3nt long.
+	my ($start, $end) = @{$pair};
+	next if $end   < $cdsStart;
+	last if $start > $cdsEnd;
+	$start = $cdsStart if ($start < $cdsStart && $end > $cdsStart);
+	$end   = $cdsEnd   if ($start < $cdsEnd && $end > $cdsEnd);
+	push @cds_pairs, [$start, $end];
+    }
+
+    my $exons = build_child_features(parent 	 => $transcript,
+				     type   	 => 'exon',
+				     coordinates => \@exon_pairs
+				     );
+    my $CDSs = build_child_features(parent 	 => $transcript,
+				    type   	 => 'CDS',
+				    coordinates => \@cds_pairs
+				    );
+
+    $transcript->{type} = 'ncRNA' unless scalar @{$CDSs};
+
+    write_gff($transcript);
+    write_gff($exons);
+    write_gff($CDSs);
+
+}
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub build_child_features {
+
+    my %args = @_;
+
+    my $parent = $args{parent};
+    my $type   = $args{type};
+    my $coords = $args{coordinates};
+    my $parent_id = $parent->{attributes}{ID}[0];
+
+    my @features;
+    my $count;
+    for my $pair (@{$coords}) {
+	my ($start, $end) = @{$pair};
+	my $id = join ':', ($parent_id, $type, ++$count);
+	my %feature = %{$parent};
+	my $attributes = {ID     => [$id],
+			  Parent => [$parent_id],
+			  };
+
+	@feature{qw(type start end attributes)} =
+	    ($type, $start, $end, $attributes);
+	
+	push @features, \%feature;
+    }
+    return \@features;
+}
+
+#-----------------------------------------------------------------------------
+
+sub write_gff {
+
+    my $features = shift;
+
+    $features = ref $features eq 'ARRAY' ? $features : [$features];
+
+    for my $feature (@{$features}) {
+	my $attribute_text = get_attribute_text($feature);
+	print join "\t", (@{$feature}{qw(seqid source type start end score
+					 strand phase)},
+			  $attribute_text);
+	print "\n";
+	print '';
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub get_attribute_text {
+
+    my $feature = shift;
+    my $attributes = $feature->{attributes};
+
+    my %ORDER = (ID     => 1,
+		 Parent => 2,
+		 Dbxref => 3,
+		 );
+
+    my $attribute_text;
+    for my $key (sort {$ORDER{$a} <=> $ORDER{$b}} keys %{$attributes}) {
+	my @values = @{$attributes->{$key}};
+	my $value_text = join ',', @values;
+	$attribute_text .= "$key=$value_text;";
+    }
+    return $attribute_text;
+}
+
+#-----------------------------------------------------------------------------
+
+sub any_overlaps {
+
+    my @pairs = @_;
+
+    for my $i (0 .. scalar @pairs - 1) {
+	my $pair_i = $pairs[$i];
+	for my $j (0 .. scalar @pairs - 1) {
+	    next if $i == $j;
+	    my $pair_j = $pairs[$j];
+	    # Return 1 unless these two don't overlap
+	    return 1 unless ($pair_i->[1] < $pair_j->[0] or 
+			     $pair_i->[0] > $pair_j->[1]); 
+	}
+    }
+    # We never overlaped so return false
+    return 0;
+}
