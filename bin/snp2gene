@@ -57,7 +57,7 @@ my $opt_success = GetOptions('help'         => \$help,
 			     'dsn=s'        => \$dsn,
 			     'user=s'       => \$user,
 			     'password=s'   => \$password,
-			     'prompt'       => sub {$password = prompt("Password: ",   -echo => '*')->{value}},
+			     'prompt'       => sub {$password = prompt("Password: ", -tty, -echo => '*')->{value}},
 			     'continue'     => \$continue,
 			     'test'         => \$test,
 			      );

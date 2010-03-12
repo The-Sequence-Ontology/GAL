@@ -40,7 +40,7 @@ my $opt_success = GetOptions('help'         => \$help,
 			     'create'       => \$create,
 			     'user=s'       => \$user,
 			     'password=s'   => \$password,
-			     'prompt'       => sub {$password = prompt("Password: ",   -echo => '*')->{value}},
+			     'prompt'       => sub {$password = prompt("Password: ", -tty,  -echo => '*')->{value}},
 			    );
 
 die $usage if $help || ! $opt_success;
