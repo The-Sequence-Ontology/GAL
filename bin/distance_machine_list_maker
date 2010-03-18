@@ -1,0 +1,128 @@
+#!/usr/bin/perl -w 
+use strict;
+use lib '/Users/myandell/lib';
+use warnings;
+use FileHandle;
+use PostData;
+use Getopt::Std;
+use vars qw($opt_o $opt_n $opt_e $opt_l);
+getopts('o:n:l:'); 
+
+$| = 1;
+
+
+my $usage = "
+
+\n\n
+
+distance_machine_list_maker: makes lists for input to distance_machine_runner jobs; the smaller the n, the more 
+                             paralellized the compute 
+
+OPTIONS: -o <out dir> where to write the files
+         -n <number> number of genome-pairs to include in each list_file
+	 -l <path to list of GVF files> e.g. all the genomes you want to include in the final tree
+
+         distance_machine_list_maker -o ./distances/test -n 2 -l list_file
+ 
+\n\n";
+#--------------------------------------------------------------------------------
+#-------------------------------------- MAIN ------------------------------------
+#--------------------------------------------------------------------------------
+
+
+die $usage unless args_okay();
+
+my $files = parse_list_file($opt_l);
+
+my $TOTAL_PRINTED = 0;
+my @PAIRS;
+for (my $i = 0; $i < @{$files} - 1 ; $i++){
+	for (my $j = $i + 1; $j < @{$files}; $j++){
+		my $i_file = $files->[$i];
+		my $j_file = $files->[$j];
+
+		my ($i_name) = $i_file =~ /\/?([^\/]+)$/;
+		my ($j_name) = $j_file =~ /\/?([^\/]+)$/;
+
+		die "i_name not defined!\n" unless $i_name;
+		die "j_name not defined!\n" unless $j_name;
+
+		push(@PAIRS, [$i_file, $j_file]);
+	}
+}
+process_pairs();
+#--------------------------------------------------------------------------------
+#---------------------------------------- SUBS ----------------------------------
+#--------------------------------------------------------------------------------
+sub process_pairs {
+
+	my $total_pairs = @PAIRS;
+	my $i = 1;
+	my $j = 0;
+	my $counter = 0;
+	my @set;
+	foreach my $p (@PAIRS){
+		push(@set, $p);
+		$counter++;
+		print_it(\@set, $j) if $i == $opt_n || $counter == $total_pairs;
+		@set = ()           if $i == $opt_n;	
+		$j++                if $i == $opt_n;
+		$i = 0              if $i == $opt_n;
+		$i++;
+	}	
+	die "LOGIC ERROR! total pairs printed:$TOTAL_PRINTED total_pairs:$total_pairs\n" 
+	unless $total_pairs == $TOTAL_PRINTED;
+}
+#--------------------------------------------------------------------------------
+sub print_it {
+	my $set = shift;
+	my $i   = shift;
+
+	my $file = $opt_o.'/'.$opt_l.'.'.'run_file'.'.'.$i;
+
+	my $fh = new FileHandle();
+	   $fh->open(">$file");
+
+	foreach my $p (@{$set}){
+		$TOTAL_PRINTED++;
+		print $fh $p->[0]."\t".$p->[1]."\n";
+	}
+	$fh->close();
+}
+#--------------------------------------------------------------------------------
+sub parse_list_file {
+	my $list_file = shift;
+
+	my $fh = new FileHandle();
+	   $fh->open($list_file);
+
+	my @files;
+	while (my $l = <$fh>){
+		$l =~ s/\s+//g;
+		chomp($l);
+
+		die "can\'t find file:$l!\n" unless -e $l;
+
+		push(@files, $l);
+	}
+	$fh->close();
+
+	return \@files;
+}
+
+#--------------------------------------------------------------------------------
+sub args_okay {
+
+	return 0 unless $opt_o && $opt_n && $opt_l;
+
+	return 0 unless -e $opt_o || mkdir $opt_o;
+
+	return 1;
+
+}
+#--------------------------------------------------------------------------------
+
+
+
+
+

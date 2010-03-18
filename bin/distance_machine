@@ -1,0 +1,210 @@
+#!/usr/bin/perl -w 
+use strict;
+use lib '/Users/myandell/lib';
+
+use warnings;
+use FileHandle;
+use Getopt::Long;
+use PostData;
+$| = 1;
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+distance_machine  --chr <gff3 file> <gff3 file> 
+
+Description: gets distance between files 
+
+OPTIONS:
+
+--help 
+--chr : restrict the analysis to a single chromosome
+
+";
+
+
+my ($help, $chr, $segment_size);
+
+my $opt_success = GetOptions('help'           => \$help,
+			     'chr=s'          => \$chr,
+			     );
+
+die $usage if $help || ! $opt_success;
+
+die $usage unless -e $ARGV[1];
+
+my @files;
+
+while (my $file =  shift (@ARGV)){
+	push (@files, $file);
+}
+my %DATA;
+my $BIGGEST_OFFSET = 0;
+
+
+my $i = 0;
+foreach my $file (@files){
+	die "can\'t find file:$file\n" unless -e $file;
+
+	print STDERR "Now Processing file($i):$file\n";
+	parse_file($file, $i);
+	$i++;
+}
+
+print STDERR "BIGGEST_OFFSET:$BIGGEST_OFFSET\n";
+
+my $matrix = get_matrix();
+
+print_matrix($matrix);
+
+exit(0);
+
+#--------------------------------------------------------------------------------
+#---------------------------------------- SUBS ----------------------------------
+#--------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------
+sub parse_file {
+
+	my $file = shift;
+	my $num  = shift;
+
+	my $fh = new FileHandle();
+	   $fh->open($file);
+
+	$DATA{FILES}{$num}++;
+
+	while (defined(my $line = <$fh>)){
+		chomp($line);
+
+		next if $line =~ /^#/;
+
+		next if defined($chr) && $line !~ /^chr$chr\t/;
+
+		my @fields = split(/\t/, $line);
+
+		my $b = $fields[3];
+		my $e = $fields[4];
+
+
+		if ($b =~ /\d+/ && $e =~ /\d+/){
+			$BIGGEST_OFFSET = $e if $e > $BIGGEST_OFFSET; 
+
+			$DATA{COORS}{$fields[0].$b.'.'.$e}{$num}++;
+		}
+		else {
+			warn "bad line:$line\n";
+			sleep 2;
+		}
+	}
+	$fh->close();	
+
+}
+#--------------------------------------------------------------------------------
+sub get_matrix {
+
+	my %matrix;
+	my %seen;
+	foreach my $i (sort {$a <=> $b} keys %{$DATA{FILES}}){
+		foreach my $j (sort {$a <=> $b} keys %{$DATA{FILES}}){
+			if ($i eq $j){
+				$matrix{$i}{$j} = 0;
+				$matrix{$i}{$j} = 0;
+			}
+			elsif (! defined($seen{$i}{$j})){
+				my $d = get_distance($i, $j);
+				$matrix{$i}{$j} = $d;
+				$matrix{$j}{$i} = $d;
+				$seen{$i}{$j}++;
+				$seen{$j}{$i}++;
+			}
+			else {
+			}
+		}
+	}
+	return \%matrix;
+}
+#-------------------------------------------------------------------------------
+sub get_distance {
+	my $i = shift;
+	my $j = shift;
+
+	print  STDERR "Now getting distance for I:$i J:$j\n";
+
+	my %stuff;
+	while (my $coor = each %{$DATA{COORS}}){
+		my $v_i = defined($DATA{COORS}{$coor}{$i}) ? 1 : 0;
+		my $v_j = defined($DATA{COORS}{$coor}{$j}) ? 1 : 0;
+
+		$stuff{"$v_i$v_j"}++;	
+	}
+
+
+		
+	$stuff{'11'} = 0 unless defined($stuff{'11'});
+	$stuff{'00'} = 0 unless defined($stuff{'00'});
+	$stuff{'01'} = 0 unless defined($stuff{'01'});
+	$stuff{'10'} = 0 unless defined($stuff{'10'});
+
+	my $Ns = $stuff{'10'} || 0;
+	my $Nl = $stuff{'01'} || 0;
+
+
+
+	($Ns, $Nl) = ($Nl, $Ns) if $Nl > $Ns;
+
+	$Ns = $Ns + $stuff{'11'};
+
+	my $intersection = $stuff{'11'};
+
+	#PostData(\%stuff);
+
+	#print STDERR "I:$i J:$j\n";
+	foreach my $k (keys %stuff){
+		print STDERR "$k:".$stuff{$k}."\n";
+	}
+	my $d = ($Ns - $intersection)/$Ns;
+
+	print STDERR "D:$d\n";
+	return $d;
+} 
+#-----------------------------------------------------------------------------
+sub print_matrix {
+        my $matrix = shift;
+
+
+        my $c = 8;
+        my $c_s = " "x 2;
+
+
+        my $keys = keys %{$matrix};
+
+        #print "        "." "x $c.join($c_s, (sort keys %{$matrix}))."\n";
+
+        print "         $keys\n";
+
+        foreach my $i (sort keys %{$matrix}){
+                my @data;
+                foreach my $j (sort keys %{$matrix->{$i}}){
+                        my $sij = substr($matrix->{$i}->{$j}, 0, $c-2);
+                        my $l = $c - length($sij);
+                        my $spacer = " "x $l;
+                        my $string = $spacer."       ".$sij;
+                        push(@data, $string);
+                }
+                print $i." ".join(" ", @data)."\n";
+        }
+
+
+}
+#-----------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+
+
+
+
+
+

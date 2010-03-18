@@ -1,0 +1,220 @@
+#!/usr/bin/perl -w 
+use strict;
+use warnings;
+use FileHandle;
+use Getopt::Long;
+use PostData;
+$| = 1;
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+distance_machine  <gff3 file> <gff3 file> 
+
+Description: gets distance between files. outputs a phylip distance matrix
+
+OPTIONS:
+
+--help 
+--chr : restrict the analysis to a single chromosome.
+EXAMPLE:
+
+";
+
+
+my ($help, $chr, $segment_size);
+my $opt_success = GetOptions('help'           => \$help,
+			     'chr=s'          => \$chr,
+			     );
+
+die $usage if $help || ! $opt_success;
+
+#die $usage unless -e $ARGV[1];
+
+
+my %DATA;
+my $BIGGEST_OFFSET = 0;
+
+
+my $files = get_files();
+
+my $i = 0;
+foreach my $file (@{$files}){
+	print STDERR "Now Processing file($i):$file\n";
+	parse_file($file, $i);
+	$i++;
+}
+
+print STDERR "BIGGEST_OFFSET:$BIGGEST_OFFSET\n";
+
+my $matrix = get_matrix();
+
+print_matrix($matrix);
+
+exit(0);
+
+#--------------------------------------------------------------------------------
+#---------------------------------------- SUBS ----------------------------------
+#--------------------------------------------------------------------------------
+sub get_files {
+	my $dir = 
+	'/Users/myandell/Omicia/gff3_standardization_project/Standardized_GFF/';
+
+	my @files;
+
+
+	push(@files, $dir.'omim_alleles_for_every_genome');
+
+	return \@files;
+}
+#--------------------------------------------------------------------------------
+sub parse_file {
+
+	my $file = shift;
+	my $num  = shift;
+
+	my $fh = new FileHandle();
+	   $fh->open($file);
+
+	$DATA{FILES}{$num}++;
+
+	while (defined(my $line = <$fh>)){
+		chomp($line);
+
+		next if $line =~ /^#/;
+
+		next if defined($chr) && $line !~ /^chr$chr\t/;
+
+		my @fields = split(/\t/, $line);
+
+		my $b = $fields[3];
+		my $e = $fields[4];
+
+
+                my $nine = $fields[8];
+
+                my @stuff = split(';', $nine);
+
+
+                my %hash;
+                foreach my $s (@stuff){
+                        my ($k, $v) = $s =~ /(.*)\=(.*)$/;
+
+                        $hash{$k} = $v;
+                }
+
+                if ($b =~ /\d+/ && $e =~ /\d+/){
+                        $BIGGEST_OFFSET = $e if $e > $BIGGEST_OFFSET;
+
+                        $DATA{GENOMES}{$hash{GENOME}}{$b.'.'.$e}++;
+                }
+
+	}
+	$fh->close();	
+
+}
+#--------------------------------------------------------------------------------
+sub get_matrix {
+
+	my %matrix;
+	my %seen;
+	foreach my $i (keys %{$DATA{GENOMES}}){
+		foreach my $j (keys %{$DATA{GENOMES}}){
+			if ($i eq $j){
+				$matrix{$i}{$j} = 0;
+				$matrix{$i}{$j} = 0;
+			}
+			elsif (! defined($seen{$i}{$j})){
+				my $d = get_distance($i, $j);
+				$matrix{$i}{$j} = $d;
+				$matrix{$j}{$i} = $d;
+				$seen{$i}{$j}++;
+				$seen{$j}{$i}++;
+			}
+			else {
+			}
+		}
+	}
+	return \%matrix;
+}
+#-------------------------------------------------------------------------------
+sub get_distance {
+	my $i = shift;
+	my $j = shift;
+
+	print  STDERR "Now getting distance for I:$i J:$j\n";
+
+	my %stuff;
+	while (my $coor = each %{$DATA{GENOMES}{$i}}){
+		my $v_j = defined($DATA{GENOMES}{$j}{$coor}) ? 1 : 0;
+
+		$stuff{'1'.$v_j}++;	
+	}
+
+        while (my $coor = each %{$DATA{GENOMES}{$j}}){
+                my $v_i = defined($DATA{GENOMES}{$i}{$coor}) ? 1 : 0;
+
+                $stuff{$v_i.'1'}++;     
+        }
+
+		
+	my $Ns = $stuff{'10'};
+	my $Nl = $stuff{'01'};
+
+	($Ns, $Nl) = ($Nl, $Ns) if $Nl > $Ns;
+
+	$Ns = $Ns + $stuff{'11'};
+
+	my $intersection = $stuff{'11'};
+
+	print STDERR "I:$i J:$j\n";
+	print STDERR "intersection:$intersection\n";
+	foreach my $k (keys %stuff){
+		print STDERR "$k:".$stuff{$k}."\n";
+	}
+	my $d = ($Ns - $intersection)/$Ns;
+
+	return $d;
+} 
+#-----------------------------------------------------------------------------
+sub print_matrix {
+        my $matrix = shift;
+
+
+        my $c = 8;
+        my $c_s = " "x 2;
+
+
+        my $keys = keys %{$matrix};
+
+        #print "        "." "x $c.join($c_s, (sort keys %{$matrix}))."\n";
+
+        print "         $keys\n";
+
+        foreach my $i (sort keys %{$matrix}){
+		my $short = substr($i, 3, 9);
+                my @data;
+                foreach my $j (sort keys %{$matrix->{$i}}){
+                        my $sij = substr($matrix->{$i}->{$j}, 0, $c-2);
+                        my $l = $c - length($sij);
+                        my $spacer = " "x $l;
+                        my $string = $spacer."       ".$sij;
+                        push(@data, $string);
+                }
+                print $short." ".join(" ", @data)."\n";
+        }
+
+
+}
+#-----------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+
+
+
+
+
+

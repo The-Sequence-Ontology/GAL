@@ -1,0 +1,255 @@
+#!/usr/bin/perl -w 
+use strict;
+use warnings;
+use FileHandle;
+use Getopt::Long;
+use PostData;
+$| = 1;
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+distance_machine  <gff3 file> <gff3 file> 
+
+Description: gets distance between files. outputs a phylip distance matrix
+
+OPTIONS:
+
+--help 
+--chr : restrict the analysis to a single chromosome.
+EXAMPLE:
+
+";
+
+
+my ($help, $chr, $segment_size);
+my $opt_success = GetOptions('help'           => \$help,
+			     'chr=s'          => \$chr,
+			     );
+
+die $usage if $help || ! $opt_success;
+
+#die $usage unless -e $ARGV[1];
+
+
+my %DATA;
+my $BIGGEST_OFFSET = 0;
+
+
+my $files = get_files();
+
+foreach my $file (@{$files}){
+	print STDERR "finding offset file:$file\n";
+	set_offset($file);
+}
+
+$BIGGEST_OFFSET++;
+print STDERR "BIGGEST_OFFSET:$BIGGEST_OFFSET\n";
+
+my $i = 0;
+foreach my $file (@{$files}){
+        print STDERR "Now Processing file($i):$file\n";
+        parse_file($file, $i);
+        $i++;
+}
+
+print STDERR "BIGGEST_OFFSET:$BIGGEST_OFFSET\n";
+
+my $matrix = get_matrix();
+
+print_matrix($matrix);
+
+#--------------------------------------------------------------------------------
+#---------------------------------------- SUBS ----------------------------------
+#--------------------------------------------------------------------------------
+sub get_files {
+	my $dir = 
+	'/Users/myandell/Omicia/gff3_standardization_project/Standardized_GFF/';
+
+	my @files;
+
+
+	push(@files, $dir.'ut_NA07022_snp.gff3.fixed');
+	push(@files, $dir.'ut_NA12878_snp.gff3');
+	push(@files, $dir.'ut_NA18507_Illumina_snp.gff3');
+	push(@files, $dir.'ut_NA18507_SOLiD_snp.gff3');
+	push(@files, $dir.'ut_NA19240_snp.gff3');
+	push(@files, $dir.'ut_chinese_snp.gff3');
+	push(@files, $dir.'ut_korean_snp.gff3');
+	push(@files, $dir.'ut_quake_snp.gff3');
+	push(@files, $dir.'ut_venter_snp.gff3.fixed');
+	push(@files, $dir.'ut_watson_snp.gff3');
+
+	return \@files;
+}
+#--------------------------------------------------------------------------------
+sub set_offset {
+
+        my $file = shift;
+        my $num  = shift;
+
+        my $fh = new FileHandle();
+           $fh->open($file);
+
+        while (defined(my $line = <$fh>)){
+                chomp($line);
+
+                next if $line =~ /^#/;
+
+                next if defined($chr) && $line !~ /^chr$chr/;
+
+                my @fields = split(/\t/, $line);
+
+                my $b = $fields[3];
+                my $e = $fields[4];
+
+
+                if ($b =~ /\d+/ && $e =~ /\d+/){
+                        $BIGGEST_OFFSET = $e if $e > $BIGGEST_OFFSET;
+                }
+        }
+        $fh->close();
+
+}
+#--------------------------------------------------------------------------------
+sub parse_file {
+
+	my $file = shift;
+	my $num  = shift;
+
+	my $fh = new FileHandle();
+	   $fh->open($file);
+
+	print STDERR "Building String for file($num):$file\n";
+
+	$DATA{$num}{$chr} = '0' x $BIGGEST_OFFSET;
+
+	while (defined(my $line = <$fh>)){
+		chomp($line);
+
+		next if $line =~ /^#/;
+
+		next if defined($chr) && $line !~ /^chr$chr/;
+
+		my @fields = split(/\t/, $line);
+
+		my $b = $fields[3];
+		my $e = $fields[4];
+
+                my $l = $e - $b + 1;
+
+                my $new_str = '1' x $l;
+
+                substr($DATA{$num}{$chr}, $b, $l) =  $new_str;
+
+	}
+	$fh->close();	
+
+	print STDERR "... finished\n";
+}
+#--------------------------------------------------------------------------------
+sub get_matrix {
+
+	my %matrix;
+	my %seen;
+	foreach my $i (sort {$a <=> $b} keys %DATA){
+		foreach my $j (sort {$a <=> $b} keys %DATA){
+			if ($i eq $j){
+				$matrix{$i}{$j} = 0;
+				$matrix{$i}{$j} = 0;
+			}
+			elsif (! defined($seen{$i}{$j})){
+				my $d = get_distance($i, $j);
+				$matrix{$i}{$j} = $d;
+				$matrix{$j}{$i} = $d;
+				$seen{$i}{$j}++;
+				$seen{$j}{$i}++;
+			}
+			else {
+			}
+		}
+		$DATA{$i} = undef;
+	}
+	return \%matrix;
+}
+#-------------------------------------------------------------------------------
+sub get_distance {
+	my $i = shift;
+	my $j = shift;
+
+
+
+	my $length = length($DATA{$i}{$chr});
+	
+	print STDERR "Scoreing string for $i $j\n";
+
+	my %stuff;
+	my $mod = 1000000;
+	for (my $k = 0; $k < $length; $k++){
+		my $v_i = substr($DATA{$i}{$chr}, $k, 1);
+		my $v_j = substr($DATA{$j}{$chr}, $k, 1);
+
+		my $where = $k/$mod;
+		print STDERR  "k:$k \n" if int($k/$mod) == $k/$mod;
+
+		$stuff{"$v_i$v_j"}++;
+	}
+
+	PostData(\%stuff);
+
+	my $Ns = $stuff{'10'};
+	my $Nl = $stuff{'01'};
+
+	($Ns, $Nl) = ($Nl, $Ns) if $Nl < $Ns;
+
+	print STDERR "Ns:$Ns Nl:$Nl\n";
+
+	my $intersection = $stuff{'11'};
+
+	my $d = $Ns/($Ns + $intersection);
+
+	print STDERR "I:$i J:$j D:$d\n";
+
+	return $d;
+} 
+#-----------------------------------------------------------------------------
+sub print_matrix {
+        my $matrix = shift;
+
+
+        my $c = 8;
+        my $c_s = " "x 2;
+
+
+        my $keys = keys %{$matrix};
+
+        #print "        "." "x $c.join($c_s, (sort keys %{$matrix}))."\n";
+
+        print "         $keys\n";
+
+        foreach my $i (sort keys %{$matrix}){
+                my @data;
+                foreach my $j (sort keys %{$matrix->{$i}}){
+                        my $sij = substr($matrix->{$i}->{$j}, 0, $c-2);
+                        my $l = $c - length($sij);
+                        my $spacer = " "x $l;
+                        my $string = $spacer."       ".$sij;
+                        push(@data, $string);
+                }
+                print $i." ".join(" ", @data)."\n";
+        }
+
+
+}
+#-----------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+
+
+
+
+
+

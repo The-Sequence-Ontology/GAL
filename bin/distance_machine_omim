@@ -1,0 +1,505 @@
+#!/usr/bin/perl -w 
+
+use strict;
+use warnings;
+
+use lib '/Users/myandell/lib';
+
+use FileHandle;
+use Getopt::Long;
+use PostData;
+$| = 1;
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+distance_machine_omim  <gff3 file> <gff3 file> 
+
+Description: gets list of allels common to OMIM. 
+
+OPTIONS:
+
+--help 
+--chr : restrict the analysis to a single chromosome.
+EXAMPLE:
+
+";
+
+
+my ($help, $chr, $segment_size);
+my $opt_success = GetOptions('help'           => \$help,
+			     'chr=s'          => \$chr,
+			     );
+
+die $usage if $help || ! $opt_success;
+
+#die $usage unless -e $ARGV[1];
+
+
+my %DATA;
+my $BIGGEST_OFFSET = 0;
+
+
+my $files = get_files();
+
+my $i = 0;
+foreach my $file (@{$files}){
+	print STDERR "Now Processing file($i):$file\n";
+	parse_file($file, $i);
+	$i++;
+}
+
+print STDERR "BIGGEST_OFFSET:$BIGGEST_OFFSET\n";
+
+my $list = get_list();
+
+#print_list($list, $files);
+print_list_2($list, $files);
+exit(0);
+
+#--------------------------------------------------------------------------------
+#---------------------------------------- SUBS ----------------------------------
+#--------------------------------------------------------------------------------
+sub get_files {
+	my $dir = 
+	'/Users/myandell/Omicia/gff3_standardization_project/Standardized_GFF/';
+
+	my @files;
+
+
+
+	push(@files, $dir.'omim_variants_v2.gff.fixed');
+        push(@files, $dir.'ut_NA19240_snp.gff3');
+=cut;
+        push(@files, $dir.'ut_NA18507_Illumina_snp.gff3');
+        push(@files, $dir.'ut_NA18507_SOLiD_snp.gff3');
+        push(@files, $dir.'ut_chinese_snp.gff3');
+        push(@files, $dir.'ut_korean_snp.gff3');
+        push(@files, $dir.'ut_venter_snp.gff3.fixed');
+        push(@files, $dir.'watson.snp.uniq.gvf');
+        push(@files, $dir.'ut_NA07022_snp.gff3.fixed');
+        push(@files, $dir.'ut_NA12878_snp.gff3');
+        push(@files, $dir.'ut_quake_snp.gff3.fixed');
+=cut;
+
+=cut;
+	push(@files, $dir.'omim_variants_v2.gff.fixed');
+	push(@files, $dir.'ut_NA07022_snp.gff3.fixed');
+	push(@files, $dir.'ut_NA12878_snp.gff3');
+	push(@files, $dir.'ut_NA18507_Illumina_snp.gff3');
+	push(@files, $dir.'ut_NA18507_SOLiD_snp.gff3');
+	push(@files, $dir.'ut_NA19240_snp.gff3');
+	push(@files, $dir.'ut_chinese_snp.gff3');
+	push(@files, $dir.'ut_korean_snp.gff3');
+	push(@files, $dir.'ut_quake_snp.gff3.fixed');
+	push(@files, $dir.'ut_venter_snp.gff3.fixed');
+	push(@files, $dir.'ut_watson_snp.gff3');
+=cut;
+
+	return \@files;
+}
+#--------------------------------------------------------------------------------
+sub parse_file {
+
+	my $file = shift;
+	my $num  = shift;
+
+	my $fh = new FileHandle();
+	   $fh->open($file);
+
+	$DATA{FILES}{$num}++;
+
+	while (defined(my $line = <$fh>)){
+		chomp($line);
+
+		next if $line =~ /^#/;
+
+		next if defined($chr) && $line !~ /^chr$chr\t/;
+
+		my @fields = split(/\t/, $line);
+
+		my $chr = $fields[0] unless defined($chr);
+
+		my $b = $fields[3];
+		my $e = $fields[4];
+
+
+		if ($b =~ /\d+/ && $e =~ /\d+/){
+			$BIGGEST_OFFSET = $e if $e > $BIGGEST_OFFSET; 
+
+			if ($num == 0){
+
+				push(@{$DATA{$chr}{$b.'.'.$e}{$num}}, $line);
+			}
+			elsif (defined($DATA{$chr}{$b.'.'.$e}{0})){
+				push(@{$DATA{$chr}{$b.'.'.$e}{$num}}, $line)
+			}
+		}
+	}
+	$fh->close();	
+
+}
+#--------------------------------------------------------------------------------
+sub get_list {
+
+
+	my %seen;
+
+	my %list;
+
+	my @keys = sort {$a <=> $b} keys %{$DATA{FILES}};
+
+	shift (@keys);
+
+
+	foreach my $j (@keys){
+		get_common(0, $j, \%list);
+	}
+
+	return \%list;
+}
+#-------------------------------------------------------------------------------
+sub get_common {
+	my $i     = shift;
+	my $j     = shift;
+	my $list  = shift;
+
+	print  STDERR "Now getting common SNPS for I:$i J:$j\n";
+
+	my %stuff;
+
+	foreach my $chr (keys %DATA){
+		while (my $coor = each %{$DATA{$chr}}){
+			chrmy $v_i = $DATA{$chr}{$coor}{$i};
+			my $v_j = $DATA{$chr}{$coor}{$j};
+
+			if (defined($v_i) && defined($v_j)){
+				push(@{$list->{$chr}->{$j}}, [$v_i, $v_j]);
+			}
+		
+		}
+	}
+} 
+#-----------------------------------------------------------------------------
+sub print_list {
+        my $l     = shift;
+	my $files = shift;
+
+	for (my $i = 1; $i <@{$files};$i++){
+		my $file = $files->[$i];
+
+		my $tot_num = 0;
+		foreach my $chrom (keys %{$l}){
+			my $num = defined ($l->{$chrom}->{$i}) ? @{$l->{$chrom}->{$i}} : 0;
+			$tot_num += $num if defined($num);
+
+		}
+		print "chr$chr SETS:$tot_num TARGET GENOME:$file\n";
+
+		print "chr$chr TOTAL NUM DIEASE SNP SETS:$tot_num\n";
+
+		my $set_num = 0;
+		foreach my $set (@{$l->{$chr}->{$i}}){
+			my $omim = $set->[0];
+			my $geno = $set->[1];
+
+			print "#--------- SET:$set_num ---------------\n";
+			foreach my $o (@{$omim}){
+				print "chr$chr\tSET_NUM:$set_num\tOMIM:$o\n";
+			}
+			foreach my $g (@{$geno}){
+				print "chr$chr\tSET_NUM:$set_num\tGENO:$g\n";
+			}
+			$set_num++;
+		}
+	}
+}
+#-----------------------------------------------------------------------------
+sub print_list_2 {
+        my $l     = shift;
+        my $files = shift;
+
+        for (my $i = 1; $i <@{$files};$i++){
+                my $file = $files->[$i];
+
+		foreach my $chr (keys %{$l}){
+                	foreach my $set (@{$l->{$chr}->{$i}}){
+                        	my $omim = $set->[0];
+                        	my $geno = $set->[1];
+
+				my $snps = add_info($omim, $geno);
+
+				my $status = get_status($snps);
+
+				my ($name) = $file =~ /.*\/(.*)$/;
+
+				print_it($geno, $status, $name);
+                	}
+		}
+	}
+}
+#-----------------------------------------------------------------------------
+sub print_it {
+	my $g = shift;
+	my $s = shift;
+	my $n = shift;
+
+	foreach my $l (@{$g}){
+		print $l."STATUS=".$s.';'."GENOME=$n"."\n";
+	}
+}
+#-----------------------------------------------------------------------------
+sub get_code {
+	my $std_vars = shift;
+	my $omim_vars = shift;
+	my $std_ref   = shift;
+	my $geno      = shift;
+
+	my %refs;
+	foreach my $std_var (keys %{$std_vars}){
+		if (defined($omim_vars->{$std_var})){
+			$refs{$std_var} = $omim_vars->{$std_var};
+			
+		}
+		else {
+			$refs{$std_var} = 'novel_allele';
+		}
+	}
+
+	my $num_keys = keys %{$std_vars};
+	my @keys     = keys %{$std_vars};
+
+	
+	
+	if    ($num_keys == 1 && $std_vars->{$keys[0]} == 1){
+
+		if ($geno eq 'homozygous:no_reference_allele'){
+			return "homo:".$std_ref.'->'.$keys[0].'/'.$keys[0]." OMIM_ID:".$refs{$keys[0]};
+		}
+		elsif ($geno eq 'heterozygous:with_reference_allele'){
+			return "het:".$std_ref.'->'.$std_ref.'/'.$keys[0]." OMIM_ID:".$refs{$keys[0]};
+		}
+	}
+        elsif ($num_keys == 1 && $std_vars->{$keys[0]} == 2){
+
+
+                return "homo:".$std_ref.'->'.$keys[0].'/'.$keys[0]." OMIM_ID:".$refs{$keys[0]};
+        }
+	elsif ($num_keys == 2){
+		return "trans_het:".$std_ref.'->'.$keys[0].'/'.$keys[1]." OMIM_ID:".$refs{$keys[0]}.'/'.$refs{$keys[1]};
+	}
+	else {
+		die "Weird number of keys insub get_code:$num_keys\n";
+	}
+	
+}
+#-----------------------------------------------------------------------------
+sub get_code_healthy {
+        my $std_vars = shift;
+        my $omim_vars = shift;
+        my $std_ref   = shift;
+        my $geno      = shift;
+
+
+        my @keys_std_vars = keys %{$std_vars};
+
+        my $alt_ref = $keys_std_vars[0];
+
+        my %refs;
+
+        foreach my $std_var (keys %{$std_vars}){
+                if (defined($omim_vars->{$std_ref})){
+                        $refs{$std_var} = $omim_vars->{$std_ref};
+
+                }
+                else {
+                        $refs{$std_var} = 'novel_allele';
+                }
+        }
+
+        my $num_keys = keys %{$std_vars};
+        my @keys     = keys %{$std_vars};
+
+
+
+        if    ($num_keys == 1 && $std_vars->{$keys[0]} == 1){
+
+                if ($geno eq 'homozygous:no_reference_allele'){
+                        return "homo:".$std_ref.'->'.$keys[0].'/'.$keys[0]." OMIM_ID:".$refs{$keys[0]}.' HEALTHY';
+                }
+                elsif ($geno eq 'heterozygous:with_reference_allele'){
+                        return "het:".$std_ref.'->'.$std_ref.'/'.$keys[0]." OMIM_ID:".$refs{$keys[0]}.' HEALTHY';
+                }
+        }
+        elsif ($num_keys == 1 && $std_vars->{$keys[0]} == 2){
+
+
+                return "homo:".$std_ref.'->'.$keys[0].'/'.$keys[0]." OMIM_ID:".$refs{$keys[0]}.' HEALTHY';
+        }
+        elsif ($num_keys == 2){
+                return "trans_het:".$std_ref.'->'.$keys[0].'/'.$keys[1]." OMIM_ID:".$refs{$keys[0]}.'/'.$refs{$keys[1]}.' HEALTHY';
+        }
+        else {
+                die "Weird number of keys insub get_code:$num_keys\n";
+        }
+
+}
+#-----------------------------------------------------------------------------
+sub get_status {
+	my $snps = shift;
+
+	foreach my $b (keys %{$snps}){
+		foreach my $e (keys %{$snps->{$b}}){
+			my $omim_ref = $snps->{$b}->{$e}->{omim}->{ref};
+			my $std_ref  = $snps->{$b}->{$e}->{std}->{ref};
+
+			my $std_vars  = $snps->{$b}->{$e}->{std}->{var};
+			my $omim_vars = $snps->{$b}->{$e}->{omim}->{var};
+			my $geno      = $snps->{$b}->{$e}->{std}->{genotype};
+
+			my @keys_std_vars = keys %{$std_vars};
+
+			my $alt_ref = $keys_std_vars[0];
+
+			my ($code, $xref);
+			if ($omim_ref eq $std_ref){
+				
+				 return get_code($std_vars, $omim_vars, $std_ref, $geno);
+			}
+			elsif (comp($std_ref) eq $omim_ref){
+				return get_code($std_vars, $omim_vars, comp($std_ref), $geno);
+			}
+                        elsif ($alt_ref eq $omim_ref){
+                                return get_code_healthy($std_vars, $omim_vars, $std_ref, $geno);
+                        }
+			else { 
+				
+				warn "inconsistant std_ref:$std_ref omim_ref:$omim_ref in sub get_status\n";
+				warn "alt_ref:$alt_ref omim_ref:$omim_ref\n";
+				sleep 1;
+			}
+		}
+	}
+}
+#-----------------------------------------------------------------------------
+sub load_omim_data {
+
+	my $data   = shift;
+	my $str    = shift;
+
+	my @fields = split(/\t/, $str);
+
+        my $b = $fields[3];
+        my $e = $fields[4];
+
+        my ($db_xref) = $fields[8] =~ /.*dbxref\=\"(\S+)\"/;
+
+	my ($codon)   = $fields[8] =~ /.*codon\=(.*\))\;/;
+
+        my ($omim_ref, $omim_var) =
+           $fields[8] =~ /.*nucleotide_variant\=\"([GATC])\/([GATC])\"/;
+
+	my $id = $fields[1];
+	my $chr = $fields[0];
+
+           $data->{$b}->{$e}->{omim}->{ref}              = $omim_ref;
+           $data->{$b}->{$e}->{omim}->{var}->{$omim_var} = $db_xref;
+	   $data->{$b}->{$e}->{omim}->{codon}            = $codon;
+	   push(@{$data->{$b}->{$e}->{omim}->{ids}}, $id);
+	   
+	   push(@{$data->{$b}->{$e}->{omim}->{strs}}, $str);
+	
+}
+#-----------------------------------------------------------------------------
+sub load_std_data {
+
+        my $data   = shift;
+        my $str    = shift;
+
+	my @fields = split(/\t/, $str);
+
+        my $b = $fields[3];
+        my $e = $fields[4];
+
+
+	my @nine = split(';', $fields[8]);
+
+	my %stuff;
+        foreach my $f (@nine){
+                my ($k, $v) = $f =~ /(.+)\=(.+)/;
+
+		$stuff{$k} = $v;
+        }
+
+	
+	
+	push(@{$data->{$b}->{$e}->{std}->{strs}},$str);
+
+	$data->{$b}->{$e}->{std}->{genotype} = $stuff{genotype};
+        $data->{$b}->{$e}->{std}->{ref}      = $stuff{reference_allele};
+	$data->{$b}->{$e}->{std}->{id}       = $stuff{ID};
+
+	my ($x, $y);
+	if     ($stuff{variant_allele} =~ /[GATC]\,[GATC]/){
+		($x, $y) = $stuff{variant_allele} =~ /([GATC])\,([GATC])/;
+	}
+	elsif ($stuff{variant_allele} =~ /[GATC]/){
+		($x) = $stuff{variant_allele} =~ /([GATC])/;
+	}
+	else {
+		die "dead in load_std_data:".$stuff{variant_allele}."\n"; 
+	}
+
+	if    ($stuff{reference_allele} eq $x && defined($y)){
+		$data->{$b}->{$e}->{std}->{var}->{$y}++;
+	}
+        elsif ($stuff{variant_allele} eq $x){
+                $data->{$b}->{$e}->{std}->{var}->{$x}++;
+	}
+	elsif ($stuff{reference_allele} eq $y){
+		$data->{$b}->{$e}->{std}->{var}->{$x}++;
+	}
+	else{
+        	$data->{$b}->{$e}->{std}->{var}->{$x}++;
+		$data->{$b}->{$e}->{std}->{var}->{$y}++ if defined $y;
+	}
+}
+#-----------------------------------------------------------------------------
+sub add_info {
+	my $omim = shift;
+	my $geno = shift;
+
+
+	my %data;
+        foreach my $o (@{$omim}){
+		
+		load_omim_data(\%data, $o);
+        }
+
+	foreach my $g (@{$geno}){
+
+		load_std_data(\%data, $g);
+	}
+
+	return \%data;
+}
+#-----------------------------------------------------------------------------
+sub comp {
+	my $n = shift;
+
+	return 'G' if $n eq 'C';
+	return 'C' if $n eq 'G';
+	return 'T' if $n eq 'A';
+	return 'A' if $n eq 'T';
+
+	die "dead in sub comp n:$n\n";	
+}
+#-----------------------------------------------------------------------------
+
+
+
+
+
