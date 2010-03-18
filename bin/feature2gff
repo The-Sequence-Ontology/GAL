@@ -20,8 +20,26 @@ Convert various sequence feature formats to GFF3.
 
 Options:
 
-  --format   The format for the feature file (a subclass of Parser e.g.
-             gigabayes, maq, clcbio, soap, celera);
+  --format   The format for the feature file - a subclass of GAL::Parser e.g.
+		basic_snp                 
+		complete_genomics
+		cosmic
+		dbsnp_flat
+		gff3
+		illumina_indel
+		illumina_snp
+		maq_cns2snp
+		na18507_sanger_indel
+		quake
+		samtools_pileup
+		soap_indel
+		soap_snp
+		solid
+		template
+		template_sequence_alteration
+		venter_indel
+		venter_snp
+		watson_cshl
 
 ";
 

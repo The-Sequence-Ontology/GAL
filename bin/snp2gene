@@ -81,9 +81,17 @@ if (@type) {
     }
 
 my $dbh     = DBI->connect($dsn, $user, $password);
-my $sth_snp = $dbh->prepare("SELECT feature_id, start, end FROM feature WHERE $type_text seqid = ? AND ((start >= ? AND start <= ?) OR (end >= ? AND end <= ?))");
-my $sth_ref = $dbh->prepare("SELECT a.att_value as reference_seq FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'Reference_seq'");
-my $sth_var = $dbh->prepare("SELECT a.att_value as variant_seq FROM feature f, attribute a WHERE f.feature_id = ? AND f.feature_id = a.feature_id AND a.att_key = 'Variant_seq'");
+my $sth_snp = $dbh->prepare("SELECT feature_id, start, end FROM feature "    .
+			    "WHERE $type_text seqid = ? AND ((start >= ? "   .
+			    "AND start <= ?) OR (end >= ? AND end <= ?))");
+my $sth_ref = $dbh->prepare("SELECT a.att_value as reference_seq FROM "      .
+			    "feature f, attribute a WHERE f.feature_id = ? " .
+			    "AND f.feature_id = a.feature_id AND a.att_key " .
+			    "= 'Reference_seq'");
+my $sth_var = $dbh->prepare("SELECT a.att_value as variant_seq FROM "        .
+			    "feature f, attribute a WHERE f.feature_id = ? " .
+			    "AND f.feature_id = a.feature_id AND a.att_key " .
+			    "= 'Variant_seq'");
 
 my $ds = parse_datastore($ds_index_file);
 
@@ -115,7 +123,8 @@ for my $gene_id (keys %{$ds}) {
 
 	my $ctg_name	= $contig->id;
 	my ($ctg_id, $ctg_begin, $ctg_end) = split /:/, $ctg_name;
-	($ctg_begin, $ctg_end) = ($ctg_end, $ctg_begin) if $ctg_begin > $ctg_end;
+	($ctg_begin, $ctg_end) = ($ctg_end, $ctg_begin)
+	    if $ctg_begin > $ctg_end;
 
 	my $gene_id     = $gene->id;
 	my $gene_begin  = $gene->nbeg;
@@ -125,18 +134,24 @@ for my $gene_id (keys %{$ds}) {
 
 	my ($gene_5p_end, $gene_3p_end);
 	if ($gene_strand == 1) {
-		$gene_5p_end = $ctg_begin + $gene_begin;
+		$gene_5p_end = $ctg_begin   + $gene_begin;
 		$gene_3p_end = $gene_5p_end + $gene_length;
 	}
 	elsif ($gene_strand == -1) {
-		$gene_3p_end = $ctg_end - $gene_begin;
+		$gene_3p_end = $ctg_end     - $gene_begin;
 		$gene_5p_end = $gene_3p_end - $gene_length;
 	}
 	else {
 		die "Bad gene strand: $gene_strand\n";
 	}
 
-	my $snps = $dbh->selectall_hashref($sth_snp, [qw(feature_id)], {}, ($ctg_id, $ctg_begin + 499, $ctg_end - 499, $ctg_begin + 499, $ctg_end - 499));
+	my $snps = $dbh->selectall_hashref($sth_snp,
+					   [qw(feature_id)], {}, 
+					   ($ctg_id, $ctg_begin + 499,
+					    $ctg_end - 499,
+					    $ctg_begin + 499,
+					    $ctg_end - 499)
+					   );
 
 	next unless keys %{$snps};
 
@@ -158,9 +173,9 @@ for my $gene_id (keys %{$ds}) {
 		my $ref_seq = $dbh->selectall_arrayref($sth_ref, {}, ($snp_id));
 		$ref_seq = $ref_seq->[0][0] || '';
 
-		my $var_reference = $dbh->selectall_arrayref($sth_var, {}, ($snp_id));;
-		my %var_hash = map {$_->[0], 1} @{$var_reference};
-		my @var_seqs = grep {$_ ne $ref_seq} keys %var_hash;
+		my $var_seq_ref = $dbh->selectall_arrayref($sth_var, {}, ($snp_id));;
+		my %var_hash    = map {$_->[0], 1} @{$var_seq_ref};
+		my @var_seqs    = grep {$_ ne $ref_seq} keys %var_hash;
 
 		# my $seqs = join '/', ($ref_seq, @var_seqs);
 		my $seqs = join '/', (@var_seqs);
