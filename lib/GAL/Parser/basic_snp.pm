@@ -88,22 +88,26 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	$self->throw(message => 'This parser should be tested and evaluated before use');
+	# $self->throw(message => 'This parser should be tested and evaluated before use');
 
 	my $seqid      = $record->{chromosome};
-	my $source     = 'Unknown';
+	my $source     = 'GAL';
 	my $type       = 'SNV';
-	my $start      = $record->{end};
+	my $start      = $record->{start};
 	my $end        = $record->{end};
 	my $score      = '.';
 	my $strand     = '+';
 	my $phase      = '.';
 	my $id         = join ':', ($seqid, $source, $type, $start);
 
-	my $variant_seq = $record->{variant};
+	my $reference_seq = $record->{reference_seq};
+	my @variant_seqs  = $self->expand_iupac_nt_codes($record->{variant_seq});
+	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
-	my $attributes = {Variant_seq   => [$variant_seq],
-			  ID               => [$id],
+	my $attributes = {Variant_seq   => \@variant_seqs,
+			  Reference_seq => [$reference_seq],
+			  ID            => [$id],
+			  Genotype      => [$genotype],
 			 };
 
 	my $feature_data = {feature_id => $id,
