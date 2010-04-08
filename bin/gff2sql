@@ -82,13 +82,15 @@ for my $file (@files) {
 	}
 }
 
+die;
+
 if ($create) {
 	$dbh->do("CREATE INDEX feature_id_index USING BTREE ON feature (feature_id)");
-	$dbh->do("CREATE INDEX seqid_index USING BTREE ON feature (seqid)");
-	$dbh->do("CREATE INDEX seqid_start_end_index USING BTREE ON feature (seqid start end)");
-	$dbh->do("CREATE INDEX type_index USING BTREE ON feature (type)");
+	# $dbh->do("CREATE INDEX seqid_index USING BTREE ON feature (seqid)");
+	$dbh->do("CREATE INDEX seqid_start_end_index USING BTREE ON feature (seqid, start, end)");
+	# $dbh->do("CREATE INDEX type_index USING BTREE ON feature (type)");
 	$dbh->do("CREATE INDEX att_feature_id_index USING BTREE ON attribute (feature_id)");
-	$dbh->do("CREATE INDEX att_key_value_index USING BTREE ON attribute (att_key att_value)");
+	$dbh->do("CREATE INDEX att_key_value_index USING BTREE ON attribute (att_key, att_value)");
 }
 
 #-----------------------------------------------------------------------------

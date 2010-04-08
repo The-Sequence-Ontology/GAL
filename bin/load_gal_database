@@ -5,6 +5,8 @@ use Getopt::Long;
 use IO::Prompt;
 use DBI;
 use File::Temp qw(tempfile);
+use File::Spec;
+use Cwd;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -63,8 +65,24 @@ die $@ if $@;
 
 my $parser = $class->new(file => $file);
 
-my ($FEAT_TEMP, $feat_filename) = tempfile();
-my ($ATT_TEMP,  $att_filename)  = tempfile();
+my $cwd = cwd();
+
+my $temp_dir = File::Spec->tmpdir;
+
+my $FEAT_TEMP = File::Temp->new(Template => 'gal_XXXXXX',
+                                SUFFIX => '.tmp',
+                                DIR    => $temp_dir,
+                                UNLINK => 0,
+                                );
+my $feat_filename = $FEAT_TEMP->filename;
+
+my ($ATT_TEMP,  $att_filename)  = tempfile('gal_XXXXXX',
+                                           SUFFIX => '.tmp',
+                                           DIR    => $temp_dir,
+                                           UNLINK => 0,
+                                           );
+
+chmod (0444, $feat_filename, $att_filename);
 
 while (my $feature = $parser->next_feature_hash) {
         my $feature_id = $feature->{feature_id};
@@ -74,7 +92,7 @@ while (my $feature = $parser->next_feature_hash) {
         print $FEAT_TEMP "\n";
 
         for my $key (keys %{$attributes}) {
-                my @values = $attributes->{$key};
+                my @values = @{$attributes->{$key}};
                 for my $value (@values) {
                         print $ATT_TEMP  join "\t", ($feature_id, $key, $value);
                         print $ATT_TEMP "\n";
@@ -84,18 +102,16 @@ while (my $feature = $parser->next_feature_hash) {
 
 create_db($dsn) if $create;
 
-my $dbh      = DBI->connect($dsn, $user, $password);
+my $dbh = DBI->connect($dsn, $user, $password);
 
 $dbh->do("LOAD DATA INFILE '$feat_filename' INTO TABLE feature (feature_id, seqid, source, type, start, end, score, strand, phase)");
 $dbh->do("LOAD DATA INFILE '$att_filename'  INTO TABLE attribute (feature_id, att_key, att_value)");
 
 if ($create) {
 	$dbh->do("CREATE INDEX feature_id_index USING BTREE ON feature (feature_id)");
-	# $dbh->do("CREATE INDEX seqid_index USING BTREE ON feature (seqid)");
-	$dbh->do("CREATE INDEX seqid_start_end_index USING BTREE ON feature (seqid start end)");
-	# $dbh->do("CREATE INDEX type_index USING BTREE ON feature (type)");
+	$dbh->do("CREATE INDEX seqid_start_end_index USING BTREE ON feature (seqid, start, end)");
 	$dbh->do("CREATE INDEX att_feature_id_index USING BTREE ON attribute (feature_id)");
-	$dbh->do("CREATE INDEX att_key_value_index USING BTREE ON attribute (att_key att_value)");
+	$dbh->do("CREATE INDEX att_key_value_index USING BTREE ON attribute (att_key, att_value)");
 }
 
 #-----------------------------------------------------------------------------
@@ -144,7 +160,7 @@ sub create_db {
 		 "attribute_id INT NOT NULL AUTO_INCREMENT, " .
 		 "feature_id VARCHAR(100), " .
 		 "att_key VARCHAR(100), "    .
-		 "att_value TEXT, "          .
+		 "att_value VARCHAR(255), "  .
 		 "PRIMARY KEY (attribute_id))"
 		 );
 }

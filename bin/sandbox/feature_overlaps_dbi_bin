@@ -1,0 +1,180 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use DBI;
+use Getopt::Long;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+feature_overlaps --feature_dsn 'dbi:mysql:feature_db' --feature_type 'SNP' \
+		 --query_dsn   'dbi:mysql:feature_db'   --query_type 'CDS' \
+		 --expanded
+
+Description:
+
+This script will take two GFF based databases of feature (They could
+be the same database), iterate over all the features in feature_dsn
+and query the query_dsn for overlapping features of type query_type.
+The feature_type and query_type arguments can be given multiple times
+to include multiple features.  Leaving either blank will include all
+features in that database.  Output is tab separated and comes in two
+forms.  In the compact output every feature from feature_dsn is
+printed once in the first column and all features from query_dsn are
+printed space separated in the second column.  In the exapnded output
+every freature from feature_dsn is printed in the first column and one
+feature from query_dsn is printed in the second column.  There is a
+separate row for every feature_dsn/query_dsn pair.  The compact output
+is the default.
+
+
+Options:
+
+  feature_dsn:   The database source name of the database that contains
+		 the features that will be iterated over.
+  feature_type:  The type of feature that will be selected from feature_dsn.
+                 Default is all types.
+  query_dsn:     The database source name of the database that contains
+		 the features that will be iterated over.
+  query_type:    The type of feature that will be selected from query_dsn.
+                 Default is all types.
+  compact:       Print output in compact form.
+  expanded:      Print output in expanded form.
+  ids:           Print the IDs of all pair of overlapping features.
+  user:          The user name of the database owner. [system username]
+  password:      The password for the database (if the database is password
+                 protected).
+
+Notes:
+
+  Compact output example:
+  SNP_ID_001    CDS exon mRNA start_codon
+  SNP_ID_002    intron three_prime_cis_splice_site
+
+  Expanded output example:
+  SNP_ID_001    CDS
+  SNP_ID_001    exon
+  SNP_ID_001    mRNA
+  SNP_ID_001    start_codon
+  SNP_ID_002    intron
+  SNP_ID_002    three_prime_cis_splice_site
+
+  IDs output example:
+  SNP_ID_001    NM_012345
+  SNP_ID_001    FBgn012345
+
+";
+
+
+my ($help, $feature_dsn, @feature_types, $query_dsn, @query_types,
+    $compact, $expanded, $ids, $user, $password);
+my $opt_success = GetOptions('help'           => \$help,
+			     'feature_dsn=s'  => \$feature_dsn,
+			     'feature_type=s' => \@feature_types,
+			     'query_dsn=s'    => \$query_dsn,
+			     'query_type=s'   => \@query_types,
+			     'compact'        => \$compact,
+			     'expanded'       => \$expanded,
+			     'user=s'         => \$user,
+			     'password=s'     => \$password,
+			     'ids'            => \$ids,
+			    );
+
+die $usage if $help || ! $opt_success;
+
+die $usage unless ($feature_dsn && $query_dsn);
+
+$compact = $expanded ? 0 : 1;
+
+my $feature_dbh = DBI->connect($feature_dsn, $user, $password);
+my $query_dbh   = DBI->connect($query_dsn, $user, $password);
+
+my $feature_type_text = join ', ', map {"'$_'"} @feature_types;
+my $feature_where = $feature_type_text ? "WHERE type IN ($feature_type_text)" : '';
+my $feature_sth = $feature_dbh->prepare("SELECT seqid, feature_id, type, start, end FROM feature $feature_where");
+
+my $query_type_text   = join ', ', map {"'$_'"} @query_types;
+my $query_where = $query_type_text ? "type IN ($query_type_text) AND" : '';
+#my $query_sth  = $query_dbh->prepare("SELECT DISTINCT(type) FROM feature WHERE seqid = ? AND $query_where ((start >= ? AND start <= ?) OR (start <= ? AND end >= ?))");
+my $query_sth  = $query_dbh->prepare("SELECT DISTINCT(type) FROM feature WHERE bin IN (?) AND $query_where start <= ? AND end >= ?");
+#my $ids_sth    = $query_dbh->prepare("SELECT feature_id FROM feature WHERE seqid = ? AND $query_where ((start >= ? AND start <= ?) OR (start <= ? AND end >= ?))");
+my $ids_sth    = $query_dbh->prepare("SELECT feature_id FROM feature WHERE bin IN (?) AND $query_where start <= ? AND end >= ?");
+
+my $features = $feature_dbh->selectall_arrayref($feature_sth);
+
+for my $feature (@{$features}) {
+
+	my ($seqid, $feature_id, $feature_type, $feature_start, $feature_end) = @{$feature};
+
+	my $bins = feature_bins($feature);
+	my $bin_text = join ', ', map {$_ = "'$_'"} @{$bins};
+
+	my $overlaps_ref;
+	if ($ids) {
+		$overlaps_ref = $query_dbh->selectall_arrayref($ids_sth, {}, ($bin_text,
+									      $feature_start,
+									      $feature_start,
+									     )
+							      );
+	}
+	else {
+	    my $stmt = "SELECT DISTINCT(type) FROM feature WHERE bin IN ($bin_text) AND $query_where start <= $feature_start AND end >= $feature_end";
+	    $overlaps_ref = $query_dbh->selectall_arrayref($stmt);
+	    # $overlaps_ref = $query_sth->fetchall_arrayref($query_sth, {}, ($bin_text,
+	    # 								    $feature_start,
+	    # 								    $feature_start,
+	    # 								    )
+	    #						   );
+	}
+
+	my @overlaps;
+	map{push @overlaps, @{$_}} @{$overlaps_ref};
+	push @overlaps, 'NO_OVERLAP' unless scalar @overlaps;
+
+	if ($expanded) {
+		for my $overlap (@overlaps) {
+			print "$feature_id\t";
+			print "$feature_type\t" unless $ids;
+			print "$overlap\n";
+		}
+	}
+	else {
+		print "$feature_id\t";
+		print "$feature_type\t" unless $ids;
+		print join ' ', @overlaps;
+		print "\n";
+	}
+}
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub feature_bins {
+
+    my $feature = shift;
+
+    my ($seqid, $start, $end) = @{$feature}[0, 3, 4];
+
+    my @feature_bins;
+    my $count;
+    my $single_bin;
+    for my $bin_size (128_000, 1_000_000, 8_000_000, 64_000_000,
+		                    512_000_000) {
+	$count++;
+        my $start_bin = int($start/$bin_size);
+        my $end_bin   = int($end/$bin_size);
+	my @these_bins = map {$_ = join ':', ($seqid, $count, $_)} ($start_bin .. $end_bin);
+	if (! $single_bin && scalar @these_bins== 1) {
+            $single_bin = shift @these_bins;
+	    }
+        unshift @feature_bins, @these_bins;
+    }
+    unshift @feature_bins, $single_bin;
+    return wantarray ? @feature_bins : \@feature_bins;
+}
+
+#-----------------------------------------------------------------------------                                                                               

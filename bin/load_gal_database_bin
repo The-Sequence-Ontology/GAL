@@ -6,7 +6,6 @@ use IO::Prompt;
 use DBI;
 use File::Temp qw(tempfile);
 use File::Spec;
-use Cwd;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -15,7 +14,8 @@ my $usage = "
 
 Synopsis:
 
-load_gal_database --create --format gff3 --dsn 'dbi:mysql:gff_db' file.gff3 [another_file.gff3]
+load_gal_database --create --format gff3 --dsn 'dbi:mysql:gff_db' \
+                  file.gff3 [another_file.gff3]
 
 Description:
 
@@ -50,8 +50,9 @@ my $opt_success = GetOptions('help'         => \$help,
 
 die $usage if $help || ! $opt_success;
 
-my $file = shift;
-die $usage unless -r $file;
+my @files = @ARGV;
+die $usage unless scalar @files;
+die $usage if grep {! -r $_}  @files;
 
 my ($scheme, $driver) = split /:/, $dsn;
 
@@ -63,55 +64,57 @@ my $class = "GAL::Parser::$format";
 eval "require $class";
 die $@ if $@;
 
-my $parser = $class->new(file => $file);
-
-my $cwd = cwd();
-
 my $temp_dir = File::Spec->tmpdir;
-
-my $FEAT_TEMP = File::Temp->new(Template => 'gal_XXXXXX',
-                                SUFFIX => '.tmp',
-                                DIR    => $temp_dir,
-                                UNLINK => 0,
-                                );
-my $feat_filename = $FEAT_TEMP->filename;
-
-my ($ATT_TEMP,  $att_filename)  = tempfile('gal_XXXXXX',
+my ($FEAT_TEMP,  $feat_filename)  = tempfile('gal_feat_XXXXXX',
                                            SUFFIX => '.tmp',
                                            DIR    => $temp_dir,
                                            UNLINK => 0,
                                            );
 
+my ($ATT_TEMP,  $att_filename)  = tempfile('gal_att_XXXXXX',
+                                           SUFFIX => '.tmp',
+                                           DIR    => $temp_dir,
+                                           UNLINK => 0,
+                                           );
 chmod (0444, $feat_filename, $att_filename);
 
-while (my $feature = $parser->next_feature_hash) {
-        my $feature_id = $feature->{feature_id};
-        my @feature_data = @{$feature}{qw(feature_id seqid source type start end score strand phase)};
-        my $attributes = $feature->{attributes};
-        print $FEAT_TEMP join "\t", @feature_data;
-        print $FEAT_TEMP "\n";
+for my $file (@files) {
+	        
+	my $parser = $class->new(file => $file);
 
-        for my $key (keys %{$attributes}) {
-                my @values = @{$attributes->{$key}};
-                for my $value (@values) {
-                        print $ATT_TEMP  join "\t", ($feature_id, $key, $value);
-                        print $ATT_TEMP "\n";
-                }
-        }
+
+	while (my $feature = $parser->next_feature_hash) {
+	        my $feature_id = $feature->{feature_id};
+	        my $bins = bin_feature($feature);
+	        my $bin = $bins->[0];
+	        my @feature_data = (@{$feature}{qw(feature_id seqid source
+                                                   type start end score strand
+                                                   phase)},
+                                    $bin);
+	        my $attributes = $feature->{attributes};
+	        print $FEAT_TEMP join "\t", @feature_data;
+	        print $FEAT_TEMP "\n";
+
+	        for my $key (keys %{$attributes}) {
+	                my @values = @{$attributes->{$key}};
+	                for my $value (@values) {
+	                        print $ATT_TEMP  join "\t",
+                                    ($feature_id, $key, $value);
+	                        print $ATT_TEMP "\n";
+	                }
+	        }
+	}
 }
-
 create_db($dsn) if $create;
 
 my $dbh = DBI->connect($dsn, $user, $password);
 
-$dbh->do("LOAD DATA INFILE '$feat_filename' INTO TABLE feature (feature_id, seqid, source, type, start, end, score, strand, phase)");
+$dbh->do("LOAD DATA INFILE '$feat_filename' INTO TABLE feature   (feature_id, seqid, source, type, start, end, score, strand, phase, bin)");
 $dbh->do("LOAD DATA INFILE '$att_filename'  INTO TABLE attribute (feature_id, att_key, att_value)");
-
-die;
 
 if ($create) {
 	$dbh->do("CREATE INDEX feature_id_index USING BTREE ON feature (feature_id)");
-	$dbh->do("CREATE INDEX seqid_start_end_index USING BTREE ON feature (seqid, start, end)");
+	$dbh->do("CREATE INDEX bin_index USING BTREE ON feature (bin)");
 	$dbh->do("CREATE INDEX att_feature_id_index USING BTREE ON attribute (feature_id)");
 	$dbh->do("CREATE INDEX att_key_value_index USING BTREE ON attribute (att_key, att_value)");
 }
@@ -146,23 +149,49 @@ sub create_db {
 	$dbh->do("DROP TABLE IF EXISTS attribute");
 	$dbh->do("CREATE TABLE feature ("    .
 		 "feature_id VARCHAR(100), " .
-		 "seqid VARCHAR(100), "      .
-		 "source VARCHAR(100), "     .
-		 "type VARCHAR(100), "       .
-		 "start INT, "               .
-		 "end INT, "                 .
-		 "score varchar(20), "       .
-		 "strand VARCHAR(1), "       .
-		 "phase VARCHAR(1))"         
+		 "seqid      VARCHAR(100), " .
+		 "source     VARCHAR(100), " .
+		 "type       VARCHAR(100), " .
+		 "start      INT, "          .
+		 "end        INT, "          .
+		 "score      VARCHAR(20), "  .
+		 "strand     VARCHAR(1), "   .
+		 "phase      VARCHAR(1),"     .
+		 "bin        VARCHAR(15))"
 		 # "name VARCHAR(100), "      .
 		 # "parent VARCHAR(100), "    .
-		 # "bin INT)"
 		 );
 	$dbh->do("CREATE TABLE attribute ("  .
 		 "attribute_id INT NOT NULL AUTO_INCREMENT, " .
 		 "feature_id VARCHAR(100), " .
 		 "att_key VARCHAR(100), "    .
-		 "att_value TEXT, "          .
+		 "att_value VARCHAR(255), "  .
 		 "PRIMARY KEY (attribute_id))"
 		 );
+}
+
+#-----------------------------------------------------------------------------
+
+sub bin_feature {
+
+    my $feature = shift;
+
+    my ($seqid, $start, $end) = @{$feature}{qw(seqid start end)};
+
+    my @feature_bins;
+    my $count;
+    my $single_bin;
+    for my $bin_size (128_000, 1_000_000, 8_000_000, 64_000_000, 
+		      512_000_000) {
+	$count++;
+	my $start_bin = int($start/$bin_size);
+	my $end_bin   = int($end/$bin_size);
+	my @these_bins = map {$_ = join ':', ($seqid, $count, $_)} ($start_bin .. $end_bin);
+	if (! $single_bin && scalar @these_bins == 1) {
+	    $single_bin = shift @these_bins;
+	}
+	unshift @feature_bins, @these_bins;
+    }
+    unshift @feature_bins, $single_bin;
+    return wantarray ? @feature_bins : \@feature_bins;
 }

@@ -151,7 +151,7 @@ sub parse_record {
 	# 9.  read_qual
 	# 10. aln_map_qual
 
-	my $seqid      = $record->{seqid};
+	my $seqid      = 'chr' . $record->{seqid};
 	my $source     = 'SAMtools';
 	my $type       = 'SNV';
 	my $start      = $record->{start};

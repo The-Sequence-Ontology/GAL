@@ -324,25 +324,30 @@ sub set_attributes {
 sub expand_iupac_nt_codes {
 	my ($self, $code) = @_;
 
-	my %iupac_code_map = (A => ['A'],
-			      C => ['C'],
-			      G => ['G'],
-			      T => ['T'],
-			      U => ['T'],
-			      M => ['A', 'C'],
-			      R => ['A', 'G'],
-			      W => ['A', 'T'],
-			      S => ['C', 'G'],
-			      Y => ['C', 'T'],
-			      K => ['G', 'T'],
-			      V => ['A', 'C', 'G'],
-			      H => ['A', 'C', 'T'],
-			      D => ['A', 'G', 'T'],
-			      B => ['C', 'G', 'T'],
-			      N => ['G', 'A', 'T', 'C'],
+	my %iupac_code_map = ('A' => ['A'],
+			      'C' => ['C'],
+			      'G' => ['G'],
+			      'T' => ['T'],
+			      'U' => ['T'],
+			      'M' => ['A', 'C'],
+			      'R' => ['A', 'G'],
+			      'W' => ['A', 'T'],
+			      'S' => ['C', 'G'],
+			      'Y' => ['C', 'T'],
+			      'K' => ['G', 'T'],
+			      'V' => ['A', 'C', 'G'],
+			      'H' => ['A', 'C', 'T'],
+			      'D' => ['A', 'G', 'T'],
+			      'B' => ['C', 'G', 'T'],
+			      'N' => ['A', 'C', 'G', 'T'],
+			      'X' => ['A', 'C', 'G', 'T'],
+			      '-' => ['-'],
 			     );
 
 	my $nts = $iupac_code_map{$code};
+
+	$self->throw(message => "Invalid IPUAC nucleotide code: $code")
+	    unless $nts;
 
 	return wantarray ? @{$nts} : $nts;
 }
