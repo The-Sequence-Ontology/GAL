@@ -92,8 +92,9 @@ sub parse_record {
 
 	map {s/^0+//} ($chromosome, $position);
 
-	$chromosome = 'X' if $chromosome eq '24';
-	$chromosome = 'Y' if $chromosome eq '25';
+	$chromosome = 'X' if $chromosome  eq '23';
+	$chromosome = 'Y' if $chromosome  eq '24';
+	$chromosome = 'MT' if $chromosome eq '25';
 
 	my $seqid = 'chr' . $chromosome;
 	my $source     = 'Quake';

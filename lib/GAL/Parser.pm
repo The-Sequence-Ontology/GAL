@@ -209,6 +209,8 @@ sub next_feature_hash {
 		return wantarray ? %{$feature} : $feature;
 	}
 
+	# Allow parse_record to return undef to ignore a record, but
+	# still keep parsing the file.
 	until ($feature) {
 		# Get the next record from the file.
 		my $record = $self->_read_next_record;

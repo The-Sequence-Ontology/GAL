@@ -149,40 +149,38 @@ sub password {
 
 #-----------------------------------------------------------------------------
 
-=head2 database
+=head2 random_db_name
 
- Title   : database
- Usage   : $a = $self->database();
- Function: Get/Set the value of database.
- Returns : The value of database.
- Args    : A value to set database to.
+ Title   : random_db_name
+ Usage   : $a = $self->random_db_name();
+ Function: Get/Set the value of random_db_name.
+ Returns : The value of random_db_name.
+ Args    : A value to set random_db_name to.
 
 =cut
 
-sub database {
-	my ($self, $database) = @_;
+sub random_db_name {
+    my $self = shift;
 
-	if (! $self->{database} && ! $database) {
-		# Generate a date stamp
-		my ($sec,$min,$hour,$mday,$mon,$year,$wday,
-		    $yday,$isdst) = localtime(time);
-		my $time_stamp = sprintf("%02d%02d%02d", $year + 1900,
-					 $mon, $mday);
-		# Generate a 8 charachter semi-random hex extension
-		# for the database.
-		my @symbols = (0..9);
-		push @symbols, qw(a b c d e f);
-		my $extension = join "", map { unpack "H*", chr(rand(256)) } (1..8);
-		$database = join '_', ('gal_database', $time_stamp,
-				      $extension);
-		$self->warn(message => ("Incomplete Data Source Name (DSN) ",
-					"given. ", __PACKAGE__,
-					' created $database as a database ',
-					'name for you.')
-			   );
-	}
-	$self->{database} = $database if $database;
-	return $self->{database};
+    # Generate a date stamp
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,
+	$yday,$isdst) = localtime(time);
+    my $time_stamp = sprintf("%02d%02d%02d", $year + 1900,
+			     $mon, $mday);
+    # Generate a 8 charachter semi-random hex extension
+    # for the database.
+    my @symbols = (0..9);
+    push @symbols, qw(a b c d e f);
+    my $extension = join "", map { unpack "H*", chr(rand(256)) } (1..8);
+    my $driver = $self->driver;
+    $random_db_name = join '_', ('gal_database', $driver, $time_stamp,
+				 $extension);
+    $self->warn(message => ("Incomplete Data Source Name (DSN) ",
+			    "given. ", __PACKAGE__,
+			    ' created $database as a database ',
+			    'name for you.')
+		);
+    return $random_db_name;
 }
 
 #-----------------------------------------------------------------------------
@@ -198,18 +196,9 @@ sub database {
 =cut
 
 sub driver {
-	my ($self, $driver) = @_;
 
-	if (! $self->{driver} && ! $driver) {
-		$driver = 'sqlite';
-		$self->warn(message => ("Incomplete Data Source Name (DSN) ",
-					"given. ", __PACKAGE__,
-					' created $driver as a database ',
-					'driver for you.')
-			   );
-	}
-	$self->{driver} = $driver if $driver;
-	return $self->{driver};
+	my $self = shift;
+	$self->throw('Storage::driver should be implimented by subclasses of Storage.pm');
 }
 
 #-----------------------------------------------------------------------------
@@ -227,52 +216,9 @@ sub driver {
 
 sub load_file {
 
-	my ($self, @files) = @_;
-	$self->throw('Not Implimented : load_file');
+	my $self = shift;
+	$self->throw('Storage::load_file should be implimented by subclasses of Storage.pm');
 
-
-	for my $file (@files) {
-
-	  my $parser = $self->parser;
-
-	  while (my $feature = $parser->next_feature_hash) {
-
-	    $self->add_feature_to_buffer($feature);
-	  }
-	}
-	$self->flush_feature_buffer;
-
-# This all needs to be re-worked to not use DBIx::Class;
-
-#	my $self = shift;
-#	my $parser = $self->parser(@_);
-#	my $feature_rs   = $self->schema->resultset('Feature');
-#	my $attribute_rs = $self->schema->resultset('Attribute');
-#
-#	my @features;
-#	my @attributes;
-#	my $count = 1;
-#	my $bulk_load_count = 10; #$self->bulk_load_count;
-#	while (my $record = $parser->_read_next_record) {
-#
-#		my $feature_hash = $parser->parse_record($record);
-#		next unless defined $feature_hash;
-#		my ($feature, $attribute_array) =
-#		  $self->_split_feature_and_attributes($feature_hash);
-#		push @features, $feature;
-#		push @attributes, @{$attribute_array};
-#		if ($count++ >= $bulk_load_count) {
-#			$feature_rs->populate(\@features);
-#			$attribute_rs->populate(\@attributes);
-#			$count = 1;
-#			@features = ();
-#			@attributes = ();
-#		}
-#	}
-#	$feature_rs->insert_bulk(@features) if scalar @features;;
-#	$attribute_rs->populate(\@attributes) if scalar @attributes;
-#
-#	return $self;
 }
 
 #-----------------------------------------------------------------------------
@@ -379,11 +325,9 @@ sub prepare_features {
 =cut
 
 sub add_features {
-  my ($self, $features) = @_;
 
-  $features = ref $features ? $features : [$features];
-
-  my ($features, $attributes) = $self->prepare_features($features);
+    my $self = shift;
+    $self->throw('Storage::add_features should be implimented by subclasses of Storage.pm');
 }
 
 #-----------------------------------------------------------------------------
@@ -392,72 +336,17 @@ sub add_features {
 
  Title   : create_database
  Usage   : $self->create_database();
- Function: Create the database if it doesn't exists.
+ Function: Create the database if it doesnt exists.
  Returns : Success
  Args    : N/A
 
 =cut
 
 sub create_database {
-	my $self = shift;
 
-	my @databases = DBI->data_sources($self->driver,
-					  {user     => $self->user,
-					   password => $self->password,
-					  }
-					 );
+    my $self = shift;
+    $self->throw('Storage::creat_database should be implimented by subclasses of Storage.pm');
 
-	my $dsn = $self->dsn;
-	my $database = $self->database;
-	if (! grep {$_ eq $dsn} @databases) {
-		my $drh = DBI->install_driver("mysql");
-		my $host = ''; # Defaults to localhost, abstract this later.
-		my $rc = $drh->func('createdb',
-				    $database,
-				    $host,
-				    $self->user,
-				    $self->password,
-				    'admin');
-		my $dbh = DBI->connect($self->dsn, $self->user,
-				       $self->password);
-		$dbh->do("DROP TABLE IF EXISTS feature");
-		$dbh->do("DROP TABLE IF EXISTS attribute");
-		my @feature_columns = (feature_id => 'VARCHAR(100),',
-				       seqid      => 'VARCHAR(100),',
-				       source     => 'VARCHAR(100),',
-				       type       => 'VARCHAR(100),',
-				       start      => 'INT,',
-				       end        => 'INT,',
-				       score      => 'varchar(20),',
-				       strand     => 'VARCHAR(1),',
-				       phase      => 'VARCHAR(1),',
-				      );
-		my $feature_columns_text = join ' ', @feature_columns;
-		$feature_columns_text =~ s/,\s*$//;
-		my $feature_create_stmt =
-		  "CREATE TABLE feature ($feature_columns_text)";
-		$dbh->do($feature_create_stmt);
-
-		my @att_columns =
-			       (attribute_id => 'INT NOT NULL AUTO_INCREMENT,',
-				feature_id   => 'VARCHAR(100),',
-				tag      => 'VARCHAR(100),',
-				value    => 'TEXT,',
-			       );
-		my $att_columns_text = join ' ', @att_columns;
-		my $att_create_stmt =
-		  "CREATE TABLE attribute ($att_columns_text " .
-		    "PRIMARY KEY (attribute_id))";
-		#CREATE TABLE attribute (attribute_id INT NOT NULL
-		# AUTO_INCREMENT, feature_id VARCHAR(100),
-		# tag VARCHAR(100), value TEXT, PRIMARY KEY (attribute_id))
-		$dbh->do($att_create_stmt);
-	}
-	else {
-		$self->warn(message => "Using exsiting database $database");
-	}
-
-	return 1;
 }
 
 #-----------------------------------------------------------------------------

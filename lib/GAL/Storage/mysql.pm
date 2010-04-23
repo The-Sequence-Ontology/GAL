@@ -187,7 +187,7 @@ sub add_features {
 
  Title   : create_database
  Usage   : $self->create_database();
- Function: Create the database if it doesn't exists.
+ Function: Create the database if it doesnt exists.
  Returns : Success
  Args    : N/A
 

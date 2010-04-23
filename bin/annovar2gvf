@@ -1,0 +1,283 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+annovar2gvf --db RefSeq genome.annovar.txt.exonic_variant_function > genome.gvf
+
+Description:
+
+This script will convert Annovar's annotate_variant output to GVF.
+
+Option:
+
+  db           The DB that transcript IDs come from.
+
+
+Format Description:
+
+    # GVF Attributes
+    #--------------------------------------------------------------
+    ID=1:SAMtools:SNV:878522
+    Reference_seq=T
+    Variant_seq=C:1,G:2
+    Variant_effect=
+    non_synonymous_codon:mRNA:UCSC:uc001aby.2:-:1
+    amino_acid_substitution:polypeptide:UCSC:uc001aby.2:p.I97V:1
+    non_synonymous_codon:mRNA:UCSC:uc009vjq.1:-:1
+    amino_acid_substitution:polypeptide:UCSC:uc009vjq.1:p.I300V:1
+    Genotype=homozygous
+    Total_reads=28
+
+
+    # Variant Effect Details
+    #--------------------------------------------------------------
+    SO variant_effect:   non_synonymous_codon
+    SO sequence_feature: mRNA
+    Database:            UCSC
+    Database ID:         uc001aby.2
+    Effect Descriptor:   -
+    Variant_seq Index:   1
+
+    SO variant_effect:   amino_acid_substitution
+    SO sequence_feature: polypeptide
+    Database:            UCSC
+    Database ID:         uc001aby.2
+    Effect Descriptor:   p.I97V
+    Variant_seq Index:   1
+
+    SO variant_effect:   non_synonymous_codon
+    SO sequence_feature: mRNA
+    Database:            UCSC
+    Database ID:         uc009vjq.1
+    Effect Descriptor:   -
+    Variant_seq Index:   2
+
+    SO variant_effect:   amino_acid_substitution
+    SO sequence_feature: polypeptide
+    Database:            UCSC
+    Database ID:         uc009vjq.1
+    Effect Descriptor:   p.I300G
+    Variant_seq Index:   2
+
+";
+
+
+my ($help, $db);
+my $opt_success = GetOptions('help'          => \$help,
+			     'db=s'          => \$db,
+			      );
+
+die $usage if $help || ! $opt_success;
+
+my $annovar_file = shift @ARGV;
+die $usage unless $annovar_file;
+
+my %TYPE_MAP = ('frameshift insertion'       => {trns => 'frameshift_variant',
+						 prot => 'polypeptide_sequence_variant'},
+		'frameshift deletion'	     => {trns => 'frameshift_variant',
+						 prot => 'polypeptide_sequence_variant'},
+		'frameshift substitution'    => {trns => 'frameshift_variant',
+						 prot => 'polypeptide_sequence_variant'},
+		'stopgain SNV'		     => {trns => 'stop_codon_gain',
+						 prot => 'truncated_polypeptide'},
+		'stoplost SNV'		     => {trns => 'stop_codon_loss',
+						 prot => 'elongated_polypeptide'},
+		'nonframeshift insertion'    => {trns => 'codon_insertion',
+						 prot => 'amino_acid_insertion'},
+		'nonframeshift deletion'     => {trns => 'codon_deletion',
+						 prot => 'amino_acid_deletion'},
+		'nonframeshift substitution' => {trns => 'MNP',
+						 prot => 'amino_acid_substitution'},
+		'nonsynonymous SNV'	     => {trns => 'non_synonymous_codon',
+						 prot => 'amino_acid_substitution'},
+		'synonymous SNV'             => {trns => 'synonymous_codon',
+						 prot => undef},
+	       );
+
+my %ATTRB_ORDER = (ID             => 0,
+		   Reference_seq  => 1,
+		   Variant_seq    => 2,
+		   Variant_effect => 3,
+		   Genotype       => 4,
+		   Total_reads    => 5,
+		  );
+
+my $annovar_data = parse_annovar_data($annovar_file);
+
+for my $id (sort {my ($seqid_a, $seqid_b) = ($annovar_data->{$a}{seqid},
+					     $annovar_data->{$b}{seqid});
+		  my ($start_a, $start_b) = ($annovar_data->{$a}{start},
+					     $annovar_data->{$b}{start});
+		  $seqid_a =~ s/^chr//;
+		  $seqid_b =~ s/^chr//;
+		  $seqid_a = $seqid_a eq 'X' ? 23 : $seqid_a;
+		  $seqid_a = $seqid_a eq 'Y' ? 24 : $seqid_a;
+		  $seqid_b = $seqid_b eq 'X' ? 23 : $seqid_b;
+		  $seqid_b = $seqid_b eq 'Y' ? 24 : $seqid_b;
+		  return ($seqid_a <=> $seqid_b || $start_a <=> $start_b);
+		}
+	    keys %{$annovar_data}) {
+
+  my $feature = $annovar_data->{$id};
+  my $attribute_text = get_attribute_text($feature);
+
+  print join "\t", (@{$feature}{qw(seqid source type start end score strand
+				phase)}, $attribute_text);
+  print "\n";
+
+}
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub parse_annovar_data {
+
+  my $file = shift;
+
+  open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
+  my %annovar_data;
+  while (my $line = <$IN>) {
+
+    # line200 synonymous SNV  SAMD11:NM_152486:exon10:p.R343R, chr1  867694  867694  T  C
+    # line204 synonymous SNV  NOC2L:NM_015658:exon16:p.L615L,  chr1  871490  871490  G  A
+    # line217 synonymous SNV  NOC2L:NM_015658:exon10:p.T394T,  chr1  877664  877664  A  G
+    # line218 synonymous SNV  NOC2L:NM_015658:exon9:p.E306E,   chr1  878502  878502  T  C
+
+    chomp $line;
+    my ($line_number, $annovar_effect, $variant_detail_text, $seqid,
+	$start, $end, $reference_seq, $variant_seq, $feature_id,
+	$source, $type, $score, $strand, $phase, $attribute_text,) =
+	split /\t/, $line;
+
+    my $attributes = parse_attributes($attribute_text);
+    my @variant_seqs = map {s/:\d+//;$_} @{$attributes->{Variant_seq}};
+
+    my $count;
+    my %var_seq_index = map {$_ => ++$count} @variant_seqs;
+    map {$_ = "$_:" . $var_seq_index{$_}} @{$attributes->{Variant_seq}};
+
+    my @variant_details = split /,/, $variant_detail_text;
+
+    my @variant_effects;
+    for my $variant_detail (@variant_details) {
+
+	my ($gene_symbol, $transcript_id, $exon, $protein_effect) =
+	    split /:/, $variant_detail;
+
+	$protein_effect =~ s/X/\*/g;
+
+	my $this_db = $db || get_database($transcript_id);
+
+	my ($ref_aa, $prot_location, $var_aa) = $protein_effect =~
+	    /p\.([GPAVLIMCFYWHKRQNEDSTX])(\d+)([GPAVLIMCFYWHKRQNEDSTX])/;
+
+	my $so_trns_effect = $TYPE_MAP{$annovar_effect}{trns};
+	my $trns_variant_effect = join ':', ($so_trns_effect,
+					     'mRNA',
+					     $this_db,
+					     $transcript_id,
+					     '.',
+					     $var_seq_index{$variant_seq},
+					     );
+	push @variant_effects, $trns_variant_effect;
+
+	my $so_prot_effect = $TYPE_MAP{$annovar_effect}{prot};
+	if ($so_prot_effect) {
+	    my $prot_variant_effect = join ':', ($so_prot_effect,
+						 'polypeptide',
+						 $this_db,
+						 $transcript_id,
+						 $protein_effect,
+						 $var_seq_index{$variant_seq},
+						 );
+	    push @variant_effects, $prot_variant_effect if $prot_variant_effect;
+	}
+    }
+    
+    if (exists $annovar_data{$feature_id}) {
+      push @{$annovar_data{$feature_id}{attributes}{Variant_effect}}, @variant_effects;
+
+    }
+    else {
+      my %feature = (seqid   => $seqid,
+		     source  => $source,
+		     type    => $type,
+		     start   => $start,
+		     end     => $end,
+		     score   => $score,
+		     strand  => $strand,
+		     phase   => $phase,
+		    );
+
+      # Variant_effect=non_synonymous_codon:mRNA:RefSeq:NM_012345,nonsense_codon:mRNA:RefSeq:NM_543210;
+
+      push @{$attributes->{Variant_effect}}, @variant_effects;
+
+      $feature{attributes} = $attributes;
+      $annovar_data{$feature_id} = \%feature;
+    }
+  }
+  return \%annovar_data;
+}
+
+#-----------------------------------------------------------------------------
+
+sub parse_attributes {
+
+  my $attribute_text = shift;
+
+  my @pairs = split /;/, $attribute_text;
+
+  my %attributes;
+  for my $pair (@pairs) {
+    my ($key, $value_text) = split /=/, $pair;
+    my @values = split /,/, $value_text;
+    $attributes{$key} = \@values;
+  }
+  return \%attributes;
+}
+
+#-----------------------------------------------------------------------------
+
+sub get_attribute_text {
+
+  my $feature = shift;
+
+  my $attribute_text;
+  for my $key (sort {$ATTRB_ORDER{$a} <=> $ATTRB_ORDER{$b}}
+	       keys %{$feature->{attributes}}) {
+    my $value_text = join ',', @{$feature->{attributes}{$key}};
+    $attribute_text .= "$key=$value_text;";
+  }
+  return $attribute_text;
+}
+
+#-----------------------------------------------------------------------------
+
+sub get_database {
+
+    my $transcript_id = shift;
+
+    my $db;
+    if ($transcript_id =~ /^[NX][MR]_\d+/) {
+	$db = 'RefSeq';
+    }
+    elsif ($transcript_id =~ /^uc\d{3}[a-z]{3}\.\d+/) {
+	$db = 'UCSC';
+    }
+    else {
+	$db = '.';
+    }
+    return $db;
+}
+

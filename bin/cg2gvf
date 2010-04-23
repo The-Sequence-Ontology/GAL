@@ -1,0 +1,291 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $warning = "
+
+################################################################################
+
+WARNING!!!!         This script is not thouroughly tested!!!!         WARNING!!!
+
+I've checked two dozen random SNVs that have dbSNP Dbxrefs in the UCSC
+genome browser and they were correct.  I have not checked insertions,
+deltions, or substitutions.
+
+Tested data from:
+/data/hts_genomes/NA20431_CG/SRA/ASM/GS00021-DNA-A01_02-ASM/GS00021-DNA-A01_02-ASM.gvf
+chr341948066ID=chr3:Complete_Genomics:SNV:41948066:41948066;Reference_seq=T;Variant_seq=C;Genotype=homozygous;Dbxref=dbSNP:rs1716992;
+chr32477255ID=chr3:Complete_Genomics:SNV:2477255:2477255;Reference_seq=T;Variant_seq=T,C;Genotype=heterozygous;Dbxref=dbSNP:rs11716315;
+chr149110809ID=chr1:Complete_Genomics:SNV:49110809:49110809;Reference_seq=C;Variant_seq=G;Genotype=homozygous;Dbxref=dbSNP:rs4387218;
+chr618131813ID=chr6:Complete_Genomics:SNV:18131813:18131813;Reference_seq=G;Variant_seq=C,G;Genotype=heterozygous;Dbxref=dbSNP:rs4072861;
+chr256287460ID=chr2:Complete_Genomics:SNV:56287460:56287460;Reference_seq=C;Variant_seq=T;Genotype=homozygous;Dbxref=dbSNP:rs17190072;
+chr53739854ID=chr5:Complete_Genomics:SNV:3739854:3739854;Reference_seq=C;Variant_seq=G;Genotype=unknown;Dbxref=dbSNP:rs7704844;
+chr77035649ID=chr7:Complete_Genomics:SNV:7035649:7035649;Reference_seq=G;Variant_seq=T;Genotype=homozygous;Dbxref=dbSNP:rs4527790;
+chr148401454ID=chr1:Complete_Genomics:SNV:48401454:48401454;Reference_seq=T;Variant_seq=A;Genotype=homozygous;Dbxref=dbSNP:rs214214;
+chr145681369ID=chr1:Complete_Genomics:SNV:45681369:45681369;Reference_seq=C;Variant_seq=T,C;Genotype=heterozygous;Dbxref=dbSNP:rs11211111;
+chr4178588134ID=chr4:Complete_Genomics:SNV:178588134:178588134;Reference_seq=A;Variant_seq=G;Genotype=homozygous;Dbxref=dbSNP:rs12647375;
+chr254256793ID=chr2:Complete_Genomics:SNV:54256793:54256793;Reference_seq=A;Variant_seq=A,G;Genotype=heterozygous;Dbxref=dbSNP:rs1215152;
+chr4147817845ID=chr4:Complete_Genomics:SNV:147817845:147817845;Reference_seq=C;Variant_seq=G;Genotype=unknown;Dbxref=dbSNP:rs2713879;
+chr134693662ID=chr1:Complete_Genomics:SNV:34693662:34693662;Reference_seq=C;Variant_seq=T;Genotype=homozygous;Dbxref=dbSNP:rs2075933;
+chr669066539ID=chr6:Complete_Genomics:SNV:69066539:69066539;Reference_seq=T;Variant_seq=T,G;Genotype=heterozygous;Dbxref=dbSNP:rs6909883;
+chr624014209ID=chr6:Complete_Genomics:SNV:24014209:24014209;Reference_seq=T;Variant_seq=T,C;Genotype=heterozygous;Dbxref=dbSNP:rs9466977;
+chr3158101831ID=chr3:Complete_Genomics:SNV:158101831:158101831;Reference_seq=C;Variant_seq=G;Genotype=homozygous;Dbxref=dbSNP:rs4680313;
+chr1211942857ID=chr1:Complete_Genomics:SNV:211942857:211942857;Reference_seq=T;Variant_seq=G;Genotype=homozygous;Dbxref=dbSNP:rs34065530;
+chr5115293973ID=chr5:Complete_Genomics:SNV:115293973:115293973;Reference_seq=C;Variant_seq=T,C;Genotype=heterozygous;Dbxref=dbSNP:rs6890722;
+chr623632197ID=chr6:Complete_Genomics:SNV:23632197:23632197;Reference_seq=T;Variant_seq=G;Genotype=homozygous;Dbxref=dbSNP:rs199097;
+chr373840406ID=chr3:Complete_Genomics:SNV:73840406:73840406;Reference_seq=G;Variant_seq=T;Genotype=homozygous;Dbxref=dbSNP:rs1567577;
+chr720098407ID=chr7:Complete_Genomics:SNV:20098407:20098407;Reference_seq=G;Variant_seq=C,G;Genotype=heterozygous;Dbxref=dbSNP:rs2192330;
+chr2161331138ID=chr2:Complete_Genomics:SNV:161331138:161331138;Reference_seq=G;Variant_seq=A,G;Genotype=heterozygous;Dbxref=dbSNP:rs532146;
+chr724817520ID=chr7:Complete_Genomics:SNV:24817520:24817520;Reference_seq=T;Variant_seq=T,C;Genotype=heterozygous;Dbxref=dbSNP:rs9648315;
+chr1236773763ID=chr1:Complete_Genomics:SNV:236773763:236773763;Reference_seq=G;Variant_seq=A;Genotype=homozygous;Dbxref=dbSNP:rs523623;
+
+
+################################################################################
+
+";
+
+my $usage = "
+
+Synopsis:
+
+cg2gvf GS00021-DNA-A01_02-ASM-variations.csv
+
+Description:
+
+Complete Genomics files are difficult to parse within the standard
+GAL::Parser framework, so as a temporary solution we'll parse them
+externally with a script.
+
+
+
+$warning
+
+
+
+";
+
+print $warning;
+print STDERR $warning;
+
+my ($help);
+my $opt_success = GetOptions('help'    => \$help,
+			      );
+
+die $usage if $help || ! $opt_success;
+
+my $file = shift;
+die $usage unless $file;
+
+open (my $FH, '<', $file) or die "Can't open $file for reading\n$!\n";
+my @buffer;
+
+while (my $locus  = parse_cg_locus(\@buffer, $FH)) {
+    print_features($locus);
+}
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub parse_cg_locus {
+
+    my ($buffer, $FH) = @_;
+
+    my %locus;
+    my $this_locus;
+    while (my $line = shift @{$buffer} || <$FH>) {
+
+	# Skip lines like this:
+	#----------------------
+	# contig,begin,end,ploidy
+	# locus,haplotype,contig,begin,end,vartype,reference,alleleSeq,totalScore,hapLink,xRef
+	# program,programVersion,referenceSequence,fileCreationDate,comment
+	# some application,1.2.0.14,/Proj/Pipeline/Production_Data/REF/HUMAN-M_02-REF/reference.gbi,2009-Jun-19 08:14:26
+	# chr1,961,972,2
+	# chr1,1001,1013,2
+	# chr1,1113,1130,2
+
+	last unless $line;
+	next unless $line =~ /^\d+,/;
+
+	# Parse lines like this:
+	#-----------------------
+	# 1,1,chr1,5012,5013,=,C,C,159,,
+	# 1,2,chr1,5012,5013,ref-consistent,C,N,159,,
+	# 2,1,chr1,6004,6005,=,G,G,95,,
+	# 2,2,chr1,6004,6005,ref-consistent,G,N,120,,
+	# 3,1,chr1,6512,6512,ref-consistent,,?,,77,
+	# 3,2,chr1,6512,6512,=,,,120,78,
+
+	chomp $line;
+	my ($locus, $haplotype, $contig, $begin, $end, $vartype, 
+	    $reference, $alleleSeq, $totalScore, $hapLink,
+	    $xRef) = split ',', $line;
+
+	$this_locus ||= $locus;
+	if ($this_locus ne $locus) {
+	    push @buffer, $line;
+	    return \%locus;
+	}
+
+	warn "Warning : non_integer_locus : $locus\n"     unless $locus =~ /^\d+$/;
+	warn "Warning : unknown_haplotype : $haplotype\n" unless $haplotype =~ /1|2|all/;
+	warn "Warning : bad_chromosome : $contig\n"       unless $contig =~ /^chr[0-9XYM]$/;
+	warn "Warning : bad_begin_location : $begin\n"    unless $begin =~ /^\d+$/;
+	warn "Warning : bad_end_location : $end\n"        unless $end =~ /^\d+$/;
+	warn "Warning : bad_vartype : $vartype\n"         unless grep {$vartype eq $_} 
+	  qw(= del delins ins snp ref-consistent ref-inconsistent sub ref
+	     no-call-rc no-call-ri no-call no-ref PAR-called-in-X);
+	warn "Warning : bad_reference_seq : $locus\t$reference\n" if $reference && $reference !~ /^[ATCG]+$/;
+	warn "Warning : bad_allele_seq : $locus\t$alleleSeq\n"    if $alleleSeq && $alleleSeq !~ /^[ATCGN\?]+$/;
+	warn "Warning : bad_xRef : $locus\t$xRef\n"       if $xRef && $xRef !~ /^dbsnp:rs\d+$/;
+
+	$locus{$locus}{$contig}{$begin}{$end}{ploidy}++;
+	next unless $vartype =~ /^(=|del|delins|ins|snp|sub|ref)$/;
+	$locus{$locus}{$contig}{$begin}{$end}{vartype}{$vartype}++;
+	$locus{$locus}{$contig}{$begin}{$end}{reference}{$reference}++;
+	$locus{$locus}{$contig}{$begin}{$end}{alleleSeq}{$alleleSeq}++;
+	$xRef =~ s/dbsnp://;
+	$locus{$locus}{$contig}{$begin}{$end}{xRef}{$xRef}++;
+	print '';
+    }
+    return \%locus;
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_features {
+
+    my $locus = shift;
+
+    my %type_map = ('del'    => 'deletion',
+		    'delins' => 'substitution', # Not sure if this is correct
+		    'ins'    => 'insertion',
+		    'snp'    => 'SNV',
+		    'sub'    => 'substitution',
+		    );
+
+    for my $locus_id (keys %{$locus}) {
+	my $locus = $locus->{$locus_id};
+	my @contigs = keys %{$locus};
+	if (scalar @contigs > 1) {
+	    my $warning = "Warning : multi_contig_locus : $locus_id\t";
+	    $warning .= join ',', @contigs;
+	    $warning .= "\n";
+	    warn $warning;
+	}
+	my $contig = shift @contigs;
+	my @begins = keys %{$locus->{$contig}};
+	for my $begin (@begins) {
+	    my @ends = keys %{$locus->{$contig}{$begin}};
+	  ENDS:
+	    for my $end (@ends) {
+		my @vartypes   = grep {$_ =~ /^(del|delins|ins|snp|sub)$/} keys %{$locus->{$contig}{$begin}{$end}{vartype}};
+		next unless scalar @vartypes;
+		my @references = keys %{$locus->{$contig}{$begin}{$end}{reference}};
+		my @alleleSeqs = keys %{$locus->{$contig}{$begin}{$end}{alleleSeq}};
+		my @xRefs      = keys %{$locus->{$contig}{$begin}{$end}{xRef}};
+		my $ploidy     = $locus->{$contig}{$begin}{$end}{ploidy};
+		
+		if (scalar @vartypes > 1) {
+		    my $warning = "Warning : multi_vartype_location : $locus_id\t";
+		    $warning .= join ',', @vartypes;
+		    $warning .= "\n";
+		    warn $warning;
+		}
+		if (scalar @references > 1) {
+		    my $warning = "Warning : multi_reference_location : $locus_id\t";
+		    $warning .= join ',', @references;
+		    $warning .= "\n";
+		    warn $warning;
+		}
+		my $vartype   = shift @vartypes;
+		my $reference = shift @references;
+	        $reference ||= '-' if $vartype eq 'ins';
+		map {$_ ||= '-'} @alleleSeqs if $vartype eq 'del';
+
+		if ($vartype || $reference || scalar @alleleSeqs) {
+		    unless ($vartype && $reference && scalar @alleleSeqs) {
+			warn "Warning : incomplete_data : $locus_id\n";
+		    }
+		}
+		else {
+		    next ENDS;
+		}
+
+		if (scalar @begins > 1 || scalar @ends > 1) {
+		    warn "Warning : multi_location_locus_printed : $locus_id\n";
+		}
+		
+		my $genotype = scalar @alleleSeqs > 1 ? 'heterozygous' : 'homozygous';
+		if ($ploidy < 2) {
+		    $genotype = 'unknown';
+		    warn "Warning : unknown_genotype : $locus_id\t$contig\n";
+		}
+
+		my $type = $type_map{$vartype};
+		my $start = $begin + 1;
+		if ($vartype eq 'delins') {
+		    warn "Warning : delins_converted_to_substitution : $locus_id\n";
+		}
+		my %feature = (seqid  	  => $contig,
+			       source 	  => 'Complete_Genomics',
+			       type   	  => $type,
+			       start  	  => $start,
+			       end    	  => $end,
+			       score  	  => '.',
+			       strand 	  => '+',
+			       phase  	  => '.',
+			       );
+		my $feature_id = join ':', @feature{qw(seqid source type start end)};
+
+		my @dbxrefs = grep {$_} map {"dbSNP:$_" if $_} @xRefs;
+		my %attributes = (ID            => [$feature_id],
+				  Reference_seq => [$reference],
+				  Variant_seq   => \@alleleSeqs,
+				  Genotype      => [$genotype],
+				  );
+		$attributes{Dbxref} = \@dbxrefs if scalar @dbxrefs;
+		$feature{attributes} = \%attributes;
+
+		my $gvf_line = feature2gvf(\%feature);
+		print "$gvf_line\n";
+	    }
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub feature2gvf {
+
+    my $feature = shift;
+    my $attribute_text = get_attribute_text($feature);
+
+    my $gvf_line = join "\t", (@{$feature}{qw(seqid source type start 
+					      end score strand phase)},
+			       $attribute_text);
+    return $gvf_line;
+}
+
+#-----------------------------------------------------------------------------
+
+sub get_attribute_text {
+
+    my $feature = shift;
+    my $attributes = $feature->{attributes};
+    
+    my %order = map {$_ => 999} keys %{$attributes};
+    @order{qw(ID Reference_seq Variant_seq Genotype)} = (1 .. 4);
+
+    my $attribute_text;
+    for my $key (sort {$order{$a} <=> $order{$b}} keys %{$attributes}) {
+	my $value_text = join ',', @{$attributes->{$key}};
+	$attribute_text .= "$key=$value_text;";
+    }
+    return $attribute_text;
+}

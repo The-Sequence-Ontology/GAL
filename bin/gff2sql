@@ -82,8 +82,6 @@ for my $file (@files) {
 	}
 }
 
-die;
-
 if ($create) {
 	$dbh->do("CREATE INDEX feature_id_index USING BTREE ON feature (feature_id)");
 	# $dbh->do("CREATE INDEX seqid_index USING BTREE ON feature (seqid)");
