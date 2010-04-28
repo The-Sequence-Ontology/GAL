@@ -1,23 +1,24 @@
-package GAL::Storage;
+package GAL::Storage::mysql;
 
 use strict;
 use vars qw($VERSION);
 
-
 $VERSION = '0.01';
-use base qw(GAL::Base);
+use base qw(GAL::Storage);
+use File::Temp qw(tempfile);
+use DBI;
 
 =head1 NAME
 
-GAL::Storage - <One line description of module's purpose here>
+GAL::Storage::mysql - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Storage version 0.01
+This document describes GAL::Storage::mysql version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Storage;
+     use GAL::Storage::mysql;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,7 +40,7 @@ This document describes GAL::Storage version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Storage->new();
+     Usage   : GAL::Storage::mysql->new();
      Function: Creates a Storage object;
      Returns : A Storage object
      Args    :
@@ -65,7 +66,7 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(dsn user password storage);
+	my @valid_attributes = qw();
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }
@@ -110,90 +111,95 @@ sub driver {'mysql'}
 
 =cut
 
-sub dbh {shift->{dbh}}
+sub dbh {
 
-#-----------------------------------------------------------------------------
-
-=head2 db_name
-
- Title   : db_name
- Usage   : $a = $self->db_name();
- Function: Get/Set the value of db_name.
- Returns : The value of db_name.
- Args    : A value to set db_name to.
-
-=cut
-
-sub db_name {
-	my ($self, $db_name) = @_;
-
-	if (! $self->{db_name} && ! $db_name) {
-	  my $db_name = $self->random_db_name;
-	  $self->warn(message => ("Incomplete Data Source Name (DSN) ",
-				  "given. ", __PACKAGE__,
-				  ' created $db_name as a database ',
-				  'name for you.')
-		     );
-	}
-	$self->{db_name} = $db_name if $db_name;
-	return $self->{db_name};
+  my $self = shift;
+  $self->{dbh} ||= $self->_open_or_create_database;
+  return $self->{dbh};
 }
 
 #-----------------------------------------------------------------------------
-
-=head2 add_features
-
- Title   : add_features
- Usage   : $self->add_features();
- Function: Get/Set value of add_features.
- Returns : Value of add_features.
- Args    : Value to set add_features to.
-
-=cut
-
-sub add_features {
-  my ($self, $feature_hash) = @_;
-  $self->not_implemented('add_features');
-
-
-  $features = ref $features ? $features : [$features];
-
-  my ($features, $attributes) = $self->prepare_features($features);
-
-  my $feat_stmt = ('INSERT INTO feature   (feature_id, seqid, source, ' .
-		   'type, start, end, score, strand, phase, name) ' .
-		   'VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-		  );
-  my $feat_sth = $dbh->prepare($feat_stmt);
-
-  my $sth_stmt = ('INSERT INTO attribute (feature_id, att_key, att_value) ' . 
-		  'VALUES(?, ?, ?)'
-		 );
-  my $sth_attr = $dbh->prepare($sth_stmt);
-
-  for my $feature (@{$features}) {
-    $sth_feat->execute(@{$feature}) or die $sth_feat->errstr;
-  }
-
-  for my $attribute (@{$attributes}) {
-    $sth_attr->execute(@{$attribute}) or die $sth_attr->errstr;
-  }
-
-}
-
+#
+# =head2 database
+#
+#  Title   : database
+#  Usage   : $a = $self->database();
+#  Function: Get/Set the value of database.
+#  Returns : The value of database.
+#  Args    : A value to set database to.
+#
+# =cut
+#
+# sub database {
+#	my ($self, $database) = @_;
+#
+#	if (! $self->{database} && ! $database) {
+#	  my $database = $self->random_database;
+#	  $self->warn(message => ("Incomplete Data Source Name (DSN) ",
+#				  "given. ", __PACKAGE__,
+#				  ' created $database as a database ',
+#				  'name for you.')
+#		     );
+#	}
+#	$self->{database} = $database if $database;
+#	return $self->{database};
+# }
+#
+#-----------------------------------------------------------------------------
+#
+# =head2 add_features
+#
+#  Title   : add_features
+#  Usage   : $self->add_features();
+#  Function: Get/Set value of add_features.
+#  Returns : Value of add_features.
+#  Args    : Value to set add_features to.
+#
+# =cut
+#
+# sub add_features {
+#   my ($self, $feature_hash) = @_;
+#   $self->not_implemented('add_features');
+#
+#
+#   $features = ref $features ? $features : [$features];
+#
+#   my ($features, $attributes) = $self->prepare_features($features);
+#
+#   my $feat_stmt = ('INSERT INTO feature   (feature_id, seqid, source, ' .
+#		   'type, start, end, score, strand, phase, name) ' .
+#		   'VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+#		  );
+#   my $feat_sth = $dbh->prepare($feat_stmt);
+#
+#   my $sth_stmt = ('INSERT INTO attribute (feature_id, att_key, att_value) ' .
+#		  'VALUES(?, ?, ?)'
+#		 );
+#   my $sth_attr = $dbh->prepare($sth_stmt);
+#
+#   for my $feature (@{$features}) {
+#     $sth_feat->execute(@{$feature}) or die $sth_feat->errstr;
+#   }
+#
+#   for my $attribute (@{$attributes}) {
+#     $sth_attr->execute(@{$attribute}) or die $sth_attr->errstr;
+#   }
+#
+# }
+#
 #-----------------------------------------------------------------------------
 
-=head2 create_database
+=head2 _open_or_create_database
 
- Title   : create_database
- Usage   : $self->create_database();
+ Title   : _open_or_create_database
+ Usage   : $self->_open_or_create_database();
  Function: Create the database if it doesnt exists.
  Returns : Success
  Args    : N/A
 
 =cut
 
-sub create_database {
+sub _open_or_create_database {
 	my $self = shift;
 
 	my @databases = DBI->data_sources($self->driver,
@@ -202,55 +208,125 @@ sub create_database {
 					  }
 					 );
 
+	my $dbh;
 	my $dsn = $self->dsn;
-	my $db_name = $self->db_name;
+	my $database = $self->database;
 	if (! grep {$_ eq $dsn} @databases) {
 		my $drh = DBI->install_driver("mysql");
 		my $host = ''; # Defaults to localhost, abstract this later.
 		my $rc = $drh->func('createdb',
-				    $db_name,
+				    $database,
 				    $host,
 				    $self->user,
 				    $self->password,
 				    'admin');
-		my $dbh = DBI->connect($self->dsn, $self->user,
-				       $self->password);
-		$dbh->do("DROP TABLE IF EXISTS feature");
+
+		$dbh = DBI->connect($self->dsn, $self->user,
+				    $self->password);
+	$dbh->do("DROP TABLE IF EXISTS feature");
 		$dbh->do("DROP TABLE IF EXISTS attribute");
-		my @feature_columns = (feature_id => 'VARCHAR(100)',
-				       seqid      => 'VARCHAR(100)',
-				       source     => 'VARCHAR(100)',
-				       type       => 'VARCHAR(100)',
-				       start      => 'INT',
-				       end        => 'INT',
-				       score      => 'varchar(20)',
-				       strand     => 'VARCHAR(1)',
-				       phase      => 'VARCHAR(1)',
-				      );
-		my $feature_columns_text = join ' ', @feature_columns;
-		$feature_columns_text =~ s/,\s*$//;
-		my $feature_create_stmt =
-		  "CREATE TABLE feature ($feature_columns_text)";
-		$dbh->do($feature_create_stmt);
-
-		my @att_columns =
-			       (attribute_id => 'INT NOT NULL AUTO_INCREMENT',
-				feature_id   => 'VARCHAR(100)',
-				tag          => 'VARCHAR(100)',
-				value        => 'TEXT',
-			       );
-		my $att_columns_text = join ' ', @att_columns;
-		$att_columns_text =~ s/,\s*$//;
-		my $att_create_stmt =
-		  "CREATE TABLE attribute ($att_columns_text " .
-		    "PRIMARY KEY (attribute_id))";
-
-		$dbh->do($att_create_stmt);
+	$dbh->do("CREATE TABLE feature ("    .
+		 "feature_id VARCHAR(255), " .
+		 "seqid      VARCHAR(255), " .
+		 "source     VARCHAR(255), " .
+		 "type       VARCHAR(255), " .
+		 "start      INT, "          .
+		 "end        INT, "          .
+		 "score      VARCHAR(255), "  .
+		 "strand     VARCHAR(1), "   .
+		 "phase      VARCHAR(1),"     .
+		 "bin        VARCHAR(15))"
+		 # "name      VARCHAR(255), "      .
+		 # "parent    VARCHAR(255), "    .
+		 );
+	$dbh->do("CREATE TABLE attribute ("  .
+		 "attribute_id INT NOT NULL AUTO_INCREMENT, " .
+		 "feature_id VARCHAR(255), " .
+		 "att_key    VARCHAR(255), "    .
+		 "att_value  TEXT, "  .
+		 "PRIMARY KEY (attribute_id))"
+		 );
 	}
 	else {
-		$self->warn(message => "Using exsiting database $db_name");
+		$self->warn(message => "Using exsiting database $database");
+		$dbh = DBI->connect($self->dsn, $self->user,
+				    $self->password);
 	}
-	return 1;
+	$self->{dbh} = $dbh;
+	return $self->{dbh};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 load_file
+
+ Title   : load_file
+ Usage   : $self->load_file();
+ Function: Get/Set value of load_file.
+ Returns : Value of load_file.
+ Args    : Value to set load_file to.
+
+=cut
+
+sub load_file {
+
+  my ($self, @args) = @_;
+
+  my $args = $self->prepare_args(\@args);
+  my $files = $args->{file};
+  $files = ref $files eq 'ARRAY' ? $files : [$files];
+  my $parser_class = $args->{format};
+  $parser_class =~ s/GAL::Parser//;
+  $parser_class = 'GAL::Parser::' . $parser_class;
+  $self->load_module($parser_class);
+
+  my $temp_dir;
+ ($temp_dir) = grep {-d $_} qw(/tmp .) unless ($temp_dir &&-d $temp_dir);
+
+  my ($FEAT_TEMP,  $feat_filename)  = tempfile('gal_feat_XXXXXX',
+					       SUFFIX => '.tmp',
+					       DIR    => $temp_dir,
+					       UNLINK => 0,
+					      );
+
+  my ($ATT_TEMP,  $att_filename)  = tempfile('gal_att_XXXXXX',
+					     SUFFIX => '.tmp',
+					     DIR    => $temp_dir,
+					     UNLINK => 0,
+					    );
+  chmod (0444, $feat_filename, $att_filename);
+
+  for my $file (@{$files}) {
+
+    my $parser = $parser_class->new(file => $file);
+
+    while (my $feature = $parser->next_feature_hash) {
+      my $feature_id = $feature->{feature_id};
+      my $bins = $self->get_feature_bins($feature);
+      my $bin = $bins->[0];
+      my @feature_data = (@{$feature}{qw(feature_id seqid source
+					 type start end score strand
+					 phase)},
+			  $bin);
+      my $attributes = $feature->{attributes};
+      print $FEAT_TEMP join "\t", @feature_data;
+      print $FEAT_TEMP "\n";
+
+      for my $key (keys %{$attributes}) {
+	my @values = @{$attributes->{$key}};
+	for my $value (@values) {
+	  print $ATT_TEMP  join "\t",
+	    ($feature_id, $key, $value);
+	  print $ATT_TEMP "\n";
+	}
+      }
+    }
+  }
+
+  my $dbh = $self->dbh;
+
+  $dbh->do("LOAD DATA INFILE '$feat_filename' INTO TABLE feature   (feature_id, seqid, source, type, start, end, score, strand, phase, bin)");
+  $dbh->do("LOAD DATA INFILE '$att_filename'  INTO TABLE attribute (feature_id, att_key, att_value)");
 }
 
 #-----------------------------------------------------------------------------
@@ -450,7 +526,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Storage> requires no configuration files or environment variables.
+<GAL::Storage::mysql> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

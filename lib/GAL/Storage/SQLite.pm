@@ -86,17 +86,10 @@ sub dbh {
 	my $self = shift;
 
 	if (! defined $self->{dbh}) {
-		my $db_name = $self->db_name;
-		if (! defined $db_name) {
-			$db_name = join "",
-			  map { unpack "H*", chr(rand(256)) } 1..16;
-			$db_name .= '.SQLite';
-		}
-		my $user = $self->user;
-		my $password = $self->password;
-		my $dbh = DBI->connect("dbi:SQLite:dbname=$db_name",
-				       $user,
-				       $password);
+
+	  my $dbh = DBI->connect($self->dsn,
+				 $user,
+				 $password);
 		$self->load_schema($dbh);
 		# http://search.cpan.org/~adamk/DBD-SQLite-1.29/lib/DBD/SQLite.pm#Transactions
 		$dbh->{AutoCommit} = 1;

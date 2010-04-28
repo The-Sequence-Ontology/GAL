@@ -56,7 +56,7 @@ sub new {
 
 sub _initialize_args {
 	my ($self, @args) = @_;
-        my $args = $self->prepare_args(\@args);
+	my $args = $self->prepare_args(\@args);
 	return $args;
 }
 
@@ -211,7 +211,7 @@ sub first_word {
  Args    : Two array references.  The first can contain an array,
 	   hash or reference to either of those containing key,
 	   value pairs.  The second optional array reference contains
-           a list of valid attributes (arguments).
+	   a list of valid attributes (arguments).
 
 =cut
 
@@ -372,6 +372,42 @@ sub load_module {
 		     ref $self .
 		     ":\n$@\n") if $@;
 	return 1;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 get_feature_bins
+
+ Title   : get_feature_bins
+ Usage   : $self->get_feature_bins($feature);
+ Function: Get the genome bins for a range
+ Returns : An array of bins that the given
+	   range falls in.
+ Args    : A feature hash
+
+=cut
+
+sub get_feature_bins {
+
+    my ($self, $feature) = @_;
+
+    my ($seqid, $start, $end) = @{$feature}{qw(seqid start end)};
+    my @feature_bins;
+    my $count;
+    my $single_bin;
+    for my $bin_size (128_000, 1_000_000, 8_000_000, 64_000_000,
+		      512_000_000) {
+      $count++;
+      my $start_bin = int($start/$bin_size);
+      my $end_bin   = int($end/$bin_size);
+      my @these_bins = map {$_ = join ':', ($seqid, $count, $_)} ($start_bin .. $end_bin);
+	if (! $single_bin && scalar @these_bins == 1) {
+	    $single_bin = shift @these_bins;
+	}
+	unshift @feature_bins, @these_bins;
+    }
+    unshift @feature_bins, $single_bin;
+    return wantarray ? @feature_bins : \@feature_bins;
 }
 
 #-----------------------------------------------------------------------------

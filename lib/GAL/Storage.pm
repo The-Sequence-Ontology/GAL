@@ -39,7 +39,7 @@ This document describes GAL::Storage version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Storage->new();
+     Usage   : GAL::Storage->new()
      Function: Creates a Storage object;
      Returns : A Storage object
      Args    :
@@ -49,9 +49,6 @@ This document describes GAL::Storage version 0.01
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
-	$class = $class . '::' . $self->driver;
-	$self->load_module($class);
-	$self = $class->new(@args);
 	return $self;
 }
 
@@ -78,7 +75,7 @@ sub _initialize_args {
 =head2 dsn
 
  Title   : dsn
- Usage   : $a = $self->dsn();
+ Usage   : $a = $self->dsn()
  Function: Get/Set the value of dsn.
  Returns : The value of dsn.
  Args    : A value to set dsn to.
@@ -94,21 +91,45 @@ sub dsn {
 
 	# If we don't have a dsn, then create one
 	$dsn ||= '';
-	my @parts = split ':', $dsn;
-	shift @parts if $parts[0] =~ /^dbi$/i;
-	my ($driver, @attribute_parts) = @parts;
-	my $attribute_txt = join '', @attribute_parts;
-	my %attributes = map {split /=/} split /;/, $attribute_txt;
+	my ($scheme, $driver, $db_attributes) = split ':', $dsn;
+	$scheme = $self->scheme($scheme);
+	$driver = $self->driver($driver);
 
-	$driver  = $self->driver($driver);
-	$attributes{database} = $self->database($attributes{database});
-	$attribute_txt = '';
-	for my $key (keys %attributes) {
-	  $attribute_txt .= $key . '=' . $attributes{$key} . ';';
+	my ($database, %attributes);
+	if ($db_attributes =~ /=/) {
+	  my %attributes = map {split /=/} split /;/, $db_attributes;
 	}
-	$self->{dsn} = join ':', ('DBI', $driver, $attribute_txt);
+	else {
+	  $database = $db_attributes
+	}
+
+	$database = $self->database($database);
+	my $attribute_txt = '';
+	map {$attribute_txt .= $_ . '=' . $attributes{$_} . ';'} keys %attributes;
+
+	$self->{dsn} = join ':', ($scheme, $driver, $database, $attribute_txt);
+	$self->{dsn} =~ s/:$//;
 
 	return $self->{dsn};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 scheme
+
+ Title   : scheme
+ Usage   : $a = $self->scheme()
+ Function: Get/Set the value of scheme.
+ Returns : The value of scheme.
+ Args    : A value to set scheme to.
+
+=cut
+
+sub scheme {
+	my ($self, $scheme) = @_;
+	$self->{scheme} = $scheme if $scheme;
+	$self->{scheme} ||= 'dbi';
+	return $self->{scheme};
 }
 
 #-----------------------------------------------------------------------------
@@ -116,7 +137,7 @@ sub dsn {
 =head2 user
 
  Title   : user
- Usage   : $a = $self->user();
+ Usage   : $a = $self->user()
  Function: Get/Set the value of user.
  Returns : The value of user.
  Args    : A value to set user to.
@@ -134,7 +155,7 @@ sub user {
 =head2 password
 
  Title   : password
- Usage   : $a = $self->password();
+ Usage   : $a = $self->password()
  Function: Get/Set the value of password.
  Returns : The value of password.
  Args    : A value to set password to.
@@ -151,36 +172,38 @@ sub password {
 
 =head2 random_db_name
 
- Title   : random_db_name
- Usage   : $a = $self->random_db_name();
- Function: Get/Set the value of random_db_name.
- Returns : The value of random_db_name.
- Args    : A value to set random_db_name to.
+ Title   : database
+ Usage   : $a = $self->database()
+ Function: Get/Set the value of database.
+ Returns : The value of database.
+ Args    : A value to set database to.
 
 =cut
 
 sub random_db_name {
     my $self = shift;
 
-    # Generate a date stamp
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,
-	$yday,$isdst) = localtime(time);
-    my $time_stamp = sprintf("%02d%02d%02d", $year + 1900,
-			     $mon, $mday);
-    # Generate a 8 charachter semi-random hex extension
-    # for the database.
-    my @symbols = (0..9);
-    push @symbols, qw(a b c d e f);
-    my $extension = join "", map { unpack "H*", chr(rand(256)) } (1..8);
-    my $driver = $self->driver;
-    $random_db_name = join '_', ('gal_database', $driver, $time_stamp,
-				 $extension);
-    $self->warn(message => ("Incomplete Data Source Name (DSN) ",
-			    "given. ", __PACKAGE__,
-			    ' created $database as a database ',
-			    'name for you.')
-		);
-    return $random_db_name;
+	if (! $self->{database} && ! $database) {
+		# Generate a date stamp
+		my ($sec,$min,$hour,$mday,$mon,$year,$wday,
+		    $yday,$isdst) = localtime(time);
+		my $time_stamp = sprintf("%02d%02d%02d", $year + 1900,
+					 $mon + 1, $mday);
+		# Generate a 8 charachter semi-random hex extension
+		# for the database.
+		my @symbols = (0..9);
+		push @symbols, qw(a b c d e f);
+		my $extension = join "", map { unpack "H*", chr(rand(256)) } (1..8);
+		$database = join '_', ('gal_database', $time_stamp,
+				      $extension);
+		$self->warn(message => ("Incomplete Data Source Name (DSN) " .
+					"given. " . __PACKAGE__ .
+					" created $database as a database " .
+					'name for you.')
+			   );
+	}
+	$self->{database} = $database if $database;
+	return $self->{database};
 }
 
 #-----------------------------------------------------------------------------
@@ -188,7 +211,7 @@ sub random_db_name {
 =head2 driver
 
  Title   : driver
- Usage   : $a = $self->driver();
+ Usage   : $a = $self->driver()
  Function: Get/Set the value of driver.
  Returns : The value of driver.
  Args    : A value to set driver to.
@@ -197,28 +220,16 @@ sub random_db_name {
 
 sub driver {
 
-	my $self = shift;
-	$self->throw('Storage::driver should be implimented by subclasses of Storage.pm');
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 load_file
-
- Title   : load_file
- Usage   : $a = $self->load_file();
- Function: Parse and store all of the features in a file
- Returns : N/A
- Args    : file  => data_file_name
-	   class => GAL::Parser::subclass.
-
-=cut
-
-sub load_file {
-
-	my $self = shift;
-	$self->throw('Storage::load_file should be implimented by subclasses of Storage.pm');
-
+	if (! $self->{driver} && ! $driver) {
+		$driver = 'mysql';
+		$self->warn(message => ("Incomplete Data Source Name (DSN) " .
+					"given. ". __PACKAGE__ .
+					" created $driver as a database " .
+					'driver for you.')
+			   );
+	}
+	$self->{driver} = $driver if $driver;
+	return $self->{driver};
 }
 
 #-----------------------------------------------------------------------------
@@ -226,7 +237,7 @@ sub load_file {
 =head2 add_features_to_buffer
 
  Title   : add_features_to_buffer
- Usage   : $self->add_features_to_buffer();
+ Usage   : $self->add_features_to_buffer()
  Function: Get/Set value of add_features_to_buffer.
  Returns : Value of add_features_to_buffer.
  Args    : Value to set add_feature to.
@@ -254,7 +265,7 @@ sub add_features_to_buffer {
 =head2 flush_feature_buffer
 
  Title   : flush_feature_buffer
- Usage   : $self->flush_feature_buffer();
+ Usage   : $self->flush_feature_buffer()
  Function: Get/Set value of flush_feature_buffer.
  Returns : Value of flush_feature_buffer.
  Args    : Value to set add_feature to.
@@ -275,7 +286,7 @@ sub flush_feature_buffer {
 =head2 prepare_features
 
  Title   : prepare_features
- Usage   : $self->prepare_features();
+ Usage   : $self->prepare_features()
  Function: Normalizes feature hashes produced by the parsers
 	   and seperates the attributes for bulk insert into the database;
  Returns : A feature hash reference and an array reference of hash references
@@ -314,10 +325,10 @@ sub prepare_features {
 
 #-----------------------------------------------------------------------------
 
-=head2 add_feature
+=head2 add_features
 
- Title   : add_feature
- Usage   : $self->add_feature();
+ Title   : add_features
+ Usage   : $self->add_features()
  Function: Get/Set value of add_feature.
  Returns : Value of add_feature.
  Args    : Value to set add_feature to.
@@ -325,9 +336,11 @@ sub prepare_features {
 =cut
 
 sub add_features {
+  my $self = shift;
 
-    my $self = shift;
-    $self->throw('Storage::add_features should be implimented by subclasses of Storage.pm');
+  $self->throw(message => ('Method must be implimented by subclass : ' .
+			   'add_features')
+	      );
 }
 
 #-----------------------------------------------------------------------------
@@ -335,7 +348,7 @@ sub add_features {
 =head2 create_database
 
  Title   : create_database
- Usage   : $self->create_database();
+ Usage   : $self->create_database()
  Function: Create the database if it doesnt exists.
  Returns : Success
  Args    : N/A
@@ -344,9 +357,9 @@ sub add_features {
 
 sub create_database {
 
-    my $self = shift;
-    $self->throw('Storage::creat_database should be implimented by subclasses of Storage.pm');
-
+	$self->throw(message => ('Method must be implimented by subclass : ' .
+				 'add_features')
+		    );
 }
 
 #-----------------------------------------------------------------------------
@@ -354,7 +367,7 @@ sub create_database {
 =head2 get_children
 
  Title   : get_children
- Usage   : $self->get_children();
+ Usage   : $self->get_children()
  Function: Get/Set value of get_children.
  Returns : Value of get_children.
  Args    : Value to set get_children to.
@@ -363,7 +376,9 @@ sub create_database {
 
 sub get_children {
 	my $self = shift;
-	$self->throw('Not Implimented : get_children');
+	$self->throw(message => ('Method must be implimented by subclass : ' .
+				 'add_features')
+		    );
 }
 
 #-----------------------------------------------------------------------------
@@ -371,7 +386,7 @@ sub get_children {
 =head2 get_children_recursively
 
  Title   : get_children_recursively
- Usage   : $self->get_children_recursively();
+ Usage   : $self->get_children_recursively()
  Function: Get/Set value of get_children_recursively.
  Returns : Value of get_children_recursively.
  Args    : Value to set get_children_recursively to.
@@ -380,7 +395,9 @@ sub get_children {
 
 sub get_children_recursively {
   my $self = shift;
-  $self->throw('Not Implimented : get_children_recursively');
+  $self->throw(message => ('Method must be implimented by subclass : ' .
+			   'add_features')
+	      );
 }
 
 #-----------------------------------------------------------------------------
@@ -388,7 +405,7 @@ sub get_children_recursively {
 =head2 get_parents
 
  Title   : get_parents
- Usage   : $self->get_parents();
+ Usage   : $self->get_parents()
  Function: Get/Set value of get_parents.
  Returns : Value of get_parents.
  Args    : Value to set get_parents to.
@@ -397,7 +414,9 @@ sub get_children_recursively {
 
 sub get_parents {
   my $self = shift;
-  $self->throw('Not Implimented : get_parents');
+  $self->throw(message => ('Method must be implimented by subclass : ' .
+			   'add_features')
+	      );
 }
 
 #-----------------------------------------------------------------------------
@@ -405,7 +424,7 @@ sub get_parents {
 =head2 get_parents_recursively
 
  Title   : get_parents_recursively
- Usage   : $self->get_parents_recursively();
+ Usage   : $self->get_parents_recursively()
  Function: Get/Set value of get_parents_recursively.
  Returns : Value of get_parents_recursively.
  Args    : Value to set get_parents_recursively to.
@@ -414,7 +433,9 @@ sub get_parents {
 
 sub get_parents_recursively {
   my $self = shift;
-  $self->throw('Not Implimented : get_parents_recursively');
+  $self->throw(message => ('Method must be implimented by subclass : ' .
+			   'add_features')
+	      );
 }
 
 #-----------------------------------------------------------------------------
@@ -422,7 +443,7 @@ sub get_parents_recursively {
 =head2 get_all_features
 
  Title   : get_all_features
- Usage   : $self->get_all_features();
+ Usage   : $self->get_all_features()
  Function: Get/Set value of get_all_features.
  Returns : Value of get_all_features.
  Args    : Value to set get_all_features to.
@@ -431,7 +452,9 @@ sub get_parents_recursively {
 
 sub get_all_features {
   my $self = shift;
-  $self->throw('Not Implimented : get_all_features');
+  $self->throw(message => ('Method must be implimented by subclass : ' .
+			   'add_features')
+	      );
 }
 
 #-----------------------------------------------------------------------------
@@ -439,7 +462,7 @@ sub get_all_features {
 =head2 get_features_by_type
 
  Title   : get_features_by_type
- Usage   : $self->get_features_by_type();
+ Usage   : $self->get_features_by_type()
  Function: Get/Set value of get_features_by_type.
  Returns : Value of get_features_by_type.
  Args    : Value to set get_features_by_type to.
@@ -448,7 +471,9 @@ sub get_all_features {
 
 sub get_features_by_type {
   my $self = shift;
-  $self->throw('Not Implimented : get_features_by_type');
+  $self->throw(message => ('Method must be implimented by subclass : ' .
+			   'add_features')
+	      );
 }
 
 #-----------------------------------------------------------------------------
@@ -456,7 +481,7 @@ sub get_features_by_type {
 =head2 get_recursive_features_by_type
 
  Title   : get_recursive_features_by_type
- Usage   : $self->get_recursive_features_by_type();
+ Usage   : $self->get_recursive_features_by_type()
  Function: Get/Set value of get_recursive_features_by_type.
  Returns : Value of get_recursive_features_by_type.
  Args    : Value to set get_recursive_features_by_type to.
@@ -465,7 +490,9 @@ sub get_features_by_type {
 
 sub get_recursive_features_by_type {
   my $self = shift;
-  $self->throw('Not Implimented : get_recursive_features_by_type');
+  $self->throw(message => ('Method must be implimented by subclass : ' .
+			   'add_features')
+	      );
 }
 
 #-----------------------------------------------------------------------------
@@ -473,7 +500,7 @@ sub get_recursive_features_by_type {
 =head2 get_feature_by_id
 
  Title   : get_feature_by_id
- Usage   : $self->get_feature_by_id();
+ Usage   : $self->get_feature_by_id()
  Function: Get/Set value of get_feature_by_id.
  Returns : Value of get_feature_by_id.
  Args    : Value to set get_feature_by_id to.
@@ -482,7 +509,9 @@ sub get_recursive_features_by_type {
 
 sub get_feature_by_id {
   my $self = shift;
-  $self->throw('Not Implimented : get_feature_by_id');
+  $self->throw(message => ('Method must be implimented by subclass : ' .
+			   'add_features')
+	      );
 }
 
 #-----------------------------------------------------------------------------
@@ -490,7 +519,7 @@ sub get_feature_by_id {
 =head2 filter_features
 
  Title   : filter_features
- Usage   : $self->filter_features();
+ Usage   : $self->filter_features()
  Function: Get/Set value of filter_features.
  Returns : Value of filter_features.
  Args    : Value to set filter_features to.
@@ -499,7 +528,9 @@ sub get_feature_by_id {
 
 sub filter_features {
   my $self = shift;
-  $self->throw('Not Implimented : filter_features');
+    $self->throw(message => ('Method must be implimented by subclass : ' .
+			   'add_features')
+		);
 }
 
 #-----------------------------------------------------------------------------
@@ -507,7 +538,7 @@ sub filter_features {
 =head2 foo
 
  Title   : foo
- Usage   : $a = $self->foo();
+ Usage   : $a = $self->foo()
  Function: Get/Set the value of foo.
  Returns : The value of foo.
  Args    : A value to set foo to.

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 3;
+use Test::More tests => 8;
 
 BEGIN {
 	use lib '../../';
@@ -15,8 +15,8 @@ $path ||= '.';
 chdir($path);
 
 # TEST 2
-my $object = GAL::Storage->new();
-isa_ok($object, 'GAL::Storage');
+my $storage = GAL::Storage->new();
+isa_ok($storage, 'GAL::Storage');
 
 # To get a list of all of the subs and throws:
 # Select an empty line and then: C-u M-| grep -nP '^sub ' ../Storage.pm
@@ -26,64 +26,19 @@ isa_ok($object, 'GAL::Storage');
 ok($storage->dsn(), '$storage->dsn()');
 
 # TEST 4
-ok($storage->user(), '$storage->user()');
+ok($storage->scheme() eq 'dbi', '$storage->scheme()');
 
 # TEST 5
-ok($storage->password(), '$storage->password()');
+ok($storage->user('fred') eq 'fred', '$storage->user(\'fred\')');
 
 # TEST 6
-ok($storage->db_name(), '$storage->db_name()');
+ok($storage->password('12345') == 12345, '$storage->password(\'12345\')');
 
 # TEST 7
-ok($storage->driver(), '$storage->driver()');
+ok($storage->database() =~ /gal_database_\d{8}_[A-z0-9]/, '$storage->database()');
 
 # TEST 8
-ok($storage->load_file(), '$storage->load_file()');
-
-# TEST 9
-ok($storage->add_features_to_buffer(), '$storage->add_features_to_buffer()');
-
-# TEST 10
-ok($storage->flush_feature_buffer(), '$storage->flush_feature_buffer()');
-
-# TEST 11
-ok($storage->prepare_features(), '$storage->prepare_features()');
-
-# TEST 12
-ok($storage->_normalize_feature(), '$storage->_normalize_feature()');
-
-# TEST 13
-ok($storage->add_feature(), '$storage->add_feature()');
-
-# TEST 14
-ok($storage->create_database(), '$storage->create_database()');
-
-# TEST 15
-ok($storage->get_children(), '$storage->get_children()');
-
-# TEST 16
-ok($storage->get_children_recursively(), '$storage->get_children_recursively()');
-
-# TEST 17
-ok($storage->get_parents(), '$storage->get_parents()');
-
-# TEST 18
-ok($storage->get_parents_recursively(), '$storage->get_parents_recursively()');
-
-# TEST 19
-ok($storage->get_all_features(), '$storage->get_all_features()');
-
-# TEST 20
-ok($storage->get_features_by_type(), '$storage->get_features_by_type()');
-
-# TEST 21
-ok($storage->get_recursive_features_by_type(), '$storage->get_recursive_features_by_type()');
-
-# TEST 22
-ok($storage->get_feature_by_id(), '$storage->get_feature_by_id()');
-
-# TEST 23
-ok($storage->filter_features(), '$storage->filter_features()');
+ok($storage->driver() eq 'SQLite', '$storage->driver()');
 
 ################################################################################
 ################################# Ways to Test #################################
