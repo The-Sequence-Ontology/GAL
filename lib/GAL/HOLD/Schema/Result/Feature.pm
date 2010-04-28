@@ -6,7 +6,7 @@ use base qw/DBIx::Class/;
 
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('feature');
-__PACKAGE__->add_columns(qw/ feature_id seqid source type start end score strand phase /);
+__PACKAGE__->add_columns(qw/ feature_id seqid source type start end score strand phase bin/);
 __PACKAGE__->set_primary_key('feature_id');
 __PACKAGE__->has_many(attributes => 'GAL::Schema::Result::Attribute', 'feature_id');
 
