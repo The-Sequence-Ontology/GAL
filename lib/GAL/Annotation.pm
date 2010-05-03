@@ -5,6 +5,7 @@ use warnings;
 
 use base qw(GAL::Base);
 use GAL::Schema;
+use Bio::DB::Fasta;
 
 use vars qw($VERSION);
 $VERSION = '0.01';
@@ -119,6 +120,51 @@ sub _initialize_args {
 
 #-----------------------------------------------------------------------------
 
+=head2 fasta
+
+  Title   : fasta
+  Usage   : $a = $self->fasta();
+  Function:
+  Returns :
+  Args    :
+
+=cut
+
+ sub fasta {
+   my ($self, $fasta_index) = @_;
+
+   if (! $self->{fasta} || $fasta_index) {
+     $self->{fasta} = $fasta_index;
+   }
+   return $self->{fasta};
+ }
+
+#-----------------------------------------------------------------------------
+
+=head2 load_fasta
+
+  Title   : load_fasta
+  Usage   : $a = $self->load_fasta();
+  Function:
+  Returns :
+  Args    :
+
+=cut
+
+ sub load_fasta {
+   my ($self, @args) = @_;
+
+   my $args = $self->prepare_args(\@args);
+   if ($args->{path}) {
+     my $fasta_path = $args->{path};
+     my $fasta = Bio::DB::Fasta->new($fasta_path);
+     $self->{fasta} = $fasta;
+   }
+   return $self->{fasta};
+ }
+
+#-----------------------------------------------------------------------------
+
 =head2 schema
 
   Title   : schema
@@ -130,16 +176,18 @@ sub _initialize_args {
 =cut
 
  sub schema {
-        my $self = shift;
+	my $self = shift;
 
-        # Create the schema if it doesn't exist
-        if (! $self->{schema}) {
-	  $self->{schema} = GAL::Schema->connect($self->storage->dsn,
-						 $self->storage->user,
-						 $self->storage->password,
-						);
-        }
-        return $self->{schema};
+	# Create the schema if it doesn't exist
+	if (! $self->{schema}) {
+	  my $schema = GAL::Schema->connect($self->storage->dsn,
+					    $self->storage->user,
+					    $self->storage->password,
+					   );
+	  $schema->annotation($self); # See GAL::SchemaAnnotation
+	  $self->{schema} = $schema;
+	}
+	return $self->{schema};
  }
 
 #-----------------------------------------------------------------------------
@@ -217,17 +265,17 @@ sub password {
 #
 #-----------------------------------------------------------------------------
 
-=head2 load_file
+=head2 load_features
 
- Title   : load_file
- Usage   : $a = $self->load_file();
+ Title   : load_features
+ Usage   : $a = $self->load_features();
  Function: Parse and store all of the features in a file
  Returns : N/A
  Args    : file_name
 
 =cut
 
-sub load_file {
+sub load_features {
   my ($self, @args) = @_;
   $self->storage->load_file(@args);
 }

@@ -32,6 +32,7 @@ This document describes GAL::Schema version 0.01
 
 
 __PACKAGE__->load_namespaces();
+__PACKAGE__->load_components(qw/ +GAL::SchemaAnnotation /);
 
 #-----------------------------------------------------------------------------
 

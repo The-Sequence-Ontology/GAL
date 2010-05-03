@@ -56,19 +56,19 @@ sub new {
 #-----------------------------------------------------------------------------
 
 sub _initialize_args {
-	my ($self, @args) = @_;
+  my ($self, @args) = @_;
 
-	######################################################################
-	# This block of code handels class attributes.  Use the
-	# @valid_attributes below to define the valid attributes for
-	# this class.  You must have identically named get/set methods
-	# for each attribute.  Leave the rest of this block alone!
-	######################################################################
-	my $args = $self->SUPER::_initialize_args(@args);
-	# Set valid class attributes here
-	my @valid_attributes = qw();
-	$self->set_attributes($args, @valid_attributes);
-	######################################################################
+  ######################################################################
+  # This block of code handels class attributes.  Use the
+  # @valid_attributes below to define the valid attributes for
+  # this class.  You must have identically named get/set methods
+  # for each attribute.  Leave the rest of this block alone!
+  ######################################################################
+  my $args = $self->SUPER::_initialize_args(@args);
+  # Set valid class attributes here
+  my @valid_attributes = qw();
+  $self->set_attributes($args, @valid_attributes);
+  ######################################################################
 }
 
 #-----------------------------------------------------------------------------
@@ -189,6 +189,42 @@ sub dbh {
 #
 #-----------------------------------------------------------------------------
 
+=head2 drop_database
+
+ Title   : drop_database
+ Usage   : $self->drop_database();
+ Function: Drop the database;
+ Returns : Success
+ Args    : N/A
+
+=cut
+
+sub drop_database {
+
+  my $self = shift;
+
+  my @databases = DBI->data_sources($self->driver,
+				    {user     => $self->user,
+				     password => $self->password,
+				    }
+				   );
+  my $dbh;
+  my $dsn = $self->dsn;
+  my $database = $self->database;
+  if (grep {$_ eq $dsn} @databases) {
+    my $drh = DBI->install_driver("mysql");
+    my $host = ''; # Defaults to localhost, abstract this later.
+    my $rc = $drh->func('dropdb',
+			$database,
+			$host,
+			$self->user,
+			$self->password,
+			'admin');
+  }
+  return;
+}
+#-----------------------------------------------------------------------------
+
 =head2 _open_or_create_database
 
  Title   : _open_or_create_database
@@ -223,37 +259,78 @@ sub _open_or_create_database {
 
 		$dbh = DBI->connect($self->dsn, $self->user,
 				    $self->password);
-	$dbh->do("DROP TABLE IF EXISTS feature");
+		$self->{dbh} = $dbh;
+		$dbh->do("DROP TABLE IF EXISTS feature");
 		$dbh->do("DROP TABLE IF EXISTS attribute");
-	$dbh->do("CREATE TABLE feature ("    .
-		 "feature_id VARCHAR(255), " .
-		 "seqid      VARCHAR(255), " .
-		 "source     VARCHAR(255), " .
-		 "type       VARCHAR(255), " .
-		 "start      INT, "          .
-		 "end        INT, "          .
-		 "score      VARCHAR(255), "  .
-		 "strand     VARCHAR(1), "   .
-		 "phase      VARCHAR(1),"     .
-		 "bin        VARCHAR(15))"
-		 # "name      VARCHAR(255), "      .
-		 # "parent    VARCHAR(255), "    .
-		 );
-	$dbh->do("CREATE TABLE attribute ("  .
-		 "attribute_id INT NOT NULL AUTO_INCREMENT, " .
-		 "feature_id VARCHAR(255), " .
-		 "att_key    VARCHAR(255), "    .
-		 "att_value  TEXT, "  .
-		 "PRIMARY KEY (attribute_id))"
-		 );
-	}
+		$dbh->do("DROP TABLE IF EXISTS relationship");
+		$dbh->do("CREATE TABLE feature ("    .
+			 "subject_id VARCHAR(255), " .
+			 "feature_id VARCHAR(255), " .
+			 "seqid      VARCHAR(255), " .
+			 "source     VARCHAR(255), " .
+			 "type       VARCHAR(255), " .
+			 "start      INT, "          .
+			 "end        INT, "          .
+			 "score      VARCHAR(255), " .
+			 "strand     VARCHAR(1), "   .
+			 "phase      VARCHAR(1),"    .
+			 "bin        VARCHAR(15))"
+			);
+		$dbh->do("CREATE TABLE attribute ("  .
+			 "attribute_id INT NOT NULL AUTO_INCREMENT, " .
+			 "subject_id VARCHAR(255), " .
+			 "feature_id VARCHAR(255), " .
+			 "att_key    VARCHAR(255), "    .
+			 "att_value  TEXT, "  .
+			 "PRIMARY KEY (attribute_id))"
+			);
+		$dbh->do("CREATE TABLE relationship ("  .
+			 "subject_id   VARCHAR(255), " .
+			 "parent       VARCHAR(255), " .
+			 "child        VARCHAR(255), "    .
+			 "relationship VARCHAR(255)) "
+			);
+		$self->index_database;
+	      }
 	else {
-		$self->warn(message => "Using exsiting database $database");
-		$dbh = DBI->connect($self->dsn, $self->user,
-				    $self->password);
+	  $self->warn(message => "Using exsiting database $database");
+	  $dbh = DBI->connect($self->dsn, $self->user,
+			      $self->password);
 	}
-	$self->{dbh} = $dbh;
 	return $self->{dbh};
+      }
+
+#-----------------------------------------------------------------------------
+
+=head2 index_database
+
+ Title   : index_database
+ Usage   : $self->index_database();
+ Function: Get/Set value of index_database.
+ Returns : Value of index_database.
+ Args    : Value to set index_database to.
+
+=cut
+
+sub index_database {
+
+  my $self = shift;
+  my $dbh  = $self->dbh;
+
+  # Create feature indeces
+  $dbh->do("CREATE INDEX feat_feature_id_index USING BTREE ON feature (feature_id)");
+  # $dbh->do("CREATE INDEX feat_seqid_start_end_index USING BTREE ON feature (seqid, start, end)");
+  $dbh->do("CREATE INDEX feat_bin_index USING BTREE ON feature (bin)");
+  # $dbh->do("CREATE INDEX feat_type_index USING BTREE ON feature (type)");
+
+  # Create attribute indeces
+  $dbh->do("CREATE INDEX att_feature_id_index USING BTREE ON attribute (feature_id)");
+  # $dbh->do("CREATE INDEX att_key_value_index USING BTREE ON attribute (att_key, att_value)");
+
+  # Create relationship indeces
+  $dbh->do("CREATE INDEX rel_parent_index USING BTREE ON relationship (parent)");
+  $dbh->do("CREATE INDEX rel_child_index  USING BTREE ON relationship (child)");
+
 }
 
 #-----------------------------------------------------------------------------
@@ -294,7 +371,12 @@ sub load_file {
 					     DIR    => $temp_dir,
 					     UNLINK => 0,
 					    );
-  chmod (0444, $feat_filename, $att_filename);
+  my ($REL_TEMP,  $rel_filename)  = tempfile('gal_rel_XXXXXX',
+					     SUFFIX => '.tmp',
+					     DIR    => $temp_dir,
+					     UNLINK => 0,
+					    );
+  chmod (0444, $feat_filename, $att_filename, $rel_filename);
 
   for my $file (@{$files}) {
 
@@ -304,11 +386,14 @@ sub load_file {
       my $feature_id = $feature->{feature_id};
       my $bins = $self->get_feature_bins($feature);
       my $bin = $bins->[0];
-      my @feature_data = (@{$feature}{qw(feature_id seqid source
+      my $attributes = $feature->{attributes};
+      my $subject_id = $attributes->{Subject_ID} || '';
+      my @parents = ref $attributes->{Parent} eq 'ARRAY' ? @{$attributes->{Parent}} : ();
+      my @feature_data = ($subject_id,
+			  @{$feature}{qw(feature_id seqid source
 					 type start end score strand
 					 phase)},
 			  $bin);
-      my $attributes = $feature->{attributes};
       print $FEAT_TEMP join "\t", @feature_data;
       print $FEAT_TEMP "\n";
 
@@ -316,17 +401,25 @@ sub load_file {
 	my @values = @{$attributes->{$key}};
 	for my $value (@values) {
 	  print $ATT_TEMP  join "\t",
-	    ($feature_id, $key, $value);
+	    ($subject_id, $feature_id, $key, $value);
 	  print $ATT_TEMP "\n";
 	}
       }
+
+      for my $parent (@parents) {
+	my @relationship_data = ($subject_id, $parent, $feature_id);
+	print $REL_TEMP join "\t", @relationship_data;
+	print $REL_TEMP "\n";
+      }
+
     }
   }
 
   my $dbh = $self->dbh;
 
-  $dbh->do("LOAD DATA INFILE '$feat_filename' INTO TABLE feature   (feature_id, seqid, source, type, start, end, score, strand, phase, bin)");
-  $dbh->do("LOAD DATA INFILE '$att_filename'  INTO TABLE attribute (feature_id, att_key, att_value)");
+  $dbh->do("LOAD DATA INFILE '$feat_filename' INTO TABLE feature   (subject_id, feature_id, seqid, source, type, start, end, score, strand, phase, bin)");
+  $dbh->do("LOAD DATA INFILE '$att_filename'  INTO TABLE attribute (subject_id, feature_id, att_key, att_value)");
+  $dbh->do("LOAD DATA INFILE '$rel_filename'  INTO TABLE relationship (subject_id, parent, child)");
 }
 
 #-----------------------------------------------------------------------------

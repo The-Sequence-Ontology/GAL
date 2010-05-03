@@ -376,6 +376,28 @@ sub load_module {
 
 #-----------------------------------------------------------------------------
 
+=head2 revcomp
+
+ Title   : revcomp
+ Usage   : $self->revcomp($feature);
+ Function: Get the genome bins for a range
+ Returns : An array of bins that the given
+	   range falls in.
+ Args    : A feature hash
+
+=cut
+
+sub revcomp {
+
+  my ($self, $sequence) = @_;
+
+  my $revcomp_seq = reverse $sequence;
+  $revcomp_seq =~ tr/acgtrymkswhbvdnxACGTRYMKSWHBVDNX/tgcayrkmswdvbhnxTGCAYRKMSWDVBHNX/;
+  return $revcomp_seq;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 get_feature_bins
 
  Title   : get_feature_bins
@@ -411,6 +433,118 @@ sub get_feature_bins {
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 translate
+
+ Title   : translate
+ Usage   : $self->translate($feature);
+ Function: 
+ Returns : 
+ Args    : 
+
+=cut
+
+sub translate {
+  my ($self, $sequence, $offset, $length) = @_;
+
+  my $genetic_code = $self->genetic_code;
+
+  $offset ||= 0;
+  $length ||= length($sequence);
+
+  my $polypeptide;
+  for (my $i = (0 + $offset); $i < $length; $i += 3) {
+    my $codon = uc substr($sequence, $i, 3);
+    my $aa = $genetic_code->{$codon};
+    $polypeptide .= $aa;
+  }
+  return $polypeptide;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 genetic_code
+
+ Title   : genetic_code
+ Usage   : $self->genetic_code($feature);
+ Function: 
+ Returns : 
+ Args    : 
+
+=cut
+
+sub genetic_code {
+  my $self = shift;
+
+  return {AAA => 'K',
+	  AAC => 'N',
+	  AAG => 'K',
+	  AAT => 'N',
+	  ACA => 'T',
+	  ACC => 'T',
+	  ACG => 'T',
+	  ACT => 'T',
+	  AGA => 'R',
+	  AGC => 'S',
+	  AGG => 'R',
+	  AGT => 'S',
+	  ATA => 'I',
+	  ATC => 'I',
+	  ATG => 'M',
+	  ATT => 'I',
+	  CAA => 'Q',
+	  CAC => 'H',
+	  CAG => 'Q',
+	  CAT => 'H',
+	  CCA => 'P',
+	  CCC => 'P',
+	  CCG => 'P',
+	  CCT => 'P',
+	  CGA => 'R',
+	  CGC => 'R',
+	  CGG => 'R',
+	  CGT => 'R',
+	  CTA => 'L',
+	  CTC => 'L',
+	  CTG => 'L',
+	  CTT => 'L',
+	  GAA => 'E',
+	  GAC => 'D',
+	  GAG => 'E',
+	  GAT => 'D',
+	  GCA => 'A',
+	  GCC => 'A',
+	  GCG => 'A',
+	  GCT => 'A',
+	  GGA => 'G',
+	  GGC => 'G',
+	  GGG => 'G',
+	  GGT => 'G',
+	  GTA => 'V',
+	  GTC => 'V',
+	  GTG => 'V',
+	  GTT => 'V',
+	  TAA => '*',
+	  TAC => 'Y',
+	  TAG => '*',
+	  TAT => 'Y',
+	  TCA => 'S',
+	  TCC => 'S',
+	  TCG => 'S',
+	  TCT => 'S',
+	  TGA => '*',
+	  TGC => 'C',
+	  TGG => 'W',
+	  TGT => 'C',
+	  TTA => 'L',
+	  TTC => 'F',
+	  TTG => 'L',
+	  TTT => 'F',
+	 };
+}
+
+#-----------------------------------------------------------------------------
+
 
 =head1 DIAGNOSTICS
 

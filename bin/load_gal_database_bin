@@ -5,7 +5,6 @@ use Getopt::Long;
 use IO::Prompt;
 use DBI;
 use File::Temp qw(tempfile);
-use File::Spec;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -34,11 +33,13 @@ Options:
 	     \$ENV{\${driver}_password} where \$driver is the driver
 	     parsed from the dsn.
   prompt     Prompt for the password on the command line.
+  temp_dir   A directory for temporary files.  If none is given, perl
+             will try to choose something logical.
 
 ";
 
 
-my ($help, $create, $format, $dsn, $user, $password, $prompt);
+my ($help, $create, $format, $dsn, $user, $password, $prompt, $temp_dir);
 my $opt_success = GetOptions('help'         => \$help,
                              'dsn=s'        => \$dsn,
                              'format=s'     => \$format,
@@ -46,6 +47,7 @@ my $opt_success = GetOptions('help'         => \$help,
  			     'user=s'       => \$user,
  			     'password=s'   => \$password,
  			     'prompt'       => sub {$password = prompt("Password: ", -tty,  -echo => '*')->{value}},
+			     'temp_dir=s'   => \$temp_dir,
 );
 
 die $usage if $help || ! $opt_success;
@@ -64,7 +66,8 @@ my $class = "GAL::Parser::$format";
 eval "require $class";
 die $@ if $@;
 
-my $temp_dir = File::Spec->tmpdir;
+($temp_dir) = grep {-d $_} qw(/tmp .) unless ($temp_dir &&-d $temp_dir);
+
 my ($FEAT_TEMP,  $feat_filename)  = tempfile('gal_feat_XXXXXX',
                                            SUFFIX => '.tmp',
                                            DIR    => $temp_dir,
