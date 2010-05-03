@@ -126,10 +126,11 @@ sub dsn {
 =cut
 
 sub scheme {
-	my ($self, $scheme) = @_;
-	$self->{scheme} = $scheme if $scheme;
-	$self->{scheme} ||= 'dbi';
-	return $self->{scheme};
+	my $self = shift;
+
+	$self->throw(message => ('Method must be implimented by subclass : ' .
+				 'scheme')
+		    );
 }
 
 #-----------------------------------------------------------------------------
@@ -170,40 +171,66 @@ sub password {
 
 #-----------------------------------------------------------------------------
 
-=head2 random_db_name
+=head2 database
 
  Title   : database
- Usage   : $a = $self->database()
+ Usage   : $a = $self->database();
  Function: Get/Set the value of database.
  Returns : The value of database.
  Args    : A value to set database to.
 
 =cut
 
+sub database {
+      my ($self, $database) = @_;
+
+      if (! $self->{database} && ! $database) {
+        my $database = $self->random_database;
+        $self->warn(message => ("Incomplete Data Source Name (DSN) ",
+                                "given. ", __PACKAGE__,
+                                ' created $database as a database ',
+                                'name for you.')
+                   );
+      }
+      $self->{database} = $database if $database;
+      return $self->{database};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 random_db_name
+
+ Title   : random_db_name
+ Usage   : $a = $self->random_db_name()
+ Function: Get/Set the value of random_db_name.
+ Returns : The value of random_db_name.
+ Args    : A value to set random_db_name to.
+
+=cut
+
 sub random_db_name {
     my $self = shift;
 
-	if (! $self->{database} && ! $database) {
-		# Generate a date stamp
-		my ($sec,$min,$hour,$mday,$mon,$year,$wday,
-		    $yday,$isdst) = localtime(time);
-		my $time_stamp = sprintf("%02d%02d%02d", $year + 1900,
-					 $mon + 1, $mday);
-		# Generate a 8 charachter semi-random hex extension
-		# for the database.
-		my @symbols = (0..9);
-		push @symbols, qw(a b c d e f);
-		my $extension = join "", map { unpack "H*", chr(rand(256)) } (1..8);
-		$database = join '_', ('gal_database', $time_stamp,
-				      $extension);
-		$self->warn(message => ("Incomplete Data Source Name (DSN) " .
-					"given. " . __PACKAGE__ .
-					" created $database as a database " .
-					'name for you.')
-			   );
-	}
-	$self->{database} = $database if $database;
-	return $self->{database};
+    # Generate a date stamp
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,
+	$yday,$isdst) = localtime(time);
+    my $time_stamp = sprintf("%02d%02d%02d", $year + 1900,
+			     $mon + 1, $mday);
+    # Generate a 8 charachter semi-random hex extension
+    # for the database.
+    my @symbols = (0..9);
+    push @symbols, qw(a b c d e f);
+    my $extension = join "", map { unpack "H*", chr(rand(256)) } (1..8);
+    my $database = join '_', ('gal_database', $time_stamp,
+			   $extension);
+    $self->warn(message => ("Incomplete Data Source Name (DSN) " .
+			    "given. " . __PACKAGE__ .
+			    " created $database as a database " .
+			    'name for you.')
+	       );
+
+    $self->{database} = $database if $database;
+    return $self->{database};
 }
 
 #-----------------------------------------------------------------------------
@@ -220,16 +247,10 @@ sub random_db_name {
 
 sub driver {
 
-	if (! $self->{driver} && ! $driver) {
-		$driver = 'mysql';
-		$self->warn(message => ("Incomplete Data Source Name (DSN) " .
-					"given. ". __PACKAGE__ .
-					" created $driver as a database " .
-					'driver for you.')
-			   );
-	}
-	$self->{driver} = $driver if $driver;
-	return $self->{driver};
+  my $self = shift;
+	$self->throw(message => ('Method must be implimented by subclass : ' .
+				 'driver')
+		    );
 }
 
 #-----------------------------------------------------------------------------
@@ -357,9 +378,10 @@ sub add_features {
 
 sub create_database {
 
-	$self->throw(message => ('Method must be implimented by subclass : ' .
-				 'add_features')
-		    );
+  my $self = shift;
+  $self->throw(message => ('Method must be implimented by subclass : ' .
+			   'add_features')
+	      );
 }
 
 #-----------------------------------------------------------------------------
