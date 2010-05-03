@@ -19,8 +19,8 @@ This script will convert Annovar's annotate_variant output to GVF.
 
 Option:
 
-  db           The DB that transcript IDs come from.
-
+  db      The DB that transcript IDs come from.
+  vaast   Produce a modified GVF requested by Mark for VAST.
 
 Format Description:
 
@@ -36,7 +36,6 @@ Format Description:
     amino_acid_substitution:polypeptide:UCSC:uc009vjq.1:p.I300V:1
     Genotype=homozygous
     Total_reads=28
-
 
     # Variant Effect Details
     #--------------------------------------------------------------
@@ -71,9 +70,10 @@ Format Description:
 ";
 
 
-my ($help, $db);
-my $opt_success = GetOptions('help'          => \$help,
-			     'db=s'          => \$db,
+my ($help, $db, $vaast);
+my $opt_success = GetOptions('help'  => \$help,
+			     'db=s'  => \$db,
+                             'vaast' => \$vaast,
 			      );
 
 die $usage if $help || ! $opt_success;
@@ -109,6 +109,7 @@ my %ATTRB_ORDER = (ID             => 0,
 		   Variant_effect => 3,
 		   Genotype       => 4,
 		   Total_reads    => 5,
+                   Variant_reads  => 6,
 		  );
 
 my $annovar_data = parse_annovar_data($annovar_file);
@@ -128,8 +129,13 @@ for my $id (sort {my ($seqid_a, $seqid_b) = ($annovar_data->{$a}{seqid},
 	    keys %{$annovar_data}) {
 
   my $feature = $annovar_data->{$id};
-  my $attribute_text = get_attribute_text($feature);
-
+  my $attribute_text;
+  if ($vaast) {
+    $attribute_text = get_vaast_attribute_text($feature);
+  }
+  else {
+    $attribute_text = get_attribute_text($feature);
+  }
   print join "\t", (@{$feature}{qw(seqid source type start end score strand
 				phase)}, $attribute_text);
   print "\n";
@@ -258,6 +264,45 @@ sub get_attribute_text {
 	       keys %{$feature->{attributes}}) {
     my $value_text = join ',', @{$feature->{attributes}{$key}};
     $attribute_text .= "$key=$value_text;";
+  }
+  return $attribute_text;
+}
+
+#-----------------------------------------------------------------------------
+
+sub get_vaast_attribute_text {
+
+  my $feature = shift;
+
+  my $attributes = $feature->{attributes};
+  my $variant_effects = $attributes->{Variant_effect};
+  my @protein_effects = grep {/^amino_acid_substitution/}
+  @{$variant_effects};
+
+  my %uniq_protein_effects;
+  for my $protein_effect (@protein_effects) {
+      my ($ref_amino_acid, $prot_location, $var_amino_acid, $index) =
+	  $protein_effect =~ /.*:p\.([A-Z\*])(\d+)([A-Z\*]):(\d+)/;
+      my $amino_acids = $ref_amino_acid . $var_amino_acid;
+      my $trimmed_protein_effect =
+	  "p.$ref_amino_acid$prot_location$var_amino_acid";
+      push @{$uniq_protein_effects{$index}{$amino_acids}},
+      $trimmed_protein_effect;
+  }
+
+  for my $index (keys %uniq_protein_effects) {
+      my ($keep_aa) = sort {@{$uniq_protein_effects{$index}{$b}} <=> 
+			    @{$uniq_protein_effects{$index}{$a}}}
+                      keys %{$uniq_protein_effects{$index}};
+      push @{$feature->{attributes}{Amino_acid_substitution}},
+	  $uniq_protein_effects{$index}{$keep_aa}[0];
+  }
+  
+  my $attribute_text;
+  for my $key (sort {($ATTRB_ORDER{$a} || 99) <=> ($ATTRB_ORDER{$b} || 99)}
+	       keys %{$feature->{attributes}}) {
+      my $value_text = join ',', @{$feature->{attributes}{$key}};
+      $attribute_text .= "$key=$value_text;";
   }
   return $attribute_text;
 }

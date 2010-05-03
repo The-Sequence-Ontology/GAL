@@ -68,12 +68,13 @@ $warning
 
 ";
 
-print $warning;
+print STDOUT $warning;
 print STDERR $warning;
 
-my ($help);
+my ($help, $format);
 my $opt_success = GetOptions('help'    => \$help,
-			      );
+			     'format'  => \$format,
+			     );
 
 die $usage if $help || ! $opt_success;
 
@@ -94,6 +95,13 @@ while (my $locus  = parse_cg_locus(\@buffer, $FH)) {
 sub parse_cg_locus {
 
     my ($buffer, $FH) = @_;
+
+    # Guess which format the data is based on the number of columns in
+    # data rows.
+    my %guess_format = (10 => '1.0.0.64',
+			13 => '1.2.0.13',
+			11 => '1.2.0.14',
+			);
 
     my %locus;
     my $this_locus;
@@ -121,10 +129,38 @@ sub parse_cg_locus {
 	# 3,1,chr1,6512,6512,ref-consistent,,?,,77,
 	# 3,2,chr1,6512,6512,=,,,120,78,
 
+	# Split based on version
+	#-----------------------
+	# 1.0.0.64
+	# locus,haplotype,contig,begin,end,vartype,reference,alleleSeq,totalScore,hapLink
+	# 1.2.0.11
+	# locus,haplotype,contig,begin,end,vartype,reference,alleleSeq,totalScore,hapLink
+	# 1.2.0.13
+	# locus,haplotype,contig,begin,end,vartype,reference,alleleSeq,baseScores,totalScore,hapLink,xRef,method
+	# 1.2.0.14
+	# locus,haplotype,contig,begin,end,vartype,reference,alleleSeq,totalScore,hapLink,xRef
+	# 1.3.0.6
+	# locus,haplotype,contig,begin,end,vartype,reference,alleleSeq,totalScore,hapLink,xRef
+
 	chomp $line;
+	my @fields = split ',', $line;
+
+	$format ||= $guess_format{scalar @fields};
+
 	my ($locus, $haplotype, $contig, $begin, $end, $vartype, 
-	    $reference, $alleleSeq, $totalScore, $hapLink,
-	    $xRef) = split ',', $line;
+	    $reference, $alleleSeq, $baseScores, $totalScore, $hapLink,
+	    $xRef);
+
+	if ($format eq '1.2.0.13') {
+	    ($locus, $haplotype, $contig, $begin, $end, $vartype, 
+	     $reference, $alleleSeq, $baseScores, $totalScore, $hapLink,
+	     $xRef) = @fields;
+	}
+	else {
+	    ($locus, $haplotype, $contig, $begin, $end, $vartype, 
+	     $reference, $alleleSeq, $totalScore, $hapLink,
+	     $xRef) = @fields;	    
+	}
 
 	$this_locus ||= $locus;
 	if ($this_locus ne $locus) {
@@ -206,7 +242,7 @@ sub print_features {
 		my $vartype   = shift @vartypes;
 		my $reference = shift @references;
 	        $reference ||= '-' if $vartype eq 'ins';
-		map {$_ ||= '-'} @alleleSeqs if $vartype eq 'del';
+		map {$_ ||= '-'} @alleleSeqs if $vartype =~ /^(del|ins)$/;
 
 		if ($vartype || $reference || scalar @alleleSeqs) {
 		    unless ($vartype && $reference && scalar @alleleSeqs) {

@@ -18,37 +18,73 @@ gff_tool --format gff3 file.gff3
 Description:
 
 A script to do a lot of different operations on a GFF3 file (or any file
-for which GAL has a parser for).
-
+for which GAL has a parser).
 
 Options:
 
-  ids        Load a list of IDs (or other values) into the hash ref \$ids
-             which will be used by include and exclude and is also
-             available to code refs for custom includes and excludes.
-  include    Include only those features who's IDs match the ids has href.
-  exclude    Exclude those features who's IDs match the ids has href.
-  sort       Use the given code ref for sorting. (Not yet implimented)
-  grep       Print only those features that match the given pattern. (Not yet implimented)
-  filter     Print only those features that return true from the
-	     given code ref.
-  alter      Apply the given code ref to each feature and then print.
-  validate   Simple validation for the file. (Not yet implimented)
-  hash_ag    Give a code ref that will be used to stuff features into \%hash_ag.
-  list_ag    Give a code ref that will be used to stuff features into \@list_ag. (Not yet implimented)
-  ag_code    A code reference that will be applied to each key or element in
-             \%hash_ag or \@list_ag.
-  stat       Return simple stats on the file. (Not yet implimented)
-  fasta      Parse the given fasta file making it available to code
-             references.  If a value is given that is not a readable file then
-             the script will attempt to parse a ##FASTA section from the GFF3
-             file before any features are processed. (Not yet implimented)
-  to_fasta   Print a fasta sequence for each feature. (Not yet implimented)
-  add_fasta  Add a fasta file to a GFF3 file ##FASTA section. (Not yet implimented)
-  no_fasta   Remove the ##FASTA section from a GFF3 file. (Not yet implimented)
-  add_ID     Add ID attributes where they don't already exist. (Not yet implimented)
-  format     The format of the input file. [gff3] (Not yet implimented)
-  in_place   Do an in-place edit to the file. [false] (Not yet implimented)
+  ids          Load a list of IDs (or other values) into the hash ref \$ids
+               which will be used by include and exclude and is also
+               available to code refs for custom includes and excludes.
+
+  include      Include only those features who's IDs match the ids hashref.
+
+  exclude      Exclude those features who's IDs match the ids hashref.
+
+  merge        Merge takes a gff file (perhaps the concatenation of two 
+               and combines the features.  If two features shares an 
+               ID only the first one is printed.
+               features in the first file will replace any features in the
+               second file that share the same ID.
+
+  blend        Blend takes a GFF3 file (perhaps the concatenation of two or more files) and uniquely blends the attributes for
+               features that share the same ID.  If two features have
+               the same ID, but conflict other ways (i.e. the first 8
+               columns) then blend will use the values from the first
+               feature encountered but still blend the attributes.
+
+  sort         Use the given code ref for sorting. (Not yet implimented)
+
+  grep         Print only those features that match the given pattern. (Not yet implimented)
+
+  filter       Print only those features that return true from the
+	       given code ref.
+
+  alter        Apply the given code ref to each feature and then print.
+
+  validate     Simple validation for the file. (Not yet implimented)
+
+  summarize    Provide simple summary details and statistics for the file
+               that may be useful in QC.
+
+  hash_ag      Give a code ref that will be used to stuff features into \%hash_ag.
+
+  list_ag      Give a code ref that will be used to stuff features into \@list_ag. (Not yet implimented)
+
+  ag_code      A code reference that will be applied to each key or element in
+               \%hash_ag or \@list_ag.
+
+  stat         Return simple stats on the file. (Not yet implimented)
+
+  fasta        Parse the given fasta file making it available to code
+               references.  If a value is given that is not a readable file then
+               the script will attempt to parse a ##FASTA section from the GFF3
+               file before any features are processed. (Not yet implimented)
+
+  to_fasta     Print a fasta sequence for each feature. (Not yet implimented)
+
+  add_fasta    Add a fasta file to a GFF3 file ##FASTA section. (Not yet implimented)
+
+  strip_fasta  Remove the ##FASTA section from a GFF3 file. (Not yet implimented)
+
+  add_ID       Add ID attributes where they don't already exist. (Not yet implimented)
+
+  format       The format of the input file. [gff3] (Not yet implimented)
+
+  in_place     Do an in-place edit to the file. [false] (Not yet implimented)
+
+  gff_pragmas  Interactively add GFF3 style pragmas to the top of the file.
+
+  gvf_pragmas  Interactively add GVF style pragmas to the top of the file.
 
 Notes:
 
@@ -83,18 +119,20 @@ The structure of the feature hash references discussed above are:
        tag2 => [value1, value2],
       }
 
-
 ";
 
 
-my ($help, $ids_file, $include, $exclude, $sort_code, $grep_code, $filter_code,
-    $alter_code, $validate, $hash_ag, $list_ag, $ag_code, $stat, $fasta, $to_fasta,
-    $add_fasta, $no_fasta, $add_ID, $format, $in_place);
+my ($help, $ids_file, $include, $exclude, $merge, $blend, $sort_code, 
+    $grep_code, $filter_code, $alter_code, $validate, $hash_ag,
+    $list_ag, $ag_code, $stat, $fasta, $to_fasta, $add_fasta,
+    $no_fasta, $add_ID, $format, $in_place);
 
 my $opt_success = GetOptions('help'        => \$help,
 			     'ids=s'       => \$ids_file,
 			     'include'     => \$include,
 			     'exclude'     => \$exclude,
+                             'merge=s'     => \$merge,
+                             'blend=s'     => \$blend,
 			     'sort=s'      => \$sort_code,
 			     'grep=s'      => \$grep_code,
 			     'filter=s'    => \$filter_code,
@@ -148,9 +186,12 @@ my $parser = $parser_class->new(fh     => $IN,
 				format => $format,
 			       );
 
+merge_gff($parser) if $merge;
+blend_gff($parser) if $blend;
 filter_gff($parser, $filter_code) if $filter_code;
 alter_gff($parser, $alter_code)   if $alter_code;
 hash_aggregate_gff($parser, $hash_ag, $ag_code) if $hash_ag && $ag_code;
+
 
 #-----------------------------------------------------------------------------
 #-------------------------------- SUBROUTINES --------------------------------
@@ -182,6 +223,52 @@ sub fails_filters {
 	}
 
 	return $fail;
+}
+
+#-----------------------------------------------------------------------------
+
+sub merge_gff {
+
+    my $parser = shift;
+
+    die "gff_tool (merge) not yet implimented!\n";
+    
+}
+#-----------------------------------------------------------------------------
+
+sub blend_gff {
+
+    my $parser = shift;
+
+    my %features;
+    my $count = 0;
+    while (my $feature = $parser->next_feature_hash) {
+	my $id = $feature->{feature_id};
+	$feature->{count} = $count++;
+	push @{$features{$feature_id}}, $feature;
+    }
+
+    for my $feature_id (sort {$features{$a}[0]{count} <=> 
+			      $features{$b}[0]{count} keys %features) {
+	my @feature_group = @{$features{$feature_id}};
+	my %blend_attributes;
+	my %base_feature;
+	my %seen_atts;
+	for my $feature (@feature_group) {
+	    my $attributes = $feature->{attributes};
+	    if (! %base_feature) {
+		@base_feature{qw(seqid source type start end score strand phase)} =
+		    @{$feature}{qw(seqid source type start end score strand phase)}; 
+	    }
+	    for my $tag (keys %{$attributes}) {
+		my @values = @{$attributes{$tag}};
+		my @new_values = grep {! $seen_atts{$tag}{$_}++} @values;
+		push @{$blend_attributes{$tag}}, @new_values;
+	    }
+	    
+	}
+
+    }
 
 }
 
@@ -210,7 +297,6 @@ sub print_gff {
 sub grep_gff {
 
 	die "gff_tool (grep) not yet implimented!\n";
-
 
 }
 

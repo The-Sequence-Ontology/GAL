@@ -1,0 +1,174 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use FileHandle;
+use Getopt::Long;
+use Set::IntSpan::Fast;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+distance_machine  --chr 1 variant_1.gvf variant_2.gvf
+
+Description: Get the distance between two GVF (GFF3) files
+
+OPTIONS:
+
+--help    Print this help message.
+--chr     Restrict the analysis to a single chromosome.
+--metric  Specify which distance metric (as integer described below) to use.
+
+Distance Metrics:
+
+Let i be all of the SNV locations in genome i.
+Let j be all of the var locations in genome j.
+
+Ci = i-j # Locations unique to i
+Cj = j-i # Locations unique to j
+Cm = max{Ui,Uj} # maximum of Ui, Uj
+
+I = i ∩ j # Intersection of i, j
+
+Metric 1:
+    Ns = Um + I
+    d = Um / Ns
+
+Metric 2:
+    d = (Ui + Uj)/(Ui + Uj + I)
+
+";
+
+
+my ($help, $chr, $metric);
+
+my $opt_success = GetOptions('help'     => \$help,
+			     'chr=s'    => \$chr,
+			     'metric=1' => \$metric,  
+			     );
+
+die $usage if $help || ! $opt_success;
+
+my @files = @ARGV;
+$chr = 'chr' . $chr if $chr =~ /^\d+$/;
+
+my $sets = parse_data(@files);
+my $distance = get_distance($data, $metric);
+
+print <<END_DOC;
+         2
+0          0          $distance
+1          $distance          0
+END_DOC
+
+print "\n";
+
+#--------------------------------------------------------------------------------
+#---------------------------------------- SUBS ----------------------------------
+#--------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------
+sub get_distance {
+
+    my @files = @_;
+
+    parse_file($file, $file_number);
+
+    my @sets;
+    my $i = 0;
+    for my $file (@files) {
+	
+	my $file = $files[$i++];
+	my $IN;
+	if ($chr) {
+	    open ($IN, '<', "grep -P $chr $file |") or 
+		die "Can't open pipe from $file for reading\n";	    
+	}
+	else {
+	    open ($IN, '<', $file) or die "Can't open $file for reading\n";
+	}
+	print STDERR "Info : processing_file : $file\n";
+	
+	my $max_offset = 0;
+	my $set = Set::IntSpan::Fast->new();
+	while (my $line = <$IN>) {
+	    chomp;
+	
+	    next if $line =~ /^\#/;
+	    next if $line =~ /^\s*$/;
+	
+	    my ($seqid, $source, $type, $start, $end) = split(/\t/, $line);
+
+	    warn "Error : bad_line : $line\n" unless ($start =~ /\d+/ &&
+						      $end   =~ /\d+/);
+
+	    $max_offset = $end if $end > $max_offset; 
+
+	    my $location = join ':', ($seqid, $start, $end);
+	    $set->add($location);
+	}
+	push @sets, $set;
+	print "Info : max_offset : $max_offset\n";
+	close $IN;
+    }
+    return \@sets;
+}
+
+#-------------------------------------------------------------------------------
+
+sub get_distance {
+
+    my $sets = shift;
+
+    my ($set_i, $set_j) = @{$sets};
+
+    my $comp_j = $set_i->diff($set_j) || (); # Compliment of set i
+    my $comp_i = $set_j->diff($set_i) || (); # Compliment of set j
+
+    my $comp_m = $comp_i > $comp_j ? $comp_i : $comp_j; # Maximum compliment
+    my $intersection = $set_i->intersection($set_j);
+
+    my $distance;
+    if ($metric == 2) {
+	$distance = ($comp_i + $comp_j) / ($comp_i + $comp_j + $intersection); 
+    }
+    else {
+	$distance = ($comp_m)/($comp_m + $intersection);
+    }
+    $distance = printf("%.4f", $distance);
+    print STDERR "D:$distance\n";
+    return $distance;
+} 
+#-----------------------------------------------------------------------------
+sub print_matrix {
+        my $distance = shift;
+
+        print "         2\n";
+
+        foreach my $i (0 .. 1) {
+                my @data;
+                foreach my $j (sort keys %{$matrix->{$i}}){
+                        my $sij = substr($matrix->{$i}{$j}, 0, $c - 2);
+                        my $l = $c - length($sij);
+                        my $spacer = " " x $l;
+                        my $string = $spacer . "       " . $sij;
+                        push(@data, $string);
+                }
+                print $i . " " . join(" ", @data) . "\n";
+        }
+
+
+}
+
+#-----------------------------------------------------------------------------
+
+
+
+
+
+
