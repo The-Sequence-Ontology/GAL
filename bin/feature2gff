@@ -64,6 +64,7 @@ for my $file (@files) {
 
 	while (my $feature = $parser->next_feature_hash) {
 		print $parser->to_gff3($feature);
+		print "\n";
 	}
 }
 

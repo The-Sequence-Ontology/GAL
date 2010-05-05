@@ -11,7 +11,8 @@ my $usage = "
 
 Synopsis:
 
-annovar2gvf --db RefSeq genome.annovar.txt.exonic_variant_function > genome.gvf
+annovar2gvf --pragmas gvf_pragma_template.txt \
+            genome.annovar.txt.exonic_variant_function > genome.gvf
 
 Description:
 
@@ -28,7 +29,7 @@ Format Description:
     #--------------------------------------------------------------
     ID=1:SAMtools:SNV:878522
     Reference_seq=T
-    Variant_seq=C:1,G:2
+    Variant_seq=C,G
     Variant_effect=
     non_synonymous_codon:mRNA:UCSC:uc001aby.2:-:1
     amino_acid_substitution:polypeptide:UCSC:uc001aby.2:p.I97V:1
@@ -70,10 +71,11 @@ Format Description:
 ";
 
 
-my ($help, $db, $vaast);
-my $opt_success = GetOptions('help'  => \$help,
-			     'db=s'  => \$db,
-                             'vaast' => \$vaast,
+my ($help, $db, $vaast, $pragmas);
+my $opt_success = GetOptions('help'      => \$help,
+			     'db=s'      => \$db,
+                             'vaast'     => \$vaast,
+                             'pragmas=s' => \$pragmas,
 			      );
 
 die $usage if $help || ! $opt_success;
@@ -103,14 +105,19 @@ my %TYPE_MAP = ('frameshift insertion'       => {trns => 'frameshift_variant',
 						 prot => undef},
 	       );
 
-my %ATTRB_ORDER = (ID             => 0,
-		   Reference_seq  => 1,
-		   Variant_seq    => 2,
-		   Variant_effect => 3,
-		   Genotype       => 4,
-		   Total_reads    => 5,
-                   Variant_reads  => 6,
+my %ATTRB_ORDER = (ID             => 1,
+		   Reference_seq  => 2,
+		   Variant_seq    => 3,
+		   Variant_effect => 4,
+		   Genotype       => 5,
+		   Total_reads    => 6,
+                   Variant_reads  => 7,
 		  );
+
+if ($pragmas) {
+  open(my $IN, '<', $pragmas) or die "Can't open $pragmas for reading\n";
+  print <$IN>;
+}
 
 my $annovar_data = parse_annovar_data($annovar_file);
 
@@ -118,12 +125,7 @@ for my $id (sort {my ($seqid_a, $seqid_b) = ($annovar_data->{$a}{seqid},
 					     $annovar_data->{$b}{seqid});
 		  my ($start_a, $start_b) = ($annovar_data->{$a}{start},
 					     $annovar_data->{$b}{start});
-		  $seqid_a =~ s/^chr//;
-		  $seqid_b =~ s/^chr//;
-		  $seqid_a = $seqid_a eq 'X' ? 23 : $seqid_a;
-		  $seqid_a = $seqid_a eq 'Y' ? 24 : $seqid_a;
-		  $seqid_b = $seqid_b eq 'X' ? 23 : $seqid_b;
-		  $seqid_b = $seqid_b eq 'Y' ? 24 : $seqid_b;
+                  map {s/^chr//;s/X/23/;s/Y/24/;s/M/25/;s/\D//g} ($seqid_a, $seqid_b);
 		  return ($seqid_a <=> $seqid_b || $start_a <=> $start_b);
 		}
 	    keys %{$annovar_data}) {
@@ -168,9 +170,11 @@ sub parse_annovar_data {
     my $attributes = parse_attributes($attribute_text);
     my @variant_seqs = map {s/:\d+//;$_} @{$attributes->{Variant_seq}};
 
-    my $count;
-    my %var_seq_index = map {$_ => ++$count} @variant_seqs;
-    map {$_ = "$_:" . $var_seq_index{$_}} @{$attributes->{Variant_seq}};
+    my $count = 0;
+    my %var_seq_index = map {$_ => $count++} @variant_seqs;
+    # Don't use the index on Variant_seq anymore, assume if from position
+    # only use it on Variant_effect
+    # map {$_ = "$_:" . $var_seq_index{$_}} @{$attributes->{Variant_seq}};
 
     my @variant_details = split /,/, $variant_detail_text;
 
@@ -279,25 +283,26 @@ sub get_vaast_attribute_text {
   my @protein_effects = grep {/^amino_acid_substitution/}
   @{$variant_effects};
 
-  my %uniq_protein_effects;
-  for my $protein_effect (@protein_effects) {
-      my ($ref_amino_acid, $prot_location, $var_amino_acid, $index) =
-	  $protein_effect =~ /.*:p\.([A-Z\*])(\d+)([A-Z\*]):(\d+)/;
-      my $amino_acids = $ref_amino_acid . $var_amino_acid;
-      my $trimmed_protein_effect =
-	  "p.$ref_amino_acid$prot_location$var_amino_acid";
-      push @{$uniq_protein_effects{$index}{$amino_acids}},
-      $trimmed_protein_effect;
-  }
-
-  for my $index (keys %uniq_protein_effects) {
-      my ($keep_aa) = sort {@{$uniq_protein_effects{$index}{$b}} <=> 
-			    @{$uniq_protein_effects{$index}{$a}}}
-                      keys %{$uniq_protein_effects{$index}};
-      push @{$feature->{attributes}{Amino_acid_substitution}},
+  if ($feature->{type} eq 'SNV') {
+      my %uniq_protein_effects;
+      for my $protein_effect (@protein_effects) {
+	  my ($ref_amino_acid, $prot_location, $var_amino_acid, $index) =
+	      $protein_effect =~ /.*:p\.([A-Z\*])(\d+)([A-Z\*]):(\d+)/;
+	  my $amino_acids = $ref_amino_acid . $var_amino_acid;
+	  my $trimmed_protein_effect =
+	      "p.$ref_amino_acid$prot_location$var_amino_acid";
+	  push @{$uniq_protein_effects{$index}{$amino_acids}},
+	  $trimmed_protein_effect;
+      }
+      
+      for my $index (keys %uniq_protein_effects) {
+	  my ($keep_aa) = sort {@{$uniq_protein_effects{$index}{$b}} <=> 
+				    @{$uniq_protein_effects{$index}{$a}}}
+	  keys %{$uniq_protein_effects{$index}};
+	  push @{$feature->{attributes}{Amino_acid_substitution}},
 	  $uniq_protein_effects{$index}{$keep_aa}[0];
+      }
   }
-  
   my $attribute_text;
   for my $key (sort {($ATTRB_ORDER{$a} || 99) <=> ($ATTRB_ORDER{$b} || 99)}
 	       keys %{$feature->{attributes}}) {

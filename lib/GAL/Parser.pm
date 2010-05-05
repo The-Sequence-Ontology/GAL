@@ -247,7 +247,33 @@ sub next_feature_hash {
 sub to_gff3 {
 	my ($self, $feature) = @_;
 
-	my $attrb_text;
+	my %ATTRB_ORDER = (ID             	 => 1,
+			   Name           	 => 2,
+			   Alias          	 => 3,
+			   Parent         	 => 3,
+			   Target         	 => 4,
+			   Gap            	 => 5,
+			   Derives_from   	 => 6,
+			   Note           	 => 7,
+			   Dbxref         	 => 8,
+			   Ontology_term  	 => 9,
+			   Variant_seq    	 => 10,
+			   Reference_seq  	 => 11,
+			   Variant_reads  	 => 12,
+			   Total_reads    	 => 13,
+			   Genotype       	 => 14,
+			   Variant_effect 	 => 15, 
+			   Variant_copy_number   => 16,
+			   Reference_copy_number => 17,
+			   );
+
+	my $attribute_text;
+	for my $key (sort {($ATTRB_ORDER{$a} || 99) <=> ($ATTRB_ORDER{$b} || 99) ||
+			       $a cmp $b}
+		     keys %{$feature->{attributes}}) {
+	    my $value_text = join ',', @{$feature->{attributes}{$key}};
+	    $attribute_text .= "$key=$value_text;";
+	}
 
 	my $gff3_text = join "\t", ($feature->{seqid},
 				    $feature->{source},
@@ -257,27 +283,8 @@ sub to_gff3 {
 				    $feature->{score},
 				    $feature->{strand},
 				    $feature->{phase},
+				    $attribute_text,
 				   );
-
-	my $att_text = 'ID=' . $feature->{feature_id} . ';';
-	if ($feature->{attributes}{Parent}) {
-		my @parents = @{$feature->{attributes}{Parent}};
-		$att_text .= 'Parent=' . join ',', @parents . ';';
-	}
-	if ($feature->{attributes}{Name}[0]) {
-		my $name_text = join ',', @{$feature->{attributes}{Name}};
-		$att_text .= "Name=$name_text;";
-	}
-	for my $tag (keys %{$feature->{attributes}}) {
-		next if $tag =~ /^(ID|Parent|Name)$/;
-		my @values = @{$feature->{attributes}{$tag}};
-		my $value_text = '';
-		if (scalar @values) {
-			$value_text = join ',', @values;
-		}
-		$att_text .= "$tag=$value_text;";
-	}
-	$gff3_text .= "\t$att_text\n";
 
 	return $gff3_text;
 }

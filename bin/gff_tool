@@ -132,7 +132,7 @@ my $opt_success = GetOptions('help'        => \$help,
 			     'include'     => \$include,
 			     'exclude'     => \$exclude,
                              'merge=s'     => \$merge,
-                             'blend=s'     => \$blend,
+                             'blend'       => \$blend,
 			     'sort=s'      => \$sort_code,
 			     'grep=s'      => \$grep_code,
 			     'filter=s'    => \$filter_code,
@@ -163,7 +163,7 @@ die $usage if ($ids_file && ! -r $ids_file);
 my $ids = parse_ids($ids_file) if ($ids_file && -r $ids_file);
 
 my $file = shift;
-die $usage unless scalar -r $file;
+die $usage unless (($file && -r $file) || ! -t STDIN);
 
 my ($IN, $OUT);
 
@@ -243,33 +243,47 @@ sub blend_gff {
     my %features;
     my $count = 0;
     while (my $feature = $parser->next_feature_hash) {
-	my $id = $feature->{feature_id};
+	my $feature_id = $feature->{feature_id};
 	$feature->{count} = $count++;
 	push @{$features{$feature_id}}, $feature;
     }
 
     for my $feature_id (sort {$features{$a}[0]{count} <=> 
-			      $features{$b}[0]{count} keys %features) {
+			      $features{$b}[0]{count}} keys %features) {
 	my @feature_group = @{$features{$feature_id}};
 	my %blend_attributes;
 	my %base_feature;
 	my %seen_atts;
-	for my $feature (@feature_group) {
-	    my $attributes = $feature->{attributes};
-	    if (! %base_feature) {
-		@base_feature{qw(seqid source type start end score strand phase)} =
-		    @{$feature}{qw(seqid source type start end score strand phase)}; 
-	    }
-	    for my $tag (keys %{$attributes}) {
-		my @values = @{$attributes{$tag}};
-		my @new_values = grep {! $seen_atts{$tag}{$_}++} @values;
-		push @{$blend_attributes{$tag}}, @new_values;
-	    }
-	    
+	if (scalar @feature_group == 1) {
+	    %base_feature = %{$feature_group[0]};
 	}
+	else {
+	    for my $feature (@feature_group) {
+		my $attributes = $feature->{attributes};
+		if (! %base_feature) {
+		    @base_feature{qw(feature_id seqid source type start end score strand phase)} =
+			@{$feature}{qw(feature_id seqid source type start end score strand phase)}; 
+		}
+		for my $tag (keys %{$attributes}) {
+		    my @values = @{$attributes->{$tag}};
 
+		    ##########################################################
+		    ##########################################################
+		    # Temprorary Hack!!! 5/3/10
+		    @values = grep {/:\d+$/} @values if $tag eq 'Variant_seq';
+		    ##########################################################
+		    ##########################################################
+
+		    my @new_values = grep {! $seen_atts{$tag}{$_}++} @values;
+		    push @{$blend_attributes{$tag}}, @new_values;
+		}
+	    }
+	    $base_feature{attributes} = \%blend_attributes;
+	}
+	print $parser->to_gff3(\%base_feature);
+	print "\n";
+	print '';
     }
-
 }
 
 #-----------------------------------------------------------------------------
