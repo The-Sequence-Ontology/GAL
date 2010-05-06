@@ -27,6 +27,7 @@ Options:
   syn	         Include synonymous SNVs in analysis.  Default is to exclude
 		 synonymous SNVs from analysis.
   diff	         Report percent differences from random distribution in classes.
+  full           Print report of SNV count for each gene in class.
 		 Default is to report raw counts.
   gff            A GFF file to calculating CDS and class footprints which are
 		 used to calculate expected variant distribution.
@@ -48,12 +49,13 @@ mean0.77083062488389
 ";
 
 
-my ($help, $map_file, $cols_text, $syn, $diff, $gff, $ns_expect, $exclude);
+my ($help, $map_file, $cols_text, $syn, $diff, $full, $gff, $ns_expect, $exclude);
 my $opt_success = GetOptions('help'	   => \$help,
 			     'class_map=s' => \$map_file,
 			     'cols=s'      => \$cols_text,
 			     'syn'         => \$syn,
 			     'diff'        => \$diff,
+			     'full'        => \$full,
 			     'gff=s'       => \$gff,
 			     'ns_expect=s' => \$ns_expect,
 			     'exclude=s'   => \$exclude,
@@ -71,12 +73,11 @@ my $files = parse_list_file($snv_list_file);
 my ($id_map, $class_map) = parse_map($map_file, \@cols);
 
 my $class_footprints;
-if ($diff) {
+if ($diff || $full) {
     $class_footprints = calculate_footprints($gff, $id_map);
     $ns_expect ||= 0.77;
     $ns_expect = calculate_ns_expect($ns_expect) if -e $ns_expect;
 }
-
 
 my %excludes = map {$_ => 1} split /\s+/, $exclude if $exclude;
 
@@ -155,9 +156,11 @@ for my $file (keys %{$files}) {
 }
 
 my @subjects = map {$files->{$_}{subject}} sort {$files->{$a}{order} <=> $files->{$b}{order}} keys %{$files};
-# push @subjects, 'Total_Genes';
-print join "\t", ('', @subjects);
-print "\n";
+
+unless ($full) {
+    print join "\t", ('', @subjects);
+    print "\n";
+}
 
 my @class_names = sort keys %classes;
 @class_names = grep {! $excludes{$_}} @class_names if %excludes;
@@ -169,13 +172,20 @@ for my $class (sort @class_names) {
 		my $snv_obsv;
 		map {$snv_obsv += $classes{$class}{$subject}{$_}} keys %{$classes{$class}{$subject}};
 		$snv_obsv ||= 0;
-		if ($diff) {
-		    my $coding_snvs = $snv_counts{$subject};
-		    my $class_footprint = $class_footprints->{$class};
-		    my $snv_expect = ($coding_snvs * ($class_footprint / $cds_footprint));
-		    $snv_expect *= $ns_expect if ! $syn;
-		    my $pct_diff = $snv_obsv / $snv_expect * 100;
-		    $pct_diff = sprintf("%.0f", $pct_diff);
+
+		my $coding_snvs = $snv_counts{$subject};
+		my $class_footprint = $class_footprints->{$class};
+		my $snv_expect = ($coding_snvs * ($class_footprint / $cds_footprint));
+		$snv_expect *= $ns_expect if ! $syn;
+		my $pct_diff = $snv_obsv / $snv_expect * 100;
+		$pct_diff = sprintf("%.0f", $pct_diff);
+
+		if ($full) {
+		    print "\n\t$subject: $snv_obsv / $snv_expect = $pct_diff\n";
+		    map {print "\t\t$_: " . $classes{$class}{$subject}{$_} . "\n"} keys %{$classes{$class}{$subject}};
+		    print "\n\n";
+		}
+		elsif ($diff) {
 		    print "$pct_diff\t";
 		}
 		else {
