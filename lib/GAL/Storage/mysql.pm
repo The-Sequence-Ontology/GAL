@@ -5,7 +5,6 @@ use vars qw($VERSION);
 
 $VERSION = '0.01';
 use base qw(GAL::Storage);
-use File::Temp qw(tempfile);
 use DBI;
 
 =head1 NAME
@@ -236,69 +235,39 @@ sub drop_database {
 =cut
 
 sub _open_or_create_database {
-	my $self = shift;
-
-	my @databases = DBI->data_sources($self->driver,
-					  {user     => $self->user,
-					   password => $self->password,
-					  }
-					 );
-
-	my $dbh;
-	my $dsn = $self->dsn;
-	my $database = $self->database;
-	if (! grep {$_ eq $dsn} @databases) {
-		my $drh = DBI->install_driver("mysql");
-		my $host = ''; # Defaults to localhost, abstract this later.
-		my $rc = $drh->func('createdb',
-				    $database,
-				    $host,
-				    $self->user,
-				    $self->password,
-				    'admin');
-
-		$dbh = DBI->connect($self->dsn, $self->user,
-				    $self->password);
-		$self->{dbh} = $dbh;
-		$dbh->do("DROP TABLE IF EXISTS feature");
-		$dbh->do("DROP TABLE IF EXISTS attribute");
-		$dbh->do("DROP TABLE IF EXISTS relationship");
-		$dbh->do("CREATE TABLE feature ("    .
-			 "subject_id VARCHAR(255), " .
-			 "feature_id VARCHAR(255), " .
-			 "seqid      VARCHAR(255), " .
-			 "source     VARCHAR(255), " .
-			 "type       VARCHAR(255), " .
-			 "start      INT, "          .
-			 "end        INT, "          .
-			 "score      VARCHAR(255), " .
-			 "strand     VARCHAR(1), "   .
-			 "phase      VARCHAR(1),"    .
-			 "bin        VARCHAR(15))"
-			);
-		$dbh->do("CREATE TABLE attribute ("  .
-			 "attribute_id INT NOT NULL AUTO_INCREMENT, " .
-			 "subject_id VARCHAR(255), " .
-			 "feature_id VARCHAR(255), " .
-			 "att_key    VARCHAR(255), "    .
-			 "att_value  TEXT, "  .
-			 "PRIMARY KEY (attribute_id))"
-			);
-		$dbh->do("CREATE TABLE relationship ("  .
-			 "subject_id   VARCHAR(255), " .
-			 "parent       VARCHAR(255), " .
-			 "child        VARCHAR(255), "    .
-			 "relationship VARCHAR(255)) "
-			);
-		$self->index_database;
-	      }
-	else {
-	  $self->warn(message => "Using exsiting database $database");
-	  $dbh = DBI->connect($self->dsn, $self->user,
-			      $self->password);
-	}
-	return $self->{dbh};
-      }
+  my $self = shift;
+  
+  my @databases = DBI->data_sources($self->driver,
+				    {user     => $self->user,
+				     password => $self->password,
+				    }
+				   );
+  
+  my $dbh;
+  my $dsn = $self->dsn;
+  my $database = $self->database;
+  if (! grep {$_ eq $dsn} @databases) {
+    my $drh = DBI->install_driver("mysql");
+    my $host = ''; # Defaults to localhost, abstract this later.
+    my $rc = $drh->func('createdb',
+			$database,
+			$host,
+			$self->user,
+			$self->password,
+			'admin');
+    
+    $dbh = DBI->connect($self->dsn, $self->user,
+			$self->password);
+    $self->_load_schema($dbh);
+    $self->index_database;
+  }
+  else {
+    $self->warn(message => "Using exsiting database $database");
+    $dbh = DBI->connect($self->dsn, $self->user,
+			$self->password);
+  }
+  return $dbh;
+}
 
 #-----------------------------------------------------------------------------
 
@@ -335,90 +304,24 @@ sub index_database {
 
 #-----------------------------------------------------------------------------
 
-=head2 load_file
+=head2 _load_temp_files
 
- Title   : load_file
- Usage   : $self->load_file();
- Function: Get/Set value of load_file.
- Returns : Value of load_file.
- Args    : Value to set load_file to.
+ Title   : _load_temp_files
+ Usage   : $self->_load_temp_files();
+ Function: Get/Set value of _load_temp_files.
+ Returns : Value of _load_temp_files.
+ Args    : Value to set _load_temp_files to.
 
 =cut
 
-sub load_file {
+sub _load_temp_files {
 
-  my ($self, @args) = @_;
-
-  my $args = $self->prepare_args(\@args);
-  my $files = $args->{file};
-  $files = ref $files eq 'ARRAY' ? $files : [$files];
-  my $parser_class = $args->{format};
-  $parser_class =~ s/GAL::Parser//;
-  $parser_class = 'GAL::Parser::' . $parser_class;
-  $self->load_module($parser_class);
-
-  my $temp_dir;
- ($temp_dir) = grep {-d $_} qw(/tmp .) unless ($temp_dir &&-d $temp_dir);
-
-  my ($FEAT_TEMP,  $feat_filename)  = tempfile('gal_feat_XXXXXX',
-					       SUFFIX => '.tmp',
-					       DIR    => $temp_dir,
-					       UNLINK => 0,
-					      );
-
-  my ($ATT_TEMP,  $att_filename)  = tempfile('gal_att_XXXXXX',
-					     SUFFIX => '.tmp',
-					     DIR    => $temp_dir,
-					     UNLINK => 0,
-					    );
-  my ($REL_TEMP,  $rel_filename)  = tempfile('gal_rel_XXXXXX',
-					     SUFFIX => '.tmp',
-					     DIR    => $temp_dir,
-					     UNLINK => 0,
-					    );
-  chmod (0444, $feat_filename, $att_filename, $rel_filename);
-
-  for my $file (@{$files}) {
-
-    my $parser = $parser_class->new(file => $file);
-
-    while (my $feature = $parser->next_feature_hash) {
-      my $feature_id = $feature->{feature_id};
-      my $bins = $self->get_feature_bins($feature);
-      my $bin = $bins->[0];
-      my $attributes = $feature->{attributes};
-      my $subject_id = $attributes->{Subject_ID} || '';
-      my @parents = ref $attributes->{Parent} eq 'ARRAY' ? @{$attributes->{Parent}} : ();
-      my @feature_data = ($subject_id,
-			  @{$feature}{qw(feature_id seqid source
-					 type start end score strand
-					 phase)},
-			  $bin);
-      print $FEAT_TEMP join "\t", @feature_data;
-      print $FEAT_TEMP "\n";
-
-      for my $key (keys %{$attributes}) {
-	my @values = @{$attributes->{$key}};
-	for my $value (@values) {
-	  print $ATT_TEMP  join "\t",
-	    ($subject_id, $feature_id, $key, $value);
-	  print $ATT_TEMP "\n";
-	}
-      }
-
-      for my $parent (@parents) {
-	my @relationship_data = ($subject_id, $parent, $feature_id);
-	print $REL_TEMP join "\t", @relationship_data;
-	print $REL_TEMP "\n";
-      }
-
-    }
-  }
+  my ($self, $feat_filename, $att_filename, $rel_filename) = @_;
 
   my $dbh = $self->dbh;
 
   $dbh->do("LOAD DATA INFILE '$feat_filename' INTO TABLE feature   (subject_id, feature_id, seqid, source, type, start, end, score, strand, phase, bin)");
-  $dbh->do("LOAD DATA INFILE '$att_filename'  INTO TABLE attribute (subject_id, feature_id, att_key, att_value)");
+  $dbh->do("LOAD DATA INFILE '$att_filename'  INTO TABLE attribute (attribute_id, subject_id, feature_id, att_key, att_value)");
   $dbh->do("LOAD DATA INFILE '$rel_filename'  INTO TABLE relationship (subject_id, parent, child)");
 }
 

@@ -6,6 +6,7 @@ use vars qw($VERSION);
 
 $VERSION = '0.01';
 use base qw(GAL::Base);
+use File::Temp qw/tempfile/;
 
 =head1 NAME
 
@@ -98,6 +99,7 @@ sub dsn {
 	my ($database, %attributes);
 	if ($db_attributes =~ /=/) {
 	  my %attributes = map {split /=/} split /;/, $db_attributes;
+	  $database = $attributes{dbname} || $attributes{database};
 	}
 	else {
 	  $database = $db_attributes
@@ -185,12 +187,12 @@ sub database {
       my ($self, $database) = @_;
 
       if (! $self->{database} && ! $database) {
-        my $database = $self->random_database;
-        $self->warn(message => ("Incomplete Data Source Name (DSN) ",
-                                "given. ", __PACKAGE__,
-                                ' created $database as a database ',
-                                'name for you.')
-                   );
+	my $database = $self->random_db_name;
+	$self->warn(message => ("Incomplete Data Source Name (DSN) ",
+				"given. ", __PACKAGE__,
+				' created $database as a database ',
+				'name for you.')
+		   );
       }
       $self->{database} = $database if $database;
       return $self->{database};
@@ -255,6 +257,123 @@ sub driver {
 
 #-----------------------------------------------------------------------------
 
+=head2 _load_schema
+
+ Title   : _load_schema
+ Usage   : $self->_load_schema();
+ Function: Get/Set value of _load_schema.
+ Returns : Value of _load_schema.
+ Args    : Value to set _load_schema to.
+
+=cut
+
+sub _load_schema {
+  my ($self, $dbh) = @_;
+
+    $dbh->do("DROP TABLE IF EXISTS feature");
+    $dbh->do("DROP TABLE IF EXISTS attribute");
+    $dbh->do("DROP TABLE IF EXISTS relationship");
+    $dbh->do("CREATE TABLE feature ("    .
+	     "subject_id VARCHAR(255), " .
+	     "feature_id VARCHAR(255), " .
+	     "seqid      VARCHAR(255), " .
+	     "source     VARCHAR(255), " .
+	     "type       VARCHAR(255), " .
+	     "start      INT, "          .
+	     "end        INT, "          .
+	     "score      VARCHAR(255), " .
+	     "strand     VARCHAR(1), "   .
+	     "phase      VARCHAR(1),"    .
+	     "bin        VARCHAR(15))"
+	    );
+    $dbh->do("CREATE TABLE attribute ("  .
+	     "attribute_id INT NOT NULL AUTO_INCREMENT, " .
+	     "subject_id VARCHAR(255), " .
+	     "feature_id VARCHAR(255), " .
+	     "att_key    VARCHAR(255), "    .
+	     "att_value  TEXT, "  .
+	     "PRIMARY KEY (attribute_id))"
+	    );
+    $dbh->do("CREATE TABLE relationship ("  .
+	     "subject_id   VARCHAR(255), " .
+	     "parent       VARCHAR(255), " .
+	     "child        VARCHAR(255), "    .
+	     "relationship VARCHAR(255)) "
+	    );
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 load_file
+
+ Title   : load_file
+ Usage   : $self->load_file();
+ Function: Get/Set value of load_file.
+ Returns : Value of load_file.
+ Args    : Value to set load_file to.
+
+=cut
+
+sub load_file {
+
+  my ($self, @args) = @_;
+
+  my $args = $self->prepare_args(\@args);
+  my $files = $args->{file};
+  $files = ref $files eq 'ARRAY' ? $files : [$files];
+  my $parser_class = $args->{format};
+  $parser_class =~ s/GAL::Parser//;
+  $parser_class = 'GAL::Parser::' . $parser_class;
+  $self->load_module($parser_class);
+
+  my $temp_dir;
+ ($temp_dir) = grep {-d $_} qw(/tmp .) unless ($temp_dir &&-d $temp_dir);
+
+  my ($FEAT_TEMP,  $feat_filename)  = tempfile('gal_feat_XXXXXX',
+					       SUFFIX => '.tmp',
+					       DIR    => $temp_dir,
+					       UNLINK => 0,
+					      );
+
+  my ($ATT_TEMP,  $att_filename)  = tempfile('gal_att_XXXXXX',
+					     SUFFIX => '.tmp',
+					     DIR    => $temp_dir,
+					     UNLINK => 0,
+					    );
+  my ($REL_TEMP,  $rel_filename)  = tempfile('gal_rel_XXXXXX',
+					     SUFFIX => '.tmp',
+					     DIR    => $temp_dir,
+					     UNLINK => 0,
+					    );
+  chmod (0444, $feat_filename, $att_filename, $rel_filename);
+
+  for my $file (@{$files}) {
+
+    my $parser = $parser_class->new(file => $file);
+
+    while (my $feature = $parser->next_feature_hash) {
+      my ($feature_rows, $attribute_rows, $relationship_rows) = $self->prepare_features($feature);
+
+      for my $feature_row (@{$feature_rows}) {
+	print $FEAT_TEMP join "\t", @{$feature_row};
+	print $FEAT_TEMP "\n";
+      }
+
+      for my $attribute_row (@{$attribute_rows}) {
+	print $ATT_TEMP  join "\t", @{$attribute_row};
+	print $ATT_TEMP "\n";
+      }
+      for my $relationship_row (@{$relationship_rows}) {
+	print $REL_TEMP join "\t", @{$relationship_row};
+	print $REL_TEMP "\n";
+      }
+    }
+  }
+  $self->_load_temp_files($feat_filename, $att_filename, $rel_filename);
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 add_features_to_buffer
 
  Title   : add_features_to_buffer
@@ -269,10 +388,13 @@ sub add_features_to_buffer {
 
 	my ($self, $features) = @_;
 
-	$features = ref $features ? $features : [$features];
+	$features = ref $features eq 'ARRAY' ? $features : [$features];
 
-	#$self->config('MAX_FEATURE_BUFFER')
-	if (scalar @{$self->{_feature_buffer}} + scalar @{$features} > 10000) {
+	$self->{_feature_buffer} ||= [];
+
+	#my $max_feature_buffer = $self->config('MAX_FEATURE_BUFFER')
+	my $max_feature_buffer = 10_000;
+	if (scalar @{$self->{_feature_buffer}} + scalar @{$features} >= $max_feature_buffer) {
 	  push @{$self->{_feature_buffer}}, @{$features};
 	  $self->flush_feature_buffer;
 	}
@@ -299,6 +421,7 @@ sub flush_feature_buffer {
 
 	if (scalar @{$self->{_feature_buffer}}) {
 		$self->add_features($self->{_feature_buffer});
+		$self->{_feature_buffer} = undef;
 	}
 }
 
@@ -318,30 +441,45 @@ sub flush_feature_buffer {
 
 sub prepare_features {
 
-	my ($self, $feature_hashes) = @_;
+  my ($self, $feature_hashes) = @_;
 
-	$feature_hashes = ref $feature_hashes ? $feature_hashes :
-	  [$feature_hashes];
+  $feature_hashes = ref $feature_hashes eq 'ARRAY' ? $feature_hashes :
+    [$feature_hashes];
 
-	my (@features, @attributes);
+  my (@features, @attributes, @relationships);
 
-	for my $feature_hash (@{$feature_hashes}) {
-		my $feature_id = $feature_hash->{feature_id};
-		my @feature_row = @{$feature_id}{qw(feature_id seqid source
-						    type start end score
-						    strand phase)
-					       };
-		push @features, \@feature_row;
-		for my $tag (keys %{$feature_hash->{attributes}}) {
-			for my $value (@{$feature_hash->{attributes}{$tag}}) {
-				push @attributes, [$feature_id,
-						   $tag,
-						   $value,
-						  ];
-			}
-		}
-	}
-	return (\@features, \@attributes);
+  for my $feature_hash (@{$feature_hashes}) {
+    my $feature_id = $feature_hash->{feature_id};
+    my $bins = $self->get_feature_bins($feature_hash);
+    my $bin = $bins->[0];
+    my $attributes = $feature_hash->{attributes};
+    my $subject_id = $attributes->{Subject_ID} || '';
+    my @parents = ref $attributes->{Parent} eq 'ARRAY' ? @{$attributes->{Parent}} : ();
+    my @feature_data = ($subject_id,
+			@{$feature_hash}{qw(feature_id seqid source
+				       type start end score strand
+				       phase)},
+			$bin);
+    push @features, \@feature_data;
+
+    for my $key (keys %{$attributes}) {
+      my @values = @{$attributes->{$key}};
+      for my $value (@values) {
+	push @attributes, [undef, $subject_id, $feature_id, $key, $value];
+      }
+    }
+
+    # "subject_id   VARCHAR(255), " .
+    # "parent       VARCHAR(255), " .
+    # "child        VARCHAR(255), "    .
+    # "relationship VARCHAR(255)) "
+
+    for my $parent (@parents) {
+      my @relationship_data = ($subject_id, $parent, $feature_id, undef);
+      push @relationships, \@relationship_data;
+    }
+  }
+  return (\@features, \@attributes, \@relationships);
 }
 
 #-----------------------------------------------------------------------------

@@ -3,9 +3,10 @@ package GAL::Storage::SQLite;
 use strict;
 use vars qw($VERSION);
 
-
 $VERSION = '0.01';
 use base qw(GAL::Storage);
+use File::Temp;
+use DBI;
 
 =head1 NAME
 
@@ -65,10 +66,38 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(dsn user password storage);
+	my @valid_attributes = qw();
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }
+
+#-----------------------------------------------------------------------------
+
+=head2 scheme
+
+ Title   : scheme
+ Usage   : $a = $self->scheme();
+ Function: Get the value of scheme.
+ Returns : The value of scheme.
+ Args    : N/A
+
+=cut
+
+sub scheme {'dbi'}
+
+#-----------------------------------------------------------------------------
+
+=head2 driver
+
+ Title   : driver
+ Usage   : $a = $self->driver();
+ Function: Get the value of driver.
+ Returns : The value of driver.
+ Args    : N/A
+
+=cut
+
+sub driver {'SQLite'}
 
 #-----------------------------------------------------------------------------
 
@@ -83,62 +112,224 @@ sub _initialize_args {
 =cut
 
 sub dbh {
-	my $self = shift;
-
-	if (! defined $self->{dbh}) {
-
-	  my $dbh = DBI->connect($self->dsn,
-				 $user,
-				 $password);
-		$self->load_schema($dbh);
-		# http://search.cpan.org/~adamk/DBD-SQLite-1.29/lib/DBD/SQLite.pm#Transactions
-		$dbh->{AutoCommit} = 1;
-		$self->{dbh} = $dbh;
-	}
-	return $self->{dbh};
+  my $self = shift;
+  $self->{dbh} ||= $self->_open_or_create_database;
+  return $self->{dbh};
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 load_schema
+=head2 database
 
- Title   : load_schema
- Usage   : $a = $self->load_schema();
+ Title   : database
+ Usage   : $a = $self->database();
+ Function: Get/Set the value of database.
+ Returns : The value of database.
+ Args    : A value to set database to.
+
+=cut
+
+sub database {
+      my ($self, $database) = @_;
+
+      if (! $database && ! $self->{database}) {
+	$database = ':memory';
+      }
+      $database = ':memory' if $database eq 'memory';
+      $self->{database} = $database if $database;
+      return $self->{database};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 _load_schema
+
+ Title   : _load_schema
+ Usage   : $a = $self->_load_schema();
  Function: Get/Set the value of load_schema.
  Returns : The value of load_schema.
  Args    : A value to set load_schema to.
 
 =cut
 
-sub load_schema {
-	my ($self, $dbh) = @_;
+sub _load_schema {
+  my ($self, $dbh) = @_;
 
-	$dbh->do("DROP TABLE IF EXISTS feature");
-	$dbh->do("DROP TABLE IF EXISTS attribute");
-	my @feature_columns = (feature_id => 'VARCHAR(100),',
-			       seqid      => 'VARCHAR(100),',
-			       source     => 'VARCHAR(100),',
-			       type       => 'VARCHAR(100),',
-			       start      => 'INT,',
-			       end        => 'INT,',
-			       score      => 'varchar(20),',
-			       strand     => 'VARCHAR(1),',
-			       phase      => 'VARCHAR(1)',
-			      );
-	my $feature_columns_text = join ' ', @feature_columns;
-	my $feature_create_stmt =
-	  "CREATE TABLE feature ($feature_columns_text)";
-	$dbh->do($feature_create_stmt);
-
-	my @att_columns =
-	  (feature_id   => 'VARCHAR(100),',
-	   tag          => 'VARCHAR(100),',
-	   value        => 'TEXT',
+  $dbh->do("DROP TABLE IF EXISTS feature");
+  $dbh->do("DROP TABLE IF EXISTS attribute");
+  $dbh->do("DROP TABLE IF EXISTS relationship");
+  $dbh->do("CREATE TABLE feature ("    .
+	   "subject_id TEXT, "    .
+	   "feature_id TEXT, "    .
+	   "seqid      TEXT, "    .
+	   "source     TEXT, "    .
+	   "type       TEXT, "    .
+	   "start      INTEGER, " .
+	   "end        INTEGER, " .
+	   "score      TEXT, "    .
+	   "strand     TEXT, "    .
+	   "phase      TEXT,"     .
+	   "bin        TEXT)"
 	  );
-	my $att_columns_text = join ' ', @att_columns;
-	my $att_create_stmt =
-	  "CREATE TABLE attribute ($att_columns_text)";
-	$dbh->do($att_create_stmt);
+  $dbh->do("CREATE TABLE attribute ("  .
+	   "attribute_id INTEGER PRIMARY KEY AUTOINCREMENT, " .
+	   "subject_id TEXT, " .
+	   "feature_id TEXT, " .
+	   "att_key    TEXT, " .
+	   "att_value  TEXT)"
+	  );
+  $dbh->do("CREATE TABLE relationship ("  .
+	   "subject_id   TEXT, " .
+	   "parent       TEXT, " .
+	   "child        TEXT, " .
+	   "relationship TEXT) "
+	  );
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 drop_database
+
+  Title   : drop_database
+  Usage   : $self->drop_database();
+Function: Drop the database;
+Returns : Success
+  Args    : N/A
+
+=cut
+
+sub drop_database {
+
+  my $self = shift;
+
+  my $database = $self->database;
+  if (-e $database) {
+    `rm $database`;
+  }
+# my @databases = DBI->data_sources($self->driver,
+  #				    {user     => $self->user,
+  #				     password => $self->password,
+  #				    }
+  #				   );
+  # my $dbh;
+  # my $dsn = $self->dsn;
+  # my $database = $self->database;
+  # if (grep {$_ eq $dsn} @databases) {
+  #   my $drh = DBI->install_driver("mysql");
+  #   my $host = ''; # Defaults to localhost, abstract this later.
+  #   my $rc = $drh->func('dropdb',
+  #			$database,
+  #			$host,
+  #			$self->user,
+  #			$self->password,
+  #			'admin');
+  # }
+  # return;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 _open_or_create_database
+
+ Title   : _open_or_create_database
+ Usage   : $self->_open_or_create_database();
+ Function: Create the database if it doesnt exists.
+ Returns : Success
+ Args    : N/A
+
+=cut
+
+sub _open_or_create_database {
+  my $self = shift;
+
+  my $dbh;
+  my $dsn = $self->dsn;
+  my $database = $self->database;
+  if (! -e $database) {
+    $dbh = DBI->connect($self->dsn);
+    # This one is supposed to speed up write significantly, but doesn't
+    # $dbh->do('PRAGMA default_synchronous = OFF');
+    $self->_load_schema($dbh);
+    # http://search.cpan.org/~adamk/DBD-SQLite-1.29/lib/DBD/SQLite.pm#Transactions
+    # $dbh->{AutoCommit} = 0;
+  }
+  else {
+    $self->warn(message => "Using exsiting database $database");
+    $dbh = DBI->connect($self->dsn);
+    # $dbh = DBI->connect("dbi:SQLite:dbname=:memory");
+    # $dbh->sqlite_backup_from_file($self->database);
+  }
+  return $dbh
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 index_database
+
+ Title   : index_database
+ Usage   : $self->index_database();
+ Function: Get/Set value of index_database.
+ Returns : Value of index_database.
+ Args    : Value to set index_database to.
+
+=cut
+
+sub index_database {
+
+  my $self = shift;
+  my $dbh  = $self->dbh;
+
+  # Create feature indeces
+  $dbh->do("CREATE INDEX feat_feature_id_index ON feature (feature_id)");
+  # $dbh->do("CREATE INDEX feat_seqid_start_end_index ON feature (seqid, start, end)");
+  $dbh->do("CREATE INDEX feat_bin_index ON feature (bin)");
+  # $dbh->do("CREATE INDEX feat_type_index ON feature (type)");
+
+  # Create attribute indeces
+  $dbh->do("CREATE INDEX att_feature_id_index ON attribute (feature_id)");
+  # $dbh->do("CREATE INDEX att_key_value_index ON attribute (att_key, att_value)");
+
+  # Create relationship indeces
+  $dbh->do("CREATE INDEX rel_parent_index ON relationship (parent)");
+  $dbh->do("CREATE INDEX rel_child_index ON relationship (child)");
+
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 load_file
+
+ Title   : load_file
+ Usage   : $self->load_file();
+ Function: Get/Set value of load_file.
+ Returns : Value of load_file.
+ Args    : Value to set load_file to.
+
+=cut
+
+sub load_file {
+
+  my ($self, @args) = @_;
+
+  my $args = $self->prepare_args(\@args);
+  my $files = $args->{file};
+  $files = ref $files eq 'ARRAY' ? $files : [$files];
+  my $parser_class = $args->{format};
+  $parser_class =~ s/GAL::Parser//;
+  $parser_class = 'GAL::Parser::' . $parser_class;
+  $self->load_module($parser_class);
+
+  for my $file (@{$files}) {
+
+    my $parser = $parser_class->new(file => $file);
+
+    while (my $feature = $parser->next_feature_hash) {
+      $self->add_features_to_buffer($feature);
+    }
+
+    $self->flush_feature_buffer;
+  }
+  $self->index_database;
 }
 
 #-----------------------------------------------------------------------------
@@ -154,44 +345,72 @@ sub load_schema {
 =cut
 
 sub add_features {
-	my ($self, $features) = @_;
+  my ($self, $features) = @_;
 
-	my ($features, $attributes) = $self->prepare_features($features);
+  my ($feat_rows, $att_rows, $rel_rows) = $self->prepare_features($features);
+  my $dbh = $self->dbh;
 
-	my $insert_stmt = "INSERT INTO feature VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  # "subject_id VARCHAR(255), " .
+  # "feature_id VARCHAR(255), " .
+  # "seqid      VARCHAR(255), " .
+  # "source     VARCHAR(255), " .
+  # "type       VARCHAR(255), " .
+  # "start      INT, "          .
+  # "end        INT, "          .
+  # "score      VARCHAR(255), " .
+  # "strand     VARCHAR(1), "   .
+  # "phase      VARCHAR(1),"    .
+  # "bin        VARCHAR(15))"
 
-	my $dbh = $self->dbh;
-	my $sth = $dbh->prepare($insert_stmt);
+  my $feat_stmt = "INSERT INTO feature VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  my $feat_sth = $dbh->prepare($feat_stmt);
 
-	# http://search.cpan.org/~adamk/DBD-SQLite-1.29/lib/DBD/SQLite.pm#Transactions
-	$dbh->begin_work;
-	for my $feature (@{$features}) {
-		my $rv = $sth->execute(@{$feature});
-		unless ($rv) {
-			my $warn_message = "WARN: bad_insert : ";
-			$warn_message .= join ', ', @{$feature};
-			$self->warn(message => $warn_message);
-		}
-	}
-	$dbh->commit;
+  # http://search.cpan.org/~adamk/DBD-SQLite-1.29/lib/DBD/SQLite.pm#Transactions
+  $dbh->begin_work;
+  for my $feat_row (@{$feat_rows}) {
+    my $rv = $feat_sth->execute(@{$feat_row});
+    unless ($rv) {
+      my $warn_message = "WARN: bad_insert : ";
+      $warn_message .= join ', ', @{$feat_row};
+      $self->warn(message => $warn_message);
+    }
+  }
 
-	my $insert_stmt = "INSERT INTO attribute VALUES (?, ?, ?)";
+  # "attribute_id INT NOT NULL AUTO_INCREMENT, " .
+  # "subject_id VARCHAR(255), " .
+  # "feature_id VARCHAR(255), " .
+  # "att_key    VARCHAR(255), "    .
+  # "att_value  TEXT, "  .
 
-	my $dbh = $self->dbh;
-	my $sth = $dbh->prepare($insert_stmt);
+  my $att_stmt = "INSERT INTO attribute VALUES (?, ?, ?, ?, ?)";
+  my $att_sth = $dbh->prepare($att_stmt);
 
-	$dbh->begin_work;
-	for my $attribute_set (@{$attributes}) {
-		for my $pair (@{$attribute_set}) {
-			my $rv = $sth->execute(@{$pair});
-			unless ($rv) {
-				my $warn_message = "WARN: bad_insert : ";
-				$warn_message .= join ', ', @{$pair};
-				$self->warn(message => $warn_message);
-			}
-		}
-	}
-	$dbh->commit;
+  for my $att_row (@{$att_rows}) {
+    my $rv = $att_sth->execute(@{$att_row});
+    unless ($rv) {
+      my $warn_message = "WARN: bad_insert : ";
+      $warn_message .= join ', ', @{$att_rows};
+      $self->warn(message => $warn_message);
+    }
+  }
+
+  # "subject_id   VARCHAR(255), " .
+  # "parent       VARCHAR(255), " .
+  # "child        VARCHAR(255), "    .
+  # "relationship VARCHAR(255)) "
+
+  my $rel_stmt = "INSERT INTO relationship VALUES (?, ?, ?, ?)";
+  my $rel_sth = $dbh->prepare($rel_stmt);
+
+  for my $rel_row (@{$rel_rows}) {
+    my $rv = $rel_sth->execute(@{$rel_row});
+    unless ($rv) {
+      my $warn_message = "WARN: bad_insert : ";
+      $warn_message .= join ', ', @{$rel_rows};
+      $self->warn(message => $warn_message);
+    }
+  }
+  $dbh->commit;
 }
 
 #-----------------------------------------------------------------------------

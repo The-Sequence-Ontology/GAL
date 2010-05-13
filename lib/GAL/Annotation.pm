@@ -108,6 +108,10 @@ sub _initialize_args {
 
    if (! $self->{storage}) {
      my $class = $args->{class};
+     if (! $class) {
+       my $scheme;
+       ($scheme, $class) = split /:/, $args->{dsn};
+     }
      $class =~ s/GAL::Storage:://;
      $class = 'GAL::Storage::' . $class;
      $self->load_module($class);
@@ -180,10 +184,19 @@ sub _initialize_args {
 
 	# Create the schema if it doesn't exist
 	if (! $self->{schema}) {
+	  # We should be able to reuse the Annotation dbh here!
+	  # my $schema = GAL::Schema->connect([sub {$self->storage->dbh}]);
 	  my $schema = GAL::Schema->connect($self->storage->dsn,
 					    $self->storage->user,
 					    $self->storage->password,
 					   );
+	  # If we're using SQLite we should be using a larger cache_size;
+	  # but why doesn't this seem to help?
+	  # $schema->storage->dbh_do(sub {
+	  # 			     my ($storage, $dbh) = @_;
+	  # 			     $dbh->do('PRAGMA cache_size = 800000');
+	  # 			   },
+	  # 			  );
 	  $schema->annotation($self); # See GAL::SchemaAnnotation
 	  $self->{schema} = $schema;
 	}

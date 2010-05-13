@@ -1,0 +1,219 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+use IO::Prompt;
+use DBIx::Class::ResultClass::HashRefInflator;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+variant_classifier --create --format gff3                            \
+                   --feature_dsn 'dbi:SQLite:dbname=feature.sqlite'  \
+                   --variant_dsn 'dbi:SQLite:variant.sqlite'         \
+                   genome_annotation.gff3 variants.gvf
+
+Description:
+
+This script will take a genome annotation file, a variant file and classify
+the functional effects of the variants against mRNA annotations.
+
+Options:
+
+  create       Drop (if exists) and load the databases.  Default
+	       will just open it.
+	       to add to  the existing database if it exists.
+  format       The format of the input file (a subclass of GAL::Parser).
+  feature_dsn  The DBI connection string (e.g. dbi:mysql:database) for the
+	       features
+  variant_dsn  The DBI connection string (e.g. dbi:mysql:database) for the
+	       variants.
+  user         The database user.  Defaults first to \$ENV{\${driver}_user}
+	       where \$driver is the driver parsed from the dsn. ['']
+  password     The database password.   Defaults first to
+	       \$ENV{\${driver}_password} where \$driver is the driver
+	       parsed from the dsn.
+  prompt       Prompt for the password on the command line.
+
+";
+
+my ($help, $create, $format, $feature_dsn, $variant_dsn, $user, $password, $prompt, $temp_dir);
+my $opt_success = GetOptions('help'          => \$help,
+			     'create'        => \$create,
+			     'format=s'      => \$format,
+			     'feature_dsn=s' => \$feature_dsn,
+			     'variant_dsn=s' => \$variant_dsn,
+			     'user=s'        => \$user,
+			     'password=s'    => \$password,
+			     'prompt'        => sub {$password = prompt("Password: ", -tty,  -echo => '*')->{value}},
+			      );
+
+die $usage if $help || ! $opt_success;
+
+die $usage unless $feature_dsn && $variant_dsn;
+
+my ($feature_file, $variant_file, $fasta_path) = @ARGV;
+
+my %feature_storage_args = (
+			    #class    => 'mysql',
+			    dsn	     => $feature_dsn,
+			    user     => $user,
+			    password => $password,
+		   );
+
+my %variant_storage_args = (
+			    #class    => 'mysql',
+			    dsn	     => $variant_dsn,
+			    user     => $user,
+			    password => $password,
+		   );
+
+my $feature_anno = GAL::Annotation->new(storage => \%feature_storage_args,
+				       );
+
+my $variant_anno = GAL::Annotation->new(storage => \%variant_storage_args,
+				       );
+
+if ($create) {
+  die $usage unless -e $feature_file && -e $variant_file;
+  my $feature_db = $feature_anno->storage;
+  $feature_db->drop_database;
+  $feature_db->load_file(file   => $feature_file,
+			 format => $format,
+			);
+
+  my $variant_db =   $variant_anno->storage;
+  $variant_db->drop_database;
+  $variant_db->load_file(file   => $variant_file,
+			 format => $format,
+			);
+  die;
+}
+
+$feature_anno->load_fasta(path => $fasta_path);
+
+my $features = $feature_anno->schema;
+my $variants = $variant_anno->schema;
+
+my $mrnas = $features->resultset('Feature')->search({type => 'mRNA'});
+while (my $mrna = $mrnas->next) {
+  my $mrna_id = $mrna->feature_id;
+  my $CDSs = $mrna->CDSs;
+  while (my $CDS = $CDSs->next) {
+    my $bins = $CDS->feature_bins;
+    my $start = $CDS->start;
+    my $end   = $CDS->end;
+    my %where = (bin   => {'-in' => $bins},
+		 start => {'>='  => $start},
+		 end   => {'<='  => $end},
+		);
+    my $snvs = $variants->resultset('Feature')->search(\%where);
+
+    for my $snv ($snvs->all) {
+      my $snv_id = $snv->feature_id;
+      my $start  = $snv->start;
+      my $reference_seq = $snv->reference_seq;
+      my @variant_seqs  = $snv->variant_seq_no_ref;
+      for my $variant_seq (@variant_seqs) {
+	my $mrna_variant_seq = $variant_seq;
+	$mrna_variant_seq = $mrna->annotation->revcomp($variant_seq)
+	  if $mrna->strand eq '-';
+	my ($ref_codon, $offset) = $mrna->codon_at_location($start);
+	my $ref_aa = $mrna->annotation->translate($ref_codon);
+	my $var_codon = $ref_codon;
+	substr($var_codon, $offset, 1, $mrna_variant_seq);
+	my $var_aa = $mrna->annotation->translate($var_codon);
+	my $effect;
+	if ($ref_aa eq $var_aa) {
+	  $effect = 'synonymous_codon';
+	}
+	elsif ($ref_aa eq '*') {
+	  $effect = 'stop_lost';
+	}
+	elsif ($var_aa eq '*') {
+	  $effect = 'stop_gained';
+	}
+	else {
+	  $effect = 'non_synonymous_codon';
+	}
+	print join "\t", ($mrna_id,
+			  $snv_id,
+			  $reference_seq,
+			  $variant_seq,
+			  $ref_codon,
+			  $var_codon,
+			  $ref_aa,
+			  $var_aa,
+			  $effect,
+			 );
+	print "\n";
+	print '';
+      }
+    }
+  }
+}
+
+
+# my $exons = $gene_features->set(type => 'exons');
+#
+# $exons->cluster_and_create_genes;
+#
+# my $mRNAs->$gene_features->set(type => 'mRNA');
+# $mRNAs->infer_features(infer_type => 'CDS');
+#
+# my $CDSs->$gene_features->set(type => 'CDS');
+#
+# my $cds_footprint = $CDSs->footprint;
+#
+# my $snp_features = GAL::Annotation->new(dsn  => 'dbi:mysql:NA19240_snps');
+#
+# $snp_features->load_file(file    => 'NA19240_snps.gff3',
+#			      format  => 'solid',
+#			     );
+#
+# my @genes = $gene_features->set(seqid  => 'chr1',
+#				     type   => 'gene');
+#
+# for my $gene (@genes) {
+#
+#   for my $mRNA ($gene->children(type => 'mRNA')) {
+#
+#     my $CDSs = $mRNA->children->(type => 'CDS');
+#     my $CDS  = $CDSs->longest;
+#
+#     my $snps = $snp_features->overlaps(feature => $CDS,
+#					  type    => 'SNP');
+#
+#     while (my $snp = $snps->next) {
+#
+#       my $ref_allele = $snp->seq;
+#
+#       # Only dealing with one variant_allele;
+#       my ($variant_allele) = $snp->attributes(variant_allele);
+#       my $codons = $gene_features->set(type   => 'codon',
+#					  parent => $CDS);
+#
+#       my $codon = $codons->overlaps(feature => $snp,
+#				    parent  => $CDS,
+#				    type    => 'codon');
+#
+#       my $codon_position  = $codon->my_coordinate($snp->start);
+#       my $ref_codon_seq   = $codon->seq;
+#       my $variant_codon_seq = $ref_codon_seq;
+#       substr($variant_codon_seq, $codon_position - 1, $snp->length, $variant_allele);
+#
+#       $snp->variant_effect(feature => $CDS);
+#     }
+#   }
+# }
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------

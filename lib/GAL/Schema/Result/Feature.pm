@@ -163,7 +163,7 @@ sub genomic_length {
 
 #-----------------------------------------------------------------------------
 
-=head2 attributes
+=head2 attributes_hash
 
  Title   : attributes_hash
  Usage   : $self->attributes_hash();

@@ -368,9 +368,11 @@ sub load_module {
 
 	my ($self, $module_name) = @_;
 	eval "require $module_name";
-	$self->throw("Failed to load $module_name in " .
-		     ref $self .
-		     ":\n$@\n") if $@;
+	if ($@) {
+	  my $self_class = ref $self;
+	  my $message = "Failed to load $module_name in $self_class:\n$@";
+	  $self->throw(message => $message);
+	}
 	return 1;
 }
 
