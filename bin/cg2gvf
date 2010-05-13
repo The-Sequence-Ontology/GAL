@@ -85,8 +85,8 @@ my %TYPE_MAP = ('del'              => 'deletion',
 		'ref-consistent'   => 'sequence_alteration',
 		'ref-inconsistent' => 'sequence_alteration',
 		'sub' 		   => 'substitution',
-		'='                => 0,  # don't use it
-		'ref'		   => 0,  # don't use it
+		'='                => '=',  # Leave these until time to print
+		'ref'		   => '=',  # Leave these until time to print
 		'no-call-rc' 	   => 0,  # don't use it
 		'no-call-ri' 	   => 0,  # don't use it
 		'no-call' 	   => 0,  # don't use it
@@ -120,7 +120,7 @@ sub parse_cg_locus {
 			);
 
     my %locus;
-    my $this_locus;
+    my $this_locus_id;
     while (my $line = (shift @{$buffer} || <$FH>)) {
 
 	# Skip lines like this:
@@ -161,49 +161,52 @@ sub parse_cg_locus {
 	chomp $line;
 	my @fields = split ',', $line;
 
+	# We guess the format based on how many fields - works so far...
 	$format ||= $guess_format{scalar @fields};
 
-	my ($locus, $haplotype, $contig, $begin, $end, $vartype, 
+	my ($locus_id, $haplotype, $contig, $begin, $end, $vartype, 
 	    $reference, $alleleSeq, $baseScores, $totalScore, $hapLink,
 	    $xRef);
 
 	if ($format eq '1.2.0.13') {
-	    ($locus, $haplotype, $contig, $begin, $end, $vartype, 
+	    ($locus_id, $haplotype, $contig, $begin, $end, $vartype, 
 	     $reference, $alleleSeq, $baseScores, $totalScore, $hapLink,
 	     $xRef) = @fields;
 	}
 	else {
-	    ($locus, $haplotype, $contig, $begin, $end, $vartype, 
+	    ($locus_id, $haplotype, $contig, $begin, $end, $vartype, 
 	     $reference, $alleleSeq, $totalScore, $hapLink,
 	     $xRef) = @fields;	    
 	}
 
+	# Just pretend pseudo-autosomal regions don't exist for now - damn messy biology.
 	$contig =~ s/nonPAR//;
 	$contig =~ s/PAR\d/chrX/; # Is this correct?  Maybe Y should get it as well in males?
 
-	$this_locus ||= $locus;
-	if ($this_locus ne $locus) {
+	# If we get to the end of a group of locus lines we're done with this record.
+	$this_locus_id ||= $locus_id;
+	if ($this_locus_id ne $locus_id) {
 	    push @buffer, $line;
 	    return \%locus;
 	}
 
-	warn "Warning : non_integer_locus : $locus\n"     unless $locus =~ /^\d+$/;
+	# Do a bunch of simple validation warnings to be sure we understand the data OK.
+	warn "Warning : non_integer_locus : $locus_id\n"  unless $locus_id =~ /^\d+$/;
 	warn "Warning : unknown_haplotype : $haplotype\n" unless $haplotype =~ /1|2|all/;
 	warn "Warning : bad_chromosome : $contig\n"       unless $contig =~ /^chr([0-9]+|[XYM])$/;
 	warn "Warning : bad_begin_location : $begin\n"    unless $begin =~ /^\d+$/;
 	warn "Warning : bad_end_location : $end\n"        unless $end =~ /^\d+$/;
 	warn "Warning : bad_vartype : $vartype\n"         unless exists $TYPE_MAP{$vartype};
-	warn "Warning : bad_reference_seq : $locus\t$reference\n" if $reference && $reference !~ /^[ATCG]+$/;
-	warn "Warning : bad_allele_seq : $locus\t$alleleSeq\n"    if $alleleSeq && $alleleSeq !~ /^[ATCGN\?]+$/;
-	warn "Warning : bad_xRef : $locus\t$xRef\n"       if $xRef && $xRef !~ /^dbsnp:rs\d+$/;
+	warn "Warning : bad_xRef : $locus_id\t$xRef\n"    if $xRef && $xRef !~ /^dbsnp:rs\d+$/;
 
-	$locus{$locus}{$contig}{$begin}{$end}{ploidy}++;
-	next unless $TYPE_MAP{$vartype}; # =~ /^(=|del|delins|ins|snp|sub|ref)$/;
-	$locus{$locus}{$contig}{$begin}{$end}{vartype}{$vartype}++;
-	$locus{$locus}{$contig}{$begin}{$end}{reference}{$reference}++;
-	$locus{$locus}{$contig}{$begin}{$end}{alleleSeq}{$alleleSeq}++;
+	# Store data for this locus
+	$locus{$locus_id}{$contig}{$begin}{$end}{ploidy}++;
+	next unless $TYPE_MAP{$vartype};
+	$locus{$locus_id}{$contig}{$begin}{$end}{vartype}{$vartype}++;
+	$locus{$locus_id}{$contig}{$begin}{$end}{reference}{$reference}++;
+	$locus{$locus_id}{$contig}{$begin}{$end}{alleleSeq}{$alleleSeq}++;
 	$xRef =~ s/dbsnp://;
-	$locus{$locus}{$contig}{$begin}{$end}{xRef}{$xRef}++;
+	$locus{$locus_id}{$contig}{$begin}{$end}{xRef}{$xRef}++;
 	print '';
     }
     return %locus ? \%locus : undef;
@@ -215,74 +218,110 @@ sub print_features {
 
     my $locus = shift;
 
+  LOCUS:
     for my $locus_id (keys %{$locus}) {
 	my $locus = $locus->{$locus_id};
 	my @contigs = keys %{$locus};
+	# This should never happen, but just in case - these variants must
+	# be on the same contig.
 	if (scalar @contigs > 1) {
-	    my $warning = "Warning : multi_contig_locus : $locus_id\t";
-	    $warning .= join ',', @contigs;
-	    $warning .= "\n";
-	    warn $warning;
+	    my $contig_text = join ',', @contigs;
+	    my $this_data = join ';', ("locus_id=$locus_id", "contigs=$contig_text");
+	    warn "Warning : multi_contig_locus : $this_data\n";
+	    next LOCUS;
 	}
-	my $contig = shift @contigs;
+	my $contig = $contigs[0];
 	my @begins = keys %{$locus->{$contig}};
 	for my $begin (@begins) {
 	    my @ends = keys %{$locus->{$contig}{$begin}};
 	  ENDS:
 	    for my $end (@ends) {
-		my @vartypes   = grep {$_ =~ /^(del|delins|ins|snp|sub)$/} keys %{$locus->{$contig}{$begin}{$end}{vartype}};
-		next unless scalar @vartypes;
+		
+		# We left = vartype in during parsing to allow heterozygous
+		# alleleSeqs to be parsed, now we remove it.
+		my @vartypes   = grep {$_ ne '='} keys %{$locus->{$contig}{$begin}{$end}{vartype}};
 		my @references = keys %{$locus->{$contig}{$begin}{$end}{reference}};
 		my @alleleSeqs = keys %{$locus->{$contig}{$begin}{$end}{alleleSeq}};
 		my @xRefs      = keys %{$locus->{$contig}{$begin}{$end}{xRef}};
 		my $ploidy     = $locus->{$contig}{$begin}{$end}{ploidy};
+
+		my $vartype_text = join ',', @vartypes;
+		my $ref_seq_text = join ',', @references;
+		my $var_seq_text  = join ',', @alleleSeqs;
+		my $this_data    = join "; ", ("locus_id=$locus_id", "contig=$contig",
+					       "vartypes=$vartype_text", "ploidy=$ploidy",
+					       "ref_seqs=$ref_seq_text", "var_seqs=$var_seq_text"
+					       );
 		
+		# Skip this record unless we have a supported vartype.
+		unless (grep {$_ =~ /^(del|delins|ins|snp|sub)$/} @vartypes) {
+		    #
+		    # Let's not warn on these - there are just too many
+		    #
+		    # my $warning = "Warning : no_valid_vartype : $locus_id\t";
+		    # $warning .= join ',', @vartypes;
+		    # $warning .= "\n";
+		    # warn $warning;
+		    next ENDS;
+		}
+		# Skip this record if we have an invalid vartype mixed in with valid ones.
+		if (grep {$_ !~ /^(del|delins|ins|snp|sub|=)$/} @vartypes) {
+		    warn "Warning : invalid_vartypes_mixed_with_valid : $this_data\n";
+		    next ENDS;
+		}
+		# Skip this record if we have multiple vartypes described
+		# This could be handled by making these complex_substitutions or similar
 		if (scalar @vartypes > 1) {
-		    my $warning = "Warning : multi_vartype_location : $locus_id\t";
-		    $warning .= join ',', @vartypes;
-		    $warning .= "\n";
-		    warn $warning;
+		    warn "Warning : multi_vartype_location : $this_data\n";
+		    next ENDS;
 		}
-		if (scalar @references > 1) {
-		    my $warning = "Warning : multi_reference_location : $locus_id\t";
-		    $warning .= join ',', @references;
-		    $warning .= "\n";
-		    warn $warning;
+		# We should only have one reference sequence reported for this location.
+		if (scalar @references > 1) {	
+		    warn "Warning : multi_reference_location : $this_data\n";
+		    next ENDS;
 		}
-		my $vartype   = shift @vartypes;
-		my $reference = shift @references;
+		my $vartype   = $vartypes[0];
+		my $reference = $references[0];
 	        $reference ||= '-' if $vartype eq 'ins';
 		map {$_ ||= '-'} @alleleSeqs if $vartype =~ /^(del|ins)$/;
 
+		# Skip this record if we have ambiguous reference or variant seqs.
+		if (grep {$_ =~ /[^ATCG-]/} @references) {
+		    warn "Warning : bad_reference_seq : $this_data\n";
+		    next ENDS;
+		}
+		if (grep {$_ =~ /[^ATCG-]/} @alleleSeqs) {
+		    warn "Warning : bad_allele_seq : $this_data\n";
+		    next ENDS;
+		}
+		# Skip this record if we have incomplete data
 		if ($vartype || $reference || scalar @alleleSeqs) {
 		    unless ($vartype && $reference && scalar @alleleSeqs) {
-			warn "Warning : incomplete_data : $locus_id\n";
+			warn "Warning : incomplete_data : $this_data\n";
+			next ENDS;
 		    }
 		}
 		else {
+		    warn "Warning : no_variant_data : $this_data\n";
 		    next ENDS;
 		}
 
-		if (scalar @begins > 1 || scalar @ends > 1) {
-		    warn "Warning : multi_location_locus_printed : $locus_id\n";
-		}
-		
 		my $genotype = scalar @alleleSeqs > 1 ? 'heterozygous' : 'homozygous';
 		# If we're on male X non PAR or Y non PAR then hemizygous we can probably get this from
 		# $vartype eq 'PAR-called-in-X'
 		if ($ploidy < 2) {
 		    $genotype = 'unknown';
 		    # warn "Warning : unknown_genotype : $locus_id\t$contig\n";
-		    warn "Warning : cant_determine_genotype : $locus_id\t$contig\n";
+		    warn "Warning : cant_determine_genotype : $this_data\n";
 		}
 
 		my $type = $TYPE_MAP{$vartype};
 		my $start = $begin + 1;
 		if ($vartype eq 'delins') {
-		    warn "Warning : delins_converted_to_substitution : $locus_id\n";
+		    warn "Warning : delins_converted_to_substitution : $this_data\n";
 		}
 		if ($vartype eq 'PAR-called-in-X') {
-		    warn "Warning : par_called_in_x : $locus_id\n";
+		    warn "Warning : par_called_in_x : $this_data\n";
 		}
 		my %feature = (seqid  	  => $contig,
 			       source 	  => 'Complete_Genomics',
