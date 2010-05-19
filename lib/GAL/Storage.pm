@@ -6,7 +6,7 @@ use vars qw($VERSION);
 
 $VERSION = '0.01';
 use base qw(GAL::Base);
-use File::Temp qw/tempfile/;
+use DBI;
 
 =head1 NAME
 
@@ -73,6 +73,24 @@ sub _initialize_args {
 
 #-----------------------------------------------------------------------------
 
+=head2 annotation
+
+ Title   : annotation
+ Usage   : $a = $self->annotation()
+ Function: Get/Set the value of annotation.
+ Returns : The value of annotation.
+ Args    : A value to set annotation to.
+
+=cut
+
+sub annotation {
+  my ($self, $annotation) = @_;
+  $self->{annotation} = $annotation if $annotation;
+  return $self->{annotation};
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 dsn
 
  Title   : dsn
@@ -92,17 +110,24 @@ sub dsn {
 
 	# If we don't have a dsn, then create one
 	$dsn ||= '';
-	my ($scheme, $driver, $db_attributes) = split ':', $dsn;
-	$scheme = $self->scheme($scheme);
+	my ($scheme, $driver, $attr_string, $attr_hash, $driver_dsn)
+	  = DBI->parse_dsn($dsn);
+	$scheme = $self->scheme;
+	my $self_driver = $self->driver;
+	$self->warn(message => ("Warn : conflicting_db_drivers " .
+				": You gave: $driver, using $self_driver instead\n"
+			       )
+		   )
+	  if $self_driver ne $driver;
 	$driver = $self->driver($driver);
 
 	my ($database, %attributes);
-	if ($db_attributes =~ /=/) {
-	  my %attributes = map {split /=/} split /;/, $db_attributes;
+	if ($driver_dsn =~ /=/) {
+	  my %attributes = map {split /=/} split /;/, $driver_dsn;
 	  $database = $attributes{dbname} || $attributes{database};
 	}
 	else {
-	  $database = $db_attributes
+	  $database = $driver_dsn;
 	}
 
 	$database = $self->database($database);
@@ -129,7 +154,6 @@ sub dsn {
 
 sub scheme {
 	my $self = shift;
-
 	$self->throw(message => ('Method must be implimented by subclass : ' .
 				 'scheme')
 		    );
@@ -186,53 +210,12 @@ sub password {
 sub database {
       my ($self, $database) = @_;
 
-      if (! $self->{database} && ! $database) {
-	my $database = $self->random_db_name;
-	$self->warn(message => ("Incomplete Data Source Name (DSN) ",
-				"given. ", __PACKAGE__,
-				' created $database as a database ',
-				'name for you.')
-		   );
-      }
       $self->{database} = $database if $database;
+      $self->{database} ||= join '_', ('gal_database',
+				       $self->time_stamp,
+				       $self->random_string(8)
+				      );
       return $self->{database};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 random_db_name
-
- Title   : random_db_name
- Usage   : $a = $self->random_db_name()
- Function: Get/Set the value of random_db_name.
- Returns : The value of random_db_name.
- Args    : A value to set random_db_name to.
-
-=cut
-
-sub random_db_name {
-    my $self = shift;
-
-    # Generate a date stamp
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,
-	$yday,$isdst) = localtime(time);
-    my $time_stamp = sprintf("%02d%02d%02d", $year + 1900,
-			     $mon + 1, $mday);
-    # Generate a 8 charachter semi-random hex extension
-    # for the database.
-    my @symbols = (0..9);
-    push @symbols, qw(a b c d e f);
-    my $extension = join "", map { unpack "H*", chr(rand(256)) } (1..8);
-    my $database = join '_', ('gal_database', $time_stamp,
-			   $extension);
-    $self->warn(message => ("Incomplete Data Source Name (DSN) " .
-			    "given. " . __PACKAGE__ .
-			    " created $database as a database " .
-			    'name for you.')
-	       );
-
-    $self->{database} = $database if $database;
-    return $self->{database};
 }
 
 #-----------------------------------------------------------------------------
@@ -250,7 +233,7 @@ sub random_db_name {
 sub driver {
 
   my $self = shift;
-	$self->throw(message => ('Method must be implimented by subclass : ' .
+	$self->throw(message => ('Method driver must be implimented by subclass : ' .
 				 'driver')
 		    );
 }
@@ -270,107 +253,110 @@ sub driver {
 sub _load_schema {
   my ($self, $dbh) = @_;
 
-    $dbh->do("DROP TABLE IF EXISTS feature");
-    $dbh->do("DROP TABLE IF EXISTS attribute");
-    $dbh->do("DROP TABLE IF EXISTS relationship");
-    $dbh->do("CREATE TABLE feature ("    .
-	     "subject_id VARCHAR(255), " .
-	     "feature_id VARCHAR(255), " .
-	     "seqid      VARCHAR(255), " .
-	     "source     VARCHAR(255), " .
-	     "type       VARCHAR(255), " .
-	     "start      INT, "          .
-	     "end        INT, "          .
-	     "score      VARCHAR(255), " .
-	     "strand     VARCHAR(1), "   .
-	     "phase      VARCHAR(1),"    .
-	     "bin        VARCHAR(15))"
-	    );
-    $dbh->do("CREATE TABLE attribute ("  .
-	     "attribute_id INT NOT NULL AUTO_INCREMENT, " .
-	     "subject_id VARCHAR(255), " .
-	     "feature_id VARCHAR(255), " .
-	     "att_key    VARCHAR(255), "    .
-	     "att_value  TEXT, "  .
-	     "PRIMARY KEY (attribute_id))"
-	    );
-    $dbh->do("CREATE TABLE relationship ("  .
-	     "subject_id   VARCHAR(255), " .
-	     "parent       VARCHAR(255), " .
-	     "child        VARCHAR(255), "    .
-	     "relationship VARCHAR(255)) "
-	    );
+  my $self = shift;
+  $self->throw(message => ('Method _load_schema must be implimented by subclass : ' .
+			   'driver')
+	      );
+
+  # $dbh->do("DROP TABLE IF EXISTS feature");
+  # $dbh->do("DROP TABLE IF EXISTS attribute");
+  # $dbh->do("DROP TABLE IF EXISTS relationship");
+  # $dbh->do("CREATE TABLE feature ("    .
+  #	   "subject_id VARCHAR(255), " .
+  #	   "feature_id VARCHAR(255), " .
+  #	   "seqid      VARCHAR(255), " .
+  #	   "source     VARCHAR(255), " .
+  #	   "type       VARCHAR(255), " .
+  #	   "start      INT, "          .
+  #	   "end        INT, "          .
+  #	   "score      VARCHAR(255), " .
+  #	   "strand     VARCHAR(1), "   .
+  #	   "phase      VARCHAR(1),"    .
+  #	   "bin        VARCHAR(15))"
+  #	  );
+  # $dbh->do("CREATE TABLE attribute ("  .
+  #	   "attribute_id INT NOT NULL AUTO_INCREMENT, " .
+  #	   "subject_id VARCHAR(255), " .
+  #	   "feature_id VARCHAR(255), " .
+  #	   "att_key    VARCHAR(255), "    .
+  #	   "att_value  TEXT, "  .
+  #	   "PRIMARY KEY (attribute_id))"
+  #	  );
+  # $dbh->do("CREATE TABLE relationship ("  .
+  #	   "subject_id   VARCHAR(255), " .
+  #	   "parent       VARCHAR(255), " .
+  #	   "child        VARCHAR(255), "    .
+  #	   "relationship VARCHAR(255)) "
+  #	  );
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 load_file
+=head2 load_files
 
- Title   : load_file
- Usage   : $self->load_file();
+ Title   : load_files
+ Usage   : $self->load_files();
  Function: Get/Set value of load_file.
  Returns : Value of load_file.
  Args    : Value to set load_file to.
 
 =cut
 
-sub load_file {
-
-  my ($self, @args) = @_;
-
-  my $args = $self->prepare_args(\@args);
-  my $files = $args->{file};
-  $files = ref $files eq 'ARRAY' ? $files : [$files];
-  my $parser_class = $args->{format};
-  $parser_class =~ s/GAL::Parser//;
-  $parser_class = 'GAL::Parser::' . $parser_class;
-  $self->load_module($parser_class);
-
-  my $temp_dir;
- ($temp_dir) = grep {-d $_} qw(/tmp .) unless ($temp_dir &&-d $temp_dir);
-
-  my ($FEAT_TEMP,  $feat_filename)  = tempfile('gal_feat_XXXXXX',
-					       SUFFIX => '.tmp',
-					       DIR    => $temp_dir,
-					       UNLINK => 0,
-					      );
-
-  my ($ATT_TEMP,  $att_filename)  = tempfile('gal_att_XXXXXX',
-					     SUFFIX => '.tmp',
-					     DIR    => $temp_dir,
-					     UNLINK => 0,
-					    );
-  my ($REL_TEMP,  $rel_filename)  = tempfile('gal_rel_XXXXXX',
-					     SUFFIX => '.tmp',
-					     DIR    => $temp_dir,
-					     UNLINK => 0,
-					    );
-  chmod (0444, $feat_filename, $att_filename, $rel_filename);
-
-  for my $file (@{$files}) {
-
-    my $parser = $parser_class->new(file => $file);
-
-    while (my $feature = $parser->next_feature_hash) {
-      my ($feature_rows, $attribute_rows, $relationship_rows) = $self->prepare_features($feature);
-
-      for my $feature_row (@{$feature_rows}) {
-	print $FEAT_TEMP join "\t", @{$feature_row};
-	print $FEAT_TEMP "\n";
-      }
-
-      for my $attribute_row (@{$attribute_rows}) {
-	print $ATT_TEMP  join "\t", @{$attribute_row};
-	print $ATT_TEMP "\n";
-      }
-      for my $relationship_row (@{$relationship_rows}) {
-	print $REL_TEMP join "\t", @{$relationship_row};
-	print $REL_TEMP "\n";
-      }
-    }
-  }
-  $self->_load_temp_files($feat_filename, $att_filename, $rel_filename);
+sub load_files {
+	my $self = shift;
+	$self->throw(message => ('Warn : method_must_be_overridden : ' .
+				 'load_files')
+		    );
 }
+
+#-----------------------------------------------------------------------------
+
+  # my $parser = $self->parser;
+  # my $temp_dir;
+  # ($temp_dir) = grep {-d $_} qw(/tmp .) unless ($temp_dir &&-d $temp_dir);
+  # 
+  # my ($FEAT_TEMP,  $feat_filename)  = tempfile('gal_feat_XXXXXX',
+  # 					       SUFFIX => '.tmp',
+  # 					       DIR    => $temp_dir,
+  # 					       UNLINK => 0,
+  # 					      );
+  # 
+  # my ($ATT_TEMP,  $att_filename)  = tempfile('gal_att_XXXXXX',
+  # 					     SUFFIX => '.tmp',
+  # 					     DIR    => $temp_dir,
+  # 					     UNLINK => 0,
+  # 					    );
+  # my ($REL_TEMP,  $rel_filename)  = tempfile('gal_rel_XXXXXX',
+  # 					     SUFFIX => '.tmp',
+  # 					     DIR    => $temp_dir,
+  # 					     UNLINK => 0,
+  # 					    );
+  # chmod (0444, $feat_filename, $att_filename, $rel_filename);
+  # 
+  # for my $file (@{$files}) {
+  # 
+  #   my $parser = $parser_class->new(file => $file);
+  # 
+  #   while (my $feature = $parser->next_feature_hash) {
+  #     my ($feature_rows, $attribute_rows, $relationship_rows) = $self->prepare_features($feature);
+  # 
+  #     for my $feature_row (@{$feature_rows}) {
+  # 	print $FEAT_TEMP join "\t", @{$feature_row};
+  # 	print $FEAT_TEMP "\n";
+  #     }
+  # 
+  #     for my $attribute_row (@{$attribute_rows}) {
+  # 	print $ATT_TEMP  join "\t", @{$attribute_row};
+  # 	print $ATT_TEMP "\n";
+  #     }
+  #     for my $relationship_row (@{$relationship_rows}) {
+  # 	print $REL_TEMP join "\t", @{$relationship_row};
+  # 	print $REL_TEMP "\n";
+  #     }
+  #   }
+  # }
+  # $self->_load_temp_files($feat_filename, $att_filename, $rel_filename);
+  # }
 
 #-----------------------------------------------------------------------------
 

@@ -6,7 +6,6 @@ use vars qw($VERSION);
 $VERSION = '0.01';
 use base qw(GAL::Storage);
 use File::Temp;
-use DBI;
 
 =head1 NAME
 
@@ -249,6 +248,7 @@ sub _open_or_create_database {
     $dbh = DBI->connect($self->dsn);
     # This one is supposed to speed up write significantly, but doesn't
     # $dbh->do('PRAGMA default_synchronous = OFF');
+    # $dbh->do('PRAGMA synchronous = 0');
     $self->_load_schema($dbh);
     # http://search.cpan.org/~adamk/DBD-SQLite-1.29/lib/DBD/SQLite.pm#Transactions
     # $dbh->{AutoCommit} = 0;
@@ -297,36 +297,27 @@ sub index_database {
 
 #-----------------------------------------------------------------------------
 
-=head2 load_file
+=head2 load_files
 
- Title   : load_file
- Usage   : $self->load_file();
- Function: Get/Set value of load_file.
- Returns : Value of load_file.
- Args    : Value to set load_file to.
+ Title   : load_files
+ Usage   : $self->load_files();
+ Function: Get/Set value of load_files.
+ Returns : Value of load_files.
+ Args    : Value to set load_files to.
 
 =cut
 
-sub load_file {
+sub load_files {
 
-  my ($self, @args) = @_;
-
-  my $args = $self->prepare_args(\@args);
-  my $files = $args->{file};
+  my ($self, $files) = @_;
   $files = ref $files eq 'ARRAY' ? $files : [$files];
-  my $parser_class = $args->{format};
-  $parser_class =~ s/GAL::Parser//;
-  $parser_class = 'GAL::Parser::' . $parser_class;
-  $self->load_module($parser_class);
+  my $parser = $self->annotation->parser;
 
   for my $file (@{$files}) {
-
-    my $parser = $parser_class->new(file => $file);
-
+    $parser->file($file);
     while (my $feature = $parser->next_feature_hash) {
       $self->add_features_to_buffer($feature);
     }
-
     $self->flush_feature_buffer;
   }
   $self->index_database;

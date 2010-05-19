@@ -259,7 +259,6 @@ sub _open_or_create_database {
     $dbh = DBI->connect($self->dsn, $self->user,
 			$self->password);
     $self->_load_schema($dbh);
-    $self->index_database;
   }
   else {
     $self->warn(message => "Using exsiting database $database");
@@ -323,6 +322,7 @@ sub _load_temp_files {
   $dbh->do("LOAD DATA INFILE '$feat_filename' INTO TABLE feature   (subject_id, feature_id, seqid, source, type, start, end, score, strand, phase, bin)");
   $dbh->do("LOAD DATA INFILE '$att_filename'  INTO TABLE attribute (attribute_id, subject_id, feature_id, att_key, att_value)");
   $dbh->do("LOAD DATA INFILE '$rel_filename'  INTO TABLE relationship (subject_id, parent, child)");
+  $self->index_database;
 }
 
 #-----------------------------------------------------------------------------

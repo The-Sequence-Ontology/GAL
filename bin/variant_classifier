@@ -15,7 +15,8 @@ my $usage = "
 
 Synopsis:
 
-variant_classifier --create --format gff3                            \
+variant_classifier --create --parser gff3 --storage SQLite           \
+                   --fasta path/to/fasta                             \
                    --feature_dsn 'dbi:SQLite:dbname=feature.sqlite'  \
                    --variant_dsn 'dbi:SQLite:variant.sqlite'         \
                    genome_annotation.gff3 variants.gvf
@@ -27,10 +28,11 @@ the functional effects of the variants against mRNA annotations.
 
 Options:
 
-  create       Drop (if exists) and load the databases.  Default
-	       will just open it.
+  create       Only create and load the databases then die.
 	       to add to  the existing database if it exists.
-  format       The format of the input file (a subclass of GAL::Parser).
+  parser       The format of the input file (a subclass of GAL::Parser).
+  storage      The type of storage to use (a sublcass of GAL::Storage).
+  fasta        A path to the fasta files associated with the give features.
   feature_dsn  The DBI connection string (e.g. dbi:mysql:database) for the
 	       features
   variant_dsn  The DBI connection string (e.g. dbi:mysql:database) for the
@@ -44,10 +46,13 @@ Options:
 
 ";
 
-my ($help, $create, $format, $feature_dsn, $variant_dsn, $user, $password, $prompt, $temp_dir);
+my ($help, $create, $parser, $storage, $fasta, $feature_dsn, $variant_dsn, $user,
+    $password, $prompt);
 my $opt_success = GetOptions('help'          => \$help,
 			     'create'        => \$create,
-			     'format=s'      => \$format,
+			     'parser=s'      => \$parser,
+			     'storage=s'     => \$storage,
+			     'fasta=s'       => \$fasta,
 			     'feature_dsn=s' => \$feature_dsn,
 			     'variant_dsn=s' => \$variant_dsn,
 			     'user=s'        => \$user,
@@ -59,50 +64,53 @@ die $usage if $help || ! $opt_success;
 
 die $usage unless $feature_dsn && $variant_dsn;
 
-my ($feature_file, $variant_file, $fasta_path) = @ARGV;
+my ($feature_file, $variant_file) = @ARGV;
 
-my %feature_storage_args = (
-			    #class    => 'mysql',
-			    dsn	     => $feature_dsn,
-			    user     => $user,
-			    password => $password,
-		   );
+my $feat_store_args = {class    => $storage,
+		       dsn      => $feature_dsn,
+		       user     => $user,
+		       password => $password,
+                   };
 
-my %variant_storage_args = (
-			    #class    => 'mysql',
-			    dsn	     => $variant_dsn,
-			    user     => $user,
-			    password => $password,
-		   );
+my $var_store_args = {class    => $storage,
+		      dsn      => $variant_dsn,
+		      user     => $user,
+		      password => $password,
+		     };
 
-my $feature_anno = GAL::Annotation->new(storage => \%feature_storage_args,
-				       );
+my $parser_args = {class => $parser,
+                  };
 
-my $variant_anno = GAL::Annotation->new(storage => \%variant_storage_args,
-				       );
+my $fasta_args = {path => $fasta};
+
+my $feat_store = GAL::Annotation->new(storage => $feat_store_args,
+				      parser  => $parser_args,
+				      fasta   => $fasta_args,
+				     );
+
+my $var_store = GAL::Annotation->new(storage => $var_store_args,
+				     parser  => $parser_args,
+				     fasta   => $fasta_args,
+				    );
 
 if ($create) {
-  die $usage unless -e $feature_file && -e $variant_file;
-  my $feature_db = $feature_anno->storage;
-  $feature_db->drop_database;
-  $feature_db->load_file(file   => $feature_file,
-			 format => $format,
-			);
-
-  my $variant_db =   $variant_anno->storage;
-  $variant_db->drop_database;
-  $variant_db->load_file(file   => $variant_file,
-			 format => $format,
+  $feat_store->load_files(files => $feature_file,
+			  mode  => 'overwrite',
+			 );
+  $var_store->load_files(files => $variant_file,
+			 mode  => 'overwrite',
 			);
   die;
 }
 
-$feature_anno->load_fasta(path => $fasta_path);
+my $features = $feat_store->schema->resultset('Feature');
+my $variants = $var_store->schema->resultset('Feature');
+my $atts =     $var_store->schema->resultset('Attribute');
 
-my $features = $feature_anno->schema;
-my $variants = $variant_anno->schema;
+#$variants->result_class('DBIx::Class::ResultClass::HashRefInflator');
+#$atts->result_class('DBIx::Class::ResultClass::HashRefInflator');
 
-my $mrnas = $features->resultset('Feature')->search({type => 'mRNA'});
+my $mrnas = $features->search({type => 'mRNA'});
 while (my $mrna = $mrnas->next) {
   my $mrna_id = $mrna->feature_id;
   my $CDSs = $mrna->CDSs;
@@ -114,13 +122,30 @@ while (my $mrna = $mrnas->next) {
 		 start => {'>='  => $start},
 		 end   => {'<='  => $end},
 		);
-    my $snvs = $variants->resultset('Feature')->search(\%where);
+    my $snvs = $variants->search(\%where)->cursor;
+    while (my @snv = $snvs->next) {
+      # my $snv_id = $snv->feature_id;
+      # my $start  = $snv->start;
+      # my $reference_seq = $snv->reference_seq;
+      # my @variant_seqs  = $snv->variant_seq_no_ref;
 
-    for my $snv ($snvs->all) {
-      my $snv_id = $snv->feature_id;
-      my $start  = $snv->start;
-      my $reference_seq = $snv->reference_seq;
-      my @variant_seqs  = $snv->variant_seq_no_ref;
+      #####################
+
+      my ($snv_id, $start) = @snv[1, 5];
+      my $att_where = {feature_id => $snv_id,
+#		       att_key    => {'-in' => [qw(Reference_sequence
+#						   Variant_sequence)]}
+		      };
+      my %attributes;
+      my $atts = $atts->search($att_where)->cursor;
+      while (my @att = $atts->next) {
+	push @{$attributes{$att[3]}}, $att[4];
+      }
+      my $reference_seq = $attributes{Reference_seq}[0];
+      my @variant_seqs = grep {$_ ne $reference_seq} @{$attributes{Variant_seq}};
+
+      #####################
+
       for my $variant_seq (@variant_seqs) {
 	my $mrna_variant_seq = $variant_seq;
 	$mrna_variant_seq = $mrna->annotation->revcomp($variant_seq)

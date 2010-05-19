@@ -287,6 +287,9 @@ sub set_attributes {
 	my $package = __PACKAGE__;
 	my $caller = ref($self);
 
+	$args ||= {};
+	# $self->throw(message => "Fatal : set_attributes_called_with_no_args : $caller") unless ref $args eq 'HASH';
+
 	for my $attribute (@valid_attributes) {
 		next unless exists $args->{$attribute};
 		if (exists $self->{$attribute}) {
@@ -440,9 +443,9 @@ sub get_feature_bins {
 
  Title   : translate
  Usage   : $self->translate($feature);
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -469,9 +472,9 @@ sub translate {
 
  Title   : genetic_code
  Usage   : $self->genetic_code($feature);
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -547,6 +550,29 @@ sub genetic_code {
 
 #-----------------------------------------------------------------------------
 
+sub timestamp {
+
+  my $self = shift;
+
+  my ($sec,$min,$hour,$mday,$mon,$year,$wday,
+      $yday,$isdst) = localtime(time);
+  my $time_stamp = sprintf("%02d%02d%02d", $year + 1900,
+			   $mon + 1, $mday);
+  return $time_stamp;
+}
+
+#-----------------------------------------------------------------------------
+
+sub random_string {
+  my ($self, $length) = @_;
+  $length ||= 8;
+  #my @symbols = (0..9);
+  #push @symbols, qw(a b c d e f);
+  my $random_string = join "", map { unpack "H*", chr(rand(256)) } (1 .. $length);
+  return $random_string;
+}
+
+#-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 

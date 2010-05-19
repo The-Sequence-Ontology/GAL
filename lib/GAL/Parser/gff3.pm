@@ -6,6 +6,7 @@ use vars qw($VERSION);
 
 $VERSION = '0.01';
 use base qw(GAL::Parser);
+use GAL::Reader::TabLine;
 
 =head1 NAME
 
@@ -55,24 +56,18 @@ sub new {
 #-----------------------------------------------------------------------------
 
 sub _initialize_args {
-	my ($self, @args) = @_;
+  my ($self, @args) = @_;
 
-	######################################################################
-	# This block of code handels class attributes.  Use the
-	# @valid_attributes below to define the valid attributes for
-	# this class.  You must have identically named get/set methods
-	# for each attribute.  Leave the rest of this block alone!
-	######################################################################
-	my $args = $self->SUPER::_initialize_args(@args);
-	my @valid_attributes = qw(); # Set valid class attributes here
-	$self->set_attributes($args, @valid_attributes);
-	######################################################################
-
-	# Set the column headers from your incoming data file here
-	# These will become the keys in your $record hash reference below.
-	$self->fields([qw(seqid source type start end score strand phase
-			  attributes)]);
-
+  ######################################################################
+  # This block of code handels class attributes.  Use the
+  # @valid_attributes below to define the valid attributes for
+  # this class.  You must have identically named get/set methods
+  # for each attribute.  Leave the rest of this block alone!
+  ######################################################################
+  my $args = $self->SUPER::_initialize_args(@args);
+  my @valid_attributes = qw(file fh); # Set valid class attributes here
+  $self->set_attributes($args, @valid_attributes);
+  ######################################################################
 }
 
 #-----------------------------------------------------------------------------
@@ -88,24 +83,24 @@ sub _initialize_args {
 =cut
 
 sub parse_record {
-        my ($self, $record) = @_;
+	my ($self, $record) = @_;
 
-        my $attributes = $self->parse_attributes($record->{attributes});
+	my $attributes = $self->parse_attributes($record->{attributes});
 
-        my $feature_id = $attributes->{ID}[0] || join ':',
-          @{$record}{qw(seqid source type start)};
+	my $feature_id = $attributes->{ID}[0] || join ':',
+	  @{$record}{qw(seqid source type start)};
 
-        my $feature_hash = {feature_id => $feature_id,
-                            seqid      => $record->{seqid},
-                            source     => $record->{source},
-                            type       => $record->{type},
-                            start      => $record->{start},
-                            end        => $record->{end},
-                            score      => $record->{score},
-                            strand     => $record->{strand},
-                            phase      => $record->{phase},
-                            attributes => $attributes,
-                           };
+	my $feature_hash = {feature_id => $feature_id,
+			    seqid      => $record->{seqid},
+			    source     => $record->{source},
+			    type       => $record->{type},
+			    start      => $record->{start},
+			    end        => $record->{end},
+			    score      => $record->{score},
+			    strand     => $record->{strand},
+			    phase      => $record->{phase},
+			    attributes => $attributes,
+			   };
 
 	return $feature_hash;
 }
@@ -136,6 +131,18 @@ sub parse_attributes {
 }
 
 #-----------------------------------------------------------------------------
+
+sub reader {
+  my $self = shift;
+
+  if (! $self->{reader}) {
+    my @field_names = qw(seqid source type start end score strand phase
+			 attributes);
+    my $reader = GAL::Reader::TabLine->new(field_names => \@field_names);
+    $self->{reader} = $reader;
+  }
+  return $self->{reader};
+}
 
 =head1 DIAGNOSTICS
 

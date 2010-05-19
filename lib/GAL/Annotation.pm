@@ -6,6 +6,7 @@ use warnings;
 use base qw(GAL::Base);
 use GAL::Schema;
 use Bio::DB::Fasta;
+use Scalar::Util qw(weaken);
 
 use vars qw($VERSION);
 $VERSION = '0.01';
@@ -68,29 +69,44 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(storage);
+	my @valid_attributes = qw(parser storage fasta);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }
 
 #-----------------------------------------------------------------------------
-#
-# =head2 dsn
-#
-#  Title   : dsn
-#  Usage   : $a = $self->dsn();
-#  Function: Get/Set the value of dsn.
-#  Returns : The value of dsn.
-#  Args    : A value to set dsn to.
-#
-# =cut
-#
-# sub dsn {
-#	my ($self, $dsn) = @_;
-#	$self->{dsn} = $dsn if $dsn;
-#	return $self->{dsn};
-# }
-#
+
+=head2 parser
+
+ Title   : parser
+ Usage   : $a = $self->parser();
+ Function: Get/Set the parser.
+ Returns : A parser object.
+ Args    : The subclass name of a GAL::Parser, or an already created
+	   GAL::Parser object.
+
+=cut
+
+sub parser {
+  my ($self, @args) = @_;
+  my $args = $self->prepare_args(\@args);
+
+  if ($args) {
+    my $class = $args->{parser};
+    # $self->config('default_parser');
+    $class ||= 'gff3';
+    $class =~ s/GAL::Parser:://;
+    $class = 'GAL::Parser::' . $class;
+    $self->load_module($class);
+    my $parser = $class->new($args);
+    my $weak_self = $self;
+    weaken $weak_self;
+    $parser->annotation($weak_self);
+    $self->{parser} = $parser;
+  }
+  return $self->{parser};
+}
+
 #-----------------------------------------------------------------------------
 
 =head2 storage
@@ -104,21 +120,26 @@ sub _initialize_args {
 =cut
 
  sub storage {
-   my ($self, $args) = @_;
+   my ($self, @args) = @_;
+   my $args = $self->prepare_args(\@args);
 
-   if (! $self->{storage}) {
+   if (! $self->{storage} || keys %{$args}) {
      my $class = $args->{class};
      if (! $class) {
-       my $scheme;
-       ($scheme, $class) = split /:/, $args->{dsn};
+       my ($scheme, $driver, $db) = split /:/, $args->{dsn};
+       $class = $driver;
      }
+     # $class ||= $self->config('default_storage');
+     $class ||= 'SQLite';
      $class =~ s/GAL::Storage:://;
      $class = 'GAL::Storage::' . $class;
      $self->load_module($class);
      my $storage = $class->new($args);
+     my $weak_self = $self;
+     weaken $weak_self;
+     $storage->annotation($weak_self);
      $self->{storage} = $storage;
    }
-
    return $self->{storage};
  }
 
@@ -135,34 +156,13 @@ sub _initialize_args {
 =cut
 
  sub fasta {
-   my ($self, $fasta_index) = @_;
-
-   if (! $self->{fasta} || $fasta_index) {
-     $self->{fasta} = $fasta_index;
-   }
-   return $self->{fasta};
- }
-
-#-----------------------------------------------------------------------------
-
-=head2 load_fasta
-
-  Title   : load_fasta
-  Usage   : $a = $self->load_fasta();
-  Function:
-  Returns :
-  Args    :
-
-=cut
-
- sub load_fasta {
    my ($self, @args) = @_;
-
    my $args = $self->prepare_args(\@args);
+
    if ($args->{path}) {
-     my $fasta_path = $args->{path};
-     my $fasta = Bio::DB::Fasta->new($fasta_path);
-     $self->{fasta} = $fasta;
+     my $fasta_path = $args->{path}; # || $self->config('default_fasta_path');
+     my $fasta_index = Bio::DB::Fasta->new($fasta_path);
+     $self->{fasta} = $fasta_index;
    }
    return $self->{fasta};
  }
@@ -191,13 +191,15 @@ sub _initialize_args {
 					    $self->storage->password,
 					   );
 	  # If we're using SQLite we should be using a larger cache_size;
-	  # but why doesn't this seem to help?
+	  # but why doesn't this seem to help?  Do this in the Storage object
 	  # $schema->storage->dbh_do(sub {
-	  # 			     my ($storage, $dbh) = @_;
-	  # 			     $dbh->do('PRAGMA cache_size = 800000');
-	  # 			   },
-	  # 			  );
-	  $schema->annotation($self); # See GAL::SchemaAnnotation
+	  #			     my ($storage, $dbh) = @_;
+	  #			     $dbh->do('PRAGMA cache_size = 800000');
+	  #			   },
+	  #			  );
+	  my $weak_self = $self;
+	  weaken $weak_self;
+	  $schema->annotation($weak_self); # See GAL::SchemaAnnotation
 	  $self->{schema} = $schema;
 	}
 	return $self->{schema};
@@ -240,57 +242,29 @@ sub password {
 }
 
 #-----------------------------------------------------------------------------
-#
-# =head2 parser
-#
-#  Title   : parser
-#  Usage   : $a = $self->parser();
-#  Function: Get/Set the parser.
-#  Returns : A parser object.
-#  Args    : The subclass name of a GAL::Parser, or an already created
-#	   GAL::Parser object.
-#
-# =cut
-#
-# sub parser {
-#	my ($self, $class_or_parser) = @_;
-#
-#	my $parser;
-#	if ($parser && ref $parser =~ /^GAL::Parser::\w+/) {
-#	  $parser = $class_or_parser;
-#	}
-#	elsif ($class_or_parser) {
-#	  my $class;
-#	  ($class = $class_or_parser) =~ s/GAL::Parser:://;
-#	  $class = 'GAL::Parser::' . $class;
-#	  $self->load_module($class);
-#	  $parser = $class->new();
-#	}
-#	elsif (! $self->{parser}) {
-#	  my $class = 'GAL::Parser::gff3';
-#	  $self->load_module($class);
-#	  $parser = $class->(new);
-#	}
-#
-#	$self->{parser} = $parser if defined $parser;
-#	return $self->{parser};
-# }
-#
-#-----------------------------------------------------------------------------
 
-=head2 load_features
+=head2 load_files
 
- Title   : load_features
- Usage   : $a = $self->load_features();
+ Title   : load_files
+ Usage   : $a = $self->load_files();
  Function: Parse and store all of the features in a file
  Returns : N/A
  Args    : file_name
 
 =cut
 
-sub load_features {
+sub load_files {
   my ($self, @args) = @_;
-  $self->storage->load_file(@args);
+  my $args = $self->prepare_args(\@args);
+  my ($mode, $files) = @{$args}{qw/mode files/};
+  $mode ||= 'append';
+  if ($mode eq 'overwrite') {
+    $self->storage->drop_database;
+    $self->storage->load_files($files);
+  }
+  elsif ($mode eq 'append') {
+    $self->storage->load_files($files);
+  }
 }
 
 ##-----------------------------------------------------------------------------

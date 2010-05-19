@@ -31,19 +31,6 @@ This document describes GAL::Parser version 0.01
      Write a full description of the module and its features here.
      Use subsections (=head2, =head3) as appropriate.
 
-
-################################################################################
-################################  TO DO ########################################
-################################################################################
-
-Maybe allow using using any file iterator
-Maybe remove Text::RecordParser
-Maybe allow using any feature_factory
-
-################################################################################
-################################################################################
-################################################################################
-
 =head1 METHODS
 
 =cut
@@ -79,11 +66,28 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(file fh record_separator field_separator
-				  comment_delimiter fields);
+	my @valid_attributes = qw(file fh);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 	return $args;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 annotation
+
+ Title   : annotation
+ Usage   : $a = $self->annotation()
+ Function: Get/Set the value of annotation.
+ Returns : The value of annotation.
+ Args    : A value to set annotation to.
+
+=cut
+
+sub annotation {
+  my ($self, $annotation) = @_;
+  $self->{annotation} = $annotation if $annotation;
+  return $self->{annotation};
 }
 
 #-----------------------------------------------------------------------------
@@ -99,9 +103,8 @@ sub _initialize_args {
 =cut
 
 sub file {
-	my ($self, $value) = @_;
-	$self->{file} = $value if defined $value;
-	return $self->{file};
+	my ($self, $file) = @_;
+	return $self->reader->file($file);
 }
 
 #-----------------------------------------------------------------------------
@@ -117,70 +120,45 @@ sub file {
 =cut
 
 sub fh {
-	my ($self, $value) = @_;
-	$self->{fh} = $value if defined $value;
-	return $self->{fh};
+  my ($self, $fh) = @_;
+  return $self->reader->fh($fh);
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 parser
+=head2 reader
 
- Title   : parser
- Usage   : $a = $self->parser();
- Function: Get/Set the parser.  This is left as a public
-	   method to support future use of alternate parsers, but
+ Title   : reader
+ Usage   : $a = $self->reader();
+ Function: Get/Set the reader.  This is left as a public
+	   method to support future use of alternate readers, but
 	   this is currently not implimented so this method should be
 	   considered for internal use only.
- Returns : The value of parser.
- Args    : A value to set parser to.
+ Returns : The value of reader.
+ Args    : A value to set reader to.
 
 =cut
 
-sub parser {
-	my ($self, $value) = @_;
-	$self->{parser} = $value if defined $value;
-	if (! $self->{parser}) {
-		if (! $self->file && ! $self->fh) {
-			$self->throw('Tried to create a ' . ref $self . 'without a file or filehandle to parse');
-		}
-		my $parser;
-		if ($self->{fh}) {
-			$parser = Text::RecordParser->new({fh               => $self->fh,
-							   record_separator => $self->record_separator,
-							   field_separator  => $self->field_separator,
-							   comment          => $self->comment_delimiter,
-							  });
-		}
-		else {
-			$parser = Text::RecordParser->new({filename         => $self->file,
-							   record_separator => $self->record_separator,
-							   field_separator  => $self->field_separator,
-							   comment          => $self->comment_delimiter,
-							  });
-		}
-		$parser->bind_fields($self->fields);
-		$self->{parser} = $parser;
-	}
-
-	return $self->{parser};
+sub reader {
+	my ($self, $reader) = @_;
+	$self->{reader} = $reader if $reader;
+	return $self->{reader};
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 _read_next_record
+=head2 next_record
 
- Title   : _read_next_record
- Usage   : $a = $self->_read_next_record();
+ Title   : next_record
+ Usage   : $a = $self->next_record();
  Function: Return the next record from the parser
  Returns : The next record from the parser.
  Args    : N/A
 
 =cut
 
-sub _read_next_record {
-	my $self = shift;
-	return $self->parser->fetchrow_hashref;
+sub next_record {
+	shift->reader->next_record;
 }
 
 #-----------------------------------------------------------------------------
@@ -200,7 +178,7 @@ sub next_feature_hash {
 
 	my $feature;
 
-	# If a previous record has returned multiple features then 
+	# If a previous record has returned multiple features then
 	# grab them off the stack first instead of reading a new one
 	# from the file.
 	if (ref $self->{_feature_stack} eq 'ARRAY' &&
@@ -213,7 +191,7 @@ sub next_feature_hash {
 	# still keep parsing the file.
 	until ($feature) {
 		# Get the next record from the file.
-		my $record = $self->_read_next_record;
+		my $record = $self->next_record;
 		return undef if ! defined $record;
 
 		# Parser the record - probably overridden by a subclass.
@@ -287,82 +265,6 @@ sub to_gff3 {
 				   );
 
 	return $gff3_text;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 record_separator
-
- Title   : record_separator
- Usage   : $a = $self->record_separator();
- Function: Get/Set the value of record_separator.
- Returns : The value of record_separator.
- Args    : A value to set record_separator to.
-
-=cut
-
-sub record_separator {
-	my ($self, $value) = @_;
-	$self->{record_separator} = $value if defined $value;
-	$self->{record_separator} ||= "\n";
-	return $self->{record_separator};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 field_separator
-
- Title   : field_separator
- Usage   : $a = $self->field_separator();
- Function: Get/Set the value of field_separator.
- Returns : The value of field_separator.
- Args    : A value to set field_separator to.
-
-=cut
-
-sub field_separator {
-	my ($self, $value) = @_;
-	$self->{field_separator} = $value if defined $value;
-	$self->{field_separator} ||= "\t";
-	return $self->{field_separator};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 comment_delimiter
-
- Title   : comment_delimiter
- Usage   : $a = $self->comment_delimiter();
- Function: Get/Set the value of comment_delimiter.
- Returns : The value of comment_delimiter.
- Args    : A value to set comment_delimiter to.
-
-=cut
-
-sub comment_delimiter {
-	my ($self, $value) = @_;
-	$self->{comment_delimiter} = $value if defined $value;
-	$self->{comment_delimiter} ||= qr/^\#/;
-	return $self->{comment_delimiter};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 fields
-
- Title   : fields
- Usage   : $a = $self->fields();
- Function: Get/Set the value of fields.
- Returns : The value of fields.
- Args    : A value to set fields to.
-
-=cut
-
-sub fields {
-	my ($self, $value) = @_;
-	$self->{fields} = $value if defined $value;
-	$self->{fields} ||= [qw(seqid source type start end score strand phase attributes)];
-	return wantarray ? @{$self->{fields}} : $self->{fields};
 }
 
 #-----------------------------------------------------------------------------
@@ -507,127 +409,3 @@ SUCH DAMAGES.
 =cut
 
 1;
-
-__END__
-
-=head2 get_all_features
-
- Title   : get_all_features
- Alias   : get_features
- Usage   : $features = $self->get_all_features();
- Function: Get all the features objects created by this parser.
- Returns : A list of Feature objects.
- Args    : N/A
-
-=cut
-
-
-#sub get_all_features {
-#	my $self = shift;
-#	$self->_parse_all_features unless $self->{features};
-#	return wantarray ? @{$self->{features}} : $self->{features};
-#}
-
-=head2 get_features
-
- Alias for get_all_features
-
-=cut
-
-#sub get_features {shift->get_all_features(@_)}
-
-#-----------------------------------------------------------------------------
-
-=head2 _parse_all_features
-
- Title   : _parse_all_features
- Alias   : parse # Depricated but kept for backwards compatibility
- Usage   : $a = $self->_parse_all_features();
- Function: Parse and store all of the features in a file
- Returns : N/A
- Args    : N/A
-
-=cut
-
-#sub _parse_all_features {
-#
-#	my $self = shift;
-#
-#	while (my $record = $self->_read_next_record) {
-#
-#		my $feature_hash = $self->parse_record($record);
-#		next unless defined $feature_hash;
-#		my $type = $feature_hash->{type};
-#		my $feature = $self->feature_factory->create($feature_hash);
-#		push @{$self->{features}}, $feature;
-#
-#	}
-#	return $self;
-#}
-
-=head2 parse
-
- Depricated alias for _parse_all_features
-
-=cut
-
-#sub parse {
-#	my $self = shift;
-#	$self->warn(message => ("The method GAL::Parser::parse is " .
-#				"depricated.  Please use " .
-#				"GAL::Parser::_parse_all_features " .
-#				"instead.")
-#		   );
-#	return $self->_parse_all_features(@_);
-#}
-
-#-----------------------------------------------------------------------------
-
-=head2 parse_next_feature
-
- Title   : parse_next_feature
- Alias   : next_feature
- Alias   : get_next_feature
- Usage   : $a = $self->parse_next_feature();
- Function: Get/Set the value of parse.
- Returns : The value of parse.
- Args    : A value to set parse to.
-
-=cut
-
-#sub parse_next_feature {
-#
-#	my $self = shift;
-#
-#	my $feature_hash;
-#	until (defined $feature_hash) {
-#		my $record = $self->_read_next_record;
-#		last unless $record;
-#
-#		$feature_hash = $self->parse_record($record);
-#	}
-#	return undef unless defined $feature_hash;
-#
-#	my $type = $feature_hash->{type};
-#	my $feature = $self->feature_factory->create($feature_hash);
-#
-#	return $feature;
-#}
-
-=head2 next_feature
-
- Alias for parse_next_feature
-
-=cut
-
-#sub next_feature     {shift->parse_next_feature(@_)}
-
-=head2 get_next_feature
-
- Alias for parse_next_feature
-
-=cut
-
-#sub get_next_feature {shift->parse_next_feature(@_)}
-
-#-----------------------------------------------------------------------------
