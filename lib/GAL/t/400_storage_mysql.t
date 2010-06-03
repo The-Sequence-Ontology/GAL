@@ -6,7 +6,7 @@ use Test::More tests => 3;
 BEGIN {
 	use lib '../../';
 	#TEST 1
-	use_ok('GAL::Class');
+	use_ok('GAL::Storage::mysql');
 }
 
 my $path = $0;
@@ -15,12 +15,12 @@ $path ||= '.';
 chdir($path);
 
 # TEST 2
-my $object = GAL::Class->new();
-isa_ok($object, 'GAL::Class');
+my $object = GAL::Storage::mysql->new();
+isa_ok($object, 'GAL::Storage::mysql');
 
 # To get a list of all of the subs and throws:
-# Select an empty line and then: C-u M-| grep -nP '^sub ' ../Class.pm
-# Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Class.pm
+# Select an empty line and then: C-u M-| grep -nP '^sub ' ../Storage::mysql.pm
+# Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Storage::mysql.pm
 
 # TEST 3
 
