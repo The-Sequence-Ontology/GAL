@@ -123,6 +123,7 @@ while (my $mrna = $mrnas->next) {
 		 end   => {'<='  => $end},
 		);
     my $snvs = $variants->search(\%where)->cursor;
+
     while (my @snv = $snvs->next) {
       # my $snv_id = $snv->feature_id;
       # my $start  = $snv->start;

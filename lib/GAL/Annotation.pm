@@ -145,30 +145,6 @@ sub parser {
 
 #-----------------------------------------------------------------------------
 
-=head2 fasta
-
-  Title   : fasta
-  Usage   : $a = $self->fasta();
-  Function:
-  Returns :
-  Args    :
-
-=cut
-
- sub fasta {
-   my ($self, @args) = @_;
-   my $args = $self->prepare_args(\@args);
-
-   if ($args->{path}) {
-     my $fasta_path = $args->{path}; # || $self->config('default_fasta_path');
-     my $fasta_index = Bio::DB::Fasta->new($fasta_path);
-     $self->{fasta} = $fasta_index;
-   }
-   return $self->{fasta};
- }
-
-#-----------------------------------------------------------------------------
-
 =head2 schema
 
   Title   : schema

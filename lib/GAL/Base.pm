@@ -3,6 +3,7 @@ package GAL::Base;
 use strict;
 use vars qw($VERSION);
 use Carp qw(croak cluck);
+use Bio::DB::Fasta
 
 $VERSION = '0.01';
 
@@ -34,6 +35,8 @@ This document describes GAL::Base version 0.01
 =cut
 
 #-----------------------------------------------------------------------------
+#                                 Constructor
+#-----------------------------------------------------------------------------
 
 =head2 new
 
@@ -57,9 +60,46 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 	my $args = $self->prepare_args(\@args);
+
+	######################################################################
+	# This block of code handels class attributes.  Use the
+	# @valid_attributes below to define the valid attributes for
+	# this class.  You must have identically named get/set methods
+	# for each attribute.  Leave the rest of this block alone!
+	######################################################################
+	my @valid_attributes = qw(fasta); # Set valid class attributes here
+	$self->set_attributes($args, @valid_attributes);
+	######################################################################
 	return $args;
 }
 
+#-----------------------------------------------------------------------------
+#                                 Attributes
+#-----------------------------------------------------------------------------
+
+=head2 fasta
+
+  Title   : fasta
+  Usage   : $a = $self->fasta();
+  Function:
+  Returns :
+  Args    :
+
+=cut
+
+ sub fasta {
+   my ($self, $fasta_path) = @_;
+
+   if (! $self->{fasta} || $fasta_path ) {
+     # $fasta_path ||= $self->config('default_fasta_path');
+     my $fasta_index = Bio::DB::Fasta->new($fasta_path);
+     $self->{fasta} = $fasta_index;
+   }
+   return $self->{fasta};
+ }
+
+#-----------------------------------------------------------------------------
+#                                  Methods
 #-----------------------------------------------------------------------------
 
 =head2 throw
@@ -570,6 +610,58 @@ sub random_string {
   #push @symbols, qw(a b c d e f);
   my $random_string = join "", map { unpack "H*", chr(rand(256)) } (1 .. $length);
   return $random_string;
+}
+
+#-----------------------------------------------------------------------------
+
+sub float_lt {
+        my ($self, $A, $B, $accuracy) = @_;
+
+	$accuracy ||= 6;
+	$A = sprintf("%.${accuracy}f", $A);
+        $B = sprintf("%.${accuracy}f", $B);
+        $A =~ s/\.//;
+        $B =~ s/\.//;
+        return $A < $B;
+}
+
+#-----------------------------------------------------------------------------
+
+sub float_le {
+        my ($self, $A, $B, $accuracy) = @_;
+
+	$accuracy ||= 6;
+	$A = sprintf("%.${accuracy}f", $A);
+        $B = sprintf("%.${accuracy}f", $B);
+        $A =~ s/\.//;
+        $B =~ s/\.//;
+        return $A <= $B;
+}
+
+#-----------------------------------------------------------------------------
+
+sub float_gt {
+        my ($self, $A, $B, $accuracy) = @_;
+
+	$accuracy ||= 6;
+	$A = sprintf("%.${accuracy}f", $A);
+        $B = sprintf("%.${accuracy}f", $B);
+        $A =~ s/\.//;
+        $B =~ s/\.//;
+        return $A > $B;
+}
+
+#-----------------------------------------------------------------------------
+
+sub float_ge {
+        my ($self, $A, $B, $accuracy) = @_;
+
+	$accuracy ||= 6;
+	$A = sprintf("%.${accuracy}f", $A);
+        $B = sprintf("%.${accuracy}f", $B);
+        $A =~ s/\.//;
+        $B =~ s/\.//;
+        return $A >= $B;
 }
 
 #-----------------------------------------------------------------------------

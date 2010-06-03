@@ -2,10 +2,10 @@ package GAL::Parser::template_sequence_alteration;
 
 use strict;
 use vars qw($VERSION);
-
-
 $VERSION = '0.01';
+
 use base qw(GAL::Parser);
+use GAL::Reader::TabLine;
 
 =head1 NAME
 
@@ -64,13 +64,9 @@ sub _initialize_args {
 	# for each attribute.  Leave the rest of this block alone!
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
-	my @valid_attributes = qw(); # Set valid class attributes here
+	my @valid_attributes = qw(file fh); # Set valid class attributes here
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
-
-	# Set the column headers from your incoming data file here
-	# These will become the keys in your $record hash reference below.
-	$self->fields([qw(these are the header names for your record hash)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -93,34 +89,36 @@ sub parse_record {
 
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/gff3.html for details.
-	my $id         = $record->{id};
-	my $seqid      = $record->{chromosome};
-	my $source     = 'Template';
-	my $type       = 'SNV';
+	my $feature_id = join ':', @record{qw(seqid source type start end)};
+	my $seqid      = $record->{seqid};
+	my $source     = $record->{source};
+	my $type       = $record->{type};
 	my $start      = $record->{start};
 	my $end        = $record->{end};
-	my $score      = '.';
+	my $score      = $record->{score};
 	my $strand     = $record->{strand};
-	my $phase      = '.';
+	my $phase      = $record->{phase};
 
 	# Create the attributes hash
 	# See http://www.sequenceontology.org/gvf.html
 
 	# Assign the reference and variant sequences:
 	# Reference_seq=A
-	# Variant_seq=G:1,A:2
+	# The order of the Variant_seqs matters for indexing Variant_effect
+	# - see below
+	# Variant_seq=G,A
 	my ($reference_seq, @variant_seqs) = split m|/|, $record->{variant_seq};
 
 	# Assign the variant seq read counts if available:
-	# Variant_reads=8:1,6:2
+	# Variant_reads=8,6
 
 	# Assign the total number of reads covering this position:
 	# Total_reads=16
 
 	# Assign the genotype and probability if available:
-	# Genotype=homozygous:0.96
+	# Genotype=homozygous
 
-	my $genotype = 'heterozygous';
+	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -141,10 +139,10 @@ sub parse_record {
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
 			  Genotype      => [$genotype],
-			  ID            => [$id],
+			  ID            => [$feature_id],
 			 };
 
-	my $feature_data = {feature_id => $id,
+	my $feature_data = {feature_id => $feature_id,
 			    seqid      => $seqid,
 			    source     => $source,
 			    type       => $type,
@@ -161,20 +159,17 @@ sub parse_record {
 
 #-----------------------------------------------------------------------------
 
-=head2 foo
-
- Title   : foo
- Usage   : $a = $self->foo();
- Function: Get/Set the value of foo.
- Returns : The value of foo.
- Args    : A value to set foo to.
-
-=cut
-
-sub foo {
-	my ($self, $value) = @_;
-	$self->{foo} = $value if defined $value;
-	return $self->{foo};
+sub reader {
+    my $self = shift;
+    
+    if (! $self->{reader}) {
+	# The column names for the incoming data
+	my @field_names = qw(seqid source type start end score strand phase
+			     attributes);
+	my $reader = GAL::Reader::TabLine->new(field_names => \@field_names);
+	$self->{reader} = $reader;
+    }
+    return $self->{reader};
 }
 
 #-----------------------------------------------------------------------------

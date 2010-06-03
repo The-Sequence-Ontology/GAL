@@ -2,7 +2,6 @@
 use strict;
 use warnings;
 use Getopt::Long;
-
 use GAL::Parser;
 
 #-----------------------------------------------------------------------------
@@ -12,7 +11,7 @@ my $usage = "
 
 Synopsis:
 
-feature2gff3 --format gigabayes gigabayes_output.gff
+feature2gff --parser gigabayes --fasta /path/to/reference gigabayes_output.gff
 
 Description:
 
@@ -20,7 +19,18 @@ Convert various sequence feature formats to GFF3.
 
 Options:
 
-  --format   The format for the feature file - a subclass of GAL::Parser e.g.
+  --parser   The format for the feature file - a subclass of GAL::Parser e.g.
+  --fasta    Some parsers (such as those producing GVF from minimal input
+             data) need access to the reference sequence.  This argument
+             points to the path where the reference sequences are located.
+  --pragma   A file that contains pragmas to include at the begining of the GFF
+             output.
+
+Notes:
+
+Following are some of the parsers that are a part of GAL, but please see
+GAL/lib/GAL/Parser for a complete list.
+
 		basic_snp                 
 		complete_genomics
 		cosmic
@@ -44,9 +54,11 @@ Options:
 ";
 
 
-my ($help, $format, $coverage);
-my $opt_success = GetOptions('help'         => \$help,
-			     'format=s'     => \$format,
+my ($help, $parser, $fasta, $pragma);
+my $opt_success = GetOptions('help'     => \$help,
+			     'parser=s' => \$parser,
+			     'fasta=s'  => \$fasta,
+			     'pragma=s' => \$pragma,
 			    );
 
 die $usage if $help || ! $opt_success;
@@ -54,13 +66,20 @@ die $usage if $help || ! $opt_success;
 my @files = @ARGV;
 die $usage unless @files;
 
-my $class = "GAL::Parser::$format";
+my $class = "GAL::Parser::$parser";
 eval "require $class";
 die $@ if $@;
 
+if (-r $pragma) {
+    open(my $IN, '<', $pragma) or die "Can't open $pragma for reading\n";
+    print (<$IN>);
+    close $IN;
+}
+
 for my $file (@files) {
 
-	my $parser = $class->new(file => $file, coverage => $coverage);
+	my $parser = $class->new(file  => $file,
+				 fasta => $fasta);
 
 	while (my $feature = $parser->next_feature_hash) {
 		print $parser->to_gff3($feature);
