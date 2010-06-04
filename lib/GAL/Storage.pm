@@ -36,6 +36,8 @@ This document describes GAL::Storage version 0.01
 =cut
 
 #-----------------------------------------------------------------------------
+#-------------------------------- Constructor --------------------------------
+#-----------------------------------------------------------------------------
 
 =head2 new
 
@@ -66,11 +68,13 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(dsn user password);
+	my @valid_attributes = qw(annotation class dsn user password);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }
 
+#-----------------------------------------------------------------------------
+#--------------------------------- Attributes --------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 annotation
@@ -118,7 +122,7 @@ sub dsn {
 				": You gave: $driver, using $self_driver instead\n"
 			       )
 		   )
-	  if $self_driver ne $driver;
+	  if $driver && $self_driver ne $driver;
 	$driver = $self->driver($driver);
 
 	my ($database, %attributes);
@@ -239,6 +243,8 @@ sub driver {
 }
 
 #-----------------------------------------------------------------------------
+#---------------------------------- Methods ----------------------------------
+#-----------------------------------------------------------------------------
 
 =head2 _load_schema
 
@@ -314,44 +320,44 @@ sub load_files {
   # my $parser = $self->parser;
   # my $temp_dir;
   # ($temp_dir) = grep {-d $_} qw(/tmp .) unless ($temp_dir &&-d $temp_dir);
-  # 
+  #
   # my ($FEAT_TEMP,  $feat_filename)  = tempfile('gal_feat_XXXXXX',
-  # 					       SUFFIX => '.tmp',
-  # 					       DIR    => $temp_dir,
-  # 					       UNLINK => 0,
-  # 					      );
-  # 
+  #					       SUFFIX => '.tmp',
+  #					       DIR    => $temp_dir,
+  #					       UNLINK => 0,
+  #					      );
+  #
   # my ($ATT_TEMP,  $att_filename)  = tempfile('gal_att_XXXXXX',
-  # 					     SUFFIX => '.tmp',
-  # 					     DIR    => $temp_dir,
-  # 					     UNLINK => 0,
-  # 					    );
+  #					     SUFFIX => '.tmp',
+  #					     DIR    => $temp_dir,
+  #					     UNLINK => 0,
+  #					    );
   # my ($REL_TEMP,  $rel_filename)  = tempfile('gal_rel_XXXXXX',
-  # 					     SUFFIX => '.tmp',
-  # 					     DIR    => $temp_dir,
-  # 					     UNLINK => 0,
-  # 					    );
+  #					     SUFFIX => '.tmp',
+  #					     DIR    => $temp_dir,
+  #					     UNLINK => 0,
+  #					    );
   # chmod (0444, $feat_filename, $att_filename, $rel_filename);
-  # 
+  #
   # for my $file (@{$files}) {
-  # 
+  #
   #   my $parser = $parser_class->new(file => $file);
-  # 
+  #
   #   while (my $feature = $parser->next_feature_hash) {
   #     my ($feature_rows, $attribute_rows, $relationship_rows) = $self->prepare_features($feature);
-  # 
+  #
   #     for my $feature_row (@{$feature_rows}) {
-  # 	print $FEAT_TEMP join "\t", @{$feature_row};
-  # 	print $FEAT_TEMP "\n";
+  #	print $FEAT_TEMP join "\t", @{$feature_row};
+  #	print $FEAT_TEMP "\n";
   #     }
-  # 
+  #
   #     for my $attribute_row (@{$attribute_rows}) {
-  # 	print $ATT_TEMP  join "\t", @{$attribute_row};
-  # 	print $ATT_TEMP "\n";
+  #	print $ATT_TEMP  join "\t", @{$attribute_row};
+  #	print $ATT_TEMP "\n";
   #     }
   #     for my $relationship_row (@{$relationship_rows}) {
-  # 	print $REL_TEMP join "\t", @{$relationship_row};
-  # 	print $REL_TEMP "\n";
+  #	print $REL_TEMP join "\t", @{$relationship_row};
+  #	print $REL_TEMP "\n";
   #     }
   #   }
   # }

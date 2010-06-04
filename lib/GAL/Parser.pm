@@ -36,6 +36,8 @@ This document describes GAL::Parser version 0.01
 =cut
 
 #-----------------------------------------------------------------------------
+#-------------------------------- Constructor --------------------------------
+#-----------------------------------------------------------------------------
 
 =head2 new
 
@@ -50,6 +52,8 @@ This document describes GAL::Parser version 0.01
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
+	my $class = $self->class;
+	bless $self, $class;
 	return $self;
 }
 
@@ -66,12 +70,14 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(file fh);
+	my @valid_attributes = qw(annotation class fh file);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 	return $args;
 }
 
+#-----------------------------------------------------------------------------
+#-------------------------------- Attributes ---------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 annotation
@@ -88,6 +94,30 @@ sub annotation {
   my ($self, $annotation) = @_;
   $self->{annotation} = $annotation if $annotation;
   return $self->{annotation};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 class
+
+ Title   : class
+ Usage   : $a = $self->class()
+ Function: Get/Set the value of class.
+ Returns : The value of class.
+ Args    : A value to set class to.
+
+=cut
+
+sub class {
+  my ($self, $class) = @_;
+  
+  if ($class) {
+      $class =~ s/GAL::Parser:://;
+      $class = 'GAL::Parser::' . $class;
+      $self->{class} = $class;
+  }
+  $self->{class} ||= 'GAL::Parser::gff3';
+  return $self->{class};
 }
 
 #-----------------------------------------------------------------------------
@@ -145,6 +175,8 @@ sub reader {
 	return $self->{reader};
 }
 
+#-----------------------------------------------------------------------------
+#---------------------------------- Methods ----------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 next_record

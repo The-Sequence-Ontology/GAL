@@ -69,7 +69,7 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(parser storage fasta);
+	my @valid_attributes = qw(parser storage);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }
@@ -89,20 +89,18 @@ sub _initialize_args {
 
 sub parser {
   my ($self, @args) = @_;
-  my $args = $self->prepare_args(\@args);
 
-  if ($args) {
-    my $class = $args->{parser};
-    # $self->config('default_parser');
-    $class ||= 'gff3';
-    $class =~ s/GAL::Parser:://;
-    $class = 'GAL::Parser::' . $class;
-    $self->load_module($class);
-    my $parser = $class->new($args);
-    my $weak_self = $self;
-    weaken $weak_self;
-    $parser->annotation($weak_self);
-    $self->{parser} = $parser;
+  if (! $self->{parser} || @args) {
+      my $args = $self->prepare_args(@args);
+      my $class = $args->{class} || 'gff3';
+      $class =~ s/GAL::Parser:://;
+      $class = 'GAL::Parser::' . $class;
+      $self->load_module($class);
+      my $parser = $class->new(@args);
+      my $weak_self = $self;
+      weaken $weak_self;
+      $parser->annotation($weak_self);
+      $self->{parser} = $parser;
   }
   return $self->{parser};
 }
@@ -119,29 +117,23 @@ sub parser {
 
 =cut
 
- sub storage {
-   my ($self, @args) = @_;
-   my $args = $self->prepare_args(\@args);
-
-   if (! $self->{storage} || keys %{$args}) {
-     my $class = $args->{class};
-     if (! $class) {
-       my ($scheme, $driver, $db) = split /:/, $args->{dsn};
-       $class = $driver;
-     }
-     # $class ||= $self->config('default_storage');
-     $class ||= 'SQLite';
-     $class =~ s/GAL::Storage:://;
-     $class = 'GAL::Storage::' . $class;
-     $self->load_module($class);
-     my $storage = $class->new($args);
-     my $weak_self = $self;
-     weaken $weak_self;
-     $storage->annotation($weak_self);
-     $self->{storage} = $storage;
-   }
-   return $self->{storage};
- }
+sub storage {
+    my ($self, @args) = @_;
+    
+    if (! $self->{storage} || @args) {
+	my $args = $self->prepare_args(@args);
+	my $class = $args->{class} || 'SQLite';
+	$class =~ s/GAL::Storage:://;
+	$class = 'GAL::Storage::' . $class;
+	$self->load_module($class);
+	my $storage = $class->new(@args);
+	my $weak_self = $self;
+	weaken $weak_self;
+	$storage->annotation($weak_self);
+	$self->{storage} = $storage;
+    }
+    return $self->{storage};
+}
 
 #-----------------------------------------------------------------------------
 
@@ -155,66 +147,30 @@ sub parser {
 
 =cut
 
- sub schema {
-	my $self = shift;
-
-	# Create the schema if it doesn't exist
-	if (! $self->{schema}) {
-	  # We should be able to reuse the Annotation dbh here!
-	  # my $schema = GAL::Schema->connect([sub {$self->storage->dbh}]);
-	  my $schema = GAL::Schema->connect($self->storage->dsn,
-					    $self->storage->user,
-					    $self->storage->password,
-					   );
-	  # If we're using SQLite we should be using a larger cache_size;
-	  # but why doesn't this seem to help?  Do this in the Storage object
-	  # $schema->storage->dbh_do(sub {
-	  #			     my ($storage, $dbh) = @_;
-	  #			     $dbh->do('PRAGMA cache_size = 800000');
-	  #			   },
-	  #			  );
-	  my $weak_self = $self;
-	  weaken $weak_self;
-	  $schema->annotation($weak_self); # See GAL::SchemaAnnotation
-	  $self->{schema} = $schema;
-	}
-	return $self->{schema};
- }
-
-#-----------------------------------------------------------------------------
-
-=head2 user
-
- Title   : user
- Usage   : $a = $self->user();
- Function: Get/Set the value of user.
- Returns : The value of user.
- Args    : A value to set user to.
-
-=cut
-
-sub user {
-       my ($self, $user) = @_;
-       $self->{user} = $user if $user;
-       return $self->{user};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 password
-
- Title   : password
- Usage   : $a = $self->password();
- Function: Get/Set the value of password.
- Returns : The value of password.
- Args    : A value to set password to.
-
-=cut
-
-sub password {
-       my ($self, $password) = @_;
-       $self->{password} = $password if $password;
-       return $self->{password};
+sub schema {
+    my $self = shift;
+    
+    # Create the schema if it doesn't exist
+    if (! $self->{schema}) {
+	# We should be able to reuse the Annotation dbh here!
+	# my $schema = GAL::Schema->connect([sub {$self->storage->dbh}]);
+	my $schema = GAL::Schema->connect($self->storage->dsn,
+					  $self->storage->user,
+					  $self->storage->password,
+					  );
+	# If we're using SQLite we should be using a larger cache_size;
+	# but why doesn't this seem to help?  Do this in the Storage object
+	# $schema->storage->dbh_do(sub {
+	#			     my ($storage, $dbh) = @_;
+	#			     $dbh->do('PRAGMA cache_size = 800000');
+	#			   },
+	#			  );
+	my $weak_self = $self;
+	weaken $weak_self;
+	$schema->annotation($weak_self); # See GAL::SchemaAnnotation
+	$self->{schema} = $schema;
+    }
+    return $self->{schema};
 }
 
 #-----------------------------------------------------------------------------
@@ -243,7 +199,43 @@ sub load_files {
   }
 }
 
-##-----------------------------------------------------------------------------
+# #-----------------------------------------------------------------------------
+#
+# =head2 user
+#
+#  Title   : user
+#  Usage   : $a = $self->user();
+#  Function: Get/Set the value of user.
+#  Returns : The value of user.
+#  Args    : A value to set user to.
+#
+# =cut
+#
+# sub user {
+#        my ($self, $user) = @_;
+#        $self->{user} = $user if $user;
+#        return $self->{user};
+# }
+#
+# #-----------------------------------------------------------------------------
+#
+# =head2 password
+#
+#  Title   : password
+#  Usage   : $a = $self->password();
+#  Function: Get/Set the value of password.
+#  Returns : The value of password.
+#  Args    : A value to set password to.
+#
+# =cut
+#
+# sub password {
+#        my ($self, $password) = @_;
+#        $self->{password} = $password if $password;
+#        return $self->{password};
+# }
+#
+# #-----------------------------------------------------------------------------
 #
 # =head2 add_feature
 #
@@ -261,7 +253,7 @@ sub load_files {
 #	return $feature;
 # }
 #
-##-----------------------------------------------------------------------------
+# #-----------------------------------------------------------------------------
 #
 # =head2 get_all_features
 #

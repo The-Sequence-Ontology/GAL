@@ -114,8 +114,7 @@ sub _initialize_args {
 
 sub throw {
 	my ($self, @args) = @_;
-	my @valid_attributes = qw(message);
-	my $args = $self->prepare_args(\@args, \@valid_attributes);
+	my $args = $self->prepare_args(@args);
 
 	my $caller = ref($self);
 
@@ -152,8 +151,7 @@ sub throw {
 
 sub warn {
 	my $self = shift;
-	my @valid_attributes = qw(message);
-	my $args = $self->prepare_args(\@_, \@valid_attributes);
+	my $args = $self->prepare_args(@_);
 
 	my $caller = ref($self);
 
@@ -243,36 +241,26 @@ sub first_word {
 =head2 prepare_args
 
  Title   : prepare_args
- Usage   : $args = $self->prepare_args(\@_, \@valid_attributes);
+ Usage   : $args = $self->prepare_args(@_);
  Function: Take a list of key value pairs that may be an array, hash or ref
 	   to either and return them as a hash or hash reference depending on
-	   calling context.  Optionally verify that args are valid.
+	   calling context.
  Returns : Hash or hash reference.
- Args    : Two array references.  The first can contain an array,
-	   hash or reference to either of those containing key,
-	   value pairs.  The second optional array reference contains
-	   a list of valid attributes (arguments).
+ Args    : An array, hash or reference to either.
 
 =cut
 
 sub prepare_args {
 
-	my ($self, $args, $valid_attributes) = @_;
+	my ($self, @args) = @_;
 
 	my %args_hash;
-
-	if (ref $args ne 'ARRAY') {
-		my $message = 'First argument to prepare_args must be an array reference';
-		$self->throw(message => $message);
-	}
-	my @args = @{$args};
 
 	if (scalar @args == 1 && ref $args[0] eq 'ARRAY') {
 		%args_hash = @{$args[0]};
 	}
 	elsif (scalar @args == 1 && ref $args[0] eq 'HASH') {
 		%args_hash = %{$args[0]};
-
 	}
 	elsif (scalar @args % 2 == 0) {
 		%args_hash = @args;
@@ -283,20 +271,8 @@ sub prepare_args {
 		  ("Bad arguments passed to $class",
 		   "We always expect a list of key value pairs or a",
 		   "reference to such a list, But we got:\n",
-		   @args);
+		   join ' ', @args);
 		$self->throw(message => $error);
-	}
-
-	if ($valid_attributes) {
-		if (ref $valid_attributes ne 'ARRAY') {
-			my $message = 'Second argument to prepare_args must be an array reference';
-			$self->throw(message => $message);
-		}
-		my %valid_attributes = map {$_, 1} @{$valid_attributes};
-		my $invalid_attributes = join ', ', grep {! $valid_attributes{$_}} keys %args_hash;
-		if ($invalid_attributes) {
-			$self->throw(message => "Invalid attributes: $invalid_attributes");
-		}
 	}
 
 	return wantarray ? %args_hash : \%args_hash;
