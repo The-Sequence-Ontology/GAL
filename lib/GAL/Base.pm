@@ -35,7 +35,7 @@ This document describes GAL::Base version 0.01
 =cut
 
 #-----------------------------------------------------------------------------
-#                                 Constructor
+#--------------------------------- Constructor -------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 new
@@ -74,7 +74,7 @@ sub _initialize_args {
 }
 
 #-----------------------------------------------------------------------------
-#                                 Attributes
+#---------------------------------- Attributes -------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 fasta
@@ -99,7 +99,7 @@ sub _initialize_args {
  }
 
 #-----------------------------------------------------------------------------
-#                                  Methods
+#------------------------------------ Methods --------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 throw
@@ -189,9 +189,8 @@ sub warn {
 sub wrap_text {
 	my ($self, $text, $cols) = @_;
 	$cols ||= 50;
-	$text .= " ";
-	$text =~ s/(.{0,$cols})\s+/$1\n/g;
-	chomp $text;
+	$text =~ s/(.{0,$cols})/$1\n/g;
+	$text =~ s/\n+$//;
 	return $text;
 }
 #-----------------------------------------------------------------------------
@@ -208,32 +207,9 @@ sub wrap_text {
 
 sub trim_whitespace {
 	my ($self, $text) = @_;
-
 	$text =~ s/^\s+//;
 	$text =~ s/\s+$//;
-
 	return $text;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 first_word
-
- Title   : first_word
- Usage   : $word = $self->first_word($text);
- Function: Grab the first word from a string of text
- Returns : A single word as text.
- Args    : Text.
-
-=cut
-
-sub first_word {
-	my ($self, $text) = @_;
-
-	my $word;
-	($word) = $text =~ /^\s*(\S+)\s*/;
-
-	return $word;
 }
 
 #-----------------------------------------------------------------------------
@@ -304,7 +280,6 @@ sub set_attributes {
 	my $caller = ref($self);
 
 	$args ||= {};
-	# $self->throw(message => "Fatal : set_attributes_called_with_no_args : $caller") unless ref $args eq 'HASH';
 
 	for my $attribute (@valid_attributes) {
 		next unless exists $args->{$attribute};
@@ -324,7 +299,7 @@ sub set_attributes {
 #	my @leftover_args = keys %{$args};
 #	for my $arg (@leftover_args) {
 #		my $message = "Invalid argument $arg passed to $caller.";
-#		$self->throw(message => $message);
+#		$self->warn(message => $message);
 #	}
 }
 
@@ -582,10 +557,8 @@ sub timestamp {
 sub random_string {
   my ($self, $length) = @_;
   $length ||= 8;
-  #my @symbols = (0..9);
-  #push @symbols, qw(a b c d e f);
   my $random_string = join "", map { unpack "H*", chr(rand(256)) } (1 .. $length);
-  return $random_string;
+  return substr($random_string, 0, $length);
 }
 
 #-----------------------------------------------------------------------------

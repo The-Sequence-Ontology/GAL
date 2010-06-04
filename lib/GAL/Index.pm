@@ -1,4 +1,4 @@
-package GAL::Template;
+package GAL::Index;
 
 use strict;
 use vars qw($VERSION);
@@ -10,15 +10,15 @@ use DBI;
 
 =head1 NAME
 
-GAL::Template - <One line description of module's purpose here>
+GAL::Index - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Template version 0.01
+This document describes GAL::Index version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Template;
+     use GAL::Index;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -36,15 +36,15 @@ This document describes GAL::Template version 0.01
 =cut
 
 #-----------------------------------------------------------------------------
-#                                 Constructor                                 
+#--------------------------------- Constructor -------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 new
 
      Title   : new
-     Usage   : GAL::Template->new()
-     Function: Creates a Template object;
-     Returns : A Template object
+     Usage   : GAL::Index->new()
+     Function: Creates a Index object;
+     Returns : A Index object
      Args    :
 
 =cut
@@ -72,7 +72,7 @@ sub _initialize_args {
 }
 
 #-----------------------------------------------------------------------------
-#                                 Attributes                                 
+#---------------------------------- Attributes -------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 attribute
@@ -92,7 +92,7 @@ sub attribute {
 }
 
 #-----------------------------------------------------------------------------
-#                                   Methods                                 
+#----------------------------------- Methods ---------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 method
@@ -137,7 +137,7 @@ sub method {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Template> requires no configuration files or environment variables.
+<GAL::Index> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
