@@ -5,7 +5,6 @@ use warnings;
 
 use base qw(GAL::Base);
 use GAL::Schema;
-use Bio::DB::Fasta;
 use Scalar::Util qw(weaken);
 
 use vars qw($VERSION);
@@ -13,7 +12,7 @@ $VERSION = '0.01';
 
 =head1 NAME
 
-GAL::Annotation - <One line description of module's purpose here>
+GAL::Annotation - Genome Annotation Library
 
 =head1 VERSION
 
@@ -21,23 +20,105 @@ This document describes GAL::Annotation version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Annotation;
+    use GAL::Annotation;
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    my $feat_store = GAL::Annotation->new(fasta => '/path/to/fasta_dir/');
+
+    $feat_store->load_files(files => $feature_file,
+			    mode  => 'overwrite',
+			   );
+
+    my $features = $feat_store->schema->resultset('Feature');
+
+    my $mrnas = $features->search({type => 'mRNA'});
+    while (my $mrna = $mrnas->next) {
+      print $mrna->feature_id . "\n";
+      my $CDSs = $mrna->CDSs;
+      while (my $CDS = $CDSs->next) {
+	print join "\n", ($CDS->start,
+			  $CDS->end,
+			  $CDS->seq,
+			 );
+      }
+    }
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+The Genome Annotation Library is a collection of modules that strive
+to make working with genome annotations simple, intuitive and fast.
+Users of GAL first create an annotation object which in turn will
+contain Parser, Storage and Schema objects.  The parser allows
+features to be loaded into GAL's storage from a variety of formats.
+The storage object specifies how the features should be stored, and
+the schema object provides flexible query and iteration functions over
+the features.  In addtion, Index objects (not yet implimented) provide
+additional key/value mapped look up tables, and List objects provide
+aggregation and analysis functionality for lists of feature
+attributes.
 
-=head1 METHODS
+A wide variety of parsers are available to convert sequence features
+from various formats, and new parsers are easy to write.  See
+GAL::Parser for more details.  Currently MySQL and SQLite storage
+options are available (a fast RAM storage engine is on the TODO list).
+Schema objects are provided by DBIx::Class and a familiarity with that
+package is necessary to understanding how to query and iterate over
+feature objects.
+
+=head1 Constructor
+
+New Annotation objects are created by the class method new.  Arguments
+should be passed to the constructor as a list (or reference) of key
+value pairs.  All attributes of the Annotation object can be set in
+the call to new, but reasonable defaults will be used where ever
+possilbe to keep object creation simple.  An simple example of object
+creation would look like this:
+
+    my $feat_store = GAL::Annotation->new();
+
+The resulting object would use a GFF3 parser and SQLite storage by
+default and it would not have access to feature sequence.
+
+A more complex object creation might look like this:
+
+    my $feat_store = GAL::Annotation->new(parser  => {class => gff3},
+					  storage => {class => mysql,
+						      dsn   => 'dbi:mysql:database'
+						      user  => 'me',
+						      password => 'secret'
+					  fasta   =>  '/path/to/fasta/files/'
+					  );
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=over 4
+
+=item * C<< parser => parser_subclass [gff3] >>
+
+This optional parameter defines which parser subclass to instantiate.
+This parameter will default to gff3 if not provided.  See GAL::Parser
+for a complete list of available parser classes.
+
+=item * C<< storage => storage_subclass [SQLite] >>
+
+This optional parameter defines which storage subclass to instantiate.
+Currently available storage classes are SQLite (the default) and
+mysql.
+
+=item * C<< fasta => '/path/to/fasta/files/ >>
+
+This optional parameter defines a path to a collection of fasta files
+that correspond the annotated features.  The IDs (first contiguous
+non-whitespace charachters) of the fasta headers must correspond to
+the sequence IDs (seqids) in the annotated features.  The fasta
+parameter is optional, but if the fasta attribute is not set then the
+features will not have access to their sequence.  Access to the
+sequence in provided by Bio::DB::Fasta.
 
 =cut
 
+#-----------------------------------------------------------------------------
+#-------------------------------- Constructor --------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 new
@@ -46,7 +127,7 @@ This document describes GAL::Annotation version 0.01
      Usage   : GAL::Annotation->new();
      Function: Creates a GAL::Annotation object;
      Returns : A GAL::Annotation object
-     Args    :
+     Args    : A list of key value pairs for the attributes specified above.
 
 =cut
 
@@ -75,15 +156,27 @@ sub _initialize_args {
 }
 
 #-----------------------------------------------------------------------------
+#-------------------------------- Attributes ---------------------------------
+#-----------------------------------------------------------------------------
+
+=head1  Attributes
+
+All attributes can be supplied as parameters to the GAL::Annotation
+constructor as a list (or referenece) of key value pairs.
+
+=cut
 
 =head2 parser
 
  Title   : parser
- Usage   : $a = $self->parser();
- Function: Get/Set the parser.
- Returns : A parser object.
- Args    : The subclass name of a GAL::Parser, or an already created
-	   GAL::Parser object.
+ Usage   : $parser = $self->parser();
+ Function: Create or return a parser object.
+ Returns : A GAL::Parser::subclass object.
+ Args    : (class => gal_parser_subclass)
+	   See GAL::Parser and it's subclasses for more arguments.
+ Notes   : The parser object is created as a singleton, but it
+	   can be changed by passing new arguments to a call to
+	   parser.
 
 =cut
 
@@ -92,7 +185,7 @@ sub parser {
 
   if (! $self->{parser} || @args) {
       my $args = $self->prepare_args(@args);
-      my $class = $args->{class} || 'gff3';
+      My $class = $args->{class} || 'gff3';
       $class =~ s/GAL::Parser:://;
       $class = 'GAL::Parser::' . $class;
       $self->load_module($class);
@@ -110,17 +203,20 @@ sub parser {
 =head2 storage
 
   Title   : storage
-  Usage   : $a = $self->storage();
-  Function:
-  Returns :
-  Args    :
+  Usage   : $storage = $self->storage();
+  Function: Create or return a storage object.
+  Returns : A GAL::Storage::subclass object.
+  Args    : (class => gal_storage_subclass)
+	    See GAL::Storage and it's subclasses for more arguments.
+  Notes   : The storage object is created as a singleton and can not be
+	    destroyed or recreated after being created.
 
 =cut
 
 sub storage {
     my ($self, @args) = @_;
-    
-    if (! $self->{storage} || @args) {
+
+    if (! $self->{storage}) {
 	my $args = $self->prepare_args(@args);
 	my $class = $args->{class} || 'SQLite';
 	$class =~ s/GAL::Storage:://;
@@ -135,21 +231,34 @@ sub storage {
     return $self->{storage};
 }
 
+
+=head2 fasta
+
+The fasta attribute is provided by GAL::Base, see that module for more
+details.
+
+=cut
+
 #-----------------------------------------------------------------------------
+#---------------------------------- Metohds ----------------------------------
+#-----------------------------------------------------------------------------
+
+=head1 Methods
+
 
 =head2 schema
 
   Title   : schema
   Usage   : $self->schema();
-  Function: Return the cached DBIx::Class::Schema object
-  Returns : DBIx::Class::Schema object
-  Args    : N/A
+  Function: Create and/or return the DBIx::Class::Schema object
+  Returns : DBIx::Class::Schema object.
+  Args    : N/A - Arguments are provided by the GAL::Storage object.
 
 =cut
 
 sub schema {
     my $self = shift;
-    
+
     # Create the schema if it doesn't exist
     if (! $self->{schema}) {
 	# We should be able to reuse the Annotation dbh here!
@@ -179,9 +288,12 @@ sub schema {
 
  Title   : load_files
  Usage   : $a = $self->load_files();
- Function: Parse and store all of the features in a file
+ Function: Parse and store all of the features in a file.
  Returns : N/A
- Args    : file_name
+ Args    : (files => \@feature_files,
+	    mode  => 'overwrite',
+	   )
+ Notes   : Default
 
 =cut
 
@@ -199,42 +311,6 @@ sub load_files {
   }
 }
 
-# #-----------------------------------------------------------------------------
-#
-# =head2 user
-#
-#  Title   : user
-#  Usage   : $a = $self->user();
-#  Function: Get/Set the value of user.
-#  Returns : The value of user.
-#  Args    : A value to set user to.
-#
-# =cut
-#
-# sub user {
-#        my ($self, $user) = @_;
-#        $self->{user} = $user if $user;
-#        return $self->{user};
-# }
-#
-# #-----------------------------------------------------------------------------
-#
-# =head2 password
-#
-#  Title   : password
-#  Usage   : $a = $self->password();
-#  Function: Get/Set the value of password.
-#  Returns : The value of password.
-#  Args    : A value to set password to.
-#
-# =cut
-#
-# sub password {
-#        my ($self, $password) = @_;
-#        $self->{password} = $password if $password;
-#        return $self->{password};
-# }
-#
 # #-----------------------------------------------------------------------------
 #
 # =head2 add_feature
@@ -345,46 +421,30 @@ sub load_files {
 #
 #
 # #-----------------------------------------------------------------------------
-
-=head2 foo
-
- Title   : foo
- Usage   : $a = $self->foo();
- Function: Get/Set the value of foo.
- Returns : The value of foo.
- Args    : A value to set foo to.
-
-=cut
-
-sub foo {
-	my ($self, $value) = @_;
-	$self->{foo} = $value if defined $value;
-	return $self->{foo};
-}
-
-#-----------------------------------------------------------------------------
+#
+# =head2 foo
+#
+#  Title   : foo
+#  Usage   : $a = $self->foo();
+#  Function: Get/Set the value of foo.
+#  Returns : The value of foo.
+#  Args    : A value to set foo to.
+#
+# =cut
+#
+# sub foo {
+#	my ($self, $value) = @_;
+#	$self->{foo} = $value if defined $value;
+#	return $self->{foo};
+# }
+#
+# #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+<GAL::Annotation> currently does not throw any warnings or errors, but
+most other modules in the library do, and details of those errors can
+be found in those modules.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -392,7 +452,33 @@ sub foo {
 
 =head1 DEPENDENCIES
 
-None.
+Modules in GAL/lib use the following modules:
+
+Bio::DB::Fasta
+Carp
+DBD::SQLite
+DBD::mysql
+DBI
+File::Temp
+List::Util
+Scalar::Util
+Set::IntSpan::Fast
+Statistics::Descriptive
+Text::RecordParser
+
+Some script in GAL/bin and/or GAL/lib/GAL/t use the following modules:
+
+Data::Dumper
+FileHandle
+Getopt::Long
+Getopt::Std
+IO::Prompt
+List::MoreUtils
+TAP::Harness
+Test::More
+Test::Pod::Coverage
+URI::Escape
+XML::LibXML::Reader
 
 =head1 INCOMPATIBILITIES
 
@@ -400,7 +486,7 @@ None reported.
 
 =head1 BUGS AND LIMITATIONS
 
-No bugs have been reported.
+I'm sure there are plenty of bugs right now - please let me know if you find one.
 
 Please report any bugs or feature requests to:
 barry.moore@genetics.utah.edu
@@ -411,7 +497,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

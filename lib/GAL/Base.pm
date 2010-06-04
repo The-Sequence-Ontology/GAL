@@ -9,7 +9,7 @@ $VERSION = '0.01';
 
 =head1 NAME
 
-GAL::Base - <One line description of module's purpose here>
+GAL::Base - Base class for the Genome Annotation Library
 
 =head1 VERSION
 
@@ -17,18 +17,17 @@ This document describes GAL::Base version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Base;
-
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    use base qw(GAL::Base);
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+GAL::Base serves as a base class for all of the other classes in the
+GAL.  It is not intended to be instantiated directly, but rather to be
+used with the 'use base' pragma.  GAL::Base provides object
+instantiation, argument preparation and attribute setting functions
+for other classes during object construction.  In addition it provides
+a wide range of utility functions that are expected to be widly
+applicable throughout the library.
 
 =head1 METHODS
 
@@ -44,7 +43,7 @@ This document describes GAL::Base version 0.01
      Usage   : GAL::Base->new();
      Function: Creates a GAL::Base object;
      Returns : A GAL::Base object
-     Args    :
+     Args    : fasta => '/path/to/fasta/files/'
 
 =cut
 
@@ -80,10 +79,10 @@ sub _initialize_args {
 =head2 fasta
 
   Title   : fasta
-  Usage   : $a = $self->fasta();
-  Function:
-  Returns :
-  Args    :
+  Usage   : $fasta = $self->fasta($fasta_dir);
+  Function: Provides a Bio::DB::Fasta object
+  Returns : A Bio::DB::Fasta object
+  Args    : A directory of fasta files.
 
 =cut
 
@@ -105,10 +104,11 @@ sub _initialize_args {
 =head2 throw
 
  Title   : throw
- Usage   : $a = $self->throw(message => $error_message);
+ Usage   : $base->throw(message => $err_msg, code => $err_code);
  Function: Throw an error - print an error message and die.
- Returns : N/A
- Args    : message => $error_message
+ Returns : None
+ Args    : message => $err_msg  # Free text description of error
+           code    => $err_code # single_word_code_for_error
 
 =cut
 
@@ -117,6 +117,9 @@ sub throw {
 	my $args = $self->prepare_args(@args);
 
 	my $caller = ref($self);
+
+	my $code = $args->{code} || ('unspecified_error_code : Complain to the ' .
+				     'author');
 
 	$args->{message} ||= join '',
 	  ("GAL::Base is throwing an exception for $caller ",
@@ -127,7 +130,7 @@ sub throw {
 	$args->{message} = $self->wrap_text($args->{message}, 50);
 	$args->{message} .= "\n";
 
-	my $message = "\n\n";
+	my $message = "\n\n$code\n";
 	$message .= '#' x 60;
 	$message .= "\n";
 	$message .= $args->{message};
@@ -142,9 +145,9 @@ sub throw {
 =head2 warn
 
  Title   : warn
- Usage   : $a = $self->warn(message => $warning_message);
+ Usage   : $base->warn(message => $warning_message);
  Function: Send a warning.
- Returns : N/A
+ Returns : None
  Args    : message => $warning_message
 
 =cut
@@ -182,7 +185,7 @@ sub warn {
  Usage   : $text = $self->wrap_text($text, 50);
  Function: Wrap text to the specified column width.
  Returns : Wrapped text
- Args    : A string of text and an integer value.
+ Args    : A string of text and an optional integer value.
 
 =cut
 
@@ -200,8 +203,8 @@ sub wrap_text {
  Title   : trim_whitespace
  Usage   : $trimmed_text = $self->trim_whitespace($text);
  Function: Trim leading and trailing whitespace from text;
- Returns : Whitespace trimmed text.
- Args    : Text.
+ Returns : Trimmed text.
+ Args    : Text
 
 =cut
 
@@ -221,8 +224,8 @@ sub trim_whitespace {
  Function: Take a list of key value pairs that may be an array, hash or ref
 	   to either and return them as a hash or hash reference depending on
 	   calling context.
- Returns : Hash or hash reference.
- Args    : An array, hash or reference to either.
+ Returns : Hash or hash reference
+ Args    : An array, hash or reference to either
 
 =cut
 
@@ -243,12 +246,13 @@ sub prepare_args {
 	}
 	else {
 		my $class = ref($self);
-		my $error = join "\n",
-		  ("Bad arguments passed to $class",
-		   "We always expect a list of key value pairs or a",
-		   "reference to such a list, But we got:\n",
-		   join ' ', @args);
-		$self->throw(message => $error);
+		my $err_code = 'invalid_arguments_to_prepare_args';
+		my $err_msg  = ("Bad arguments passed to $class. A list "   .
+				"of key value pairs or a reference to "     .
+				"such a list was expected, But we got:\n"   .
+				join ' ', @args);
+		$self->throw(message => $err_msg,
+			     code    => $err_code);
 	}
 
 	return wantarray ? %args_hash : \%args_hash;
@@ -259,10 +263,10 @@ sub prepare_args {
 =head2 set_attributes
 
  Title   : set_attributes
- Usage   : $args = $self->set_attributes($args, @valid_attributes);
+ Usage   : $base->set_attributes($args, @valid_attributes);
  Function: Take a hash reference of arguments and a list of valid attribute
 	   names and call the methods to set those attribute values.
- Returns : N/A
+ Returns : None
  Args    : A hash reference of arguments and an array or array reference of
 	   valid attributes names.
 
@@ -295,12 +299,6 @@ sub set_attributes {
 		$self->$attribute($args->{$attribute});
 		delete $args->{$attribute};
 	}
-
-#	my @leftover_args = keys %{$args};
-#	for my $arg (@leftover_args) {
-#		my $message = "Invalid argument $arg passed to $caller.";
-#		$self->warn(message => $message);
-#	}
 }
 
 #-----------------------------------------------------------------------------
@@ -309,14 +307,14 @@ sub set_attributes {
 
  Title   : expand_iupac_nt_codes
  Usage   : @nucleotides = $self->expand_iupac_nt_codes('W');
- Function: Expands and IUPAC ambiguity codes to an array of nucleotides
+ Function: Expands an IUPAC ambiguity codes to an array of nucleotides
  Returns : An array or array ref of nucleotides
- Args    : An IUPAC Nucleotide ambiguity code
+ Args    : An IUPAC Nucleotide ambiguity code or an array of such
 
 =cut
 
 sub expand_iupac_nt_codes {
-	my ($self, $code) = @_;
+	my ($self, @codes) = @_;
 
 	my %iupac_code_map = ('A' => ['A'],
 			      'C' => ['C'],
@@ -338,12 +336,18 @@ sub expand_iupac_nt_codes {
 			      '-' => ['-'],
 			     );
 
-	my $nts = $iupac_code_map{$code};
-
-	$self->throw(message => "Invalid IPUAC nucleotide code: $code")
+	my @nts;
+	for my $code (@codes) {
+	  my $nts = $iupac_code_map{$code};
+	  $self->throw(message => "Invalid IPUAC nucleotide code: $code",
+		       code     => "invalid_ipuac_nucleotide_code",
+		      )
 	    unless $nts;
+	  push @nts, @{$nts};
+	}
 
-	return wantarray ? @{$nts} : $nts;
+
+	return wantarray ? @nts : \@nts;
 }
 
 #-----------------------------------------------------------------------------
@@ -351,10 +355,10 @@ sub expand_iupac_nt_codes {
 =head2 load_module
 
  Title   : load_module
- Usage   : $self->load_module(Some::Module);
+ Usage   : $base->load_module(Some::Module);
  Function: Do runtime loading (require) of a module/class.
- Returns : 1 on success - throws exception on failure.
- Args    : A valid module name.
+ Returns : 1 on success - throws exception on failure
+ Args    : A valid module name
 
 =cut
 
@@ -364,8 +368,10 @@ sub load_module {
 	eval "require $module_name";
 	if ($@) {
 	  my $self_class = ref $self;
-	  my $message = "Failed to load $module_name in $self_class:\n$@";
-	  $self->throw(message => $message);
+	  my $err_code = "failed_to_load_module : $module_name";
+	  my $err_msg  = "Failed to load $module_name in $self_class:\n$@";
+	  $self->throw(message => $err_msg,
+		       code    => $err_code);
 	}
 	return 1;
 }
@@ -375,11 +381,10 @@ sub load_module {
 =head2 revcomp
 
  Title   : revcomp
- Usage   : $self->revcomp($feature);
- Function: Get the genome bins for a range
- Returns : An array of bins that the given
-	   range falls in.
- Args    : A feature hash
+ Usage   : $base->revcomp($feature);
+ Function: Get the reverse compliment of a nucleotide sequence
+ Returns : The reverse complimented sequence
+ Args    : A nucleotide sequence
 
 =cut
 
@@ -397,11 +402,12 @@ sub revcomp {
 =head2 get_feature_bins
 
  Title   : get_feature_bins
- Usage   : $self->get_feature_bins($feature);
+ Usage   : $base->get_feature_bins($feature);
  Function: Get the genome bins for a range
  Returns : An array of bins that the given
 	   range falls in.
- Args    : A feature hash
+ Args    : A hash reference with key values seqid, start, end (i.e. a
+	   feature hash)
 
 =cut
 
@@ -433,10 +439,11 @@ sub get_feature_bins {
 =head2 translate
 
  Title   : translate
- Usage   : $self->translate($feature);
- Function:
- Returns :
- Args    :
+ Usage   : $base->translate($sequence, $offset, $length);
+ Function: Translate a nucleotide sequence to an amino acid sequence
+ Returns : An amino acid sequence
+ Args    : The sequence as a scalar, and integer offset and an integer
+	   length
 
 =cut
 
@@ -462,10 +469,10 @@ sub translate {
 =head2 genetic_code
 
  Title   : genetic_code
- Usage   : $self->genetic_code($feature);
- Function:
- Returns :
- Args    :
+ Usage   : $base->genetic_code;
+ Function: Returns a hash reference of the genetic code
+ Returns : A hash reference of the genetic code
+ Args    : None
 
 =cut
 
@@ -541,6 +548,16 @@ sub genetic_code {
 
 #-----------------------------------------------------------------------------
 
+=head2 timestamp
+
+ Title   : timestamp
+ Usage   : $base->timestamp;
+ Function: Returns a YYYYMMDD timestamp
+ Returns : A YYYYMMDD timestamp
+ Args    : None
+
+=cut
+
 sub timestamp {
 
   my $self = shift;
@@ -554,6 +571,16 @@ sub timestamp {
 
 #-----------------------------------------------------------------------------
 
+=head2 random_string
+
+ Title   : random_string
+ Usage   : $base->random_string;
+ Function: Returns a random alphanumeric string
+ Returns : A random alphanumeric string
+ Args    : The length of the string to be returned [8]
+
+=cut
+
 sub random_string {
   my ($self, $length) = @_;
   $length ||= 8;
@@ -563,77 +590,126 @@ sub random_string {
 
 #-----------------------------------------------------------------------------
 
+=head2 float_lt
+
+ Title   : float_lt
+ Usage   : $base->float_lt(0.0000123, 0.0000124, 7);
+ Function: Return true if the first number given is less than (<) the
+	   second number at a given level of accuracy.
+ Returns : 1 if the first number is less than the second, otherwise 0
+ Args    : The two values to compare and optionally a integer value for
+	   the accuracy.  Accuracy defaults to 6 decimal places.
+
+=cut
+
 sub float_lt {
-        my ($self, $A, $B, $accuracy) = @_;
+	my ($self, $A, $B, $accuracy) = @_;
 
 	$accuracy ||= 6;
 	$A = sprintf("%.${accuracy}f", $A);
-        $B = sprintf("%.${accuracy}f", $B);
-        $A =~ s/\.//;
-        $B =~ s/\.//;
-        return $A < $B;
+	$B = sprintf("%.${accuracy}f", $B);
+	$A =~ s/\.//;
+	$B =~ s/\.//;
+	return $A < $B;
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 float_le
+
+ Title   : float_le
+ Usage   : $base->float_le(0.0000123, 0.0000124, 7);
+ Function: Return true if the first number given is less than or equal to
+	   (<=) the second number at a given level of accuracy.
+ Returns : 1 if the first number is less than or equal to the second,
+	   otherwise 0
+ Args    : The two values to compare and optionally a integer value for
+	   the accuracy.  Accuracy defaults to 6 decimal places.
+
+=cut
 
 sub float_le {
-        my ($self, $A, $B, $accuracy) = @_;
+	my ($self, $A, $B, $accuracy) = @_;
 
 	$accuracy ||= 6;
 	$A = sprintf("%.${accuracy}f", $A);
-        $B = sprintf("%.${accuracy}f", $B);
-        $A =~ s/\.//;
-        $B =~ s/\.//;
-        return $A <= $B;
+	$B = sprintf("%.${accuracy}f", $B);
+	$A =~ s/\.//;
+	$B =~ s/\.//;
+	return $A <= $B;
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 float_gt
+
+ Title   : float_gt
+ Usage   : $base->float_gt(0.0000123, 0.0000124, 7);
+ Function: Return true if the first number given is greater than (>) the
+	   second number at a given level of accuracy.
+ Returns : 1 if the first number is greater than the second, otherwise 0
+ Args    : The two values to compare and optionally a integer value for
+	   the accuracy.  Accuracy defaults to 6 decimal places.
+
+=cut
 
 sub float_gt {
-        my ($self, $A, $B, $accuracy) = @_;
+	my ($self, $A, $B, $accuracy) = @_;
 
 	$accuracy ||= 6;
 	$A = sprintf("%.${accuracy}f", $A);
-        $B = sprintf("%.${accuracy}f", $B);
-        $A =~ s/\.//;
-        $B =~ s/\.//;
-        return $A > $B;
+	$B = sprintf("%.${accuracy}f", $B);
+	$A =~ s/\.//;
+	$B =~ s/\.//;
+	return $A > $B;
 }
 
 #-----------------------------------------------------------------------------
 
+=head2 float_ge
+
+ Title   : float_ge
+ Usage   : $base->float_ge(0.0000123, 0.0000124, 7);
+ Function: Return true if the first number given is greater than or equal
+           to (>=) the second number at a given level of accuracy.
+ Returns : 1 if the first number is greater than or equal to the second,
+           otherwise 0
+ Args    : The two values to compare and optionally a integer value for
+	   the accuracy.  Accuracy defaults to 6 decimal places.
+
+=cut
+
 sub float_ge {
-        my ($self, $A, $B, $accuracy) = @_;
+	my ($self, $A, $B, $accuracy) = @_;
 
 	$accuracy ||= 6;
 	$A = sprintf("%.${accuracy}f", $A);
-        $B = sprintf("%.${accuracy}f", $B);
-        $A =~ s/\.//;
-        $B =~ s/\.//;
-        return $A >= $B;
+	$B = sprintf("%.${accuracy}f", $B);
+	$A =~ s/\.//;
+	$B =~ s/\.//;
+	return $A >= $B;
 }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
 =over
 
-=item C<< Error message here, perhaps with %s placeholders >>
+=item C<< invalid_arguments_to_prepare_args >>
 
-[Description of error here]
+<GAL::Base::prepare_args> accepts an array, a hash or a reference to either
+an array or hash, but it was passed something different.
 
-=item C<< Another error message here >>
+=item C<< invalid_ipuac_nucleotide_code >>
 
-[Description of error here]
+<GAL::Base::expand_iupac_nt_codes> was passed a charachter that is not a valid
+IUPAC nucleotide code (http://en.wikipedia.org/wiki/Nucleic_acid_notation).
 
-[Et cetera, et cetera]
+=item C<< failed_to_load_module >>
+
+<GAL::Base::load_module> was unable to load (require) the specified module.
+The module may not be installed or it may have a compile time error.
 
 =back
 
@@ -643,7 +719,13 @@ sub float_ge {
 
 =head1 DEPENDENCIES
 
-None.
+=over
+
+=item C<< Carp qw(croak cluck) >>
+
+=item C<< Bio::DB::Fasta >>
+
+=back
 
 =head1 INCOMPATIBILITIES
 
@@ -662,7 +744,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

@@ -1,4 +1,4 @@
-package GAL::Parser;
+ackage GAL::Parser;
 
 use strict;
 use vars qw($VERSION);
@@ -6,7 +6,6 @@ use vars qw($VERSION);
 
 $VERSION = '0.01';
 use base qw(GAL::Base);
-use Text::RecordParser;
 
 =head1 NAME
 
@@ -18,20 +17,57 @@ This document describes GAL::Parser version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser;
+    use GAL::Parser;
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    my $parser = GAL::Parser::gff3->new(file => 'data/feature.gff3');
+
+    while (my $feature_hash = $parser->next_feature_hash) {
+	print $parser->to_gff3($feature_hash) . "\n";
+    }
+
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+<GAL::Parser> is not intended to be instantiated by itself, but rather
+functions as a base class for <GAL::Parser> subclasses.  It provides a
+variety of attributes and methods that are generally applicable to all
+parsers.  While parsers are intended for use from within
+<GAL::Annotation> objects, they can be instantiated seperately from the
+rest of the GAL library and there are many use cases for the parsers
+as stand alone objects.  Anytime you just need fast access to iterate
+over all features in flat file and are happy to have hashese of those
+features you should just use the parser directly without the
+<GAL::Annotation> object.
 
-=head1 METHODS
+=head1 Constructor
+
+New GAL::Parser::subclass objects are created by the class method
+new.  Arguments should be passed to the constructor as a list (or
+reference) of key value pairs.  All attributes of the Parser object
+can be set in the call to new. An simple example
+of object creation would look like this:
+
+    my $parser = GAL::Parser::gff3->new(file => 'data/feature.gff3');
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=over 4
+
+=item * C<< file => feature_file.txt >>
+
+This optional parameter defines what file to parse. While this
+parameter is optional either it, or the following fh parameter must be
+set.
+
+=item * C<< annotation => $gal_annotation_object >>
+
+This parameter is not intended for public use as a setter, but it is
+available for use as a getter.  When a parser is instantiated via
+<GAL::Annotation>, a weakened copy of the <GAL::Annotation> object is
+stored in the parser.
+
+=back
 
 =cut
 
@@ -42,18 +78,17 @@ This document describes GAL::Parser version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser->new();
+     Usage   : GAL::Parser::subclass->new();
      Function: Creates a GAL::Parser object;
      Returns : A GAL::Parser object
-     Args    :
+     Args    : (file => $file)
+	       (fh   => $FH)
 
 =cut
 
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
-	my $class = $self->class;
-	bless $self, $class;
 	return $self;
 }
 
@@ -80,6 +115,8 @@ sub _initialize_args {
 #-------------------------------- Attributes ---------------------------------
 #-----------------------------------------------------------------------------
 
+=head1 Attributes
+
 =head2 annotation
 
  Title   : annotation
@@ -96,31 +133,31 @@ sub annotation {
   return $self->{annotation};
 }
 
-#-----------------------------------------------------------------------------
-
-=head2 class
-
- Title   : class
- Usage   : $a = $self->class()
- Function: Get/Set the value of class.
- Returns : The value of class.
- Args    : A value to set class to.
-
-=cut
-
-sub class {
-  my ($self, $class) = @_;
-  
-  if ($class) {
-      $class =~ s/GAL::Parser:://;
-      $class = 'GAL::Parser::' . $class;
-      $self->{class} = $class;
-  }
-  $self->{class} ||= 'GAL::Parser::gff3';
-  return $self->{class};
-}
-
-#-----------------------------------------------------------------------------
+# #-----------------------------------------------------------------------------
+#
+# =head2 class
+#
+#  Title   : class
+#  Usage   : $a = $self->class()
+#  Function: Get/Set the value of class.
+#  Returns : The value of class.
+#  Args    : A value to set class to.
+#
+# =cut
+#
+# sub class {
+#   my ($self, $class) = @_;
+#
+#   if ($class) {
+#       $class =~ s/GAL::Parser:://;
+#       $class = 'GAL::Parser::' . $class;
+#       $self->{class} = $class;
+#   }
+#   $self->{class} ||= 'GAL::Parser::gff3';
+#   return $self->{class};
+# }
+#
+# #-----------------------------------------------------------------------------
 
 =head2 file
 
@@ -134,7 +171,7 @@ sub class {
 
 sub file {
 	my ($self, $file) = @_;
-	return $self->reader->file($file);
+	return $self->_reader->file($file);
 }
 
 #-----------------------------------------------------------------------------
@@ -151,46 +188,46 @@ sub file {
 
 sub fh {
   my ($self, $fh) = @_;
-  return $self->reader->fh($fh);
+  return $self->_reader->fh($fh);
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 reader
+=head2 _reader
 
- Title   : reader
- Usage   : $a = $self->reader();
- Function: Get/Set the reader.  This is left as a public
-	   method to support future use of alternate readers, but
-	   this is currently not implimented so this method should be
-	   considered for internal use only.
- Returns : The value of reader.
- Args    : A value to set reader to.
+ Title   : _reader
+ Usage   : $a = $self->_reader();
+ Function: Get/Set the reader.
+ Returns : The value of _reader.
+ Args    : A value to set _reader to.
 
 =cut
 
-sub reader {
+sub _reader {
 	my ($self, $reader) = @_;
-	$self->{reader} = $reader if $reader;
-	return $self->{reader};
+	$self->{_reader} = $reader if $reader;
+	return $self->{_reader};
 }
 
 #-----------------------------------------------------------------------------
 #---------------------------------- Methods ----------------------------------
 #-----------------------------------------------------------------------------
 
+=head1 Methods
+
 =head2 next_record
 
  Title   : next_record
  Usage   : $a = $self->next_record();
- Function: Return the next record from the parser
- Returns : The next record from the parser.
+ Function: Return the next record from the reader in whatever format
+	   that reader specifies.
+ Returns : The next record from the reader.
  Args    : N/A
 
 =cut
 
 sub next_record {
-	shift->reader->next_record;
+	shift->_reader->next_record;
 }
 
 #-----------------------------------------------------------------------------
@@ -202,6 +239,26 @@ sub next_record {
  Function: Return the next record from the parser as a 'feature hash'.
  Returns : A hash or hash reference.
  Args    : N/A
+
+The feature hash has the following format:
+
+%feature = (feature_id => $feature_id,
+	    seqid      => $seqid,
+	    source     => $source,
+	    type       => $type,
+	    start      => $start,
+	    end        => $end,
+	    score      => $score,
+	    strand     => $strand,
+	    phase      => $phase,
+	    attributes => {ID => $feature_id,
+			   Parent => $parent_id,
+			  }
+	   );
+
+This hash follows the format layed out by the GFF3 specification
+(http://www.sequenceontology.org/resources/gff3.html).  Please see
+that document for details on constrants for each value and attribute.
 
 =cut
 
@@ -257,22 +314,22 @@ sub next_feature_hash {
 sub to_gff3 {
 	my ($self, $feature) = @_;
 
-	my %ATTRB_ORDER = (ID             	 => 1,
-			   Name           	 => 2,
-			   Alias          	 => 3,
-			   Parent         	 => 3,
-			   Target         	 => 4,
-			   Gap            	 => 5,
-			   Derives_from   	 => 6,
-			   Note           	 => 7,
-			   Dbxref         	 => 8,
-			   Ontology_term  	 => 9,
-			   Variant_seq    	 => 10,
-			   Reference_seq  	 => 11,
-			   Variant_reads  	 => 12,
-			   Total_reads    	 => 13,
-			   Genotype       	 => 14,
-			   Variant_effect 	 => 15, 
+	my %ATTRB_ORDER = (ID	 => 1,
+			   Name	 => 2,
+			   Alias	 => 3,
+			   Parent	 => 3,
+			   Target	 => 4,
+			   Gap	 => 5,
+			   Derives_from	 => 6,
+			   Note	 => 7,
+			   Dbxref	 => 8,
+			   Ontology_term	 => 9,
+			   Variant_seq	 => 10,
+			   Reference_seq	 => 11,
+			   Variant_reads	 => 12,
+			   Total_reads	 => 13,
+			   Genotype	 => 14,
+			   Variant_effect	 => 15,
 			   Variant_copy_number   => 16,
 			   Reference_copy_number => 17,
 			   );
@@ -306,8 +363,9 @@ sub to_gff3 {
  Title   : parse_record
  Usage   : $a = $self->parse_record();
  Function: Parse the data from a record.
- Returns : A hash ref needed by Feature.pm to create a Feature object
- Args    : A hash ref of fields that this sub can understand (In this case GFF3).
+ Returns : Feature data as a hash (or reference);
+ Args    : A data structure of feature data that this method (probably
+	   overridden by a subclass) understands.
 
 =cut
 
@@ -319,19 +377,19 @@ sub parse_record {
 	my $feature_id = $attributes->{id} || join ':',
 	  @{$record}{qw(seqid source type start)};
 
-	my $feature_hash = {feature_id => $feature_id,
-			    seqid      => $record->{seqid},
-			    source     => $record->{source},
-			    type       => $record->{type},
-			    start      => $record->{start},
-			    end        => $record->{end},
-			    score      => $record->{score},
-			    strand     => $record->{strand},
-			    phase      => $record->{phase},
-			    attributes => $attributes,
-			   };
+	my %feature = (feature_id => $feature_id,
+		       seqid      => $record->{seqid},
+		       source     => $record->{source},
+		       type       => $record->{type},
+		       start      => $record->{start},
+		       end        => $record->{end},
+		       score      => $record->{score},
+		       strand     => $record->{strand},
+		       phase      => $record->{phase},
+		       attributes => $attributes,
+		     };
 
-	return $feature_hash;
+	return wantarray ? %feature : \$feature;
 }
 
 #-----------------------------------------------------------------------------
@@ -340,9 +398,9 @@ sub parse_record {
 
  Title   : parse_attributes
  Usage   : $a = $self->parse_attributes($attrb_text);
- Function: Parse the attributes from column 9 in a GFF3 style file.
- Returns : The value of parse_attributes.
- Args    : A value to set parse_attributes to.
+ Function: Parse the attributes from a GFF3 column 9 formatted string of text.
+ Returns : A hash (or reference) of attribute key value pairs.
+ Args    : A GFF3 column 9 formated string of text.
 
 =cut
 
@@ -356,7 +414,7 @@ sub parse_attributes {
 		my @values = split /,/, $value_text;
 		push @{$attrb_hash{$tag}}, @values;
 	}
-	return \%attrb_hash;
+	return wantarray ? %attrb_hash : \%attrb_hash;
 }
 
 
@@ -365,25 +423,9 @@ sub parse_attributes {
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+<GAL::Parser> currently does not throw any warnings or errors, but
+subclasses may, and details of those errors can
+be found in those modules.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -391,7 +433,7 @@ sub parse_attributes {
 
 =head1 DEPENDENCIES
 
-None.
+None for <GAL::Parser> but <GAL::Reader> object and subclasses of <GAL::Parser> may.
 
 =head1 INCOMPATIBILITIES
 
