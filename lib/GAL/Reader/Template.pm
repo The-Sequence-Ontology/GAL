@@ -1,4 +1,4 @@
-package GAL::Reader::TabLine;
+package GAL::Reader::Template;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Reader);
 
 =head1 NAME
 
-GAL::Reader::TabLine - <One line description of module's purpose here>
+GAL::Reader::Template - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Reader::TabLine version 0.01
+This document describes GAL::Reader::Template version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Reader::TabLine;
+     use GAL::Reader::Template;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -40,9 +40,9 @@ This document describes GAL::Reader::TabLine version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Reader::TabLine->new();
-     Function: Creates a GAL::Reader::TabLine object;
-     Returns : A GAL::Reader::TabLine object
+     Usage   : GAL::Reader::Template->new();
+     Function: Creates a GAL::Reader::Template object;
+     Returns : A GAL::Reader::Template object
      Args    :
 
 =cut
@@ -145,7 +145,7 @@ sub next_record {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Reader::TabLine> requires no configuration files or environment variables.
+<GAL::Reader::Template> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

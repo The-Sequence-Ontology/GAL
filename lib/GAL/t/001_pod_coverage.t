@@ -49,7 +49,7 @@ pod_coverage_ok("GAL::Parser::venter_snp", "GAL::Parser::venter_snp POD is cover
 pod_coverage_ok("GAL::Parser::watson_cshl", "GAL::Parser::watson_cshl POD is covered");
 pod_coverage_ok("GAL::Reader", "GAL::Reader POD is covered");
 pod_coverage_ok("GAL::Reader::RecordParser", "GAL::Reader::RecordParser POD is covered");
-pod_coverage_ok("GAL::Reader::TabLine", "GAL::Reader::TabLine POD is covered");
+pod_coverage_ok("GAL::Reader::DelimitedLine", "GAL::Reader::DelimitedLine POD is covered");
 pod_coverage_ok("GAL::Reader::Template", "GAL::Reader::Template POD is covered");
 pod_coverage_ok("GAL::Schema", "GAL::Schema POD is covered");
 pod_coverage_ok("GAL::Schema::Result::Attribute", "GAL::Schema::Result::Attribute POD is covered");

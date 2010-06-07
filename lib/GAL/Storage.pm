@@ -157,10 +157,7 @@ sub dsn {
 =cut
 
 sub scheme {
-	my $self = shift;
-	$self->throw(message => ('Method must be implimented by subclass : ' .
-				 'scheme')
-		    );
+  return 'DBI';
 }
 
 #-----------------------------------------------------------------------------
@@ -235,11 +232,7 @@ sub database {
 =cut
 
 sub driver {
-
-  my $self = shift;
-	$self->throw(message => ('Method driver must be implimented by subclass : ' .
-				 'driver')
-		    );
+  return 'SQLite';
 }
 
 #-----------------------------------------------------------------------------
@@ -488,7 +481,6 @@ sub prepare_features {
 
 sub add_features {
   my $self = shift;
-
   $self->throw(message => ('Method must be implimented by subclass : ' .
 			   'add_features')
 	      );
@@ -507,7 +499,6 @@ sub add_features {
 =cut
 
 sub create_database {
-
   my $self = shift;
   $self->throw(message => ('Method must be implimented by subclass : ' .
 			   'add_features')

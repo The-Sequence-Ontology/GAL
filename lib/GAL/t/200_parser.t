@@ -19,29 +19,29 @@ my $parser = GAL::Parser->new(file => 'data/soap_snp.gff');
 # TEST 2
 isa_ok($parser, 'GAL::Parser');
 
-# TEST 3
+# TEST
+ok(! $parser->annotation, '$parser->annotation');
+
+# TEST
 ok($parser->file, '$parser->file');
 
-# TEST 4
-ok($parser->parser, '$parser->parser');
+# TEST
+ok($parser->fh, '$parser->fh');
 
-# TEST 5
-ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
+# TEST
+ok($parser->reader, '$parser->reader');
 
-# TEST 6
-ok($parser->record_separator, '$parser->record_separator');
+# TEST
+ok($parser->next_record, '$parser->next_record');
 
-# TEST 7
-ok($parser->field_separator, '$parser->field_separator');
+# TEST
+ok(my $feat_hash = $parser->next_feature_hash, '$parser->next_feature_hash');
 
-# TEST 8
-ok($parser->comment_delimiter, '$parser->comment_delimiter');
+# TEST
+ok($parser->to_gff3($feat_hash), '$parser->to_gff3');
 
-# TEST 9
-ok($parser->fields, '$parser->fields');
-
-# TEST 10
-ok($parser->parse_record($record), '$parser->parse_record');
+# TEST
+ok($parser->parse_record, '$parser->parse_record');
 
 # TEST 11
 my $attribute_text = 'ID=12345; name=Gene1; Parent=6789,9876;';

@@ -22,7 +22,7 @@ isa_ok($annotation, 'GAL::Annotation');
 isa_ok($annotation->parser, 'GAL::Parser::gff3', '$annotation->parser');
 
 # TEST 
-isa_ok($annotation->storage, 'GAL::Storage::SQLite', '$annotation->storage');
+isa_ok($annotation->storage(dsn   => 'DBI:SQLite:data/annotation_test.sqlite'), 'GAL::Storage::SQLite', '$annotation->storage');
 
 # TEST 
 ok($annotation->load_files(mode  => 'overwrite',
@@ -32,9 +32,6 @@ ok($annotation->load_files(mode  => 'overwrite',
 # TEST 
 isa_ok($annotation->schema, 'GAL::Schema', '$annotation->schema');
 
-# To get a list of all of the subs and throws:
-# Select an empty line and then: C-u M-| grep -nP '^sub ' ../Class.pm
-# Select an empty line and then: C-u M-| grep -C2 -nP '\>throw(' ../Class.pm
 
 ################################################################################
 ################################# Ways to Test #################################

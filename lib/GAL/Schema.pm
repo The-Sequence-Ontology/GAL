@@ -3,7 +3,7 @@ use base qw/DBIx::Class::Schema/;
 
 =head1 NAME
 
-GAL::Schema - <One line description of module's purpose here>
+GAL::Schema - DBIx::Class functionality for the Genome Annotation Library
 
 =head1 VERSION
 
@@ -11,20 +11,24 @@ This document describes GAL::Schema version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Schema;
-
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    use GAL::Schema;
+    my $schema = GAL::Schema->connect($dsn,
+                                      $user,
+                                      $password,
+                                     );
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+<GAL::Schema> provides access to all of the query and iteration goodness of
+the excellent DBIx::Class package.  To understand how to tap into all of this
+you will want to be familiar with <DBI>, <DBIx::Class>, and to a lesser extent
+<SQL::Abstract>.  All of those projects are well documented on CPAN.
 
-=head1 METHODS
+This particular module doesn't really do much execpt provide a base class
+the modules below it, and load them up.  One additional function provided here
+is to load GAL::SchemaAnnotation which provides a single method 'annotation'
+so that each feature constructed by DBIx::Class can have access to a weakened
+copy of the GAL::Annotation object that is managing it.
 
 =cut
 
@@ -34,36 +38,13 @@ This document describes GAL::Schema version 0.01
 __PACKAGE__->load_namespaces();
 __PACKAGE__->load_components(qw/ +GAL::SchemaAnnotation /);
 
-# sub annotation {
-# 
-#   my ($self, $annotation) = shift;
-#   $self->{annotation} = $annotation if $annotation;
-#   return $self->{annotation};
-# }
-
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+This package does not throw any errors or warnings itself.  If you are
+getting errors that seem like they are coming from here, they are probably
+being thrown by <DBIx::Class>.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -71,7 +52,7 @@ __PACKAGE__->load_components(qw/ +GAL::SchemaAnnotation /);
 
 =head1 DEPENDENCIES
 
-None.
+<DBIx::Class::Schema>
 
 =head1 INCOMPATIBILITIES
 
@@ -90,7 +71,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

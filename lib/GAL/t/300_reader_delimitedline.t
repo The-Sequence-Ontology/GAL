@@ -1,12 +1,12 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 3;
+use Test::More tests => 5;
 
 BEGIN {
 	use lib '../../';
 	#TEST 1
-	use_ok('GAL::Reader::TabLine');
+	use_ok('GAL::Reader::DelimitedLine');
 }
 
 my $path = $0;
@@ -15,15 +15,18 @@ $path ||= '.';
 chdir($path);
 
 # TEST 2
-my $object = GAL::Reader::TabLine->new();
-isa_ok($object, 'GAL::Reader::TabLine');
-
-# To get a list of all of the subs and throws:
-# Select an empty line and then: C-u M-| grep -nP '^sub ' ../Reader::TabLine.pm
-# Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Reader::TabLine.pm
+my $reader = GAL::Reader::DelimitedLine->new();
+isa_ok($reader, 'GAL::Reader::DelimitedLine');
 
 # TEST 3
+ok($reader->file('./data/soap_snp.gff'), '$reader->file');
 
+# TEST 4
+ok($reader->field_names(qw(seqid source type start end score strand phase
+			   attributes)), '$reader->field_names');
+
+# TEST 5
+ok($reader->next_record, '$reader->next_record');
 
 
 ################################################################################

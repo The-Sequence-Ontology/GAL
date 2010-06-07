@@ -5,7 +5,7 @@ use vars qw($VERSION);
 $VERSION = '0.01';
 
 use base qw(GAL::Parser);
-use GAL::Reader::TabLine;
+use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
@@ -166,7 +166,7 @@ sub reader {
 	# The column names for the incoming data
 	my @field_names = qw(seqid source type start end score strand phase
 			     attributes);
-	my $reader = GAL::Reader::TabLine->new(field_names => \@field_names);
+	my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
 	$self->{reader} = $reader;
     }
     return $self->{reader};

@@ -9,7 +9,7 @@ use List::Util;
 
 =head1 NAME
 
-GAL::List - <One line description of module's purpose here>
+GAL::List - List aggregation and analysis functions for GAL
 
 =head1 VERSION
 
@@ -17,25 +17,48 @@ This document describes GAL::List version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::List;
+    use GAL::List::Categorical;
+    my $list_catg = GAL::List::Categorical->new(list => [qw(red red red blue blue
+							       green yellow orange orange
+							       purple purple purple purple)]);
+    my $count    = $list_catg->count;
+    $list_ref    = $list_catg->list;
+    @list_ary    = $list_catg->list;
+    $class       = $list_catg->class;
+    $catg_counts = $list_catg->category_counts;
+    $count_uniq  = $list_catg->count_uniq;
+    $max_str     = $list_catg->maxstr;
+    $min_str     = $list_catg->minstr;
+    @shff_list   = $list_catg_shuffle;
+    @uniq_list   = $list_catg_uniq;
+    $item        = $list_catg->random_pick;
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    use GAL::List::Numric;
+    $list_numeric = GAL::List::Numeric->new(list => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    $max = $list_numeric->max;
+    $min = $list_numeric->min;
+    $sum = $list_numeric->sum;
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+<GAL::List> serves as a base class for the modules below it and
+provides basic list summarization details.  It is not intended to be
+used on it's own.  You should use it's subclasses instead.
 
-=head1 METHODS
+=head1 CONSTRUCTOR
+
+To construct a GAL::List subclass simply pass it an appropriate list.
+
+    my $list_catg = GAL::List::Categorical->new(list => [qw(red red red blue blue
+							       green yellow orange orange
+							       purple purple purple purple)]);
+    $list_numeric = GAL::List::Numeric->new(list => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
 
 =cut
 
 #-----------------------------------------------------------------------------
-#                                 Constructor                                 
+#-------------------------------- Constructor --------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 new
@@ -51,9 +74,6 @@ This document describes GAL::List version 0.01
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
-#	my $class = $self->class;
-#	$self->load_module($class);
-#	bless $self, $class;
 	return $self;
 }
 
@@ -74,8 +94,13 @@ sub _initialize_args {
 }
 
 #-----------------------------------------------------------------------------
-#                                 Attributes                                 
+#-------------------------------- Attributes ---------------------------------
 #-----------------------------------------------------------------------------
+
+=head1  ATTRIBUTES
+
+All attributes can be supplied as parameters to the constructor as a
+list (or referenece) of key value pairs.
 
 =head2 list
 
@@ -90,39 +115,46 @@ sub _initialize_args {
 sub list {
   my ($self, $list) = @_;
   if ($list) {
-      $self->warn(message => ('GAL::List requires an array reference as the ' . 
-			      'first argument, but you gave a  ' . ref $list
-			      )
-		  ) unless ref $list eq 'ARRAY';
-      $self->{list} = $list;
+
+    my $err_msg = ('GAL::List requires an array reference as the ' .
+		   'first argument, but you gave a  ' . ref $list
+		  );
+    my $err_code = 'list_or_reference_required : ' . ref $list;
+    $self->warn(message => (message => $err_msg,
+			    code    => $err_code,
+			   )
+	       ) unless ref $list eq 'ARRAY';
+    $self->{list} = $list;
   }
   $self->{list} ||= [];
   return wantarray ? @{$self->{list}} : $self->{list};
 }
 
 #-----------------------------------------------------------------------------
-
-=head2 class
-
- Title   : class
- Usage   : $a = $self->class()
- Function: Get/Set the value of class.
- Returns : The value of class.
- Args    : A value to set class to.
-
-=cut
-
-sub class {
-  my ($self, $class) = @_;
-  $class =~ s/GAL::List:://;
-  $class = 'GAL::List::' . $self->{class};
-  $self->{class} = $class if $class;
-  return $self->{class};
-}
-
+#
+# =head2 class
+#
+#  Title   : class
+#  Usage   : $a = $self->class()
+#  Function: Get/Set the value of class.
+#  Returns : The value of class.
+#  Args    : A value to set class to.
+#
+# =cut
+#
+# sub class {
+#   my ($self, $class) = @_;
+#   $class =~ s/GAL::List:://;
+#   $class = 'GAL::List::' . $self->{class};
+#   $self->{class} = $class if $class;
+#   return $self->{class};
+# }
+#
 #-----------------------------------------------------------------------------
-#                                   Methods                                 
+#---------------------------------- Methods ----------------------------------
 #-----------------------------------------------------------------------------
+
+=head1 METHODS
 
 =head2 count
 
@@ -145,15 +177,14 @@ sub count {
 
  Title   : count_uniq
  Usage   : $a = $self->count_uniq()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
 sub count_uniq {
     my $self = shift;
-    
     return scalar @{$self->uniq};
 }
 
@@ -182,9 +213,9 @@ sub category_counts {
 
  Title   : max
  Usage   : $a = $self->max()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -199,9 +230,9 @@ sub max {
 
  Title   : maxstr
  Usage   : $a = $self->maxstr()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -216,9 +247,9 @@ sub maxstr {
 
  Title   : min
  Usage   : $a = $self->min()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -233,9 +264,9 @@ sub min {
 
  Title   : minstr
  Usage   : $a = $self->minstr()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -250,9 +281,9 @@ sub minstr {
 
  Title   : shuffle
  Usage   : $a = $self->shuffle()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -267,9 +298,9 @@ sub shuffle {
 
  Title   : sum
  Usage   : $a = $self->sum()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -284,9 +315,9 @@ sub sum {
 
  Title   : uniq
  Usage   : $a = $self->uniq()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -297,7 +328,7 @@ sub uniq {
     return wantarray ? @uniq : \@uniq;
 }
 
-#-----------------------------------------------------------------------------                                                                               
+#-----------------------------------------------------------------------------
 
 =head2 random_pick
 
@@ -316,27 +347,19 @@ sub random_pick {
     return $self->{list}[$random];
 }
 
-#-----------------------------------------------------------------------------                                                                               
+#-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
 =over
 
-=item C<< Error message here, perhaps with %s placeholders >>
+=item C<< list_or_reference_required >>
 
-[Description of error here]
+GAL::List::list require an array or a reference to any array be passed
+as an argument, but you have passed something else.
 
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
+Keep in mind that several of GAL::List's methods are provided by
+List::Util, and errors not found here may be thrown by that module.
 
 =back
 
@@ -346,7 +369,8 @@ sub random_pick {
 
 =head1 DEPENDENCIES
 
-None.
+<GAL::Base>
+<List::Util>
 
 =head1 INCOMPATIBILITIES
 
@@ -365,7 +389,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

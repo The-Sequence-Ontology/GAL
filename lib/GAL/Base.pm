@@ -548,17 +548,17 @@ sub genetic_code {
 
 #-----------------------------------------------------------------------------
 
-=head2 timestamp
+=head2 time_stamp
 
- Title   : timestamp
- Usage   : $base->timestamp;
- Function: Returns a YYYYMMDD timestamp
- Returns : A YYYYMMDD timestamp
+ Title   : time_stamp
+ Usage   : $base->time_stamp;
+ Function: Returns a YYYYMMDD time_stamp
+ Returns : A YYYYMMDD time_stamp
  Args    : None
 
 =cut
 
-sub timestamp {
+sub time_stamp {
 
   my $self = shift;
 

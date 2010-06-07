@@ -1,4 +1,4 @@
-package GAL::Reader::TabLine;
+package GAL::Reader::DelimitedLine;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use base qw(GAL::Reader);
 
 =head1 NAME
 
-GAL::Reader::TabLine - <One line description of module's purpose here>
+GAL::Reader::DelimitedLine - Tab delimited file parsing for GAL
 
 =head1 VERSION
 
-This document describes GAL::Reader::TabLine version 0.01
+This document describes GAL::Reader::DelimitedLine version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Reader::TabLine;
+     use GAL::Reader::DelimitedLine;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -40,9 +40,9 @@ This document describes GAL::Reader::TabLine version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Reader::TabLine->new();
-     Function: Creates a GAL::Reader::TabLine object;
-     Returns : A GAL::Reader::TabLine object
+     Usage   : GAL::Reader::DelimitedLine->new();
+     Function: Creates a GAL::Reader::DelimitedLine object;
+     Returns : A GAL::Reader::DelimitedLine object
      Args    :
 
 =cut
@@ -148,7 +148,7 @@ sub field_names {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Reader::TabLine> requires no configuration files or environment variables.
+<GAL::Reader::DelimitedLine> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 

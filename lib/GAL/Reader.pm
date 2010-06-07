@@ -3,13 +3,12 @@ package GAL::Reader;
 use strict;
 use vars qw($VERSION);
 
-
 $VERSION = '0.01';
 use base qw(GAL::Base);
 
 =head1 NAME
 
-GAL::Reader - <One line description of module's purpose here>
+GAL::Reader - Reader objects for the Genome Annotation Library
 
 =head1 VERSION
 
@@ -17,33 +16,64 @@ This document describes GAL::Reader version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Reader;
-
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+  use GAL::Reader::DelimitedLine;
+  $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+<GAL::Reader>, via it's subclasses, provides file reading access for a
+variety of file formats.  The reader objects don't parse the
+information in the files themselves, but rather provide standard
+access to broad categories of formats such as tab-delimited,
+multi-line record, XML files and others.  <GAL::Reader> should not be
+instantiated on it's own, but rather acts as a base class for
+functionality common to all readers.
 
+=head1 CONSTRUCTOR
 
-=head1 METHODS
+New GAL::Reader::subclass objects are created by the class method new.
+Arguments should be passed to the constructor as a list (or reference)
+of key value pairs.  All attributes of the Reader object can be set in
+the call to new. An simple example of object creation would look like
+this:
+
+  $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=over 4
+
+=item * C<< file => feature_file.txt >>
+
+This optional parameter defines what file to parse. While this
+parameter is optional either it, or the following fh parameter must be
+set before the first call to next_record.
+
+=item * C<< fh => $FH >>
+
+This optional parameter provides a file handle to parse. While this
+parameter is optional, either it or the previous must be set before
+the first call to next_record.
+
+=back
+
+Other attributes are used by subclasses of <GAL::Reader>.  See those modules
+for details.
 
 =cut
 
+#-----------------------------------------------------------------------------
+#-------------------------------- Constructor --------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 new
 
      Title   : new
-     Usage   : GAL::Reader->new();
-     Function: Creates a GAL::Reader object;
-     Returns : A GAL::Reader object
-     Args    :
+     Usage   : GAL::Reader::DelimitedLine->new();
+     Function: Creates a GAL::Reader::DelimitedLine object;
+     Returns : A GAL::Reader::DelimitedLine object
+     Args    : See <GAL::Reader::DelimitedLine> and other subclasses.
 
 =cut
 
@@ -73,6 +103,13 @@ sub _initialize_args {
 }
 
 #-----------------------------------------------------------------------------
+#-------------------------------- Attributes ---------------------------------
+#-----------------------------------------------------------------------------
+
+=head1  ATTRIBUTES
+
+All attributes can be supplied as parameters to the constructor as a
+list (or referenece) of key value pairs.
 
 =head2 file
 
@@ -80,7 +117,7 @@ sub _initialize_args {
  Usage   : $a = $self->file();
  Function: Get/Set the value of file.
  Returns : The value of file.
- Args    : A value to set file to.
+ Args    : The filename of a readable file.
 
 =cut
 
@@ -96,9 +133,10 @@ sub file {
 
  Title   : fh
  Usage   : $a = $self->fh();
- Function: Get/Set the filehandle.
- Returns : The filehandle.
- Args    : A filehandle.
+ Function: Get/Set the filehandle.  Once the file handle is set, the same
+	   file handle is returned until another file handle is passed in.
+ Returns : A filehandle
+ Args    : A filehandle
 
 =cut
 
@@ -108,9 +146,10 @@ sub fh {
   if (! $self->{fh}) {
     my $file = $self->file;
     if ($file) {
-      $self->throw(message => "Fatal : file_doesnt_exist : $file") if ! -e $file;
-      $self->throw(message => "Fatal : cant_read_file : $file")    if ! -r $file;
-      open($fh, '<', $file) or $self->throw("Fatal : failed_to_open_file : $file");
+      # TODO $self->open_file($file, 'read');
+      $self->throw(code => "file_doesnt_exist : $file") if ! -e $file;
+      $self->throw(code => "cant_read_file : $file")    if ! -r $file;
+      open($fh, '<', $file) or $self->throw(code => "failed_to_open_file : $file");
       $self->{fh} = $fh;
     }
   }
@@ -118,24 +157,27 @@ sub fh {
 }
 
 #-----------------------------------------------------------------------------
+#---------------------------------- Methods ----------------------------------
+#-----------------------------------------------------------------------------
 
-=head2 external_reader
+=head1 METHODS
 
- Title   : external_reader
- Usage   : $a = $self->external_reader();
- Function: Get/Set the external_reader.  This is left as a public
-	   method to support future use of alternate external_readers, but
-	   this is currently not implimented so this method should be
-	   considered for internal use only.
- Returns : The value of external_reader.
- Args    : A value to set external_reader to.
+=head2 _external_reader
+
+ Title   : _external_reader
+ Usage   : $a = $self->_external_reader();
+ Function: Get/Set the _external_reader if one is used.  This allows, for
+	   example, Text::RecordParser or XML::Twig to be easily added as
+	   an external reader by subclasses.
+ Returns : The value of _external_reader.
+ Args    : A value to set _external_reader to.
 
 =cut
 
-sub external_reader {
+sub _external_reader {
 	my ($self, $reader) = @_;
-	$self->{external_reader} = $reader if $reader;
-	return $self->{external_reader};
+	$self->{_external_reader} = $reader if $reader;
+	return $self->{_external_reader};
 
 }
 
@@ -145,7 +187,8 @@ sub external_reader {
 
  Title   : next_record
  Usage   : $a = $self->next_record();
- Function: Return the next record from the external_reader
+ Function: Return the next record from the external_reader.  Note that this
+	   method must be overridden by a sublass of GAL::Reader.
  Returns : The next record from the external_reader.
  Args    : N/A
 
@@ -153,30 +196,39 @@ sub external_reader {
 
 sub next_record {
 	my $self = shift;
-	return $self->external_reader->fetchrow_hashref;
+	my $err_code = 'method_must_be_overridden : GAL::Reader::next_record';
+	my $caller = ref $self;
+	my $err_msg  = ("The method GAL::Reader::next_record must be "       .
+			"overridden by subclasses of GAL::Reader.  Send an " .
+			"angry e-mail to the author of $caller!");
+	$self->throw(code => $err_code, message => $err_msg);
 }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
 =over
 
-=item C<< Error message here, perhaps with %s placeholders >>
+=item C<< file_doesnt_exist >>
 
-[Description of error here]
+GAL::Reader tried to open a file that did not exist.  Please check you
+file path and filename.
 
-=item C<< Another error message here >>
+=item C<< cant_read_file >>
 
-[Description of error here]
+GAL::Reader tried to open a file that exists, but could not be read.
+Please check your file permissions.
 
-[Et cetera, et cetera]
+=item C<< failed_to_open_file >>
+
+GAL::Reader tried to open a file, but failed.
+
+=item C<< method_must_be_overridden >>
+
+GAL::Parser::next_record must be overridden by a subclasses of
+<GAL::Parser>, but this was not done.  Please contact the author of
+the subclass that you were using.
 
 =back
 
@@ -186,7 +238,9 @@ sub next_record {
 
 =head1 DEPENDENCIES
 
-None.
+<GAL::Base>
+
+Subclasses of GAL::Reader may have additional dependencies.
 
 =head1 INCOMPATIBILITIES
 
@@ -205,7 +259,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.
@@ -234,4 +288,3 @@ SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.
 
 =cut
-

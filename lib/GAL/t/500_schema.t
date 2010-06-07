@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 3;
+use Test::More tests => 1;
 
 BEGIN {
 	use lib '../../';
@@ -13,17 +13,6 @@ my $path = $0;
 $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
-
-# TEST 2
-my $object = GAL::Schema->new();
-isa_ok($object, 'GAL::Schema');
-
-# To get a list of all of the subs and throws:
-# Select an empty line and then: C-u M-| grep -nP '^sub ' ../Schema.pm
-# Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Schema.pm
-
-# TEST 3
-
 
 
 ################################################################################

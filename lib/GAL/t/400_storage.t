@@ -18,15 +18,11 @@ chdir($path);
 my $storage = GAL::Storage->new();
 isa_ok($storage, 'GAL::Storage');
 
-# To get a list of all of the subs and throws:
-# Select an empty line and then: C-u M-| grep -nP '^sub ' ../Storage.pm
-# Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Storage.pm
-
 # TEST 3
 ok($storage->dsn(), '$storage->dsn()');
 
 # TEST 4
-ok($storage->scheme() eq 'dbi', '$storage->scheme()');
+ok($storage->scheme() eq 'DBI', '$storage->scheme()');
 
 # TEST 5
 ok($storage->user('fred') eq 'fred', '$storage->user(\'fred\')');

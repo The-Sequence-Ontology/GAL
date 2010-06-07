@@ -31,12 +31,12 @@ This document describes GAL::Template version 0.01
      Write a full description of the module and its features here.
      Use subsections (=head2, =head3) as appropriate.
 
-=head1 METHODS
+=head1 CONSTRUCTOR
 
 =cut
 
 #-----------------------------------------------------------------------------
-#                                 Constructor                                 
+#-------------------------------- Constructor --------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 new
@@ -72,8 +72,14 @@ sub _initialize_args {
 }
 
 #-----------------------------------------------------------------------------
-#                                 Attributes                                 
+#-------------------------------- Attributes ---------------------------------
 #-----------------------------------------------------------------------------
+
+
+=head1  ATTRIBUTES
+
+All attributes can be supplied as parameters to the constructor
+constructor as a list (or referenece) of key value pairs.
 
 =head2 attribute
 

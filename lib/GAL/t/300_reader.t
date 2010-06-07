@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 3;
+use Test::More tests => 5;
 
 BEGIN {
 	use lib '../../';
@@ -15,16 +15,21 @@ $path ||= '.';
 chdir($path);
 
 # TEST 2
-my $object = GAL::Reader->new();
-isa_ok($object, 'GAL::Reader');
-
-# To get a list of all of the subs and throws:
-# Select an empty line and then: C-u M-| grep -nP '^sub ' ../Reader.pm
-# Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Reader.pm
+my $reader = GAL::Reader->new();
+isa_ok($reader, 'GAL::Reader');
 
 # TEST 3
+ok($reader->file('./data/soap_snp.gff'), '$reader->file');
 
+# TEST 4
+ok($reader->fh, '$reader->fh');
 
+# TEST 5
+ok(! $reader->_external_reader, '$reader->_external_reader');
+
+# TEST 6
+# eval {$reader->next_record};
+# ok($@ =~ /The method GAL::Reader::next_record must be/, '$reader->next_record');
 
 ################################################################################
 ################################# Ways to Test #################################
@@ -32,10 +37,6 @@ isa_ok($object, 'GAL::Reader');
 
 __END__
 
-
-
-=head3
-# Various other ways to say "ok"
 ok($this eq $that, $test_name);
 
 is  ($this, $that,    $test_name);

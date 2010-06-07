@@ -2,7 +2,7 @@ package GAL::Parser::trait_o_matic;
 
 use strict;
 use vars qw($VERSION);
-use GAL::Reader::TabLine;
+use GAL::Reader::DelimitedLine;
 
 $VERSION = '0.01';
 use base qw(GAL::Parser);
@@ -268,7 +268,7 @@ sub reader {
 	# The column names for the incoming data
 	my @field_names = qw(seqid source type start end score strand phase
 			     attributes);
-	my $reader = GAL::Reader::TabLine->new(field_names => \@field_names);
+	my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
 	$self->{reader} = $reader;
     }
     return $self->{reader};

@@ -1,4 +1,4 @@
-ackage GAL::Parser;
+package GAL::Parser;
 
 use strict;
 use vars qw($VERSION);
@@ -9,7 +9,7 @@ use base qw(GAL::Base);
 
 =head1 NAME
 
-GAL::Parser - <One line description of module's purpose here>
+GAL::Parser - Parser objects for the Genome Annotation Library
 
 =head1 VERSION
 
@@ -39,7 +39,7 @@ over all features in flat file and are happy to have hashese of those
 features you should just use the parser directly without the
 <GAL::Annotation> object.
 
-=head1 Constructor
+=head1 CONSTRUCTOR
 
 New GAL::Parser::subclass objects are created by the class method
 new.  Arguments should be passed to the constructor as a list (or
@@ -115,7 +115,10 @@ sub _initialize_args {
 #-------------------------------- Attributes ---------------------------------
 #-----------------------------------------------------------------------------
 
-=head1 Attributes
+=head1  ATTRIBUTES
+
+All attributes can be supplied as parameters to the constructor as a
+list (or referenece) of key value pairs.
 
 =head2 annotation
 
@@ -171,7 +174,7 @@ sub annotation {
 
 sub file {
 	my ($self, $file) = @_;
-	return $self->_reader->file($file);
+	return $self->reader->file($file);
 }
 
 #-----------------------------------------------------------------------------
@@ -188,32 +191,39 @@ sub file {
 
 sub fh {
   my ($self, $fh) = @_;
-  return $self->_reader->fh($fh);
+  return $self->reader->fh($fh);
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 _reader
+=head2 reader
 
- Title   : _reader
- Usage   : $a = $self->_reader();
+ Title   : reader
+ Usage   : $a = $self->reader();
  Function: Get/Set the reader.
- Returns : The value of _reader.
- Args    : A value to set _reader to.
+ Returns : The value of reader.
+ Args    : A value to set reader to.
 
 =cut
 
-sub _reader {
-	my ($self, $reader) = @_;
-	$self->{_reader} = $reader if $reader;
-	return $self->{_reader};
+sub reader {
+  my $self = shift;
+
+  if (! $self->{reader}) {
+    my @field_names = qw(seqid source type start end score strand phase
+			 attributes);
+    $self->load_module('GAL::Reader::DelimitedLine');
+    my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
+    $self->{reader} = $reader;
+  }
+  return $self->{reader};
 }
 
 #-----------------------------------------------------------------------------
 #---------------------------------- Methods ----------------------------------
 #-----------------------------------------------------------------------------
 
-=head1 Methods
+=head1 METHODS
 
 =head2 next_record
 
@@ -227,7 +237,7 @@ sub _reader {
 =cut
 
 sub next_record {
-	shift->_reader->next_record;
+	shift->reader->next_record;
 }
 
 #-----------------------------------------------------------------------------
@@ -374,8 +384,8 @@ sub parse_record {
 
 	my $attributes = $self->parse_attributes($record->{attributes});
 
-	my $feature_id = $attributes->{id} || join ':',
-	  @{$record}{qw(seqid source type start)};
+	my $feature_id = exists $attributes->{ID} ? $attributes->{ID} :
+	  join ':', @{$record}{qw(seqid source type start)};
 
 	my %feature = (feature_id => $feature_id,
 		       seqid      => $record->{seqid},
@@ -387,9 +397,9 @@ sub parse_record {
 		       strand     => $record->{strand},
 		       phase      => $record->{phase},
 		       attributes => $attributes,
-		     };
+		     );
 
-	return wantarray ? %feature : \$feature;
+	return wantarray ? %feature : \%feature;
 }
 
 #-----------------------------------------------------------------------------
@@ -424,8 +434,8 @@ sub parse_attributes {
 =head1 DIAGNOSTICS
 
 <GAL::Parser> currently does not throw any warnings or errors, but
-subclasses may, and details of those errors can
-be found in those modules.
+subclasses may, and details of those errors can be found in those
+modules.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -433,7 +443,9 @@ be found in those modules.
 
 =head1 DEPENDENCIES
 
-None for <GAL::Parser> but <GAL::Reader> object and subclasses of <GAL::Parser> may.
+<GAL::Reader>
+
+<GAL::Reader> and subclasses of <GAL::Parser> have other dependencies.
 
 =head1 INCOMPATIBILITIES
 

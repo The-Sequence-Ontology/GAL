@@ -4,7 +4,7 @@ use strict;
 use Test::More 'no_plan'; # tests => 10;
 
 BEGIN {
-	use lib '../';
+	use lib '../../';
 	#TEST 1
 	use_ok('GAL::List::Numeric');
 	#TEST 2
@@ -32,9 +32,6 @@ ok(ref $list_categorical_ref eq 'ARRAY', '$x = $list_categorical->list');
 # TEST 
 my @list_ary = $list_categorical->list;
 ok(scalar @list_ary == 13, '@x = $list_categorical->list');
-
-# TEST 
-ok($list_categorical->class, '$list_categorical->class');
 
 # TEST 
 my $category_counts = $list_categorical->category_counts;

@@ -93,7 +93,7 @@ my $genetic_code = $base->genetic_code;
 is($genetic_code->{ATG}, 'M', '$base->genetic_code');
 
 # TEST 16
-ok($base->timestamp =~ /^\d{8}$/, '$base->timestamp');
+ok($base->time_stamp =~ /^\d{8}$/, '$base->time_stamp');
 
 # TEST 17
 my $rand_text = $base->random_string;

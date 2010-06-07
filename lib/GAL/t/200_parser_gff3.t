@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 4;
+use Test::More tests => 7;
 
 BEGIN {
 	use lib '../../';
@@ -19,11 +19,22 @@ my $parser = GAL::Parser::gff3->new(file => 'data/dmel-4-r5.24.partial.gff');
 # TEST 2
 isa_ok($parser, 'GAL::Parser::gff3');
 
-# Test 3
-ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
+# TEST 3
+ok(my $reader = $parser->reader, '$parser->reader');
 
 # TEST 4
+isa_ok($reader, 'GAL::Reader::DelimitedLine');
+
+# TEST 5
+ok($parser->parse_attributes('ID=My_ID;Name=Name1,Name2;'), '$parser->parse_attributes');
+
+# TEST 6
+my $record;
+ok($record = $parser->next_record, '$parser->next_record');
+
+# TEST 7
 ok($parser->parse_record($record), '$parser->parse_record');
+
 
 ################################################################################
 ################################# Ways to Test #################################

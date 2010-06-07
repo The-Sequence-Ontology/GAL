@@ -64,7 +64,7 @@ Schema objects are provided by DBIx::Class and a familiarity with that
 package is necessary to understanding how to query and iterate over
 feature objects.
 
-=head1 Constructor
+=head1 CONSTRUCTOR
 
 New Annotation objects are created by the class method new.  Arguments
 should be passed to the constructor as a list (or reference) of key
@@ -159,7 +159,7 @@ sub _initialize_args {
 #-------------------------------- Attributes ---------------------------------
 #-----------------------------------------------------------------------------
 
-=head1  Attributes
+=head1  ATTRIBUTES
 
 All attributes can be supplied as parameters to the GAL::Annotation
 constructor as a list (or referenece) of key value pairs.
@@ -185,7 +185,7 @@ sub parser {
 
   if (! $self->{parser} || @args) {
       my $args = $self->prepare_args(@args);
-      My $class = $args->{class} || 'gff3';
+      my $class = $args->{class} || 'gff3';
       $class =~ s/GAL::Parser:://;
       $class = 'GAL::Parser::' . $class;
       $self->load_module($class);

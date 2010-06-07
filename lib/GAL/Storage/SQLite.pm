@@ -132,9 +132,8 @@ sub database {
       my ($self, $database) = @_;
 
       if (! $database && ! $self->{database}) {
-	$database = ':memory';
+	$database = $self->random_string . '.sqlite';
       }
-      $database = ':memory' if $database eq 'memory';
       $self->{database} = $database if $database;
       return $self->{database};
 }

@@ -18,18 +18,41 @@ This document describes GAL::List::Numeric version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::List::Numeric;
+    use GAL::List::Numeric;
 
-     @rand_list = map {int(rand(1000)) + 1} (1 .. 1000);
-     $list_numeric = GAL::List::Numeric->new(list => \@rand_list);
-     $stats = $list_numeric->stats;
-     $mean  = $list_numerics->stats->mean;
-     $bins  = $list_numeric->bins(\@bins);
-     $bins  = $list_numeric->bin_range($min, $max, $step);
-     $fd    = $list_numeric->fd($bin_value);
-     $cfd   = $list_numeric->cfd;
-     $rfd   = $list_numeric->relative_fd;
-     $rcfd  = $list_numeric->relative_cfd;
+    @rand_list = map {int(rand(1000)) + 1} (1 .. 1000);
+    $list_numeric = GAL::List::Numeric->new(list => \@rand_list);
+    $stats = $list_numeric->stats;
+    $mean  = $list_numerics->stats->mean;
+    $bins  = $list_numeric->bins(\@bins);
+    $bins  = $list_numeric->bin_range($min, $max, $step);
+    $fd    = $list_numeric->fd($bin_value);
+    $cfd   = $list_numeric->cfd;
+    $rfd   = $list_numeric->relative_fd;
+    $rcfd  = $list_numeric->relative_cfd;
+
+    # The following methods are provided by <Statistics::Descriptive>, please see
+    # documentation for that package.
+
+    $list_numeric->stats->count();
+    $list_numeric->stats->mean();
+    $list_numeric->stats->sum();
+    $list_numeric->stats->variance();
+    $list_numeric->stats->standard_deviation();
+    $list_numeric->stats->min();
+    $list_numeric->stats->mindex();
+    $list_numeric->stats->max();
+    $list_numeric->stats->maxdex();
+    $list_numeric->stats->sample_range();
+    $list_numeric->stats->median();
+    $list_numeric->stats->harmonic_mean();
+    $list_numeric->stats->geometric_mean();
+    $list_numeric->stats->mode();
+    $list_numeric->stats->trimmed_mean($ltrim, $utrim);
+    $list_numeric->stats->frequency_distribution($partitions);
+    $list_numeric->stats->frequency_distribution(\@bins);
+    $list_numeric->stats->frequency_distribution();
+    $list_numeric->stats->least_squares_fit();
 
 =head1 DESCRIPTION
 
@@ -44,7 +67,7 @@ This document describes GAL::List::Numeric version 0.01
 =cut
 
 #-----------------------------------------------------------------------------
-#                                 Constructor                                 
+#                                 Constructor
 #-----------------------------------------------------------------------------
 
 =head2 new
@@ -80,19 +103,19 @@ sub _initialize_args {
 }
 
 #-----------------------------------------------------------------------------
-#                                 Attributes                                 
+#                                 Attributes
 #-----------------------------------------------------------------------------
 
 # =head2 attribute
-# 
+#
 #  Title   : attribute
 #  Usage   : $a = $self->attribute()
 #  Function: Get/Set the value of attribute.
 #  Returns : The value of attribute.
 #  Args    : A value to set attribute to.
-# 
+#
 # =cut
-# 
+#
 # sub attribute {
 #   my ($self, $attribute) = @_;
 #   $self->{attribute} = $attribute if $attribute;
@@ -100,7 +123,7 @@ sub _initialize_args {
 # }
 
 #-----------------------------------------------------------------------------
-#                                   Methods                                 
+#                                   Methods
 #-----------------------------------------------------------------------------
 
 =head2 stats
@@ -126,12 +149,12 @@ sub stats {
 #-----------------------------------------------------------------------------
 
 =head2 histogram
-    
+
  Title   : histogram
  Usage   : $a = $self->histogram()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -143,11 +166,11 @@ sub histogram {
 #-----------------------------------------------------------------------------
 
 =head2 bins
-    
+
  Title   : bins
  Usage   : @bins = $self->bins($bin_count)
-           @bins = $self->bins($min, $max, $step)
-           @bins = $self->bins(\@bins)
+	   @bins = $self->bins($min, $max, $step)
+	   @bins = $self->bins(\@bins)
  Function: Get/Set bin values
  Returns : A list or reference of the bin values.
  Args    : A reference to a list of bin values.
@@ -155,7 +178,7 @@ sub histogram {
 =cut
 
 sub bins {
-        my ($self, $min, $max, $step) = @_;
+	my ($self, $min, $max, $step) = @_;
 	if (ref $min eq 'ARRAY') {
 	    my $bins = $min;
 	    $self->{bins} = $bins;
@@ -173,50 +196,50 @@ sub bins {
 	    $step = sprintf "%.1g", $step;
 	    my @bins;
 	    foreach (my $i = $min + $step; $i <= $max + $step; $i += $step) {
-                push @bins, $i;
+		push @bins, $i;
 	    }
 	    $self->{bins} = \@bins;
 	}
-        $self->bin_range unless $self->{bins};
-        return wantarray ? @{$self->{bins}} : $self->{bins};
+	$self->bin_range unless $self->{bins};
+	return wantarray ? @{$self->{bins}} : $self->{bins};
 }
 
 #-----------------------------------------------------------------------------
 
 =head2 bin_range
-    
+
  Title   : bin_range
  Usage   : @bins = $self->bin_range($min, $max, $step)
  Function: Get
- Returns : 
- Args    : 
+ Returns :
+ Args    :
 
 =cut
 
 sub bin_range {
-        my ($self, $min, $max, $step) = @_;
+	my ($self, $min, $max, $step) = @_;
 
-        $min  = $self->min unless defined $min;
-        $max  = $self->max unless defined $max;
-        $step = ($max - $min) / 10 unless defined $step;
+	$min  = $self->min unless defined $min;
+	$max  = $self->max unless defined $max;
+	$step = ($max - $min) / 10 unless defined $step;
 	$step = sprintf "%.1g", $step;
-        my @bins;
-        foreach (my $i = $min + $step; $i <= $max + $step; $i += $step) {
-                push @bins, $i;
-        }
-        $self->{bins} = \@bins;
-        return wantarray ? @bins : \@bins;
+	my @bins;
+	foreach (my $i = $min + $step; $i <= $max + $step; $i += $step) {
+		push @bins, $i;
+	}
+	$self->{bins} = \@bins;
+	return wantarray ? @bins : \@bins;
 }
 
 #-----------------------------------------------------------------------------
 
 =head2 fd
-    
+
  Title   : fd
  Usage   : $a = $self->fd()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -274,12 +297,12 @@ sub fd {
 #-----------------------------------------------------------------------------
 
 =head2 cfd
-    
+
  Title   : cfd
  Usage   : $a = $self->cfd()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -298,12 +321,12 @@ sub cfd {
 #-----------------------------------------------------------------------------
 
 =head2 relative_fd
-    
+
  Title   : relative_fd
  Usage   : $a = $self->relative_fd()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -318,12 +341,12 @@ sub relative_fd {
 #-----------------------------------------------------------------------------
 
 =head2 relative_cfd
-    
+
  Title   : relative_cfd
  Usage   : $a = $self->relative_cfd()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -338,12 +361,12 @@ sub relative_cfd {
 #-----------------------------------------------------------------------------
 
 =head2 method
-    
+
  Title   : method
  Usage   : $a = $self->method()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
