@@ -3,7 +3,7 @@ use base qw/DBIx::Class/;
 
 =head1 NAME
 
-GAL::Schema::Result::Relationship - <One line description of module's purpose here>
+GAL::Schema::Result::Relationship - Access to relationships for <GAL::Schema::Result::Feature> objects.
 
 =head1 VERSION
 
@@ -11,26 +11,18 @@ This document describes GAL::Schema::Result::Relationship version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Schema::Result::Relationship;
-
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    my $exons = $self->children->search({type => 'exon'});
+    my $transcripts = $self->parents->search({type => 'mRNA'});
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
-
-=head1 METHODS
+The GAL::Schema::Result::Relationship class is not intended for public
+used by GAL::Schema::Result::Feature to find parents and children of
+features.
 
 =cut
 
 #-----------------------------------------------------------------------------
-
-
 
 __PACKAGE__->load_components(qw/ Core /);
 __PACKAGE__->table('relationship');
@@ -39,30 +31,48 @@ __PACKAGE__->set_primary_key(qw /subject_id parent child /);
 __PACKAGE__->belongs_to('your_parents'  => 'GAL::Schema::Result::Feature', {'foreign.feature_id' => 'self.parent'});
 __PACKAGE__->belongs_to('your_children' => 'GAL::Schema::Result::Feature', {'foreign.feature_id' => 'self.child'});
 
-
 #-----------------------------------------------------------------------------
+
+=head1 METHODS
+
+=head2 subject_id
+
+ Title   : subject_id
+ Usage   : $subject_id = $self->subject_id
+ Function: Get the features subject_id.
+ Returns : The value of the subject_id as text.
+ Args    : None
+
+=head2 parent
+
+ Title   : parent
+ Usage   : $parent = $self->parent
+ Function: Get the features parent.
+ Returns : The value of the parent as text.
+ Args    : None
+
+=head2 child
+
+ Title   : child
+ Usage   : $child = $self->child
+ Function: Get the features child.
+ Returns : The value of the child as text.
+ Args    : None
+
+=head2 relationship
+
+ Title   : relationship
+ Usage   : $relationship = $self->relationship
+ Function: Get the features relationship.
+ Returns : The value of the relationship as text.
+ Args    : None
+ Note    : The relationship column in the GAL schema - and
+           hence this method - are not currently in use.
+           They are here for future developement.
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+<GAL::Schema::Result::Relationship> currently throws no errors or warning messages.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -70,7 +80,7 @@ __PACKAGE__->belongs_to('your_children' => 'GAL::Schema::Result::Feature', {'for
 
 =head1 DEPENDENCIES
 
-None.
+<DBIx::Class>
 
 =head1 INCOMPATIBILITIES
 
@@ -89,7 +99,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

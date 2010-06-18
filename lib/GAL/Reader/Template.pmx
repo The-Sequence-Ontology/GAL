@@ -17,24 +17,59 @@ This document describes GAL::Reader::Template version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Reader::Template;
-
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    use GAL::Reader::Template;
+    $reader = GAL::Reader::Template->new(file => 'annotation_file.gff');
+    $reader->next_record, '$reader->next_record');
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+<GAL::Reader::Template> provides << BLAH BLAH BLAH >> reading
+capability to GAL.  It is not intended for general library use, but
+rather as a GAL::Reader subclass for developers of GAL::Parser
+subclasses.  There is however no reason why it couldn't also be used
+as a stand alone module for other purposes.
+
+=head1 CONSTRUCTOR
+
+New GAL::Reader::Template objects are created by the class method new.
+Arguments should be passed to the constructor as a list (or reference)
+of key value pairs.  All attributes of the Reader object can be set in
+the call to new. An simple example of object creation would look like
+this:
+
+    $reader = GAL::Reader::Template->new(file => 'annotation_file.gff');
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=over 4
+
+=item * C<< some_attribute => $some_value >>
+
+This optional attribute provides << BLAH BLAH BLAH >>
 
 
-=head1 METHODS
+The following attributes are inhereted from GAL::Reader:
+
+
+=item * C<< file => feature_file.txt >>
+
+This optional parameter defines what file to parse. While this
+parameter is optional either it, or the following fh parameter must be
+set before the first call to next_record.
+
+=item * C<< fh => $FH >>
+
+This optional parameter provides a file handle to parse. While this
+parameter is optional, either it or the previous must be set before
+the first call to next_record.
+
+=back
 
 =cut
 
+#-----------------------------------------------------------------------------
+#------------------------------- Constructor ---------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 new
@@ -73,30 +108,30 @@ sub _initialize_args {
 }
 
 #-----------------------------------------------------------------------------
+#------------------------------- Attributes ----------------------------------
+#-----------------------------------------------------------------------------
+#
+# =head2 attribute
+#
+#  Title   : attribute
+#  Usage   : $a = $self->attribute()
+#  Function: Get/Set the value of attribute.
+#  Returns : The value of attribute.
+#  Args    : A value to set attribute to.
+#
+# =cut
+#
+# sub attribute {
+#   my ($self, $attribute) = @_;
+#
+#   if ($attribute) {
+#   $self->{attribute} ||= 'GAL::Parser::gff3';
+#   return $self->{attribute};
+# }
+#
 
-=head2 external_reader
-
- Title   : external_reader
- Usage   : $a = $self->external_reader();
- Function: Get/Set the external_reader.  This is left as a public
-	   method to support future use of alternate external_readers, but
-	   this is currently not implimented so this method should be
-	   considered for internal use only.
- Returns : The value of external_reader.
- Args    : A value to set external_reader to.
-
-=cut
-
-sub external_reader {
-	my ($self, $external_reader) = @_;
-	$self->{external_reader} = $value if defined $value;
-	if (! $self->{external_reader}) {
-	  # Create a default external_reader here.
-	}
-
-	return $self->{external_reader};
-}
-
+#-----------------------------------------------------------------------------
+#---------------------------------- Methods ----------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 next_record
@@ -168,7 +203,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.
@@ -197,4 +232,3 @@ SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.
 
 =cut
-

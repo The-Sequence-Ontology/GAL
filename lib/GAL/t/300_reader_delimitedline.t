@@ -28,14 +28,11 @@ ok($reader->field_names(qw(seqid source type start end score strand phase
 # TEST 5
 ok($reader->next_record, '$reader->next_record');
 
-
 ################################################################################
 ################################# Ways to Test #################################
 ################################################################################
 
 __END__
-
-
 
 =head3
 # Various other ways to say "ok"

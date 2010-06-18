@@ -2,11 +2,11 @@ package GAL::Schema::Result::Feature::template;
 
 use strict;
 use warnings;
-use base qw(GAL::Schema::Result::Feature::sequence_feature);
+use base qw(GAL::Schema::Result::Feature::template);
 
 =head1 NAME
 
-GAL::Schema::Result::Feature::template - <One line description of module's purpose here>
+GAL::Schema::Result::Feature::template - A exon object for the GAL Library
 
 =head1 VERSION
 
@@ -84,7 +84,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

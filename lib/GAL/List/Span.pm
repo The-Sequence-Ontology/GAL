@@ -10,7 +10,7 @@ use Set::IntSpan::Fast;
 
 =head1 NAME
 
-GAL::List::Span - <One line description of module's purpose here>
+GAL::List::Span - Provide functions for lists of genomic coordinates
 
 =head1 VERSION
 
@@ -36,7 +36,7 @@ This document describes GAL::List::Span version 0.01
 =cut
 
 #-----------------------------------------------------------------------------
-#                                 Constructor                                 
+#-------------------------------- Constructor --------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 new
@@ -45,7 +45,7 @@ This document describes GAL::List::Span version 0.01
      Usage   : GAL::List::Span->new()
      Function: Creates a List::Span object;
      Returns : A List::Span object
-     Args    :
+     Args    : list => \@list
 
 =cut
 
@@ -72,16 +72,16 @@ sub _initialize_args {
 }
 
 #-----------------------------------------------------------------------------
-#                                 Attributes                                 
+#--------------------------------- Attributes --------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 list
 
  Title   : list
  Usage   : $a = $self->list()
- Function: Get/Set the value of list.
- Returns : The value of list.
- Args    : A value to set list to.
+ Function: Get/Set the list of spans
+ Returns : The list of spans as an array or reference
+ Args    : An reference to an array of genomic coordinates.
 
 =cut
 
@@ -107,35 +107,35 @@ sub list {
     return wantarray ? @{$self->{list}} : $self->{list};
 }
 
-#-----------------------------------------------------------------------------                                                                              
-# 
+#-----------------------------------------------------------------------------
+#
 # =head2 attribute
-# 
+#
 #  Title   : attribute
 #  Usage   : $a = $self->attribute()
 #  Function: Get/Set the value of attribute.
 #  Returns : The value of attribute.
 #  Args    : A value to set attribute to.
-# 
+#
 # =cut
-# 
+#
 # sub attribute {
 #   my ($self, $attribute) = @_;
 #   $self->{attribute} = $attribute if $attribute;
 #   return $self->{attribute};
 # }
-# 
+#
 #-----------------------------------------------------------------------------
-#                                   Methods                                 
+#---------------------------------- Methods ----------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 set
 
  Title   : set
  Usage   : $a = $self->set()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -152,11 +152,11 @@ sub set {
 
 =head2 footprint
 
- Title   : method
- Usage   : $a = $self->method()
- Function: 
- Returns : 
- Args    : 
+ Title   : footprint
+ Usage   : $footprint = $self->footprint
+ Function: Returns the tiled footprint of all of the spans
+ Returns : An integer
+ Args    : None
 
 =cut
 
@@ -187,23 +187,8 @@ sub method {
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
+<GAL::List::Span> currently does not throw any warnings or errors.
 
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
 
 =back
 
@@ -213,7 +198,8 @@ sub method {
 
 =head1 DEPENDENCIES
 
-None.
+<GAL::List>
+<Set::IntSpan::Fast>
 
 =head1 INCOMPATIBILITIES
 
@@ -232,7 +218,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

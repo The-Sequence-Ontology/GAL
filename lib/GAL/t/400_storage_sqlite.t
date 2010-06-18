@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 3;
+use Test::More tests => 8;
 
 BEGIN {
 	use lib '../../';
@@ -15,15 +15,26 @@ $path ||= '.';
 chdir($path);
 
 # TEST 2
-my $object = GAL::Storage::SQLite->new();
-isa_ok($object, 'GAL::Storage::SQLite');
-
-# To get a list of all of the subs and throws:
-# Select an empty line and then: C-u M-| grep -nP '^sub ' ../Storage::SQLite.pm
-# Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Storage::SQLite.pm
+my $storage = GAL::Storage::SQLite->new(dsn => 'DBI:SQLite:data/test_storage.sqlite');
+isa_ok($storage, 'GAL::Storage::SQLite');
 
 # TEST 3
+ok(! $storage->drop_database, '$storage->drop_database');
 
+# TEST 4
+ok($storage->scheme, '$storage->scheme');
+
+# TEST 5
+ok($storage->driver, '$storage->driver');
+
+# TEST 6
+ok($storage->database, '$storage->database');
+
+# TEST 7
+ok($storage->dbh, '$storage->dbh');
+
+# TEST 8
+ok($storage->index_database, '$storage->index_database');
 
 
 ################################################################################

@@ -65,8 +65,8 @@ To construct a GAL::List subclass simply pass it an appropriate list.
 
      Title   : new
      Usage   : GAL::List->new()
-     Function: Creates a List object;
-     Returns : A List object
+     Function: Creates a GAL::List object;
+     Returns : A GAL::List object
      Args    :
 
 =cut

@@ -22,11 +22,11 @@ isa_ok($annotation, 'GAL::Annotation');
 isa_ok($annotation->parser, 'GAL::Parser::gff3', '$annotation->parser');
 
 # TEST 
-isa_ok($annotation->storage(dsn   => 'DBI:SQLite:data/annotation_test.sqlite'), 'GAL::Storage::SQLite', '$annotation->storage');
+isa_ok($annotation->storage(dsn   => 'DBI:SQLite:data/test_storage.sqlite'), 'GAL::Storage::SQLite', '$annotation->storage');
 
 # TEST 
 ok($annotation->load_files(mode  => 'overwrite',
-			   files => './data/refseq_chr22.trim.gff3'),
+			   files => './data/dmel-4-r5.24.partial.gff'),
    '$annotation->load_files');
 
 # TEST 

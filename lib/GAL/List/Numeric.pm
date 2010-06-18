@@ -160,7 +160,7 @@ sub stats {
 
 sub histogram {
     my $self = shift;
-    $self->throw('Metohd histogram not implimented yet');
+    $self->throw(message => 'Metohd histogram not implimented yet');
 }
 
 #-----------------------------------------------------------------------------
@@ -379,23 +379,12 @@ sub method {
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
 =over
 
-=item C<< Error message here, perhaps with %s placeholders >>
+=item C<< Metohd histogram not implimented yet >>
 
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
+There is a place holder for the histogram method, but the method has
+not been written yet.
 
 =back
 
@@ -405,7 +394,8 @@ sub method {
 
 =head1 DEPENDENCIES
 
-None.
+<GAL::List>
+<Statistics::Descriptive>
 
 =head1 INCOMPATIBILITIES
 
