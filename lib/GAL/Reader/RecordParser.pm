@@ -6,10 +6,11 @@ use vars qw($VERSION);
 
 $VERSION = '0.01';
 use base qw(GAL::Reader);
+use Text::RecordParser;
 
 =head1 NAME
 
-GAL::Reader::RecordParser - <One line description of module's purpose here>
+GAL::Reader::RecordParser - Record Parsing using Text::RecordParser
 
 =head1 VERSION
 
@@ -17,21 +18,72 @@ This document describes GAL::Reader::RecordParser version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Reader::RecordParser;
-
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    use GAL::Reader::RecrodParser
+    $reader = GAL::Reader::RecrodParser->new(file => 'annotation_file.txt',
+					     record_separator => "\n",
+					     field_separator  => "\t",
+					     bind_fields => [qw(seqid source
+								type start end
+								score strand
+								phase attrb
+								)
+							    ],
+					    );
+    $reader->next_record, '$reader->next_record');
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+<GAL::Reader::RecordParser> provides flexible record reading via
+Text::RecordParser.  It is not intended for general library use, but
+rather as a GAL::Reader subclass for developers of GAL::Parser
+subclasses.  There is however no reason why it couldn't also be used
+as a stand alone module for other purposes.
 
+=head1 CONSTRUCTOR
 
-=head1 METHODS
+New GAL::Reader::RecordParser objects are created by the class method new.
+Arguments should be passed to the constructor as a list (or reference)
+of key value pairs.  All attributes of the Reader object can be set in
+the call to new. An simple example of object creation would look like
+this:
+
+    $reader = GAL::Reader::RecrodParser->new(file => 'annotation_file.txt',
+					     record_separator => "\n",
+					     field_separator  => "\t",
+					     bind_fields => [qw(seqid source
+								type start end
+								score strand
+								phase attrb
+								)
+							    ],
+					    );
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=over 4
+
+=item * C<< record_separator >>
+
+This optional parameter defines the pattern by which records are
+separated.  The default is a new line.
+
+=item * C<< field_separator >>
+
+This optional parameter defines the pattern by which fields are
+separated.  The default is a comma.
+
+=item * C<< comment >>
+
+This optional parameter defines the pattern by which comment lines
+are identified.
+
+=item * C<< bind_fields => [qw(seqid source type start end)] >>
+
+This attribute provides an orderd list that describes the field names
+of the columns in the delimited file.  If this attribute is not set then
+Text::RecordParser will automatically assume that the first line of text
+in the file are headers.
 
 =cut
 
@@ -78,10 +130,10 @@ sub _initialize_args {
 =head2 record_separator
 
  Title   : record_separator
- Usage   : $a = $self->record_separator();
- Function:
- Returns :
- Args    : N/A
+ Usage   : $a = $self->record_separator("\n");
+ Function: Gets/set the pattern to use as the record separator.
+ Returns : The pattern to use as the record separator.
+ Args    : The pattern to use as the record separator.
 
 =cut
 
@@ -96,10 +148,10 @@ sub record_separator {
 =head2 field_separator
 
  Title   : field_separator
- Usage   : $a = $self->field_separator();
- Function:
- Returns :
- Args    : N/A
+ Usage   : $a = $self->field_separator("\t");
+ Function: Gets/set the pattern to use as the field separator.
+ Returns : The pattern to use as the field separator.
+ Args    : The pattern to use as the field separator.
 
 =cut
 
@@ -114,10 +166,12 @@ sub field_separator {
 =head2 comment
 
  Title   : comment
- Usage   : $a = $self->comment();
- Function:
- Returns :
- Args    : N/A
+ Usage   : $a = $self->comment(qr/^#/);
+ Function: Takes a regex to apply to a record to see if it looks like a
+	   comment to skip.
+ Returns : The stored regular expression
+ Args    : A regex to apply to a record to see if it looks like a
+	   comment to skip.
 
 =cut
 
@@ -133,9 +187,12 @@ sub comment {
 
  Title   : bind_fields
  Usage   : $a = $self->bind_fields();
- Function:
- Returns :
- Args    : N/A
+ Function: Takes an array of field names to use as the key values when
+	   a hash is returned from C<next_record>.
+ Returns : The array reference of field names used as key values for hashes
+	   returned by C<next_record>.
+ Args    : An array of field names to use as the key values for hashes
+	   returned from C<next_record>.
 
 =cut
 
@@ -147,34 +204,31 @@ sub bind_fields {
 
 #-----------------------------------------------------------------------------
 
-=head2 external_reader
+=head2 _external_reader
 
- Title   : external_reader
- Usage   : $a = $self->external_reader();
- Function: Get/Set the external_reader.  This is left as a public
-	   method to support future use of alternate external_readers, but
-	   this is currently not implimented so this method should be
-	   considered for internal use only.
- Returns : The value of external_reader.
- Args    : A value to set external_reader to.
+ Title   : _external_reader
+ Usage   : $a = $self->_external_reader();
+ Function: Get the external_reader.
+ Returns : A Text::RecordParser object as a singleton.
+ Args    : None
 
 =cut
 
-sub external_reader {
+sub _external_reader {
   my $self = shift;
-  if (! $self->{external_reader}) {
-    my $external_reader;
+  if (! $self->{_external_reader}) {
+    my $_external_reader;
     my $reader_args = {fh               => $self->fh,
 		       record_separator => $self->record_separator,
 		       field_separator  => $self->field_separator,
 		       comment          => $self->comment,
 		      };
 
-    $external_reader = Text::RecordParser->new($reader_args);
-    $external_reader->bind_fields($self->bind_fields);
-    $self->{external_reader} = $external_reader;
+    $_external_reader = Text::RecordParser->new($reader_args);
+    $_external_reader->bind_fields($self->bind_fields);
+    $self->{_external_reader} = $_external_reader;
   }
-  return $self->{external_reader};
+  return $self->{_external_reader};
 }
 
 #-----------------------------------------------------------------------------
@@ -183,40 +237,22 @@ sub external_reader {
 
  Title   : next_record
  Usage   : $a = $self->next_record();
- Function: Return the next record from the external_reader
- Returns : The next record from the external_reader.
+ Function: Return the next record from the _external_reader
+ Returns : The next record from the _external_reader.
  Args    : N/A
 
 =cut
 
 sub next_record {
 	my $self = shift;
-	return $self->external_reader->fetchrow_hashref;
+	return $self->_external_reader->fetchrow_hashref;
 }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+This module does not throw any errors or warning messages.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -224,7 +260,8 @@ sub next_record {
 
 =head1 DEPENDENCIES
 
-None.
+<GAL::Reader>
+<Text::RecordParser>
 
 =head1 INCOMPATIBILITIES
 
@@ -243,7 +280,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

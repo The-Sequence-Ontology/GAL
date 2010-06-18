@@ -6,32 +6,57 @@ use base qw(GAL::Schema::Result::Feature::sequence_feature);
 
 =head1 NAME
 
-GAL::Schema::Result::Feature::sequence_alteration - <One line description of module's purpose here>
+GAL::Schema::Result::Feature::sequence_alteration - A
+sequence_alteration object for the GAL library
 
 =head1 VERSION
 
-This document describes GAL::Schema::Result::Feature::sequence_alteration version 0.01
+This document describes
+GAL::Schema::Result::Feature::sequence_alteration version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Schema::Result::Feature::sequence_alteration;
+    use GAL::Annotation
+    my $var_store = GAL::Annotation->new(storage => $var_store_args,
+					 parser  => $parser_args,
+					 fasta   => $fasta_args,
+					);
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+      $var_store->load_files(files => $variant_file,
+			     mode  => 'overwrite',
+			    );
+    my $variants = $var_store->schema->resultset('Feature');
+    my $snvs = $variants->search(\%where);
+
+    while (my @snv = $snvs->next) {
+      my $snv_id = $snv->feature_id;
+      my $start  = $snv->start;
+      my $reference_seq = $snv->reference_seq;
+      my @variant_seqs  = $snv->variant_seqs;
+    }
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+<GAL::Schema::Result::Feature::sequence_alteration> provides a
+<GAL::Schema::Result::Feature> subclass for sequence_alteration
+specific behavior.  See documentation for
+<GAL::Schema::Result::Feature> for more methods and details.
 
 =head1 METHODS
 
 =cut
 
 #-----------------------------------------------------------------------------
+
+=head2 variant_seq
+
+ Title   : variant_seq
+ Usage   : $variant_seq = $self->variant_seq
+ Function: Get the value(s) for the features Variant_seq attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+=cut
 
 sub variant_seq {
   my $self = shift;
@@ -40,6 +65,17 @@ sub variant_seq {
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 variant_seq_no_ref
+
+ Title   : variant_seq_no_ref
+ Usage   : $variant_seq_no_ref = $self->variant_seq_no_ref
+ Function: Get the value(s) for the features Variant_seq attribute, but
+           remove the reference sequence if it is present.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+=cut
 
 sub variant_seq_no_ref {
   my $self = shift;
@@ -51,6 +87,16 @@ sub variant_seq_no_ref {
 
 #-----------------------------------------------------------------------------
 
+=head2 reference_seq
+
+ Title   : reference_seq
+ Usage   : $reference_seq = $self->reference_seq
+ Function: Get the value(s) for the features Reference_seq attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+=cut
+
 sub reference_seq {
   my $self = shift;
   my $reference_seq = $self->attribute_value('Reference_seq');
@@ -58,6 +104,16 @@ sub reference_seq {
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 Variant_reads
+
+ Title   : Variant_reads
+ Usage   : $Variant_reads = $self->Variant_reads
+ Function: Get the value(s) for the features Variant_reads attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+=cut
 
 sub variant_reads {
   my $self = shift;
@@ -67,6 +123,16 @@ sub variant_reads {
 
 #-----------------------------------------------------------------------------
 
+=head2 total_reads
+
+ Title   : total_reads
+ Usage   : $total_reads = $self->total_reads
+ Function: Get the value(s) for the features Total_reads attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+=cut
+
 sub total_reads {
   my $self = shift;
   my $total_reads = $self->attribute_value('Total_reads');
@@ -74,6 +140,16 @@ sub total_reads {
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 genotype
+
+ Title   : genotype
+ Usage   : $genotype = $self->genotype
+ Function: Get the value(s) for the features Genotype attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+=cut
 
 sub genotype {
   my $self = shift;
@@ -83,6 +159,16 @@ sub genotype {
 
 #-----------------------------------------------------------------------------
 
+=head2 variant_effect
+
+ Title   : variant_effect
+ Usage   : $variant_effect = $self->variant_effect
+ Function: Get the value(s) for the features Variant_effect attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+=cut
+
 sub variant_effect {
   my $self = shift;
   my $variant_effect = $self->attribute_value('Variant_effect');
@@ -91,6 +177,16 @@ sub variant_effect {
 
 #-----------------------------------------------------------------------------
 
+=head2 variant_copy_number
+
+ Title   : variant_copy_number
+ Usage   : $variant_copy_number = $self->variant_copy_number
+ Function: Get the value(s) for the features Variant_copy_number attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+=cut
+
 sub variant_copy_number {
   my $self = shift;
   my $variant_copy_number = $self->attribute_value('Variant_copy_number');
@@ -98,6 +194,16 @@ sub variant_copy_number {
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 reference_copy_number
+
+ Title   : reference_copy_number
+ Usage   : $reference_copy_number = $self->reference_copy_number
+ Function: Get the value(s) for the features Reference_copy_number attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+=cut
 
 sub reference_copy_number {
   my $self = shift;
@@ -109,33 +215,17 @@ sub reference_copy_number {
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+<GAL::Schema::Result::Feature::sequence_alteration> throws no warnings
+or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Schema::Result::Feature::sequence_alteration> requires no configuration files or environment variables.
+<GAL::Schema::Result::Feature::sequence_alteration> requires no
+configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-None.
+<GAL::Schema::Result::Feature::sequence_feature>
 
 =head1 INCOMPATIBILITIES
 
@@ -154,7 +244,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

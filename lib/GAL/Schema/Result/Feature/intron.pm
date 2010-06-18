@@ -6,7 +6,7 @@ use base qw(GAL::Schema::Result::Feature::sequence_feature);
 
 =head1 NAME
 
-GAL::Schema::Result::Feature::intron - <One line description of module's purpose here>
+GAL::Schema::Result::Feature::intron -  A intron object for the GAL Library
 
 =head1 VERSION
 
@@ -14,20 +14,36 @@ This document describes GAL::Schema::Result::Feature::intron version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Schema::Result::Feature::intron;
+    use GAL::Annotation;
+    my $feat_store = GAL::Annotation->new(storage => $feat_store_args,
+					  parser  => $parser_args,
+					  fasta   => $fasta_args,
+					 );
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    $feat_store->load_files(files => $feature_file,
+			    mode  => 'overwrite',
+			    );
+
+    my $features = $feat_store->schema->resultset('Feature');
+
+    my $mrnas = $features->search({type => 'mRNA'});
+    while (my $mrna = $mrnas->next) {
+      my $introns = $mrna->introns;
+      while (my $intron = $introns->next) {
+	my $length = $intron->length;
+      }
+    }
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+<GAL::Schema::Result::Feature::intron> provides a <GAL::Schema::Result::Feature>
+subclass for intron specific behavior.
 
 =head1 METHODS
+
+There are currenlty no intron specific methods implimented for
+<GAL::Schema::Result::Feature::intron>.  See <GAL::Schema::Result::Feature>
+for inhereted methods.
 
 =cut
 
@@ -39,33 +55,17 @@ This document describes GAL::Schema::Result::Feature::intron version 0.01
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+<GAL::Schema::Result::Feature::intron> currently throws no errors or
+warnings.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Schema::Result::Feature::intron> requires no configuration files or environment variables.
+<GAL::Schema::Result::Feature::intron> requires no configuration files
+or environment variables.
 
 =head1 DEPENDENCIES
 
-None.
+<GAL::Schema::Result::Feature::sequence_feature>
 
 =head1 INCOMPATIBILITIES
 
@@ -84,7 +84,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

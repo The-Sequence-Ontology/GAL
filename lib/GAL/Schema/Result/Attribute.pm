@@ -3,7 +3,7 @@ use base qw/DBIx::Class/;
 
 =head1 NAME
 
-GAL::Schema::Result::Attribute - <One line description of module's purpose here>
+GAL::Schema::Result::Attribute - Access to feature attributes for GAL::Schema::Result::Features
 
 =head1 VERSION
 
@@ -11,20 +11,32 @@ This document describes GAL::Schema::Result::Attribute version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Schema::Result::Attribute;
+    use GAL::Annotation;
+    my $feat_store = GAL::Annotation->new(storage => $feat_store_args,
+					  parser  => $parser_args,
+					  fasta   => $fasta_args,
+					 );
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    $feat_store->load_files(files => $feature_file,
+			    mode  => 'overwrite',
+			    );
+
+    my $features = $feat_store->schema->resultset('Feature');
+
+    my $mrnas = $features->search({type => 'mRNA'});
+    while (my $mrna = $mrnas->next) {
+	my $attributes = $mrnas->attributes->all;
+      }
+    }
+
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
-
-=head1 METHODS
+<GAL::Schema::Result::Attribute> provides access to a
+<GAL::Schema::Result::Feature>'s attributes.  You don't instantiate
+objects for it yourself, <DBIx::Class> does that for you, hence there
+is no constructor and there are no attributes available and currently there
+are no methods except those provided by DBIx::Class.
 
 =cut
 
@@ -39,27 +51,51 @@ __PACKAGE__->belongs_to(features => 'GAL::Schema::Result::Feature', 'feature_id'
 
 #-----------------------------------------------------------------------------
 
+=head1 METHODS
+
+=head2 subject_id
+
+ Title   : subject_id
+ Usage   : $seqid = $self->subject_id;
+ Function: Get the attributes subject_id.
+ Returns : A text string for the subject_id.
+ Args    : None
+
+=head2 attribute_id
+
+ Title   : attribute_id
+ Usage   : $seqid = $self->attribute_id;
+ Function: Get the attributes attribute_id.
+ Returns : A text string for the attribute_id.
+ Args    : None
+
+=head2 feature_id
+
+ Title   : feature_id
+ Usage   : $seqid = $self->feature_id;
+ Function: Get the attributes feature_id.
+ Returns : A text string for the feature_id.
+ Args    : None
+
+=head2 att_key
+
+ Title   : att_key
+ Usage   : $seqid = $self->att_key;
+ Function: Get the attributes key.
+ Returns : A text string for the key.
+ Args    : None
+
+=head2 subject
+
+ Title   : att_value
+ Usage   : $seqid = $self->att_value;
+ Function: Get the attributes value(s)
+ Returns : A text string for the value(s) as a comma seperated list.
+ Args    : None
+
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+This module currently throws no errors or warnings.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -67,7 +103,7 @@ __PACKAGE__->belongs_to(features => 'GAL::Schema::Result::Feature', 'feature_id'
 
 =head1 DEPENDENCIES
 
-None.
+<DBIx::Class>
 
 =head1 INCOMPATIBILITIES
 
@@ -86,7 +122,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

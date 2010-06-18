@@ -9,7 +9,7 @@ use base qw(GAL::List);
 
 =head1 NAME
 
-GAL::List::Categorical - <One line description of module's purpose here>
+GAL::List::Categorical - Provide functions for categorical lists
 
 =head1 VERSION
 
@@ -17,34 +17,50 @@ This document describes GAL::List::Categorical version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::List::Categorical;
+    use GAL::List::Categorical;
+    my $list_catg = GAL::List::Categorical->new(list => [qw(red red red blue blue
+							       green yellow orange orange
+							       purple purple purple purple)]);
+    my $count    = $list_catg->count;
+    $list_ref    = $list_catg->list;
+    @list_ary    = $list_catg->list;
+    $class       = $list_catg->class;
+    $catg_counts = $list_catg->category_counts;
+    $count_uniq  = $list_catg->count_uniq;
+    $max_str     = $list_catg->maxstr;
+    $min_str     = $list_catg->minstr;
+    @shff_list   = $list_catg_shuffle;
+    @uniq_list   = $list_catg_uniq;
+    $item        = $list_catg->random_pick;
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+<GAL::List> serves as a base class for the modules below it and
+provides basic list summarization details.  It is not intended to be
+used on it's own.  You should use it's subclasses instead.
 
-=head1 METHODS
+=head1 CONSTRUCTOR
+
+To construct a GAL::List subclass simply pass it an appropriate list.
+
+    my $list_catg = GAL::List::Categorical->new(list => [qw(red red red blue blue
+							       green yellow orange orange
+							       purple purple purple purple)]);
 
 =cut
 
 #-----------------------------------------------------------------------------
-#                                 Constructor                                 
+#-------------------------------- Constructor --------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 new
 
      Title   : new
      Usage   : GAL::List::Categorical->new()
-     Function: Creates a List::Categorical object;
-     Returns : A List::Categorical object
-     Args    :
+     Function: Creates a GAL::List::Categorical object;
+     Returns : A GAL::List::Categorical object
+     Args    : list => \@list
 
 =cut
 
@@ -71,36 +87,36 @@ sub _initialize_args {
 }
 
 #-----------------------------------------------------------------------------
-#                                 Attributes                                 
+#--------------------------------- Attributes --------------------------------
 #-----------------------------------------------------------------------------
-# 
+#
 # =head2 attribute
-# 
+#
 #  Title   : attribute
 #  Usage   : $a = $self->attribute()
 #  Function: Get/Set the value of attribute.
 #  Returns : The value of attribute.
 #  Args    : A value to set attribute to.
-# 
+#
 # =cut
-# 
+#
 # sub attribute {
 #   my ($self, $attribute) = @_;
 #   $self->{attribute} = $attribute if $attribute;
 #   return $self->{attribute};
 # }
-# 
+#
 #-----------------------------------------------------------------------------
-#                                   Methods                                 
+#------------------------------------ Methods --------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 method
 
  Title   : method
  Usage   : $a = $self->method()
- Function: 
- Returns : 
- Args    : 
+ Function:
+ Returns :
+ Args    :
 
 =cut
 
@@ -113,25 +129,8 @@ sub method {
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+<GAL::List::Categorical> currently does not throw any warnings or
+errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -139,7 +138,7 @@ sub method {
 
 =head1 DEPENDENCIES
 
-None.
+<BAL::Base>
 
 =head1 INCOMPATIBILITIES
 
@@ -158,7 +157,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

@@ -32,11 +32,11 @@ This document describes GAL::Parser version 0.01
 functions as a base class for <GAL::Parser> subclasses.  It provides a
 variety of attributes and methods that are generally applicable to all
 parsers.  While parsers are intended for use from within
-<GAL::Annotation> objects, they can be instantiated seperately from the
-rest of the GAL library and there are many use cases for the parsers
-as stand alone objects.  Anytime you just need fast access to iterate
-over all features in flat file and are happy to have hashese of those
-features you should just use the parser directly without the
+<GAL::Annotation> objects. Parsers can be instantiated seperately from
+the rest of the GAL library and there are many use cases for the
+parsers as stand alone objects.  Anytime you just need fast access to
+iterate over all features in a flat file and are happy to have hashes
+of those features you should just use the parser directly without the
 <GAL::Annotation> object.
 
 =head1 CONSTRUCTOR
@@ -56,9 +56,15 @@ appropriate attributes:
 
 =item * C<< file => feature_file.txt >>
 
-This optional parameter defines what file to parse. While this
-parameter is optional either it, or the following fh parameter must be
-set.
+This optional parameter provides the filename for the file containing
+the data to be parsed. While this parameter is optional either it, or
+the following fh parameter must be set.
+
+=item * C<< fh => feature_file.txt >>
+
+This optional parameter provides a filehandle to read data from. While
+this parameter is optional either it, or the following fh parameter
+must be set.
 
 =item * C<< annotation => $gal_annotation_object >>
 
@@ -464,7 +470,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

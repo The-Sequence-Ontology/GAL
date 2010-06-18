@@ -10,7 +10,7 @@ use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::gff3 - <One line description of module's purpose here>
+GAL::Parser::gff3 - Parse GFF3 files
 
 =head1 VERSION
 
@@ -18,20 +18,40 @@ This document describes GAL::Parser::gff3 version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::gff3;
+    my $parser = GAL::Parser::gff3->new(file => 'feature.gff3');
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    while (my $feature_hash = $parser->next_feature_hash) {
+	print $parser->to_gff3($feature_hash) . "\n";
+    }
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+<GAL::Parser::gff3> provides GFF3 parsing ability for the GAL library.
 
-=head1 METHODS
+=head1 Constructor
+
+New GAL::Parser::gff3 objects are created by the class method
+new.  Arguments should be passed to the constructor as a list (or
+reference) of key value pairs.  All attributes of the Parser object
+can be set in the call to new. An simple example
+of object creation would look like this:
+
+    my $parser = GAL::Parser::gff3->new(file => 'data/feature.gff3');
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=item * C<< file => feature_file.txt >>
+
+This optional parameter provides the filename for the file containing
+the data to be parsed. While this parameter is optional either it, or
+the following fh parameter must be set.
+
+=item * C<< fh => feature_file.txt >>
+
+This optional parameter provides a filehandle to read data from. While
+this parameter is optional either it, or the following fh parameter
+must be set.
 
 =cut
 
@@ -77,8 +97,8 @@ sub _initialize_args {
  Title   : parse_record
  Usage   : $a = $self->parse_record();
  Function: Parse the data from a record.
- Returns : A hash ref needed by Feature.pm to create a Feature object
- Args    : A hash ref of fields that this sub can understand (In this case GFF3).
+ Returns : A hash (or reference) of feature data.
+ Args    : A hash reference of feature data from the reader
 
 =cut
 
@@ -90,7 +110,7 @@ sub parse_record {
 	my $feature_id = $attributes->{ID}[0] || join ':',
 	  @{$record}{qw(seqid source type start)};
 
-	my $feature_hash = {feature_id => $feature_id,
+	my %feature_hash = (feature_id => $feature_id,
 			    seqid      => $record->{seqid},
 			    source     => $record->{source},
 			    type       => $record->{type},
@@ -100,9 +120,9 @@ sub parse_record {
 			    strand     => $record->{strand},
 			    phase      => $record->{phase},
 			    attributes => $attributes,
-			   };
+			   );
 
-	return $feature_hash;
+	return wantarray ? %feature_hash : \%feature_hash;
 }
 
 #-----------------------------------------------------------------------------
@@ -111,9 +131,11 @@ sub parse_record {
 
  Title   : parse_attributes
  Usage   : $a = $self->parse_attributes($attrb_text);
- Function: Parse the attributes from column 9 in a GFF3 style file.
- Returns : The value of parse_attributes.
- Args    : A value to set parse_attributes to.
+ Function: Parse the attributes from column 9 in a GFF3 file.
+ Returns : A hash (or reference) of tag/value(s) pairs.  Values are always
+           array references even if they are only a single value.
+           For example %attributes = (tag => [$value]);
+ Args    : The text from column 9 in a GFF3 file.
 
 =cut
 
@@ -127,10 +149,20 @@ sub parse_attributes {
 		my @values = split /,/, $value_text;
 		push @{$attrb_hash{$tag}}, @values;
 	}
-	return \%attrb_hash;
+	return wantarray ? %attrb_hash : \%attrb_hash;
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 reader
+
+ Title   : reader
+ Usage   : $a = $self->reader
+ Function: Return the reader object.
+ Returns : A GAL::Reader::DelimitedLine singleton.
+ Args    : None
+
+=cut
 
 sub reader {
   my $self = shift;
@@ -144,27 +176,11 @@ sub reader {
   return $self->{reader};
 }
 
+#-----------------------------------------------------------------------------
+
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+<GAL::Parser::gff3> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -172,7 +188,8 @@ sub reader {
 
 =head1 DEPENDENCIES
 
-None.
+<GAL::Parser>
+<GAL::Reader::DelimitedLine>
 
 =head1 INCOMPATIBILITIES
 
@@ -191,7 +208,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

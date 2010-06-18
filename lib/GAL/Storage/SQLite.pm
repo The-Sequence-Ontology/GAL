@@ -5,11 +5,10 @@ use vars qw($VERSION);
 
 $VERSION = '0.01';
 use base qw(GAL::Storage);
-use File::Temp;
 
 =head1 NAME
 
-GAL::Storage::SQLite - <One line description of module's purpose here>
+GAL::Storage::SQLite - SQLite feature storage for GAL
 
 =head1 VERSION
 
@@ -17,7 +16,9 @@ This document describes GAL::Storage::SQLite version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Storage::SQLite;
+    use GAL::Storage::SQLite;
+    my $storage = GAL::Storage::SQLite->new(database => 
+
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -204,25 +205,6 @@ sub drop_database {
   if (-e $database) {
     `rm $database`;
   }
-# my @databases = DBI->data_sources($self->driver,
-  #				    {user     => $self->user,
-  #				     password => $self->password,
-  #				    }
-  #				   );
-  # my $dbh;
-  # my $dsn = $self->dsn;
-  # my $database = $self->database;
-  # if (grep {$_ eq $dsn} @databases) {
-  #   my $drh = DBI->install_driver("mysql");
-  #   my $host = ''; # Defaults to localhost, abstract this later.
-  #   my $rc = $drh->func('dropdb',
-  #			$database,
-  #			$host,
-  #			$self->user,
-  #			$self->password,
-  #			'admin');
-  # }
-  # return;
 }
 
 #-----------------------------------------------------------------------------

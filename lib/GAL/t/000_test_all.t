@@ -27,13 +27,13 @@ my @tests = qw(001_annotation.t
 	       200_parser.t
                200_parser_gff3.t
 	       300_reader.t
-               300_reader_tabline.t
+               300_reader_delimitedline.t
 	       400_storage.t
+               400_storage_sqlite.t
 	       500_schema.t
 	       600_list.t
 	     );
 
-# 400_storage_sqlite.t
 # 500_schema_result_attribute.t
 # 500_schema_result_feature.t
 # 500_schema_result_feature_transcript.t

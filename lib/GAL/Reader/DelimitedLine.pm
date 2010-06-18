@@ -9,7 +9,7 @@ use base qw(GAL::Reader);
 
 =head1 NAME
 
-GAL::Reader::DelimitedLine - Tab delimited file parsing for GAL
+GAL::Reader::DelimitedLine -  Delimited file parsing for GAL
 
 =head1 VERSION
 
@@ -17,34 +17,75 @@ This document describes GAL::Reader::DelimitedLine version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Reader::DelimitedLine;
-
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    use GAL::Reader::DelimitedLine;
+    $reader = GAL::Reader::DelimitedLine->new();
+    $reader->file('annotation_file.gff');
+    $reader->field_names(qw(seqid source type start end score strand phase
+			   attributes));
+    $reader->next_record, '$reader->next_record');
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+<GAL::Reader::DelimitedLine> provides delimited file (tab delimited, csv etc.)
+reading capability to GAL.  It is not intended for general library use, but
+rather as a GAL::Reader subclass for developers of GAL::Parser subclasses.
+There is however no reason why it couldn't also be used as a stand alone
+module for other purposes.
 
+=head1 CONSTRUCTOR
 
-=head1 METHODS
+New GAL::Reader::DelimitedLine objects are created by the class method new.
+Arguments should be passed to the constructor as a list (or reference)
+of key value pairs.  All attributes of the Reader object can be set in
+the call to new. An simple example of object creation would look like
+this:
+
+  $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=over 4
+
+=item * C<< field_names => [qw(seqid source type start end)] >>
+
+This optional attribute provides an orderd list that describes the
+field names of the columns in the delimited file.  If this attribute
+is set then a call to next_record will return a hash (or reference)
+with the given field names as keys, otherwise next_record will
+return an array of column values.
+
+The following attributes are inhereted from GAL::Reader:
+
+=item * C<< file => feature_file.txt >>
+
+This optional parameter defines what file to parse. While this
+parameter is optional either it, or the following fh parameter must be
+set before the first call to next_record.
+
+=item * C<< fh => $FH >>
+
+This optional parameter provides a file handle to parse. While this
+parameter is optional, either it or the previous must be set before
+the first call to next_record.
+
+=back
 
 =cut
 
+#-----------------------------------------------------------------------------
+#------------------------------- Constructor ---------------------------------
 #-----------------------------------------------------------------------------
 
 =head2 new
 
      Title   : new
-     Usage   : GAL::Reader::DelimitedLine->new();
+     Usage   : $reader = GAL::Reader::DelimitedLine->new();
      Function: Creates a GAL::Reader::DelimitedLine object;
      Returns : A GAL::Reader::DelimitedLine object
-     Args    :
-
+     Args    : field_names => [qw(seqid source type)]
+	       file => $file_name
+	       fh   => FH
 =cut
 
 sub new {
@@ -73,13 +114,48 @@ sub _initialize_args {
 }
 
 #-----------------------------------------------------------------------------
+#--------------------------------- Attributes --------------------------------
+#-----------------------------------------------------------------------------
+
+=head1 ATTRIBUTES
+
+All attributes can be supplied as parameters to the GAL::Annotation
+constructor as a list (or referenece) of key value pairs.
+
+=head2 field_names
+
+ Title   : field_names
+ Usage   : $reader = $self->field_names([qw(seqid source type)]);
+ Function: Set the names for the columns in the delimited text.  If this
+	   attribute is set then next_record will return a hash (or reference)
+	   otherwise it will return an array (or reference).
+ Returns : The next record from the reader.
+ Args    : N/A
+
+=cut
+
+sub field_names {
+
+  my ($self, $field_names) = @_;
+
+  $self->{field_names} = $field_names if $field_names;
+  return wantarray ? @{$self->{field_names}} : $self->{field_names};
+}
+
+#-----------------------------------------------------------------------------
+#---------------------------------- Methods ----------------------------------
+#-----------------------------------------------------------------------------
+
+=head1 METHODS
 
 =head2 next_record
 
  Title   : next_record
- Usage   : $a = $self->next_record();
+ Usage   : $record = $reader->next_record();
  Function: Return the next record from the reader
- Returns : The next record from the reader.
+ Returns : The next record from the reader as a hash, array or reference
+	   to one of those.  If feild_names is set then a hash will be
+	   returned, otherwise an array.
  Args    : N/A
 
 =cut
@@ -104,47 +180,11 @@ sub next_record {
 
 #-----------------------------------------------------------------------------
 
-=head2 field_names
-
- Title   : field_names
- Usage   : $a = $self->field_names();
- Function: Return the next record from the reader
- Returns : The next record from the reader.
- Args    : N/A
-
-=cut
-
-sub field_names {
-
-  my ($self, $field_names) = @_;
-
-  $self->{field_names} = $field_names if $field_names;
-  return wantarray ? @{$self->{field_names}} : $self->{field_names};
-}
-
-#-----------------------------------------------------------------------------
-
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+<GAL::Reader::DelimitedLine> does not throw any error or warnings.  If
+errors or warnings appear to be coming from GAL::Reader::Delimited it may be
+that they are being throw by <GAL::Reader>
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -152,7 +192,7 @@ sub field_names {
 
 =head1 DEPENDENCIES
 
-None.
+<GAL::Reader>
 
 =head1 INCOMPATIBILITIES
 
@@ -171,7 +211,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.
@@ -200,4 +240,3 @@ SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.
 
 =cut
-
