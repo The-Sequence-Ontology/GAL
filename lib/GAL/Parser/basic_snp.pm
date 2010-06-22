@@ -6,10 +6,11 @@ use vars qw($VERSION);
 
 $VERSION = '0.01';
 use base qw(GAL::Parser);
+use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::basic_snp - <One line description of module's purpose here>
+GAL::Parser::basic_snp - Parse SNP files with basic information.
 
 =head1 VERSION
 
@@ -17,20 +18,42 @@ This document describes GAL::Parser::basic_snp version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::basic_snp;
+    my $parser = GAL::Parser::basic_snp->new(file => 'snp.txt');
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    while (my $feature_hash = $parser->next_feature_hash) {
+	print $parser->to_basic_snp($feature_hash) . "\n";
+    }
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+L<GAL::Parser::basic_snp> provides a parser for basic snp files that
+contain the following tab delimited columns: chromosome start end
+reference_seq variant_seq.
 
-=head1 METHODS
+=head1 Constructor
+
+New L<GAL::Parser::basic_snp> objects are created by the class method
+new.  Arguments should be passed to the constructor as a list (or
+reference) of key value pairs.  All attributes of the Parser object
+can be set in the call to new. An simple example of object creation
+would look like this:
+
+    my $parser = GAL::Parser::basic_snp->new(file => 'data/snp.txt');
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=item * C<< file => feature_file.txt >>
+
+This optional parameter provides the filename for the file containing
+the data to be parsed. While this parameter is optional either it, or
+the following fh parameter must be set.
+
+=item * C<< fh => feature_file.txt >>
+
+This optional parameter provides a filehandle to read data from. While
+this parameter is optional either it, or the following fh parameter
+must be set.
 
 =cut
 
@@ -42,7 +65,7 @@ This document describes GAL::Parser::basic_snp version 0.01
      Usage   : GAL::Parser::basic_snp->new();
      Function: Creates a GAL::Parser::basic_snp object;
      Returns : A GAL::Parser::basic_snp object
-     Args    :
+     Args    : See the attributes described above.
 
 =cut
 
@@ -81,7 +104,7 @@ sub _initialize_args {
  Usage   : $a = $self->parse_record();
  Function: Parse the data from a record.
  Returns : A hash ref needed by Feature.pm to create a Feature object
- Args    : A hash ref of fields that this sub can understand (In this case GFF3).
+ Args    : A hash ref of fields that this sub can understand.
 
 =cut
 

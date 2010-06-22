@@ -10,7 +10,7 @@ use DBI;
 
 =head1 NAME
 
-GAL::Storage - <One line description of module's purpose here>
+GAL::Storage - Base class for GAL's storage engines
 
 =head1 VERSION
 
@@ -18,18 +18,98 @@ This document describes GAL::Storage version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Storage;
+my $feat_store_args = {class    => $storage,
+		       dsn      => $feature_dsn,
+		       user     => $user,
+		       password => $password,
+		   };
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+my $parser_args = {class => $parser,
+		  };
+
+my $fasta_args = {path => $fasta};
+
+my $feat_store = GAL::Annotation->new(storage => $feat_store_args,
+				      parser  => $parser_args,
+				      fasta   => $fasta_args,
+				     );
+
+$feat_store->load_files(files => $feature_file,
+			  mode  => 'overwrite',
+			 );
+my $features = $feat_store->schema->resultset('Feature');
+
+my $mrnas = $features->search({type => 'mRNA'});
+while (my $mrna = $mrnas->next) {
+  my $mrna_id = $mrna->feature_id;
+}
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+The L<GAL::Storage> class provides a base class for the storage
+classes available to GAL.  It is not intended to be used directly -
+you should use one of it's subclasses instead.  It provides many of
+the general attributes used by the sublcasses and several general
+methods.
+
+=head1 CONSTRUCTOR
+
+New GAL::Storage::subclass objects are created by the class method
+new.  Arguments should be passed to the constructor as a list (or
+reference) of key value pairs.  All attributes of the Storage object
+can be set in the call to new. An simple example of object creation
+would look like this:
+
+    my $parser = GAL::Storage::SQLite->new(dsn => 'dbi:SQLite:db_name);
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=over 4
+
+=item * C<annotation>
+
+This is a read only attribute that provides access to a weakened
+version of the L<GAL::Annotation> object that created this storage
+
+=item * C<dsn'>
+
+dsn => 'dbi:SQLite:db_name
+
+This optional parameter defines the data source name of the database
+to open.  By default Storage will use and SQLite database with a
+random filename, but see the comment for the database attribute below.
+
+=item * C<scheme>
+
+This is a read only parameter that is set to 'DBI';
+
+=item * C<driver >
+
+This is a read only parameter that defines the database driver
+(i.e. what RDMS you are going to use).  It is set by each storage
+subclass.
+
+=item * C<database>
+
+database => 'db_name'
+
+This optional parameter defines the database name.  You don't need to
+specify both the database name and the dsn as they both contain the
+database name. Since the driver and the scheme are set by the class
+you could give either the dsn or the database name it it will work.
+
+=item * C<user => 'user_name'>
+
+This optional parameter defines the user name for connecting to the
+database.
+
+=item * C<password => 'password'>
+
+This optional parameter defines the password for connecting to the
+database.
+
+=back
 
 =head1 METHODS
 
@@ -45,7 +125,7 @@ This document describes GAL::Storage version 0.01
      Usage   : GAL::Storage->new()
      Function: Creates a Storage object;
      Returns : A Storage object
-     Args    :
+     Args    : See L</attributes> above
 
 =cut
 
@@ -80,10 +160,11 @@ sub _initialize_args {
 =head2 annotation
 
  Title   : annotation
- Usage   : $a = $self->annotation()
- Function: Get/Set the value of annotation.
- Returns : The value of annotation.
- Args    : A value to set annotation to.
+ Usage   : $annotation = $self->annotation()
+ Function: Get a weakened copy of the L<GAL::Annotation> object that owns
+	   this storage object.
+ Returns : A L<GAL::Annotation> object.
+ Args    : None
 
 =cut
 
@@ -98,10 +179,10 @@ sub annotation {
 =head2 dsn
 
  Title   : dsn
- Usage   : $a = $self->dsn()
- Function: Get/Set the value of dsn.
- Returns : The value of dsn.
- Args    : A value to set dsn to.
+ Usage   : $dsn = $self->dsn('dbi:SQLite:db_name')
+ Function: Get/Set the value of the Database Source Name (DSN).
+ Returns : A text value for the DSN
+ Args    : A text value of the form scheme:driver:db_name.
 
 =cut
 
@@ -149,10 +230,10 @@ sub dsn {
 =head2 scheme
 
  Title   : scheme
- Usage   : $a = $self->scheme()
- Function: Get/Set the value of scheme.
- Returns : The value of scheme.
- Args    : A value to set scheme to.
+ Usage   : $scheme = $self->scheme
+ Function: Get the value of scheme.
+ Returns : The value 'DBI'.
+ Args    : None
 
 =cut
 
@@ -162,11 +243,50 @@ sub scheme {
 
 #-----------------------------------------------------------------------------
 
+=head2 driver
+
+ Title   : driver
+ Usage   : $driver = $self->driver
+ Function: Get  the value of driver.
+ Returns : The value 'SQLite'
+ Args    : None
+
+=cut
+
+sub driver {
+  return 'SQLite';
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 database
+
+ Title   : database
+ Usage   : $db = $self->database('db_name');
+ Function: Get/Set the value of the database name.
+ Returns : The value of the database name.
+ Args    : A text value to set the database name to.
+
+=cut
+
+sub database {
+      my ($self, $database) = @_;
+
+      $self->{database} = $database if $database;
+      $self->{database} ||= join '_', ('gal_database',
+				       $self->time_stamp,
+				       $self->random_string(8)
+				      );
+      return $self->{database};
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 user
 
  Title   : user
  Usage   : $a = $self->user()
- Function: Get/Set the value of user.
+ Function: Get/Set the value of the database user.
  Returns : The value of user.
  Args    : A value to set user to.
 
@@ -184,7 +304,7 @@ sub user {
 
  Title   : password
  Usage   : $a = $self->password()
- Function: Get/Set the value of password.
+ Function: Get/Set the value of the database password.
  Returns : The value of password.
  Args    : A value to set password to.
 
@@ -197,177 +317,46 @@ sub password {
 }
 
 #-----------------------------------------------------------------------------
-
-=head2 database
-
- Title   : database
- Usage   : $a = $self->database();
- Function: Get/Set the value of database.
- Returns : The value of database.
- Args    : A value to set database to.
-
-=cut
-
-sub database {
-      my ($self, $database) = @_;
-
-      $self->{database} = $database if $database;
-      $self->{database} ||= join '_', ('gal_database',
-				       $self->time_stamp,
-				       $self->random_string(8)
-				      );
-      return $self->{database};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 driver
-
- Title   : driver
- Usage   : $a = $self->driver()
- Function: Get/Set the value of driver.
- Returns : The value of driver.
- Args    : A value to set driver to.
-
-=cut
-
-sub driver {
-  return 'SQLite';
-}
-
-#-----------------------------------------------------------------------------
 #---------------------------------- Methods ----------------------------------
 #-----------------------------------------------------------------------------
-
-=head2 _load_schema
-
- Title   : _load_schema
- Usage   : $self->_load_schema();
- Function: Get/Set value of _load_schema.
- Returns : Value of _load_schema.
- Args    : Value to set _load_schema to.
-
-=cut
 
 sub _load_schema {
   my ($self, $dbh) = @_;
 
   my $self = shift;
-  $self->throw(message => ('Method _load_schema must be implimented by subclass : ' .
-			   'driver')
+  $self->throw(message => ('Method _load_schema must be implimented by ' .
+			   'subclass')
+	       'code'  => 'subclass_must_override_this_method : _load_schema',
 	      );
-
-  # $dbh->do("DROP TABLE IF EXISTS feature");
-  # $dbh->do("DROP TABLE IF EXISTS attribute");
-  # $dbh->do("DROP TABLE IF EXISTS relationship");
-  # $dbh->do("CREATE TABLE feature ("    .
-  #	   "subject_id VARCHAR(255), " .
-  #	   "feature_id VARCHAR(255), " .
-  #	   "seqid      VARCHAR(255), " .
-  #	   "source     VARCHAR(255), " .
-  #	   "type       VARCHAR(255), " .
-  #	   "start      INT, "          .
-  #	   "end        INT, "          .
-  #	   "score      VARCHAR(255), " .
-  #	   "strand     VARCHAR(1), "   .
-  #	   "phase      VARCHAR(1),"    .
-  #	   "bin        VARCHAR(15))"
-  #	  );
-  # $dbh->do("CREATE TABLE attribute ("  .
-  #	   "attribute_id INT NOT NULL AUTO_INCREMENT, " .
-  #	   "subject_id VARCHAR(255), " .
-  #	   "feature_id VARCHAR(255), " .
-  #	   "att_key    VARCHAR(255), "    .
-  #	   "att_value  TEXT, "  .
-  #	   "PRIMARY KEY (attribute_id))"
-  #	  );
-  # $dbh->do("CREATE TABLE relationship ("  .
-  #	   "subject_id   VARCHAR(255), " .
-  #	   "parent       VARCHAR(255), " .
-  #	   "child        VARCHAR(255), "    .
-  #	   "relationship VARCHAR(255)) "
-  #	  );
 }
 
 #-----------------------------------------------------------------------------
-
-=head2 load_files
-
- Title   : load_files
- Usage   : $self->load_files();
- Function: Get/Set value of load_file.
- Returns : Value of load_file.
- Args    : Value to set load_file to.
-
-=cut
 
 sub load_files {
-	my $self = shift;
-	$self->throw(message => ('Warn : method_must_be_overridden : ' .
-				 'load_files')
-		    );
+  my $self = shift;
+  $self->throw(message => 'Method load files must be implimented by sublcass',
+	       code    => 'subclass_must_override_this_method : load_files'
+	      );
 }
-
-#-----------------------------------------------------------------------------
-
-  # my $parser = $self->parser;
-  # my $temp_dir;
-  # ($temp_dir) = grep {-d $_} qw(/tmp .) unless ($temp_dir &&-d $temp_dir);
-  #
-  # my ($FEAT_TEMP,  $feat_filename)  = tempfile('gal_feat_XXXXXX',
-  #					       SUFFIX => '.tmp',
-  #					       DIR    => $temp_dir,
-  #					       UNLINK => 0,
-  #					      );
-  #
-  # my ($ATT_TEMP,  $att_filename)  = tempfile('gal_att_XXXXXX',
-  #					     SUFFIX => '.tmp',
-  #					     DIR    => $temp_dir,
-  #					     UNLINK => 0,
-  #					    );
-  # my ($REL_TEMP,  $rel_filename)  = tempfile('gal_rel_XXXXXX',
-  #					     SUFFIX => '.tmp',
-  #					     DIR    => $temp_dir,
-  #					     UNLINK => 0,
-  #					    );
-  # chmod (0444, $feat_filename, $att_filename, $rel_filename);
-  #
-  # for my $file (@{$files}) {
-  #
-  #   my $parser = $parser_class->new(file => $file);
-  #
-  #   while (my $feature = $parser->next_feature_hash) {
-  #     my ($feature_rows, $attribute_rows, $relationship_rows) = $self->prepare_features($feature);
-  #
-  #     for my $feature_row (@{$feature_rows}) {
-  #	print $FEAT_TEMP join "\t", @{$feature_row};
-  #	print $FEAT_TEMP "\n";
-  #     }
-  #
-  #     for my $attribute_row (@{$attribute_rows}) {
-  #	print $ATT_TEMP  join "\t", @{$attribute_row};
-  #	print $ATT_TEMP "\n";
-  #     }
-  #     for my $relationship_row (@{$relationship_rows}) {
-  #	print $REL_TEMP join "\t", @{$relationship_row};
-  #	print $REL_TEMP "\n";
-  #     }
-  #   }
-  # }
-  # $self->_load_temp_files($feat_filename, $att_filename, $rel_filename);
-  # }
 
 #-----------------------------------------------------------------------------
 
 =head2 add_features_to_buffer
 
  Title   : add_features_to_buffer
- Usage   : $self->add_features_to_buffer()
- Function: Get/Set value of add_features_to_buffer.
- Returns : Value of add_features_to_buffer.
- Args    : Value to set add_feature to.
+ Usage   : $self->add_features_to_buffer(@features)
+ Function: Add feature hashes to a buffer for loading into storage.
+ Returns : N/A
+ Args    : A reference to an array of feature hashes.
+ Alias   : features2buffer
+
+=head2 features2buffer
+
+An alias for add_features_to_buffer.
 
 =cut
+
+sub features2buffer {shift->add_features_to_buffer(@_)}
 
 sub add_features_to_buffer {
 
@@ -381,7 +370,7 @@ sub add_features_to_buffer {
 	my $max_feature_buffer = 10_000;
 	if (scalar @{$self->{_feature_buffer}} + scalar @{$features} >= $max_feature_buffer) {
 	  push @{$self->{_feature_buffer}}, @{$features};
-	  $self->flush_feature_buffer;
+	  $self->flush_buffer;
 	}
 	else {
 	  push @{$self->{_feature_buffer}}, @{$features};
@@ -390,17 +379,17 @@ sub add_features_to_buffer {
 
 #-----------------------------------------------------------------------------
 
-=head2 flush_feature_buffer
+=head2 flush_buffer
 
- Title   : flush_feature_buffer
- Usage   : $self->flush_feature_buffer()
- Function: Get/Set value of flush_feature_buffer.
- Returns : Value of flush_feature_buffer.
+ Title   : flush_buffer
+ Usage   : $self->flush_buffer()
+ Function: Get/Set value of flush_buffer.
+ Returns : Value of flush_buffer.
  Args    : Value to set add_feature to.
 
 =cut
 
-sub flush_feature_buffer {
+sub flush_buffer {
 
 	my $self = shift;
 
@@ -416,11 +405,11 @@ sub flush_feature_buffer {
 
  Title   : prepare_features
  Usage   : $self->prepare_features()
- Function: Normalizes feature hashes produced by the parsers
-	   and seperates the attributes for bulk insert into the database;
- Returns : A feature hash reference and an array reference of hash references
-	   of attributes.  Both normalized for insert statements
- Args    : A feature hash or array of feature hashes
+ Function: Normalizes feature hashes produced by the parsers and seperates
+	   the attributes and relationships for bulk insert into the database;
+ Returns : An array reference of feature data and an array reference of
+	   attribute data.
+ Args    : A feature hash or array of feature hashes.
 
 =cut
 
@@ -435,8 +424,7 @@ sub prepare_features {
 
   for my $feature_hash (@{$feature_hashes}) {
     my $feature_id = $feature_hash->{feature_id};
-    my $bins = $self->get_feature_bins($feature_hash);
-    my $bin = $bins->[0];
+    my $bin = $self->get_feature_bin($feature_hash);
     my $attributes = $feature_hash->{attributes};
     my $subject_id = $attributes->{Subject_ID} || '';
     my @parents = ref $attributes->{Parent} eq 'ARRAY' ? @{$attributes->{Parent}} : ();
@@ -454,11 +442,6 @@ sub prepare_features {
       }
     }
 
-    # "subject_id   VARCHAR(255), " .
-    # "parent       VARCHAR(255), " .
-    # "child        VARCHAR(255), "    .
-    # "relationship VARCHAR(255)) "
-
     for my $parent (@parents) {
       my @relationship_data = ($subject_id, $parent, $feature_id, undef);
       push @relationships, \@relationship_data;
@@ -469,254 +452,232 @@ sub prepare_features {
 
 #-----------------------------------------------------------------------------
 
-=head2 add_features
-
- Title   : add_features
- Usage   : $self->add_features()
- Function: Get/Set value of add_feature.
- Returns : Value of add_feature.
- Args    : Value to set add_feature to.
-
-=cut
-
 sub add_features {
   my $self = shift;
   $self->throw(message => ('Method must be implimented by subclass : ' .
 			   'add_features')
+	       code    => 'subclass_must_override_this_method : add_features',
 	      );
 }
 
 #-----------------------------------------------------------------------------
-
-=head2 create_database
-
- Title   : create_database
- Usage   : $self->create_database()
- Function: Create the database if it doesnt exists.
- Returns : Success
- Args    : N/A
-
-=cut
 
 sub create_database {
   my $self = shift;
   $self->throw(message => ('Method must be implimented by subclass : ' .
 			   'add_features')
+	       code    => ('subclass_must_override_this_method : ' .
+			   'create_database'),
 	      );
 }
 
 #-----------------------------------------------------------------------------
-
-=head2 get_children
-
- Title   : get_children
- Usage   : $self->get_children()
- Function: Get/Set value of get_children.
- Returns : Value of get_children.
- Args    : Value to set get_children to.
-
-=cut
-
-sub get_children {
-	my $self = shift;
-	$self->throw(message => ('Method must be implimented by subclass : ' .
-				 'add_features')
-		    );
-}
-
 #-----------------------------------------------------------------------------
-
-=head2 get_children_recursively
-
- Title   : get_children_recursively
- Usage   : $self->get_children_recursively()
- Function: Get/Set value of get_children_recursively.
- Returns : Value of get_children_recursively.
- Args    : Value to set get_children_recursively to.
-
-=cut
-
-sub get_children_recursively {
-  my $self = shift;
-  $self->throw(message => ('Method must be implimented by subclass : ' .
-			   'add_features')
-	      );
-}
-
+#
+# The methods below a turned off because for now we're using only DBIx::Class
+# for object retrival, but I plan to write direct access to the data soon to
+# avoid the overhead imposed by DBIx::Class
+#
 #-----------------------------------------------------------------------------
-
-=head2 get_parents
-
- Title   : get_parents
- Usage   : $self->get_parents()
- Function: Get/Set value of get_parents.
- Returns : Value of get_parents.
- Args    : Value to set get_parents to.
-
-=cut
-
-sub get_parents {
-  my $self = shift;
-  $self->throw(message => ('Method must be implimented by subclass : ' .
-			   'add_features')
-	      );
-}
-
 #-----------------------------------------------------------------------------
-
-=head2 get_parents_recursively
-
- Title   : get_parents_recursively
- Usage   : $self->get_parents_recursively()
- Function: Get/Set value of get_parents_recursively.
- Returns : Value of get_parents_recursively.
- Args    : Value to set get_parents_recursively to.
-
-=cut
-
-sub get_parents_recursively {
-  my $self = shift;
-  $self->throw(message => ('Method must be implimented by subclass : ' .
-			   'add_features')
-	      );
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 get_all_features
-
- Title   : get_all_features
- Usage   : $self->get_all_features()
- Function: Get/Set value of get_all_features.
- Returns : Value of get_all_features.
- Args    : Value to set get_all_features to.
-
-=cut
-
-sub get_all_features {
-  my $self = shift;
-  $self->throw(message => ('Method must be implimented by subclass : ' .
-			   'add_features')
-	      );
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 get_features_by_type
-
- Title   : get_features_by_type
- Usage   : $self->get_features_by_type()
- Function: Get/Set value of get_features_by_type.
- Returns : Value of get_features_by_type.
- Args    : Value to set get_features_by_type to.
-
-=cut
-
-sub get_features_by_type {
-  my $self = shift;
-  $self->throw(message => ('Method must be implimented by subclass : ' .
-			   'add_features')
-	      );
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 get_recursive_features_by_type
-
- Title   : get_recursive_features_by_type
- Usage   : $self->get_recursive_features_by_type()
- Function: Get/Set value of get_recursive_features_by_type.
- Returns : Value of get_recursive_features_by_type.
- Args    : Value to set get_recursive_features_by_type to.
-
-=cut
-
-sub get_recursive_features_by_type {
-  my $self = shift;
-  $self->throw(message => ('Method must be implimented by subclass : ' .
-			   'add_features')
-	      );
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 get_feature_by_id
-
- Title   : get_feature_by_id
- Usage   : $self->get_feature_by_id()
- Function: Get/Set value of get_feature_by_id.
- Returns : Value of get_feature_by_id.
- Args    : Value to set get_feature_by_id to.
-
-=cut
-
-sub get_feature_by_id {
-  my $self = shift;
-  $self->throw(message => ('Method must be implimented by subclass : ' .
-			   'add_features')
-	      );
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 filter_features
-
- Title   : filter_features
- Usage   : $self->filter_features()
- Function: Get/Set value of filter_features.
- Returns : Value of filter_features.
- Args    : Value to set filter_features to.
-
-=cut
-
-sub filter_features {
-  my $self = shift;
-    $self->throw(message => ('Method must be implimented by subclass : ' .
-			   'add_features')
-		);
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 foo
-
- Title   : foo
- Usage   : $a = $self->foo()
- Function: Get/Set the value of foo.
- Returns : The value of foo.
- Args    : A value to set foo to.
-
-=cut
-
-sub foo {
-	my ($self, $value) = @_;
-	$self->{foo} = $value if defined $value;
-	return $self->{foo};
-}
-
-#-----------------------------------------------------------------------------
+#
+#=head2 get_children
+#
+# Title   : get_children
+# Usage   : $self->get_children()
+# Function: Get/Set value of get_children.
+# Returns : Value of get_children.
+# Args    : Value to set get_children to.
+#
+#=cut
+#
+#sub get_children {
+#	my $self = shift;
+#	$self->throw(message => ('Method must be implimented by subclass : ' .
+#				 'add_features')
+#		    );
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_children_recursively
+#
+# Title   : get_children_recursively
+# Usage   : $self->get_children_recursively()
+# Function: Get/Set value of get_children_recursively.
+# Returns : Value of get_children_recursively.
+# Args    : Value to set get_children_recursively to.
+#
+#=cut
+#
+#sub get_children_recursively {
+#  my $self = shift;
+#  $self->throw(message => ('Method must be implimented by subclass : ' .
+#			   'add_features')
+#	      );
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_parents
+#
+# Title   : get_parents
+# Usage   : $self->get_parents()
+# Function: Get/Set value of get_parents.
+# Returns : Value of get_parents.
+# Args    : Value to set get_parents to.
+#
+#=cut
+#
+#sub get_parents {
+#  my $self = shift;
+#  $self->throw(message => ('Method must be implimented by subclass : ' .
+#			   'add_features')
+#	      );
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_parents_recursively
+#
+# Title   : get_parents_recursively
+# Usage   : $self->get_parents_recursively()
+# Function: Get/Set value of get_parents_recursively.
+# Returns : Value of get_parents_recursively.
+# Args    : Value to set get_parents_recursively to.
+#
+#=cut
+#
+#sub get_parents_recursively {
+#  my $self = shift;
+#  $self->throw(message => ('Method must be implimented by subclass : ' .
+#			   'add_features')
+#	      );
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_all_features
+#
+# Title   : get_all_features
+# Usage   : $self->get_all_features()
+# Function: Get/Set value of get_all_features.
+# Returns : Value of get_all_features.
+# Args    : Value to set get_all_features to.
+#
+#=cut
+#
+#sub get_all_features {
+#  my $self = shift;
+#  $self->throw(message => ('Method must be implimented by subclass : ' .
+#			   'add_features')
+#	      );
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_features_by_type
+#
+# Title   : get_features_by_type
+# Usage   : $self->get_features_by_type()
+# Function: Get/Set value of get_features_by_type.
+# Returns : Value of get_features_by_type.
+# Args    : Value to set get_features_by_type to.
+#
+#=cut
+#
+#sub get_features_by_type {
+#  my $self = shift;
+#  $self->throw(message => ('Method must be implimented by subclass : ' .
+#			   'add_features')
+#	      );
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_recursive_features_by_type
+#
+# Title   : get_recursive_features_by_type
+# Usage   : $self->get_recursive_features_by_type()
+# Function: Get/Set value of get_recursive_features_by_type.
+# Returns : Value of get_recursive_features_by_type.
+# Args    : Value to set get_recursive_features_by_type to.
+#
+#=cut
+#
+#sub get_recursive_features_by_type {
+#  my $self = shift;
+#  $self->throw(message => ('Method must be implimented by subclass : ' .
+#			   'add_features')
+#	      );
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_feature_by_id
+#
+# Title   : get_feature_by_id
+# Usage   : $self->get_feature_by_id()
+# Function: Get/Set value of get_feature_by_id.
+# Returns : Value of get_feature_by_id.
+# Args    : Value to set get_feature_by_id to.
+#
+#=cut
+#
+#sub get_feature_by_id {
+#  my $self = shift;
+#  $self->throw(message => ('Method must be implimented by subclass : ' .
+#			   'add_features')
+#	      );
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 filter_features
+#
+# Title   : filter_features
+# Usage   : $self->filter_features()
+# Function: Get/Set value of filter_features.
+# Returns : Value of filter_features.
+# Args    : Value to set filter_features to.
+#
+#=cut
+#
+#sub filter_features {
+#  my $self = shift;
+#    $self->throw(message => ('Method must be implimented by subclass : ' .
+#			   'add_features')
+#		);
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 foo
+#
+# Title   : foo
+# Usage   : $a = $self->foo()
+# Function: Get/Set the value of foo.
+# Returns : The value of foo.
+# Args    : A value to set foo to.
+#
+#=cut
+#
+#sub foo {
+#	my ($self, $value) = @_;
+#	$self->{foo} = $value if defined $value;
+#	return $self->{foo};
+#}
+#
+##-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
+=item C<subclass_must_override_this_method>
 
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+<GAL::Storage> subclasses are required to override a number of methods.  You
+have called one of those methods and the author of the subclass has not
+written a method to override it - you should complain bitterly to the author
+of the subclass.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -724,7 +685,8 @@ sub foo {
 
 =head1 DEPENDENCIES
 
-None.
+L<GAL::Base>
+L<DBI>
 
 =head1 INCOMPATIBILITIES
 
@@ -743,7 +705,8 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All
+rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.
@@ -751,25 +714,25 @@ Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights res
 =head1 DISCLAIMER OF WARRANTY
 
 BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
-FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
-OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
-PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
-ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
-YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
-NECESSARY SERVICING, REPAIR, OR CORRECTION.
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.
 
 IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
 WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
-LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
-OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
-THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
 RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
 FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
-SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGES.
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.
 
 =cut
 

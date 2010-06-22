@@ -55,6 +55,18 @@ is set then a call to next_record will return a hash (or reference)
 with the given field names as keys, otherwise next_record will
 return an array of column values.
 
+=item * C<< field_separator => "\t" >>
+
+This optional attribute provides a regular expression that will be used
+to split the fields in each line of data.  The default is "\t" - a
+tab.
+
+=item * C<< comment_delimiter => "^\s*#" >>
+
+This optional attribute provides a regular expression that will be
+used to skip comment lines.  The default is "^\s*#" - lines whos first
+non-whitespace charachter is a '#'.
+
 The following attributes are inhereted from GAL::Reader:
 
 =item * C<< file => feature_file.txt >>
@@ -107,7 +119,8 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(field_names);
+	my @valid_attributes = qw(field_names field_separator
+                                  comment_delimiter);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 	return $args;
@@ -119,13 +132,14 @@ sub _initialize_args {
 
 =head1 ATTRIBUTES
 
-All attributes can be supplied as parameters to the GAL::Annotation
-constructor as a list (or referenece) of key value pairs.
+All attributes can be supplied as parameters to the
+GAL::Reader::DelimitedLine constructor as a list (or referenece) of
+key value pairs.
 
 =head2 field_names
 
  Title   : field_names
- Usage   : $reader = $self->field_names([qw(seqid source type)]);
+ Usage   : $self->field_names([qw(seqid source type)]);
  Function: Set the names for the columns in the delimited text.  If this
 	   attribute is set then next_record will return a hash (or reference)
 	   otherwise it will return an array (or reference).
@@ -140,6 +154,58 @@ sub field_names {
 
   $self->{field_names} = $field_names if $field_names;
   return wantarray ? @{$self->{field_names}} : $self->{field_names};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 field_separator
+
+ Title   : field_separator
+ Usage   : $self->field_separator("\t");
+ Function: Set the field separator for spliting lines of data.  Default
+           is "\t" (tab).
+ Returns : The field separator as a complied regular expression.
+ Args    : A string or complied regular expression pattern.
+
+=cut
+
+sub field_separator {
+
+  my ($self, $field_separator) = @_;
+
+  if ($field_separator) {
+    $field_separator = qr/$field_separator/
+      unless ref $field_separator eq 'Regexp';
+  }
+  $self->{field_separator} = $field_separator if $field_separator;
+  $self->{field_separator} ||= qr/\t/;
+  return wantarray ? @{$self->{field_separator}} : $self->{field_names};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 comment_delimiter
+
+ Title   : comment_delimiter
+ Usage   : $self->comment_delimiter("\t");
+ Function: Set the field separator for spliting lines of data.  Default
+           is "\t" (tab).
+ Returns : The field separator as a complied regular expression.
+ Args    : A string or complied regular expression pattern.
+
+=cut
+
+sub comment_delimiter {
+
+  my ($self, $comment_delimiter) = @_;
+
+  if ($comment_delimiter) {
+    $comment_delimiter = qr/$comment_delimiter/
+      unless ref $comment_delimiter eq 'Regexp';
+  }
+  $self->{comment_delimiter} = $comment_delimiter if $comment_delimiter;
+  $self->{comment_delimiter} ||= qr/^\s*#/;
+  return wantarray ? @{$self->{comment_delimiter}} : $self->{field_names};
 }
 
 #-----------------------------------------------------------------------------
@@ -165,11 +231,11 @@ sub next_record {
 	my $fh = $self->fh;
 	my $line;
 	while ($line = <$fh>) {
+	  last unless $line =~ $self->comment_delimiter;
 	  chomp $line;
-	  last unless $line =~ /\s*\#/;
 	}
 	return undef unless defined $line;
-	my @record_array = split /\t/, $line;
+	my @record_array = split $self->field_separator, $line;
 	if (ref $self->{field_names} eq 'ARRAY') {
 	  my %record_hash;
 	  @record_hash{@{$self->{field_names}}} = @record_array;

@@ -17,19 +17,71 @@ This document describes GAL::Storage::SQLite version 0.01
 =head1 SYNOPSIS
 
     use GAL::Storage::SQLite;
-    my $storage = GAL::Storage::SQLite->new(database => 
-
-
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    my $storage = GAL::Storage::SQLite->new(dsn => 'dbi:SQLite:db_name');
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+The L<GAL::Storage::SQLite> class provides SQLite based storage to
+GAL.
+
+=head1 CONSTRUCTOR
+
+New GAL::Storage::SQLite objects are created by the class method new.
+Arguments should be passed to the constructor as a list (or reference)
+of key value pairs.  All attributes of the Storage object can be set
+in the call to new. An simple example of object creation would look
+like this:
+
+    my $parser = GAL::Storage::SQLite->new(dsn => 'dbi:SQLite:db_name);
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=over 4
+
+=item * C<scheme>
+
+This is a read only parameter that is set to 'DBI';
+
+=item * C<driver >
+
+This is a read only parameter that is set to 'SQLite';
+
+=item * C<database>
+
+database => 'db_name'
+
+This optional parameter defines the database name.  You don't need to
+specify both the database name and the dsn as they both contain the
+database name. Since the driver and the scheme are set by the class
+you could give either the dsn or the database name and it will work.
+
+B<The following attributes are inherited from> L<GAL::Storage>
+
+=item * C<annotation>
+
+This is a read only attribute that provides access to a weakened
+version of the L<GAL::Annotation> object that created this storage
+
+=item * C<dsn => 'dbi:SQLite:db_name'>
+
+dsn => 'dbi:SQLite:db_name
+
+This optional parameter defines the data source name of the database
+to open.  By default Storage will use and SQLite database with a
+random filename, but see the comment for the database attribute below.
+
+=item * C<user => 'user_name'>
+
+This optional parameter defines the user name for connecting to the
+database.
+
+=item * C<password => 'password'>
+
+This optional parameter defines the password for connecting to the
+database.
+
+=back
 
 =head1 METHODS
 
@@ -42,8 +94,8 @@ This document describes GAL::Storage::SQLite version 0.01
      Title   : new
      Usage   : GAL::Storage::SQLite->new();
      Function: Creates a Storage object;
-     Returns : A Storage object
-     Args    :
+     Returns : A L<GAL::Storage::SQLite> object
+     Args    : See the attributes described above.
 
 =cut
 
@@ -77,8 +129,8 @@ sub _initialize_args {
 
  Title   : scheme
  Usage   : $a = $self->scheme();
- Function: Get the value of scheme.
- Returns : The value of scheme.
+ Function: Return the RDMS scheme.
+ Returns : DBI
  Args    : N/A
 
 =cut
@@ -92,7 +144,7 @@ sub scheme {'dbi'}
  Title   : driver
  Usage   : $a = $self->driver();
  Function: Get the value of driver.
- Returns : The value of driver.
+ Returns : SQLite
  Args    : N/A
 
 =cut
@@ -105,9 +157,9 @@ sub driver {'SQLite'}
 
  Title   : dbh
  Usage   : $a = $self->dbh();
- Function: Get/Set the value of dbh.
- Returns : The value of dbh.
- Args    : A value to set dbh to.
+ Function: Get/Set the database handle
+ Returns : The a DBI::SQLite object
+ Args    : A DBI::SQLite object
 
 =cut
 
@@ -123,9 +175,9 @@ sub dbh {
 
  Title   : database
  Usage   : $a = $self->database();
- Function: Get/Set the value of database.
- Returns : The value of database.
- Args    : A value to set database to.
+ Function: Get/Set the database name.
+ Returns : A database name.
+ Args    : A database name.
 
 =cut
 
@@ -141,15 +193,11 @@ sub database {
 
 #-----------------------------------------------------------------------------
 
-=head2 _load_schema
-
- Title   : _load_schema
- Usage   : $a = $self->_load_schema();
- Function: Get/Set the value of load_schema.
- Returns : The value of load_schema.
- Args    : A value to set load_schema to.
-
-=cut
+# Title   : _load_schema
+# Usage   : $a = $self->_load_schema();
+# Function: Load the database schema
+# Returns : N/A
+# Args    : N/A
 
 sub _load_schema {
   my ($self, $dbh) = @_;
@@ -191,8 +239,8 @@ sub _load_schema {
 
   Title   : drop_database
   Usage   : $self->drop_database();
-Function: Drop the database;
-Returns : Success
+  Function: Drop the database;
+  Returns : N/A
   Args    : N/A
 
 =cut
@@ -209,15 +257,11 @@ sub drop_database {
 
 #-----------------------------------------------------------------------------
 
-=head2 _open_or_create_database
-
- Title   : _open_or_create_database
- Usage   : $self->_open_or_create_database();
- Function: Create the database if it doesnt exists.
- Returns : Success
- Args    : N/A
-
-=cut
+# Title   : _open_or_create_database
+# Usage   : $self->_open_or_create_database();
+# Function: Create the database if it doesnt exists.
+# Returns : A DBD::SQLite object
+# Args    : Nothing
 
 sub _open_or_create_database {
   my $self = shift;
@@ -235,7 +279,9 @@ sub _open_or_create_database {
     # $dbh->{AutoCommit} = 0;
   }
   else {
-    $self->warn(message => "Using exsiting database $database");
+    $self->warn(message => ("A database by the name $database already "      .
+			    "existed, so I'll use it as is.",
+		code    => "using_existing_database : $database");
     $dbh = DBI->connect($self->dsn);
     # $dbh = DBI->connect("dbi:SQLite:dbname=:memory");
     # $dbh->sqlite_backup_from_file($self->database);
@@ -249,9 +295,9 @@ sub _open_or_create_database {
 
  Title   : index_database
  Usage   : $self->index_database();
- Function: Get/Set value of index_database.
- Returns : Value of index_database.
- Args    : Value to set index_database to.
+ Function: Create indeces on the database.
+ Returns : Nothing
+ Args    : None
 
 =cut
 
@@ -282,11 +328,14 @@ sub index_database {
 
  Title   : load_files
  Usage   : $self->load_files();
- Function: Get/Set value of load_files.
- Returns : Value of load_files.
- Args    : Value to set load_files to.
+ Function: Load a file(s) into the database
+ Returns : Nothing
+ Args    : An scalar string or array reference containing the name(s) of
+           files to load.
 
 =cut
+
+# TODO: Allow GAL::Storage::subclass::load_files to set the parser.
 
 sub load_files {
 
@@ -310,9 +359,9 @@ sub load_files {
 
  Title   : add_features
  Usage   : $self->add_features();
- Function: Get/Set value of add_features.
- Returns : Value of add_features.
- Args    : Value to set add_feature to.
+ Function: Add features to the database.
+ Returns : Nothing
+ Args    : An array reference of feature hashes.
 
 =cut
 
@@ -342,9 +391,14 @@ sub add_features {
   for my $feat_row (@{$feat_rows}) {
     my $rv = $feat_sth->execute(@{$feat_row});
     unless ($rv) {
-      my $warn_message = "WARN: bad_insert : ";
-      $warn_message .= join ', ', @{$feat_row};
-      $self->warn(message => $warn_message);
+      my $warn_message = ('The following data failed to insert into the ' .
+			  'feature table : ');
+      my $warn_code = 'bad_feature_table_insert :'
+      my $data = join ', ', @{$feat_row};
+      $warn_message .= $data;
+      $warn_code    .= $data;
+      $self->warn(message => $warn_message,
+		  code     => $warn_code);
     }
   }
 
@@ -360,9 +414,14 @@ sub add_features {
   for my $att_row (@{$att_rows}) {
     my $rv = $att_sth->execute(@{$att_row});
     unless ($rv) {
-      my $warn_message = "WARN: bad_insert : ";
-      $warn_message .= join ', ', @{$att_rows};
-      $self->warn(message => $warn_message);
+      my $warn_message = ('The following data failed to insert into the ' .
+			  'attribute table : ');
+      my $warn_code = 'bad_attribute_table_insert :'
+      my $data = join ', ', @{$att_row};
+      $warn_message .= $data;
+      $warn_code    .= $data;
+      $self->warn(message => $warn_message,
+		  code     => $warn_code);
     }
   }
 
@@ -377,216 +436,233 @@ sub add_features {
   for my $rel_row (@{$rel_rows}) {
     my $rv = $rel_sth->execute(@{$rel_row});
     unless ($rv) {
-      my $warn_message = "WARN: bad_insert : ";
-      $warn_message .= join ', ', @{$rel_rows};
-      $self->warn(message => $warn_message);
+      my $warn_message = ('The following data failed to insert into the ' .
+			  'relationship table : ');
+      my $warn_code = 'bad_relationship_table_insert :'
+      my $data = join ', ', @{$rel_row};
+      $warn_message .= $data;
+      $warn_code    .= $data;
+      $self->warn(message => $warn_message,
+		  code     => $warn_code);
     }
   }
   $dbh->commit;
 }
 
 #-----------------------------------------------------------------------------
-
-=head2 get_children
-
- Title   : get_children
- Usage   : $self->get_children();
- Function: Get/Set value of get_children.
- Returns : Value of get_children.
- Args    : Value to set get_children to.
-
-=cut
-
-sub get_children {
-	my $self = shift;
-	$self->not_implemented('get_children');
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 get_children_recursively
-
- Title   : get_children_recursively
- Usage   : $self->get_children_recursively();
- Function: Get/Set value of get_children_recursively.
- Returns : Value of get_children_recursively.
- Args    : Value to set get_children_recursively to.
-
-=cut
-
-sub get_children_recursively {
-  my $self = shift;
-  $self->not_implemented('get_children_recursively');
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 get_parents
-
- Title   : get_parents
- Usage   : $self->get_parents();
- Function: Get/Set value of get_parents.
- Returns : Value of get_parents.
- Args    : Value to set get_parents to.
-
-=cut
-
-sub get_parents {
-  my $self = shift;
-  $self->not_implemented('get_parents');
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 get_parents_recursively
-
- Title   : get_parents_recursively
- Usage   : $self->get_parents_recursively();
- Function: Get/Set value of get_parents_recursively.
- Returns : Value of get_parents_recursively.
- Args    : Value to set get_parents_recursively to.
-
-=cut
-
-sub get_parents_recursively {
-  my $self = shift;
-  $self->not_implemented('get_parents_recursively');
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 get_all_features
-
- Title   : get_all_features
- Usage   : $self->get_all_features();
- Function: Get/Set value of get_all_features.
- Returns : Value of get_all_features.
- Args    : Value to set get_all_features to.
-
-=cut
-
-sub get_all_features {
-  my $self = shift;
-  $self->not_implemented('get_all_features');
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 get_features_by_type
-
- Title   : get_features_by_type
- Usage   : $self->get_features_by_type();
- Function: Get/Set value of get_features_by_type.
- Returns : Value of get_features_by_type.
- Args    : Value to set get_features_by_type to.
-
-=cut
-
-sub get_features_by_type {
-  my $self = shift;
-  $self->not_implemented('get_features_by_type');
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 get_recursive_features_by_type
-
- Title   : get_recursive_features_by_type
- Usage   : $self->get_recursive_features_by_type();
- Function: Get/Set value of get_recursive_features_by_type.
- Returns : Value of get_recursive_features_by_type.
- Args    : Value to set get_recursive_features_by_type to.
-
-=cut
-
-sub get_recursive_features_by_type {
-  my $self = shift;
-  $self->not_implemented('get_recursive_features_by_type');
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 get_feature_by_id
-
- Title   : get_feature_by_id
- Usage   : $self->get_feature_by_id();
- Function: Get/Set value of get_feature_by_id.
- Returns : Value of get_feature_by_id.
- Args    : Value to set get_feature_by_id to.
-
-=cut
-
-sub get_feature_by_id {
-  my $self = shift;
-  $self->not_implemented('get_feature_by_id');
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 filter_features
-
- Title   : filter_features
- Usage   : $self->filter_features();
- Function: Get/Set value of filter_features.
- Returns : Value of filter_features.
- Args    : Value to set filter_features to.
-
-=cut
-
-sub filter_features {
-  my $self = shift;
-  $self->not_implemented('filter_features');
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 foo
-
- Title   : foo
- Usage   : $a = $self->foo();
- Function: Get/Set the value of foo.
- Returns : The value of foo.
- Args    : A value to set foo to.
-
-=cut
-
-sub foo {
-	my ($self, $value) = @_;
-	$self->{foo} = $value if defined $value;
-	return $self->{foo};
-}
-
-#-----------------------------------------------------------------------------
+#
+#=head2 get_children
+#
+# Title   : get_children
+# Usage   : $self->get_children();
+# Function: Get/Set value of get_children.
+# Returns : Value of get_children.
+# Args    : Value to set get_children to.
+#
+#=cut
+#
+#sub get_children {
+#	my $self = shift;
+#	$self->not_implemented('get_children');
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_children_recursively
+#
+# Title   : get_children_recursively
+# Usage   : $self->get_children_recursively();
+# Function: Get/Set value of get_children_recursively.
+# Returns : Value of get_children_recursively.
+# Args    : Value to set get_children_recursively to.
+#
+#=cut
+#
+#sub get_children_recursively {
+#  my $self = shift;
+#  $self->not_implemented('get_children_recursively');
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_parents
+#
+# Title   : get_parents
+# Usage   : $self->get_parents();
+# Function: Get/Set value of get_parents.
+# Returns : Value of get_parents.
+# Args    : Value to set get_parents to.
+#
+#=cut
+#
+#sub get_parents {
+#  my $self = shift;
+#  $self->not_implemented('get_parents');
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_parents_recursively
+#
+# Title   : get_parents_recursively
+# Usage   : $self->get_parents_recursively();
+# Function: Get/Set value of get_parents_recursively.
+# Returns : Value of get_parents_recursively.
+# Args    : Value to set get_parents_recursively to.
+#
+#=cut
+#
+#sub get_parents_recursively {
+#  my $self = shift;
+#  $self->not_implemented('get_parents_recursively');
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_all_features
+#
+# Title   : get_all_features
+# Usage   : $self->get_all_features();
+# Function: Get/Set value of get_all_features.
+# Returns : Value of get_all_features.
+# Args    : Value to set get_all_features to.
+#
+#=cut
+#
+#sub get_all_features {
+#  my $self = shift;
+#  $self->not_implemented('get_all_features');
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_features_by_type
+#
+# Title   : get_features_by_type
+# Usage   : $self->get_features_by_type();
+# Function: Get/Set value of get_features_by_type.
+# Returns : Value of get_features_by_type.
+# Args    : Value to set get_features_by_type to.
+#
+#=cut
+#
+#sub get_features_by_type {
+#  my $self = shift;
+#  $self->not_implemented('get_features_by_type');
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_recursive_features_by_type
+#
+# Title   : get_recursive_features_by_type
+# Usage   : $self->get_recursive_features_by_type();
+# Function: Get/Set value of get_recursive_features_by_type.
+# Returns : Value of get_recursive_features_by_type.
+# Args    : Value to set get_recursive_features_by_type to.
+#
+#=cut
+#
+#sub get_recursive_features_by_type {
+#  my $self = shift;
+#  $self->not_implemented('get_recursive_features_by_type');
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 get_feature_by_id
+#
+# Title   : get_feature_by_id
+# Usage   : $self->get_feature_by_id();
+# Function: Get/Set value of get_feature_by_id.
+# Returns : Value of get_feature_by_id.
+# Args    : Value to set get_feature_by_id to.
+#
+#=cut
+#
+#sub get_feature_by_id {
+#  my $self = shift;
+#  $self->not_implemented('get_feature_by_id');
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 filter_features
+#
+# Title   : filter_features
+# Usage   : $self->filter_features();
+# Function: Get/Set value of filter_features.
+# Returns : Value of filter_features.
+# Args    : Value to set filter_features to.
+#
+#=cut
+#
+#sub filter_features {
+#  my $self = shift;
+#  $self->not_implemented('filter_features');
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2 foo
+#
+# Title   : foo
+# Usage   : $a = $self->foo();
+# Function: Get/Set the value of foo.
+# Returns : The value of foo.
+# Args    : A value to set foo to.
+#
+#=cut
+#
+#sub foo {
+#	my ($self, $value) = @_;
+#	$self->{foo} = $value if defined $value;
+#	return $self->{foo};
+#}
+#
+##-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
 =over
 
-=item C<< Error message here, perhaps with %s placeholders >>
+=item C<using_existing_database>
 
-[Description of error here]
+A database by the same name specified already existed and you haven't
+asked for it to be overwritten, so it will be used and possible
+appended to.  If you want to overwrite this database you should use
+the attribute C<mode => overwrite> when you create the storage object.
 
-=item C<< Another error message here >>
+=item C<bad_feature_table_insert>
 
-[Description of error here]
+An error occured while trying to insert data into the feature table.
+The offending data is given as a comma separated list.  Make sure that
+all of the data is compatible with the database schema.  This may be a
+problem in the parser you are using, or more likely the incoming data
+is not in the correct format.
 
-[Et cetera, et cetera]
+=item C<bad_attribute_table_insert>
+
+Same problem as C<bad_feature_table_insert> above, but for the
+attribute table.
+
+=item C<bad_relationship_table_insert>
+
+Same problem as C<bad_feature_table_insert> above, but for the
+attribute table.
 
 =back
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Storage::SQLite> requires no configuration files or environment variables.
+<GAL::Storage::SQLite> requires no configuration files or environment
+variables.
 
 =head1 DEPENDENCIES
 
-None.
+L<GAL::Storage>
+L<DBI>
+L<DBD::SQLite>
 
 =head1 INCOMPATIBILITIES
 
@@ -605,7 +681,8 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All
+rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.
@@ -613,25 +690,25 @@ Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights res
 =head1 DISCLAIMER OF WARRANTY
 
 BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
-FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
-OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
-PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
-ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
-YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
-NECESSARY SERVICING, REPAIR, OR CORRECTION.
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.
 
 IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
 WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
-LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
-OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
-THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
 RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
 FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
-SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGES.
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.
 
 =cut
 
