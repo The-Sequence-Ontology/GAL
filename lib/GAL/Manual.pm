@@ -1,51 +1,57 @@
-CONTENTS:
+=pod 
 
+=head1 INTRODUCTION:
 
+=head2 Justification
 
-INTRODUCTION:
+=head1 MAJOR FEATURES:
 
+=head1 LIBRARY STRUCTURE:
 
+=head2 Schema/Object Structure
 
-MAJOR FEATURES:
+Based on GFF3 structure
 
+Hash references vs. objects
 
+GAL::Annotation - Genome Annotation Library
+GAL::Base - Base class for the Genome Annotation Library
+GAL::Parser - Parser objects for the Genome Annotation Library
+GAL::Reader - Reader objects for the Genome Annotation Library
+GAL::Storage - <One line description of module's purpose here>
+GAL::Schema - DBIx::Class functionality for the Genome Annotation Library
+GAL::List - List aggregation and analysis functions for GAL
+GAL::Feature - <One line description of module's purpose here>
+GAL::Index - <One line description of module's purpose here>
+GAL::Parser::gff3 - Parse GFF3 files
+GAL::Reader::DelimitedLine -  Delimited file parsing for GAL
+GAL::Reader::RecordParser - Record Parsing using Text::RecordParser
+GAL::Schema::Result::Feature - Base class for all sequence features
+GAL::Schema::Result::Attribute - Access to feature attributes for GAL::Schema::Result::Features
+GAL::Schema::Result::Relationship - Access to relationships for <GAL::Schema::Result::Feature> objects.
+GAL::Schema::Result::Feature::gene -  A gene object for the GAL Library
+GAL::Schema::Result::Feature::transcript - A transcript object for the GAL
+GAL::Schema::Result::Feature::exon -  A exon object for the GAL Library
+GAL::Schema::Result::Feature::cds - A CDS object for the GAL Library
 
-LIBRARY STRUCTURE:
+=head2 Structure of the objects
 
+=head1 BASIC USAGE:
 
+=head1 SEQUENCE ONTOLOGY INTEGRATION:
 
-BASIC USAGE:
+=head1 PERFORMANCE:
 
+=head1 FAQ:
 
+=head1 COOKBOOK:
 
-SEQUENCE ONTOLOGY INTEGRATION:
+=head1 TROUBLESHOOTING:
 
+=head1 GLOSSARY:
 
+=head1 TODO:
 
-PERFORMANCE:
-
-
-
-FAQ:
-
-
-
-COOKBOOK:
-
-
-
-TROUBLESHOOTING:
-
-
-
-GLOSSARY:
-
-
-
-TODO:
-
-
-=head1 NAME
 
 GAL::Annotation - Genome Annotation Library
 

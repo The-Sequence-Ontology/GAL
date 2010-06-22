@@ -3,34 +3,60 @@ package GAL::Parser::complete_genomics;
 use strict;
 use vars qw($VERSION);
 
-
 $VERSION = '0.01';
 use base qw(GAL::Parser);
+use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::complete_genomics - <One line description of module's purpose here>
+GAL::Parser::complete_genomics_new - Parse some types of Complete
+Genomics files.
 
 =head1 VERSION
 
-This document describes GAL::Parser::complete_genomics version 0.01
+This document describes GAL::Parser::complete_genomics_new version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::complete_genomics;
+    my $parser = GAL::Parser::complete_genomics_new->new(file =>
+                                        'complete_genomics.txt');
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    while (my $feature_hash = $parser->next_feature_hash) {
+	print $parser->to_complete_genomics_new($feature_hash) . "\n";
+    }
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+L<GAL::Parser::complete_genomics_new> provides parsing ability for some
+versions of Complete Genomics variant files.
 
-=head1 METHODS
+=head1 Constructor
+
+New L<GAL::Parser::complete_genomics_new> objects are created by the
+class method new.  Arguments should be passed to the constructor as a
+list (or reference) of key value pairs.  All attributes of the
+L<GAL::Parser::complete_genomics_new> object can be set in the call to
+new. An simple example of object creation would look like this:
+
+    my $parser = GAL::Parser::complete_genomics_new->new(file =>
+                           'data/feature.complete_genomics_new');
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+These attributes are inhereted from L<GAL::Parser>.
+
+=item * C<< file => feature_file.txt >>
+
+This optional parameter provides the filename for the file containing
+the data to be parsed. While this parameter is optional either it, or
+the following fh parameter must be set.
+
+=item * C<< fh => feature_file.txt >>
+
+This optional parameter provides a filehandle to read data from. While
+this parameter is optional either it, or the following fh parameter
+must be set.
 
 =cut
 
@@ -39,10 +65,10 @@ This document describes GAL::Parser::complete_genomics version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::complete_genomics->new();
-     Function: Creates a GAL::Parser::complete_genomics object;
-     Returns : A GAL::Parser::complete_genomics object
-     Args    :
+     Usage   : GAL::Parser::complete_genomics_new->new();
+     Function: Creates a GAL::Parser::complete_genomics_new object;
+     Returns : A GAL::Parser::complete_genomics_new object
+     Args    : See the attributes described above.
 
 =cut
 
@@ -67,18 +93,12 @@ sub _initialize_args {
     my @valid_attributes = qw(); # Set attributes here.
     $self->set_attributes($args, @valid_attributes);
     ######################################################################
-
-    # Set the column headers from your incoming data file here
-    # These will become the keys in your $record hash reference below.
-    $self->fields([qw(locus haplotype contig begin end vartype reference alleleSeq totalScore hapLink xRef)]);
-    $self->field_separator(',');
-    $self->comment_delimiter(qr/^[^\d]/);
 }
 
 #-----------------------------------------------------------------------------
 
 =head2 parse_record
-    
+
  Title   : parse_record
  Usage   : $a = $self->parse_record();
  Function: Parse the data from a record.
@@ -89,9 +109,13 @@ sub _initialize_args {
 
 sub parse_record {
     my ($self, $record) = @_;
-    
+
+    $self->throw(message => ("GAL::Parser::complete_genomics_new is not " .
+			     "finished.  Don't use it!")
+		);
+
     return undef unless $record->{locus} =~ /^\d+$/;
-    
+
     # locus,haplotype,contig,begin,end,vartype,reference,alleleSeq,totalScore,hapLink,xRef
     # 14,1,chr1,26241,26252,=,AAGAATTTAAA,AAGAATTTAAA,30,349,
     # 14,1,chr1,26252,26252,ref-consistent,,?,,349,
@@ -99,15 +123,15 @@ sub parse_record {
     # 14,2,chr1,26241,26259,ref-consistent,AAGAATTTAAATTATAAA,?,,350,
     # 15,1,chr1,26263,26264,=,T,T,22,349,
     # 15,2,chr1,26263,26264,ref-consistent,T,N,91,350,
-    
+
     my $id         = sprintf 'CG_%09d', $record->{locus};
     my $seqid      = $record->{contig};
     my $source     = 'Complete_Genomics';
-    
+
     my $type = $record->{vartype};
     my $has_ref_seq;
     $has_ref_seq++ if $types{'='};
-    
+
     # snp: single-nucleotide polymorphism
     # ins: insertion
     # del: deletion
@@ -129,7 +153,7 @@ sub parse_record {
     #     sequence is reported as diploid sequence on Chromosome X; on
     #     chromosome Y the sequence is reported as varType = “PAR-
     #     called-in-X”.
-    
+
     my %type_map = ('snp'		  => 'SNV',
 		    'ins'		  => 'nucleotide_insertion',
 		    'del'		  => 'nucleotide_deletion',
@@ -144,28 +168,28 @@ sub parse_record {
 		    'no-ref'          => 'no_call',
 		    'PAR-called-in-X' => 'unknown',
 		    );
-    
+
     $type = $type_map{$type} || 'sequence_alteration';
-    
+
     my $start      = $record->{begin} + 1;
     my $end        = $record->{end};
     my $score      = $record->{totalScore};
     my $strand     = '+';
     my $phase      = '.';
-    
+
     my $reference_seq = $record->{reference} || '-';
     my %variant_hash  = map {$_ => 1} ($record->{seq1}, $record->{seq2});
     $variant_hash{$reference_seq}++ if $has_ref_seq;
     my @variant_seqs = map {$_ ||= '-'} keys %variant_hash;
-    
+
     my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
-    
+
     my $attributes = {Reference_seq => [$reference_seq],
 		      Variant_seq   => \@variant_seqs,
 		      Genotype         => [$genotype],
 		      ID               => [$id],
 		  };
-    
+
     my $feature_data = {feature_id => $id,
 			seqid      => $seqid,
 			source     => $source,
@@ -177,7 +201,7 @@ sub parse_record {
 			phase      => $phase,
 			attributes => $attributes,
 		    };
-    
+
     return $feature_data;
 }
 
@@ -195,9 +219,9 @@ sub parse_record {
 
 sub next_feature_hash {
     my $self = shift;
-    
+
     my $feature;
-    
+
     # If a previous record has returned multiple features then
     # grab them off the stack first instead of reading a new one
     # from the file.
@@ -206,18 +230,18 @@ sub next_feature_hash {
 	$feature = shift @{$self->{_feature_stack}};
 	return wantarray ? %{$feature} : $feature;
     }
-    
+
     # Allow parse_record to return undef to ignore a record, but
     # still keep parsing the file.
     until ($feature) {
 	# Get the next record from the file.
 	my $record = $self->_read_next_record;
 	return undef if ! defined $record;
-	
+
 	# Parser the record - probably overridden by a subclass.
 	$feature = $self->parse_record($record);
     }
-    
+
     # Allow parsers to return more than one feature.
     # This allows the parser to expand a single record into
     # multiple features.
@@ -226,59 +250,52 @@ sub next_feature_hash {
 	push @{$self->{_feature_stack}}, @{$feature};
 	$feature = $this_feature;
     }
-    
+
     return wantarray ? %{$feature} : $feature;
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 foo
+=head2 reader
 
- Title   : foo
- Usage   : $a = $self->foo();
- Function: Get/Set the value of foo.
- Returns : The value of foo.
- Args    : A value to set foo to.
+ Title   : reader
+ Usage   : $a = $self->reader
+ Function: Return the reader object.
+ Returns : A GAL::Reader::DelimitedLine singleton.
+ Args    : None
 
 =cut
 
-sub foo {
-	my ($self, $value) = @_;
-	$self->{foo} = $value if defined $value;
-	return $self->{foo};
+sub reader {
+  my $self = shift;
+
+  if (! $self->{reader}) {
+    my @field_names = qw(locus contig begin end vartype1 vartype2 reference
+			 seq1 seq2 totalScore);
+    my $reader = GAL::Reader::DelimitedLine->new(field_names      => \@field_names,
+						 field_separator   => ',',
+						 comment_delimiter => qr/^\s*#/);
+    $self->{reader} = $reader;
+  }
+  return $self->{reader};
 }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+L<GAL::Parser::complete_genomics_new> does not throw any warnings or
+errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::complete_genomics> requires no configuration files or environment variables.
+L<GAL::Parser::complete_genomics_new> requires no configuration files
+or environment variables.
 
 =head1 DEPENDENCIES
 
-None.
+L<GAL::Parser>
+L<GAL::Reader::DelimitedLine>
 
 =head1 INCOMPATIBILITIES
 
@@ -297,7 +314,8 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All
+rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.
@@ -305,25 +323,25 @@ Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights res
 =head1 DISCLAIMER OF WARRANTY
 
 BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
-FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
-OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
-PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
-ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
-YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
-NECESSARY SERVICING, REPAIR, OR CORRECTION.
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.
 
 IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
 WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
-LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
-OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
-THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
 RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
 FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
-SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGES.
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.
 
 =cut
 
