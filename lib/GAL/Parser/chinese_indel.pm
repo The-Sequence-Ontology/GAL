@@ -6,10 +6,11 @@ use vars qw($VERSION);
 
 $VERSION = '0.01';
 use base qw(GAL::Parser);
+use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::soap_indel - <One line description of module's purpose here>
+GAL::Parser::soap_indel - Parse SOAP indel files
 
 =head1 VERSION
 
@@ -17,20 +18,40 @@ This document describes GAL::Parser::soap_indel version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::soap_indel;
+    my $parser = GAL::Parser::soap_indel->new(file => 'soap_indel.gff');
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    while (my $feature_hash = $parser->next_feature_hash) {
+	print $parser->to_gff3($feature_hash) . "\n";
+    }
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+L<GAL::Parser::soap_indel> provides a parser for SOAP indel files 
 
-=head1 METHODS
+=head1 Constructor
+
+New L<GAL::Parser::soap_indel> objects are created by the class method
+new.  Arguments should be passed to the constructor as a list (or
+reference) of key value pairs.  All attributes of the
+L<GAL::Parser::soap_indel> object can be set in the call to new. An
+simple example of object creation would look like this:
+
+    my $parser = GAL::Parser::soap_indel->new(file => 'soap_indel');
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=item * C<< file => feature_file.txt >>
+
+This optional parameter provides the filename for the file containing
+the data to be parsed. While this parameter is optional either it, or
+the following fh parameter must be set.
+
+=item * C<< fh => feature_file.txt >>
+
+This optional parameter provides a filehandle to read data from. While
+this parameter is optional either it, or the following fh parameter
+must be set.
 
 =cut
 
@@ -42,7 +63,7 @@ This document describes GAL::Parser::soap_indel version 0.01
      Usage   : GAL::Parser::soap_indel->new();
      Function: Creates a GAL::Parser::soap_indel object;
      Returns : A GAL::Parser::soap_indel object
-     Args    :
+     Args    : See the attributes described above.
 
 =cut
 
