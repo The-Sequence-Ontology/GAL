@@ -1,8 +1,7 @@
-package GAL::Parser::illumina_indel;
+package GAL::Parser::cgi_compact;
 
 use strict;
 use vars qw($VERSION);
-
 
 $VERSION = '0.01';
 use base qw(GAL::Parser);
@@ -10,36 +9,43 @@ use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::illumina_indel - Parse Illumina indel variant files
+GAL::Parser::cgi_compact - Parse Complete Genomics compact files
 
 =head1 VERSION
 
-This document describes GAL::Parser::illumina_indel version 0.01
+This document describes GAL::Parser::cgi_compact version 0.01
 
 =head1 SYNOPSIS
 
-    my $parser = GAL::Parser::illumina_indel->new(file => 'illumina_indel.gff');
+    my $parser = GAL::Parser::cgi_compact->new(file =>
+          'CGI-Variations-Compact.csv');
 
     while (my $feature_hash = $parser->next_feature_hash) {
-	print $parser->to_illumina_indel($feature_hash) . "\n";
+	print $parser->to_gff3($feature_hash) . "\n";
     }
 
 =head1 DESCRIPTION
 
-L<GAL::Parser::illumina_indel> provides a parser for Illumina indel data.
+L<GAL::Parser::cgi_compact> provides a parser for the
+CGI-Variations-Compact.csv format which Complete Genomics provided
+with the sequence data for the Feb 5, 2009 sequencing of the anonymous
+CEPH (cell-line) genome NA07022.
 
 =head1 Constructor
 
-New L<GAL::Parser::illumina_indel> objects are created by the class
+New L<GAL::Parser::cgi_compact> objects are created by the class
 method new.  Arguments should be passed to the constructor as a list
 (or reference) of key value pairs.  All attributes of the
-L<GAL::Parser::illumina_indel> object can be set in the call to
-new. An simple example of object creation would look like this:
+L<GAL::Parser::cgi_compact> object can be set in the call to new. An
+simple example of object creation would look like this:
 
-    my $parser = GAL::Parser::illumina_indel->new(file => 'data/illumin_indel.gff');
+    my $parser = GAL::Parser::cgi_compact->new(file =>
+          'CGI-Variations-Compact.csv');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
+
+The following attributes are inhereted from L<GAL::Parser>.
 
 =item * C<< file => feature_file.txt >>
 
@@ -60,9 +66,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::illumina_indel->new();
-     Function: Creates a GAL::Parser::illumina_indel object;
-     Returns : A GAL::Parser::illumina_indel object
+     Usage   : GAL::Parser::cgi_compact->new();
+     Function: Creates a GAL::Parser::cgi_compact object;
+     Returns : A GAL::Parser::cgi_compact object
      Args    : See the attributes described above.
 
 =cut
@@ -70,7 +76,6 @@ must be set.
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
-
 	return $self;
 }
 
@@ -86,9 +91,12 @@ sub _initialize_args {
 	# for each attribute.  Leave the rest of this block alone!
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
-	my @valid_attributes = qw(); # Set valid class attributes here.
+	my @valid_attributes = qw(); # Set attributes here.
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
+
+	# Set the column headers from your incoming data file here
+	# These will become the keys in your $record hash reference below.
 }
 
 #-----------------------------------------------------------------------------
@@ -106,80 +114,57 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# Create the attributes hash
+	return undef unless $record->{locus} =~ /^\d+$/;
 
-	# N/A chr1 713662 13 -2:AG    AGGGAGAGAGAAAGGAAGAGACGATGAGAGAC AGAGAGAAGGAGAGAGAAAGTACAAAAGAACG	HET Non_genic Other
-	# N/A chr1 714130 49  5:GAATG TGGAACGCACTCGAATGGAATGGAACGGACAT GAATGGAATGGAATGGAACGGACACGAATGGA	HET Non_genic Other
-	# N/A chr1 715647 78 -2:AG    TAATGGAATGGACTTGAATGGAATAGAATGGA AGAGACTCGAATGGAATGGAATGCAATGGAAT	HET Non_genic Other
-	# N/A chr1 780560 13  2:AT    TACGGGTGTATCTGTGTATTGTGTATGCACAC ACGAGCATATGTGTACATGAATTTGTATTGCA	HET Non_genic Other
-	# N/A chr1 780622 27 -2:TA    CACATGTGTTTAATGCGAACACGTGTCATGTG TATGTGTTCACATGCATGTGTGTCTGTGTACT	HET Non_genic Other
-	# N/A chr1 794457 9  -1:A     TGCTGTGACAAAAAAGCAGGGAAAGGGAATTT AAAAAAAAAAAAGCAAACAACAACAACAAAAA	HET Non_genic Other
-	# N/A chr1 805541 10 -1:G     GTTAGCTGTGTTTTTTGTTGTTGTTGTTTTTT GGGGTTTTTTTTGTATAACATTATGTTAAGGT	HET Non_genic Other
-	# N/A chr1 806031 30 -1:T     CAGTGTAGCCATCTGGTCCAGGCTTTTCTTTG TTGCTGGGTTTTTTATTACTGATGCAATCTTC	HET Non_genic Other
-	# N/A chr1 806276 26 -1:T     TTATTTTTGAGTTTGGTAATTTGAGTATTCCC TTTTTTTCTTAGTCAATCTAGATAAAATTTTG	HET Non_genic Other
-	# N/A chr1 806790 32  1:C     TGTATCAACATTTGTTGTGTTCTCATAAACTT TGTAATACATGGAGATTTCTGGTCCACATATG	HET Non_genic Other
+	# locus,contig,begin,end,vartype1,vartype2,reference,seq1,seq2,totalScore
+	# 6,chr1,31843,31844,snp,snp,A,G,G,235
+	# 21,chr1,36532,36533,snp,snp,A,G,G,36
+	# 23,chr1,36970,36971,snp,snp,G,C,C,109
+	# 24,chr1,37154,37155,snp,snp,T,G,G,181
+	# 25,chr1,37354,37355,=,snp,C,C,G,73
+	# 26,chr1,37623,37624,snp,snp,T,C,C,29
+	# 27,chr1,38033,38034,=,snp,A,A,G,54
 
-	# $self->fields([qw(transcript_id chromosome location total_reads seq context1
-	#                   context2 genotype gene_name gene_part)]);
+	# $self->fields([qw(locus contig begin end vartype1 vartype2 reference seq1 seq2 totalScore)]);
+	# Fill in the first 8 columns for GFF3
+	# See http://www.sequenceontology.org/resources/gff3.html for details.
+	my $id         = sprintf 'CG_%09d', $record->{locus};
+	my $seqid      = $record->{contig};
+	my $source     = 'CGI';
 
-	my ($seq_size, $seq) =  split /:/, $record->{seq};
+	my %types = map {$_, 1} ($record->{vartype1}, $record->{vartype2});
+	my $has_ref_seq;
+	$has_ref_seq++ if $types{'='};
+	delete $types{'='};
 
-	my $seqid      = $record->{chromosome};
-	my $source     = 'Illumina_GA';
-	my $type       = $seq_size < 0 ? 'nucleotide_deletion' : 'nucleotide_insertion';
-	my $start      = $seq_size < 0 ? $record->{location} : $record->{location} - 1;
-	my $end        = $seq_size < 0 ? $record->{location} - $seq_size - 1 : $record->{location} - 1;
-	my $score      = '.';
+	my ($type) = scalar keys %types == 1 ? keys %types : '';
+
+	my %type_map = (snp		    => 'SNV',
+			ins		    => 'nucleotide_insertion',
+			del		    => 'nucleotide_deletion',
+			inv		    => 'inversion',
+		       );
+
+	$type = $type_map{$type} || 'sequence_alteration';
+
+	my $start      = $record->{begin} + 1;
+	my $end        = $record->{end};
+	my $score      = $record->{totalScore};
 	my $strand     = '+';
 	my $phase      = '.';
 
-	my $id = join ":", ($source, $type, $seqid, $start);
+	my $reference_seq = $record->{reference} || '-';
+	my %variant_hash  = map {$_ => 1} ($record->{seq1}, $record->{seq2});
+	$variant_hash{$reference_seq}++ if $has_ref_seq;
+	my @variant_seqs = map {$_ ||= '-'} keys %variant_hash;
 
-	my $reference_seq = $seq_size < 0 ? $seq : '-';
-	my @variant_seqs;
-	if ($record->{genotype} eq 'HET') {
-		push @variant_seqs, ($seq_size < 0 ? $seq : '-')
-	}
-	else {
-		push @variant_seqs, ($seq_size < 0 ? '-'     : $seq);
-	}
-
-	my $total_reads = $record->{total_reads};
-
-	my $genotype = $record->{genotype} eq 'HET' ? 'heterozygous' : 'homozygous';
-
-	my $intersected_gene;
-	$intersected_gene = $record->{gene_name} ne 'Non_genic' ? 'gene:HGNC:' . $record->gene_name : undef;
-
-	#perl -lane 'print $F[9] unless $F[9] eq "Other"' KOREF-solexa-indel-X30_d3D50E20.gff | sort | uniq -c | sort -nr
-	#  127516 Intron
-	#     319 3UTR
-	#      49 CDS
-	#      27 5UTR
-
-	my %type_map = ('Intron' => 'intron',
-			'3UTR'   => 'three_prime_UTR',
-			'CDS'    => 'CDS',
-			'5UTR'   => 'five_prime_UTR',
-			'Other'  =>  undef,
-		       );
-
-	my $intersected_gene_part;
-	$intersected_gene_part = $record->{gene_part};
-
-	my @intersected_features;
-
-	push @intersected_features, $intersected_gene      if $intersected_gene;
-	push @intersected_features, $intersected_gene_part if $intersected_gene_part;
+	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
-			  Total_reads   => [$total_reads],
-			  Genotype      => [$genotype],
-			  ID            => [$id],
+			  Genotype         => [$genotype],
+			  ID               => [$id],
 			 };
-
-	$attributes->{Intersected_feature} = \@intersected_features if scalar @intersected_features;
 
 	my $feature_data = {feature_id => $id,
 			    seqid      => $seqid,
@@ -203,7 +188,7 @@ sub parse_record {
  Title   : reader
  Usage   : $a = $self->reader
  Function: Return the reader object.
- Returns : A L<GAL::Reader::DelimitedLine> singleton.
+ Returns : A GAL::Reader::DelimitedLine singleton.
  Args    : None
 
 =cut
@@ -211,12 +196,13 @@ sub parse_record {
 sub reader {
   my $self = shift;
 
-	$self->fields([qw()]);
-
   if (! $self->{reader}) {
-    my @field_names = qw(transcript_id chromosome location total_reads seq context1
-			  context2 genotype gene_name gene_part);
-    my $reader = GAL::Reader::DelimitedLine->new(field_names     => \@field_names);
+    my @field_names = qw(locus contig begin end vartype1 vartype2 reference
+			 seq1 seq2 totalScore);
+    my $reader = GAL::Reader::DelimitedLine->new(field_separator   => ',',
+						 field_names       => \@field_names,
+						 comment_delimiter => qr/^[^\d]/,
+						);
     $self->{reader} = $reader;
   }
   return $self->{reader};
@@ -226,11 +212,11 @@ sub reader {
 
 =head1 DIAGNOSTICS
 
-L<GAL::Parser::illumina_indel> does not throw any warnings or errors.
+<GAL::Parser::cgi_compact> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<GAL::Parser::illumina_indel> requires no configuration files or
+L<GAL::Parser::cgi_compact> requires no configuration files or
 environment variables.
 
 =head1 DEPENDENCIES

@@ -18,6 +18,7 @@ This document describes GAL::Parser::gff3 version 0.01
 
 =head1 SYNOPSIS
 
+    use GAL::Parser::gff3;
     my $parser = GAL::Parser::gff3->new(file => 'feature.gff3');
 
     while (my $feature_hash = $parser->next_feature_hash) {

@@ -1,23 +1,23 @@
-package GAL::Parser::illumina_snp;
+package GAL::Parser::hapmap_genotype;
 
 use strict;
 use vars qw($VERSION);
-
-
 $VERSION = '0.01';
+
 use base qw(GAL::Parser);
+use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::illumina_snp - <One line description of module's purpose here>
+GAL::Parser::hapmap_genotype - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::illumina_snp version 0.01
+This document describes GAL::Parser::hapmap_genotype version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::illumina_snp;
+     use GAL::Parser::hapmap_genotype;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::illumina_snp version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::illumina_snp->new();
-     Function: Creates a illumina_snp object;
-     Returns : A illumina_snp object
+     Usage   : GAL::Parser::hapmap_genotype->new();
+     Function: Creates a GAL::Parser::hapmap_genotype object;
+     Returns : A GAL::Parser::hapmap_genotype object
      Args    :
 
 =cut
@@ -49,7 +49,6 @@ This document describes GAL::Parser::illumina_snp version 0.01
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
-
 	return $self;
 }
 
@@ -65,12 +64,9 @@ sub _initialize_args {
 	# for each attribute.  Leave the rest of this block alone!
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
-	my @valid_attributes = qw(); # Set valid class attributes here
+	my @valid_attributes = qw(file fh); # Set valid class attributes here
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
-
-	$self->fields([qw(chromosome location ref_seq var_seqs id
-			  total_reads read_seqs ref_reads var_reads)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -88,64 +84,65 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	my $id         = $record->{id};
-	my $seqid      = $record->{chromosome};
-	my $source     = 'Illumina_GA';
-	my $type       = 'SNV';
-	my $start      = $record->{location};
-	my $end        = $record->{location};
-	my $score      = '.';
-	my $strand     = '+';
-	my $phase      = '.';
+	# $record is a hash reference that contains the keys assigned
+	# in the $self->fields call in _initialize_args above
 
-	# Het with ref: get var_alleles and remove ref.  ref_reads and var_reads OK
-	# chr10   56397   C       CT      rs12262442      28      C/T     17      11
-	# chr10   61776   T       CT      rs61838967      15      T/C     7       8
-	# chr10   65803   T       CT      KOREFSNP1       27      T/C     19      8
-	# chr10   68106   C       AC      KOREFSNP2       43      C/A     22      21
-	# chr10   84136   C       CT      rs4607995       24      C/T     10      13
-	# chr10   84238   A       AT      rs10904041      22      A/T     5       16
+	# Fill in the first 8 columns for GFF3
+	# See http://www.sequenceontology.org/gff3.html for details.
+	my $feature_id = join ':', @record{qw(seqid source type start end)};
+	my $seqid      = $record->{seqid};
+	my $source     = $record->{source};
+	my $type       = $record->{type};
+	my $start      = $record->{start};
+	my $end        = $record->{end};
+	my $score      = $record->{score};
+	my $strand     = $record->{strand};
+	my $phase      = $record->{phase};
 
-	# Het but not ref: get var_alleles.  assign var_reads to correct var and calculate alter_var_reads from total - var_reads
-	# chr10   12625631        A       GT      rs2815636       42      A/G     0       21
-	# chr10   13864035        A       CT      rs5025431       27      A/T     0       15
-	# chr10   14292681        G       AC      rs11528656      29      G/A     0       18
-	# chr10   14771944        C       AG      rs3107794       29      C/G     0       15
-	# chr10   15075637        A       CG      rs9731518       29      A/G     4       16
+	# Create the attributes hash
+	# See http://www.sequenceontology.org/gvf.html
 
-	# Homozygous get var_alleles and use only one.  ref_reads and var_reads OK
-	# chr10   168434  T       GG      rs7089889       20      T/G     0       20
-	# chr10   173151  T       CC      rs7476951       19      T/C     0       19
-	# chr10   175171  G       TT      rs7898275       25      G/T     0       25
-	# chr10   175358  C       TT      rs7910845       26      C/T     0       26
+	# Assign the reference and variant sequences:
+	# Reference_seq=A
+	# The order of the Variant_seqs matters for indexing Variant_effect
+	# - see below
+	# Variant_seq=G,A
+	my ($reference_seq, @variant_seqs) = split m|/|, $record->{variant_seq};
 
-	# $self->fields([qw(chromosome location ref_seq var_seqs id total_reads read_seqs ref_reads var_reads)]);
+	# Assign the variant seq read counts if available:
+	# Variant_reads=8,6
 
-	my $reference_seq = $record->{ref_seq};
-	my %variant_seqs  = map {$_, 1} split //, $record->{var_seqs};
-	my @variant_seqs = keys %variant_seqs;
+	# Assign the total number of reads covering this position:
+	# Total_reads=16
 
-	my $total_reads = $record->{total_reads};
-
-	# chr10   56397   C       CT      rs12262442      28      C/T     17      11
-	my @read_seqs = split m|/|, $record->{read_seqs};
-	my %read_counts = ($read_seqs[0] => $record->{ref_reads},
-			   $read_seqs[1] => $record->{var_reads},
-			   );
-
-	my @variant_reads = map {$read_counts{$_} || $total_reads - $record->{var_reads}} @variant_seqs;
+	# Assign the genotype and probability if available:
+	# Genotype=homozygous
 
 	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
+	# Create the attribute hash reference.  Note that all values
+	# are array references - even those that could only ever have
+	# one value.  This is for consistency in the interface to
+	# Features.pm and it's subclasses.  Suggested keys include
+	# (from the GFF3 spec), but are not limited to: ID, Name,
+	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
+	# Ontology_term. Note that attribute names are case
+	# sensitive. "Parent" is not the same as "parent". All
+	# attributes that begin with an uppercase letter are reserved
+	# for later use. Attributes that begin with a lowercase letter
+	# can be used freely by applications.
+
+	# For sequence_alteration features the suggested keys include:
+	# ID, Reference_seq, Variant_seq, Variant_reads Total_reads,
+	# Genotype, Intersected_feature, Variant_effect, Copy_number
+
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
-			  Variant_reads => \@variant_reads,
-			  Total_reads   => [$total_reads],
 			  Genotype      => [$genotype],
-			  ID            => [$id],
+			  ID            => [$feature_id],
 			 };
 
-	my $feature_data = {feature_id => $id,
+	my $feature_data = {feature_id => $feature_id,
 			    seqid      => $seqid,
 			    source     => $source,
 			    type       => $type,
@@ -162,20 +159,17 @@ sub parse_record {
 
 #-----------------------------------------------------------------------------
 
-=head2 foo
-
- Title   : foo
- Usage   : $a = $self->foo();
- Function: Get/Set the value of foo.
- Returns : The value of foo.
- Args    : A value to set foo to.
-
-=cut
-
-sub foo {
-	my ($self, $value) = @_;
-	$self->{foo} = $value if defined $value;
-	return $self->{foo};
+sub reader {
+    my $self = shift;
+    
+    if (! $self->{reader}) {
+	# The column names for the incoming data
+	my @field_names = qw(seqid source type start end score strand phase
+			     attributes);
+	my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
+	$self->{reader} = $reader;
+    }
+    return $self->{reader};
 }
 
 #-----------------------------------------------------------------------------
@@ -204,7 +198,7 @@ sub foo {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::illumina_snp> requires no configuration files or environment variables.
+<GAL::Parser::hapmap_genotype> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
