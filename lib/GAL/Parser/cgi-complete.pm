@@ -1,4 +1,4 @@
-package GAL::Parser::complete_genomics;
+package GAL::Parser::cgi-complete;
 
 use strict;
 use vars qw($VERSION);
@@ -9,37 +9,37 @@ use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::complete_genomics_new - Parse some types of Complete
+GAL::Parser::cgi-complete - Parse some types of Complete
 Genomics files.
 
 =head1 VERSION
 
-This document describes GAL::Parser::complete_genomics_new version 0.01
+This document describes GAL::Parser::cgi-complete version 0.01
 
 =head1 SYNOPSIS
 
-    my $parser = GAL::Parser::complete_genomics_new->new(file =>
-                                        'complete_genomics.txt');
+    my $parser = GAL::Parser::cgi-complete->new(file =>
+                        'CGI-Variations-Complete.csv');
 
     while (my $feature_hash = $parser->next_feature_hash) {
-	print $parser->to_complete_genomics_new($feature_hash) . "\n";
+	print $parser->to_cgi-complete($feature_hash) . "\n";
     }
 
 =head1 DESCRIPTION
 
-L<GAL::Parser::complete_genomics_new> provides parsing ability for some
+L<GAL::Parser::cgi-complete> provides parsing ability for some
 versions of Complete Genomics variant files.
 
 =head1 Constructor
 
-New L<GAL::Parser::complete_genomics_new> objects are created by the
+New L<GAL::Parser::cgi-complete> objects are created by the
 class method new.  Arguments should be passed to the constructor as a
 list (or reference) of key value pairs.  All attributes of the
-L<GAL::Parser::complete_genomics_new> object can be set in the call to
+L<GAL::Parser::cgi-complete> object can be set in the call to
 new. An simple example of object creation would look like this:
 
-    my $parser = GAL::Parser::complete_genomics_new->new(file =>
-                           'data/feature.complete_genomics_new');
+    my $parser = GAL::Parser::cgi-complete->new(file =>
+                           'data/feature.cgi-complete');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
@@ -65,9 +65,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::complete_genomics_new->new();
-     Function: Creates a GAL::Parser::complete_genomics_new object;
-     Returns : A GAL::Parser::complete_genomics_new object
+     Usage   : GAL::Parser::cgi-complete->new();
+     Function: Creates a GAL::Parser::cgi-complete object;
+     Returns : A GAL::Parser::cgi-complete object
      Args    : See the attributes described above.
 
 =cut
@@ -110,7 +110,7 @@ sub _initialize_args {
 sub parse_record {
     my ($self, $record) = @_;
 
-    $self->throw(message => ("GAL::Parser::complete_genomics_new is not " .
+    $self->throw(message => ("GAL::Parser::cgi-complete is not " .
 			     "finished.  Don't use it!")
 		);
 
@@ -126,7 +126,7 @@ sub parse_record {
 
     my $id         = sprintf 'CG_%09d', $record->{locus};
     my $seqid      = $record->{contig};
-    my $source     = 'Complete_Genomics';
+    my $source     = 'CGI';
 
     my $type = $record->{vartype};
     my $has_ref_seq;
@@ -284,12 +284,12 @@ sub reader {
 
 =head1 DIAGNOSTICS
 
-L<GAL::Parser::complete_genomics_new> does not throw any warnings or
+L<GAL::Parser::cgi-complete> does not throw any warnings or
 errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<GAL::Parser::complete_genomics_new> requires no configuration files
+L<GAL::Parser::cgi-complete> requires no configuration files
 or environment variables.
 
 =head1 DEPENDENCIES
