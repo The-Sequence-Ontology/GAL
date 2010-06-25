@@ -38,7 +38,7 @@ of key value pairs.  All attributes of the L<GAL::Parser::quake_snp> object
 can be set in the call to new. An simple example of object creation
 would look like this:
 
-    my $parser = GAL::Parser::quake_snp->new(file => 'data/quake_snp.txt');
+    my $parser = GAL::Parser::quake_snp->new(file => 'quake_snp.txt');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:

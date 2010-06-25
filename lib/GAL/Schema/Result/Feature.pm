@@ -356,6 +356,44 @@ sub annotation {
 
 #-----------------------------------------------------------------------------
 
+=head2 throw
+
+ Title   : throw
+ Usage   : $self->throw
+ Function: This is a convinience function that forwards throwings on to the
+           L<GAL::Annotation> object so that L<GAL::Base> can handle them.
+           You could get the same behaviour by doing 
+           C<$self->annotation->throw(message => 'throwing'>.
+ Returns : Nothing
+ Args    : The following list: (message => 'message', code => 'code')
+
+=cut
+
+sub throw {
+  return shift->annotation->throw(@_);
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 warn
+
+ Title   : warn
+ Usage   : $self->warn
+ Function: This is a convinience function that forwards warnings on to the
+           L<GAL::Annotation> object so that L<GAL::Base> can handle them.
+           You could get the same behaviour by doing 
+           C<$self->annotation->warn(message => 'warning'>.
+ Returns : Nothing
+ Args    : The following list: (message => 'message', code => 'code')
+
+=cut
+
+sub warn {
+  return shift->annotation->warn(@_);
+}
+
+#-----------------------------------------------------------------------------
+
 # This is a private method, but is not named as one due to contraints on
 # the method name imposed by DBIx::Class.
 
@@ -376,43 +414,45 @@ sub inflate_result {
 
 #-----------------------------------------------------------------------------
 
-sub feature_bins {
-
-    my $self = shift;
-
-    $self->warn(message => ('GAL::Schema::Result::Feature::feature_bins is ' .
-			    'deprecated.  We should be using the method in ' .
-			    'GAL::Base instead.  Please update your code '   .
-			    'and stop using it.');
-
-    my ($seqid, $start, $end) = ($self->seqid, $self->start, $self->end);
-    my @feature_bins;
-    my $count;
-    my $single_bin;
-    for my $bin_size (128_000, 1_000_000, 8_000_000, 64_000_000,
-		      512_000_000) {
-      $count++;
-      my $start_bin = int($start/$bin_size);
-      my $end_bin   = int($end/$bin_size);
-      my @these_bins = map {$_ = join ':', ($seqid, $count, $_)} ($start_bin .. $end_bin);
-	if (! $single_bin && scalar @these_bins == 1) {
-	    $single_bin = shift @these_bins;
-	}
-	unshift @feature_bins, @these_bins;
-    }
-    unshift @feature_bins, $single_bin;
-    return wantarray ? @feature_bins : \@feature_bins;
+sub get_feature_bins {
+  my $self = shift;
+  return $self->annotation->get_feature_bins($self);
+  #my $self = shift;
+  #
+  #$self->warn(message => ('GAL::Schema::Result::Feature::feature_bins is ' .
+  #			    'deprecated.  We should be using the method in ' .
+  #			    'GAL::Base instead.  Please update your code '   .
+  #			    'and stop using it.')
+  #	       );
+  #
+  #my ($seqid, $start, $end) = ($self->seqid, $self->start, $self->end);
+  #my @feature_bins;
+  #my $count;
+  #my $single_bin;
+  #for my $bin_size (128_000, 1_000_000, 8_000_000, 64_000_000,
+  #		      512_000_000) {
+  #  $count++;
+  #  my $start_bin = int($start/$bin_size);
+  #  my $end_bin   = int($end/$bin_size);
+  #  my @these_bins = map {$_ = join ':', ($seqid, $count, $_)} ($start_bin .. $end_bin);
+  #	if (! $single_bin && scalar @these_bins == 1) {
+  #	    $single_bin = shift @these_bins;
+  #	}
+  #	unshift @feature_bins, @these_bins;
+  #}
+  #unshift @feature_bins, $single_bin;
+  #return wantarray ? @feature_bins : \@feature_bins;
 }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-=item C<< GAL::Schema::Result::Feature::feature_bins is deprecated.  We
-should be using the method in GAL::Base instead.  Please update your code
-and stop using it. >>
 
-The error message pretty much says it all.
+=over 4
+
+L<GAL::Schema::Result::Feature> does not throw any warnings or errors
+at this time.
 
 =back
 

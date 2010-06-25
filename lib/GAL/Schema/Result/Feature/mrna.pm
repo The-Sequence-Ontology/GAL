@@ -81,12 +81,12 @@ sub protein_seq {
 
 #-----------------------------------------------------------------------------
 
-sub map2my_CDS {
+sub map2CDS {
 
   my ($self, @coordinates) = @_;
 
-  my ($CDS_start) = $self->map2me($self->CDS_start);
-  my @CDS_coordinates = $self->map2me(@coordinates);
+  my ($CDS_start) = $self->genome2me($self->CDS_start);
+  my @CDS_coordinates = $self->genome2me(@coordinates);
   map {$_ = $_ - $CDS_start + 1} @CDS_coordinates;
 
   return wantarray ? @CDS_coordinates : \@CDS_coordinates;
@@ -94,11 +94,11 @@ sub map2my_CDS {
 
 #-----------------------------------------------------------------------------
 
-sub map2my_protein {
+sub map2protein {
 
   my ($self, @coordinates) = @_;
 
-  my @protein_coordinates = $self->map2my_CDS(@coordinates);
+  my @protein_coordinates = $self->map2CDS(@coordinates);
   map {$_ = int($_ / 3) + 1} @protein_coordinates;
 
   return wantarray ? @protein_coordinates : \@protein_coordinates;
@@ -153,7 +153,7 @@ sub phase_at_location {
 		   2 => 2,
 		   0 => 1,
 		  );
-  my ($CDS_location) = $self->map2my_CDS($location);
+  my ($CDS_location) = $self->map2CDS($location);
   my $modulus = $CDS_location % 3;
   return $mod2phase{$modulus};
 }
@@ -167,7 +167,7 @@ sub frame_at_location {
 		   2 => 1,
 		   0 => 2,
 		  );
-  my ($CDS_location) = $self->map2my_CDS($location);
+  my ($CDS_location) = $self->map2CDS($location);
   my $modulus = $CDS_location % 3;
   my $frame = $mod2frame{$modulus};;
   return $frame;
@@ -180,7 +180,7 @@ sub codon_at_location {
   my ($self, $location) = @_;
 
   my $CDS_sequence = $self->CDS_seq;
-  my ($CDS_location) = $self->map2my_CDS($location);
+  my ($CDS_location) = $self->map2CDS($location);
   my $frame = $self->frame_at_location($location);
   my $codon_start = $CDS_location - $frame;
   my $codon = substr($CDS_sequence, ($codon_start - 1), 3);

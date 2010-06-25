@@ -44,10 +44,10 @@ This document describes GAL::Annotation version 0.01
 
 =head1 DESCRIPTION
 
-The Genome Annotation Library is a collection of modules that strive
-to make working with genome annotations simple, intuitive and fast.
-Users of GAL first create an annotation object which in turn will
-contain Parser, Storage and Schema objects.  The parser allows
+The Genome Annotation Library (GAL) is a collection of modules that
+strive to make working with genome annotations simple, intuitive and
+fast.  Users of GAL first create an annotation object which in turn
+will contain Parser, Storage and Schema objects.  The parser allows
 features to be loaded into GAL's storage from a variety of formats.
 The storage object specifies how the features should be stored, and
 the schema object provides flexible query and iteration functions over
@@ -61,7 +61,7 @@ from various formats, and new parsers are easy to write.  See
 GAL::Parser for more details.  Currently MySQL and SQLite storage
 options are available (a fast RAM storage engine is on the TODO list).
 Schema objects are provided by DBIx::Class and a familiarity with that
-package is necessary to understanding how to query and iterate over
+package is necessary for understanding how to query and iterate over
 feature objects.
 
 =head1 CONSTRUCTOR
@@ -184,16 +184,13 @@ sub parser {
   my ($self, @args) = @_;
 
   if (! $self->{parser} || @args) {
-      my $args = $self->prepare_args(@args);
-      my $class = $args->{class} || 'gff3';
-      $class =~ s/GAL::Parser:://;
-      $class = 'GAL::Parser::' . $class;
-      $self->load_module($class);
-      my $parser = $class->new(@args);
-      my $weak_self = $self;
-      weaken $weak_self;
-      $parser->annotation($weak_self);
-      $self->{parser} = $parser;
+    my $class = 'GAL::Parser';
+    $self->load_module($class);
+    my $parser = $class->new(@args);
+    my $weak_self = $self;
+    weaken $weak_self;
+    $parser->annotation($weak_self);
+    $self->{parser} = $parser;
   }
   return $self->{parser};
 }
@@ -214,21 +211,18 @@ sub parser {
 =cut
 
 sub storage {
-    my ($self, @args) = @_;
+  my ($self, @args) = @_;
 
-    if (! $self->{storage}) {
-	my $args = $self->prepare_args(@args);
-	my $class = $args->{class} || 'SQLite';
-	$class =~ s/GAL::Storage:://;
-	$class = 'GAL::Storage::' . $class;
-	$self->load_module($class);
-	my $storage = $class->new(@args);
-	my $weak_self = $self;
-	weaken $weak_self;
-	$storage->annotation($weak_self);
-	$self->{storage} = $storage;
-    }
-    return $self->{storage};
+  if (! $self->{storage}) {
+    my $class = 'GAL::Storage';
+    $self->load_module($class);
+    my $storage = $class->new(@args);
+    my $weak_self = $self;
+    weaken $weak_self;
+    $storage->annotation($weak_self);
+    $self->{storage} = $storage;
+  }
+  return $self->{storage};
 }
 
 
@@ -245,6 +239,24 @@ details.
 
 =head1 Methods
 
+=head2 features
+
+  Title   : features
+  Usage   : $self->features();
+  Function: Return a GAL::Schema::Result::Feature object (a 
+            DBIx::Class::ResultSet for all features).
+  Returns : A GAL::Schema::Result::Feature object
+  Args    : A query appropriate for DBIx::Class::ResultSet::search
+
+=cut
+
+sub features {
+  my ($self, $query) = shift;
+  my $features = $self->schema->resultset('Feature');
+  return $query ? $features->search->($query) : $features;
+}
+
+#-----------------------------------------------------------------------------
 
 =head2 schema
 
@@ -300,6 +312,7 @@ sub schema {
 sub load_files {
   my ($self, @args) = @_;
   my $args = $self->prepare_args(\@args);
+  # TODO: This functionality should be in GAL::Storage.pm
   my ($mode, $files) = @{$args}{qw/mode files/};
   $mode ||= 'append';
   if ($mode eq 'overwrite') {

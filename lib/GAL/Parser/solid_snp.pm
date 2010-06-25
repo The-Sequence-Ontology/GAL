@@ -1,35 +1,57 @@
-package GAL::Parser::solid;
+package GAL::Parser::solid_snp;
 
 use strict;
 use vars qw($VERSION);
 
 $VERSION = '0.01';
 use base qw(GAL::Parser);
+use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::solid - <One line description of module's purpose here>
+GAL::Parser::solid_snp - Parse SOLiD SNP files
 
 =head1 VERSION
 
-This document describes GAL::Parser::solid version 0.01
+This document describes GAL::Parser::solid_snp version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::solid;
+    my $parser = GAL::Parser::solid_snp->new(file => 'solid_snp.txt');
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    while (my $feature_hash = $parser->next_feature_hash) {
+	print $parser->to_gff3($feature_hash) . "\n";
+    }
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+L<GAL::Parser::solid_snp> provides a parser for SNP from Life
+Technologies SOLiD system.
 
-=head1 METHODS
+=head1 Constructor
+
+New L<GAL::Parser::solid_snp> objects are created by the class method
+new.  Arguments should be passed to the constructor as a list (or
+reference) of key value pairs.  All attributes of the
+L<GAL::Parser::solid_snp> object can be set in the call to new. An
+simple example of object creation would look like this:
+
+    my $parser = GAL::Parser::solid_snp->new(file => 'solid_snp.txt');
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=item * C<< file => feature_file.txt >>
+
+This optional parameter provides the filename for the file containing
+the data to be parsed. While this parameter is optional either it, or
+the following fh parameter must be set.
+
+=item * C<< fh => feature_file.txt >>
+
+This optional parameter provides a filehandle to read data from. While
+this parameter is optional either it, or the following fh parameter
+must be set.
 
 =cut
 
@@ -38,10 +60,10 @@ This document describes GAL::Parser::solid version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::solid->new();
-     Function: Creates a solid object;
-     Returns : A solid object
-     Args    :
+     Usage   : GAL::Parser::solid_snp->new();
+     Function: Creates a GAL::Parser::solid_snp object;
+     Returns : A GAL::Parser::solid_snp object
+     Args    : See the attributes described above.
 
 =cut
 
@@ -67,10 +89,6 @@ sub _initialize_args {
 	my @valid_attributes = qw(); # Set valid class attributes here
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
-
-	# give lalbes for the fields in your file.
-	# note parser will automatically ignore lines begining with #
-	$self->fields([qw(chr pos ref_base con_base coverage)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -129,53 +147,41 @@ sub parse_record {
 
 #-----------------------------------------------------------------------------
 
-=head2 foo
+=head2 reader
 
- Title   : foo
- Usage   : $a = $self->foo();
- Function: Get/Set the value of foo.
- Returns : The value of foo.
- Args    : A value to set foo to.
+ Title   : reader
+ Usage   : $a = $self->reader
+ Function: Return the reader object.
+ Returns : A L<GAL::Reader::DelimitedLine> singleton.
+ Args    : None
 
 =cut
 
-sub foo {
-	my ($self, $value) = @_;
-	$self->{foo} = $value if defined $value;
-	return $self->{foo};
+sub reader {
+  my $self = shift;
+
+  if (! $self->{reader}) {
+    my @field_names = qw(chr pos ref_base con_base coverage);
+    my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
+    $self->{reader} = $reader;
+  }
+  return $self->{reader};
 }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+L<GAL::Parser::solid_snp> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::solid> requires no configuration files or environment variables.
+L<GAL::Parser::solid_snp> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-None.
+L<GAL::Parser>
+L<GAL::Reader::DelimitedLine>
 
 =head1 INCOMPATIBILITIES
 
@@ -194,7 +200,8 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All
+rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.
@@ -202,25 +209,25 @@ Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights res
 =head1 DISCLAIMER OF WARRANTY
 
 BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
-FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
-OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
-PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
-ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
-YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
-NECESSARY SERVICING, REPAIR, OR CORRECTION.
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.
 
 IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
 WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
-LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
-OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
-THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
 RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
 FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
-SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGES.
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.
 
 =cut
 

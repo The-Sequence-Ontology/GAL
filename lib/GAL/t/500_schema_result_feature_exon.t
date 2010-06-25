@@ -6,7 +6,7 @@ use Test::More tests => 3;
 BEGIN {
 	use lib '../../';
 	#TEST 1
-	use_ok('GAL::Schema::Result::Feature::Exon');
+	use_ok('GAL::Schema::Result::Feature::exon');
 }
 
 my $path = $0;
@@ -15,12 +15,12 @@ $path ||= '.';
 chdir($path);
 
 # TEST 2
-my $object = GAL::Schema::Result::Feature::Exon->new();
-isa_ok($object, 'GAL::Schema::Result::Feature::Exon');
+my $object = GAL::Schema::Result::Feature::exon->new();
+isa_ok($object, 'GAL::Schema::Result::Feature::exon');
 
 # To get a list of all of the subs and throws:
-# Select an empty line and then: C-u M-| grep -nP '^sub ' ../Schema::Result::Feature::Exon.pm
-# Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Schema::Result::Feature::Exon.pm
+# Select an empty line and then: C-u M-| grep -nP '^sub ' ../Schema::Result::Feature::exon.pm
+# Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Schema::Result::Feature::exon.pm
 
 # TEST 3
 

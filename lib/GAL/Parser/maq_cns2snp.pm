@@ -36,7 +36,7 @@ of key value pairs.  All attributes of the L<GAL::Parser::maq_cns2snp> object
 can be set in the call to new. An simple example of object creation
 would look like this:
 
-    my $parser = GAL::Parser::maq_cns2snp->new(file => 'data/maq_cns2snp.snp');
+    my $parser = GAL::Parser::maq_cns2snp->new(file => 'maq_cns2snp.snp');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:

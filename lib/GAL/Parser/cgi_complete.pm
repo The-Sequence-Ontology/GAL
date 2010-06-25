@@ -1,4 +1,4 @@
-package GAL::Parser::cgi-complete;
+package GAL::Parser::cgi_complete;
 
 use strict;
 use vars qw($VERSION);
@@ -9,37 +9,37 @@ use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::cgi-complete - Parse some types of Complete
+GAL::Parser::cgi_complete - Parse some types of Complete
 Genomics files.
 
 =head1 VERSION
 
-This document describes GAL::Parser::cgi-complete version 0.01
+This document describes GAL::Parser::cgi_complete version 0.01
 
 =head1 SYNOPSIS
 
-    my $parser = GAL::Parser::cgi-complete->new(file =>
+    my $parser = GAL::Parser::cgi_complete->new(file =>
                         'CGI-Variations-Complete.csv');
 
     while (my $feature_hash = $parser->next_feature_hash) {
-	print $parser->to_cgi-complete($feature_hash) . "\n";
+	print $parser->to_cgi_complete($feature_hash) . "\n";
     }
 
 =head1 DESCRIPTION
 
-L<GAL::Parser::cgi-complete> provides parsing ability for some
+L<GAL::Parser::cgi_complete> provides parsing ability for some
 versions of Complete Genomics variant files.
 
 =head1 Constructor
 
-New L<GAL::Parser::cgi-complete> objects are created by the
+New L<GAL::Parser::cgi_complete> objects are created by the
 class method new.  Arguments should be passed to the constructor as a
 list (or reference) of key value pairs.  All attributes of the
-L<GAL::Parser::cgi-complete> object can be set in the call to
+L<GAL::Parser::cgi_complete> object can be set in the call to
 new. An simple example of object creation would look like this:
 
-    my $parser = GAL::Parser::cgi-complete->new(file =>
-                           'data/feature.cgi-complete');
+    my $parser = GAL::Parser::cgi_complete->new(file =>
+                           'feature.cgi_complete');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
@@ -65,9 +65,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::cgi-complete->new();
-     Function: Creates a GAL::Parser::cgi-complete object;
-     Returns : A GAL::Parser::cgi-complete object
+     Usage   : GAL::Parser::cgi_complete->new();
+     Function: Creates a GAL::Parser::cgi_complete object;
+     Returns : A GAL::Parser::cgi_complete object
      Args    : See the attributes described above.
 
 =cut
@@ -110,11 +110,26 @@ sub _initialize_args {
 sub parse_record {
     my ($self, $record) = @_;
 
-    $self->throw(message => ("GAL::Parser::cgi-complete is not " .
+    $self->throw(message => ("GAL::Parser::cgi_complete is not " .
 			     "finished.  Don't use it!")
 		);
 
     return undef unless $record->{locus} =~ /^\d+$/;
+
+    my %type_map = ('snp'		  => 'SNV',
+		    'ins'		  => 'nucleotide_insertion',
+		    'del'		  => 'nucleotide_deletion',
+		    'inv'	          => 'inversion',
+		    'sub'             => 'sequence_alteration',
+		    'ref'             => 'reference',
+		    '='               => 'reference',
+		    'no-call-rc'	  => 'no_call',
+		    'no-call-rc'	  => 'no_call',
+		    'no-call-ri'	  => 'no_call',
+		    'no-call'	  => 'no_call',
+		    'no-ref'          => 'no_call',
+		    'PAR-called-in-X' => 'unknown',
+		    );
 
     # locus,haplotype,contig,begin,end,vartype,reference,alleleSeq,totalScore,hapLink,xRef
     # 14,1,chr1,26241,26252,=,AAGAATTTAAA,AAGAATTTAAA,30,349,
@@ -130,7 +145,9 @@ sub parse_record {
 
     my $type = $record->{vartype};
     my $has_ref_seq;
-    $has_ref_seq++ if $types{'='};
+
+
+    $has_ref_seq++ if $type_map{'='};
 
     # snp: single-nucleotide polymorphism
     # ins: insertion
@@ -153,21 +170,6 @@ sub parse_record {
     #     sequence is reported as diploid sequence on Chromosome X; on
     #     chromosome Y the sequence is reported as varType = “PAR-
     #     called-in-X”.
-
-    my %type_map = ('snp'		  => 'SNV',
-		    'ins'		  => 'nucleotide_insertion',
-		    'del'		  => 'nucleotide_deletion',
-		    'inv'	          => 'inversion',
-		    'sub'             => 'sequence_alteration',
-		    'ref'             => 'reference',
-		    '='               => 'reference',
-		    'no-call-rc'	  => 'no_call',
-		    'no-call-rc'	  => 'no_call',
-		    'no-call-ri'	  => 'no_call',
-		    'no-call'	  => 'no_call',
-		    'no-ref'          => 'no_call',
-		    'PAR-called-in-X' => 'unknown',
-		    );
 
     $type = $type_map{$type} || 'sequence_alteration';
 
@@ -284,12 +286,12 @@ sub reader {
 
 =head1 DIAGNOSTICS
 
-L<GAL::Parser::cgi-complete> does not throw any warnings or
+L<GAL::Parser::cgi_complete> does not throw any warnings or
 errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<GAL::Parser::cgi-complete> requires no configuration files
+L<GAL::Parser::cgi_complete> requires no configuration files
 or environment variables.
 
 =head1 DEPENDENCIES

@@ -67,7 +67,14 @@ This optional attribute provides a regular expression that will be
 used to skip comment lines.  The default is "^\s*#" - lines whos first
 non-whitespace charachter is a '#'.
 
-The following attributes are inhereted from GAL::Reader:
+=item * C<< header => 1 >>
+
+This optional attribute provides the ability to instruct the parser to
+skip header lines.  An integer i<n> value is provided that will cause
+the parser to skip the first i<n> lines of the file to be skipped.
+The skipped lines will be added to the L</"comments"> stack.
+
+The following attributes are inhereted from L<GAL::Reader>:
 
 =item * C<< file => feature_file.txt >>
 
@@ -179,7 +186,7 @@ sub field_separator {
   }
   $self->{field_separator} = $field_separator if $field_separator;
   $self->{field_separator} ||= qr/\t/;
-  return wantarray ? @{$self->{field_separator}} : $self->{field_names};
+  return $self->{field_separator};
 }
 
 #-----------------------------------------------------------------------------
@@ -205,7 +212,39 @@ sub comment_delimiter {
   }
   $self->{comment_delimiter} = $comment_delimiter if $comment_delimiter;
   $self->{comment_delimiter} ||= qr/^\s*#/;
-  return wantarray ? @{$self->{comment_delimiter}} : $self->{field_names};
+  return $self->{comment_delimiter};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 header
+
+ Title   : header
+ Usage   : $self->header("\t");
+ Function: Set a flag for files containing headers.  Default is undef.
+           If the header attribute is set to a positive integer value then
+           that many lines will be skipped from the top of the file and
+           those lines will be added to the L</"comments"> stack.
+ Returns : Nothing
+ Args    : An integer 0 or greater.
+
+=cut
+
+sub header {
+
+  my ($self, $header) = @_;
+
+  my $return_value;
+  if ($header) {
+    $self->{header} = $header;
+  }
+  elsif ($self->{header} > 0) {
+    $return_value = $self->{header};
+    $self->{header}--;
+  }
+  else {
+    return undef;
+  }
 }
 
 #-----------------------------------------------------------------------------
@@ -230,18 +269,42 @@ sub next_record {
 	my $self = shift;
 	my $fh = $self->fh;
 	my $line;
+	my $comment_delimiter = $self->comment_delimiter;
+	my $field_separator   = $self->field_separator;
 	while ($line = <$fh>) {
-	  last unless $line =~ $self->comment_delimiter;
 	  chomp $line;
+	  if ($line =~ $comment_delimiter) {
+	    $self->comments($line);
+	    next;
+	  }
+	  last;
 	}
 	return undef unless defined $line;
-	my @record_array = split $self->field_separator, $line;
+	my @record_array = split $field_separator, $line;
 	if (ref $self->{field_names} eq 'ARRAY') {
 	  my %record_hash;
 	  @record_hash{@{$self->{field_names}}} = @record_array;
 	  return wantarray ? %record_hash : \%record_hash;
 	}
 	return wantarray ? @record_array : \@record_array;
+}
+
+=head2 comments
+
+ Title   : comments
+ Usage   : $commnet = $reader->comments($line);
+ Function: Add a comment (as defined by L</"comment_delimiter">) to the
+           comments stack or return all the comments in the stack.
+ Returns : An array or array reference of comments.
+ Args    : A comment.
+
+=cut
+
+sub comments {
+	my ($self, $comment) = @_;
+
+	push @{$self->{comments}} if $comment;
+	return wantarray ? @{$self->{comments}} : $self->{comments};
 }
 
 #-----------------------------------------------------------------------------

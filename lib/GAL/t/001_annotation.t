@@ -19,10 +19,12 @@ my $annotation = GAL::Annotation->new();
 isa_ok($annotation, 'GAL::Annotation');
 
 # TEST 
-isa_ok($annotation->parser, 'GAL::Parser::gff3', '$annotation->parser');
+isa_ok($annotation->parser(class => 'gff3'), 'GAL::Parser::gff3', '$annotation->parser');
 
 # TEST 
-isa_ok($annotation->storage(dsn   => 'DBI:SQLite:data/test_storage.sqlite'), 'GAL::Storage::SQLite', '$annotation->storage');
+isa_ok($annotation->storage(dsn   => 'DBI:SQLite:data/test_storage.sqlite',
+			    class => 'SQLite'
+			   ), 'GAL::Storage::SQLite', '$annotation->storage');
 
 # TEST 
 ok($annotation->load_files(mode  => 'overwrite',

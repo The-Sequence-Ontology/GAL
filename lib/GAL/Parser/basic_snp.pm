@@ -3,7 +3,6 @@ package GAL::Parser::basic_snp;
 use strict;
 use vars qw($VERSION);
 
-
 $VERSION = '0.01';
 use base qw(GAL::Parser);
 use GAL::Reader::DelimitedLine;
@@ -38,7 +37,7 @@ reference) of key value pairs.  All attributes of the Parser object
 can be set in the call to new. An simple example of object creation
 would look like this:
 
-    my $parser = GAL::Parser::basic_snp->new(file => 'data/snp.txt');
+    my $parser = GAL::Parser::basic_snp->new(file => 'snp.txt');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
