@@ -39,7 +39,7 @@ L<GAL::Parser::na18507_sanger_indel> object can be set in the call to
 new. An simple example of object creation would look like this:
 
     my $parser = GAL::Parser::na18507_sanger_indel->new(file =>
-             'data/na18507_sanger_indel.txt');
+             'na18507_sanger_indel.txt');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:

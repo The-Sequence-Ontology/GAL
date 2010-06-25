@@ -10,7 +10,7 @@ use DBI;
 
 =head1 NAME
 
-GAL::Storage - Base class for GAL's storage engines
+GAL::Storage - Base class for GAL storage engines
 
 =head1 VERSION
 
@@ -325,7 +325,7 @@ sub _load_schema {
 
   my $self = shift;
   $self->throw(message => ('Method _load_schema must be implimented by ' .
-			   'subclass')
+			   'subclass'),
 	       'code'  => 'subclass_must_override_this_method : _load_schema',
 	      );
 }
@@ -393,6 +393,7 @@ sub flush_buffer {
 
 	my $self = shift;
 
+	$self->{_feature_buffer} ||= [];
 	if (scalar @{$self->{_feature_buffer}}) {
 		$self->add_features($self->{_feature_buffer});
 		$self->{_feature_buffer} = undef;
@@ -424,7 +425,7 @@ sub prepare_features {
 
   for my $feature_hash (@{$feature_hashes}) {
     my $feature_id = $feature_hash->{feature_id};
-    my $bin = $self->get_feature_bin($feature_hash);
+    my ($bin) = $self->get_feature_bins($feature_hash);
     my $attributes = $feature_hash->{attributes};
     my $subject_id = $attributes->{Subject_ID} || '';
     my @parents = ref $attributes->{Parent} eq 'ARRAY' ? @{$attributes->{Parent}} : ();
@@ -455,7 +456,7 @@ sub prepare_features {
 sub add_features {
   my $self = shift;
   $self->throw(message => ('Method must be implimented by subclass : ' .
-			   'add_features')
+			   'add_features'),
 	       code    => 'subclass_must_override_this_method : add_features',
 	      );
 }
@@ -465,7 +466,7 @@ sub add_features {
 sub create_database {
   my $self = shift;
   $self->throw(message => ('Method must be implimented by subclass : ' .
-			   'add_features')
+			   'add_features'),
 	       code    => ('subclass_must_override_this_method : ' .
 			   'create_database'),
 	      );

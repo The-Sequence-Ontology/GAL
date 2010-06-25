@@ -312,7 +312,8 @@ sub _open_or_create_database {
   }
   else {
     $self->warn(message => ("A database by the name $database already "      .
-			    "existed, so I'll use it as is.",
+			    "existed, so I'll use it as is."
+			   ),
 		code    => "using_existing_database : $database");
     $dbh = DBI->connect($self->dsn, $self->user,
 			$self->password);
@@ -360,7 +361,7 @@ sub index_database {
 # Function: Load the temporary data files into the database
 # Returns : Nothing
 # Args    : Three file names for the feature, attribute and relationship
-            temporary data files.
+#           temporary data files.
 
 sub _load_temp_files {
 

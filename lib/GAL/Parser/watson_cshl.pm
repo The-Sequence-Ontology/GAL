@@ -3,13 +3,13 @@ package GAL::Parser::watson_cshl;
 use strict;
 use vars qw($VERSION);
 
-
 $VERSION = '0.01';
 use base qw(GAL::Parser);
+use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::watson_cshl - <One line description of module's purpose here>
+GAL::Parser::watson_cshl - Parse SNP files from James Watson's genome (CSHL version)
 
 =head1 VERSION
 
@@ -17,20 +17,41 @@ This document describes GAL::Parser::watson_cshl version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::watson_cshl;
-
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    use GAL::Parser::watson_cshl
+    my $parser = GAL::Parser::watson_cshl->new(file => 'watson_cshl.txt');
+    while (my $feature_hash = $parser->next_feature_hash) {
+	print $parser->to_gff3($feature_hash) . "\n";
+    }
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+L<GAL::Parser::watson_cshl> parses SNP files from James Watson's
+genome (CSHL version).
 
-=head1 METHODS
+=head1 Constructor
+
+New L<GAL::Parser::watson_cshl> objects are created by the class method
+new.  Arguments should be passed to the constructor as a list (or
+reference) of key value pairs.  All attributes of the
+L<GAL::Parser::watson_cshl> object can be set in the call to new. An
+simple example of object creation would look like this:
+
+    my $parser = GAL::Parser::watson_cshl->new(file => 'watson_cshl.txt');
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=item * C<< file => feature_file.txt >>
+
+This optional parameter provides the filename for the file containing
+the data to be parsed. While this parameter is optional either it, or
+the following fh parameter must be set.
+
+=item * C<< fh => feature_file.txt >>
+
+This optional parameter provides a filehandle to read data from. While
+this parameter is optional either it, or the following fh parameter
+must be set.
 
 =cut
 
@@ -42,7 +63,7 @@ This document describes GAL::Parser::watson_cshl version 0.01
      Usage   : GAL::Parser::watson_cshl->new();
      Function: Creates a GAL::Parser::watson_cshl object;
      Returns : A GAL::Parser::watson_cshl object
-     Args    :
+     Args    : See the attributes described above.
 
 =cut
 
@@ -67,55 +88,6 @@ sub _initialize_args {
 	my @valid_attributes = qw(); # Set valid class attributes here.
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
-
-	# The columns are:
-	#
-	# BCM_local_SNP_ID -- unique ID for referring to the SNPs ahead of
-	# submission to dbSNP (we can talk about what and when to submit to
-	# dbSNP).
-	#
-	# chromosome --  (self explanatory)
-	#
-	# coordinate -- (self explanatory)
-	#
-	# reference_allele -- plus strand reference base
-	#
-	# variant_allele -- plus strand variant base
-	#
-	# match_status -- a Y, N or "." if a dbSNP allele, Y if the variant
-	# matches the dbSNP allele, or N if it doesn't; a "." if it's a novel
-	# SNP.
-	#
-	# rs# -- the rsid if dbSNP, "novel" otherwise.
-	#
-	# alternate_allele -- usually a "." (surrogate for null). A, C, T or G
-	# if a third allele is seen in the reads at the given position, it's
-	# listed here.  I'm don't expect you to dis play 3d allele
-	# information.
-	#
-	# variant_count -- number of reads in which variant allele was
-	# seen. Can be 1 variants matching dbSNP alleles ("Y" in match_status
-	# column), must be 2 for novel alleles, for dbSNP positions that don't
-	# match the dbSNP alleles ("N" in match_status column) or for dbSNP
-	# positions where there is an alternate allele.
-	#
-	# alternate_allele_count -- number of reads in which an
-	# alternate_allele is seen. Generally these are seen in only one read
-	# and are probably errors, and should not be mentioned. I n some rare
-	# instances (134 times), both the variant allele and the alternate
-	# allele are seen multiple times.
-	#
-	# total_coverage -- the total number of reads at a given SNP position.
-	#
-	# "genotype" -- "het" if the reference allele is seen at least
-	# once. "." (null) if not. These are the sites that are confidently
-	# heterozygotes. The others provisionally homozygote s, and in cases
-	# where the coverage is deep enough probably they are.
-
-	$self->fields([qw(id chromosome coordinate reference_seq
-			  variant_seq match_status rsid alternate_seq
-			  variant_count alternate_seq_count
-			  total_coverage genotype)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -203,53 +175,88 @@ sub parse_record {
 
 #-----------------------------------------------------------------------------
 
-=head2 foo
+=head2 reader
 
- Title   : foo
- Usage   : $a = $self->foo();
- Function: Get/Set the value of foo.
- Returns : The value of foo.
- Args    : A value to set foo to.
+ Title   : reader
+ Usage   : $a = $self->reader
+ Function: Return the reader object.
+ Returns : A L<GAL::Reader::DelimitedLine> singleton.
+ Args    : None
 
 =cut
 
-sub foo {
-	my ($self, $value) = @_;
-	$self->{foo} = $value if defined $value;
-	return $self->{foo};
+sub reader {
+  my $self = shift;
+
+  # The columns are:
+  #
+  # BCM_local_SNP_ID -- unique ID for referring to the SNPs ahead of
+  # submission to dbSNP (we can talk about what and when to submit to
+  # dbSNP).
+  #
+  # chromosome --  (self explanatory)
+  #
+  # coordinate -- (self explanatory)
+  #
+  # reference_allele -- plus strand reference base
+  #
+  # variant_allele -- plus strand variant base
+  #
+  # match_status -- a Y, N or "." if a dbSNP allele, Y if the variant
+  # matches the dbSNP allele, or N if it doesn't; a "." if it's a novel
+  # SNP.
+  #
+  # rs# -- the rsid if dbSNP, "novel" otherwise.
+  #
+  # alternate_allele -- usually a "." (surrogate for null). A, C, T or G
+  # if a third allele is seen in the reads at the given position, it's
+  # listed here.  I'm don't expect you to dis play 3d allele
+  # information.
+  #
+  # variant_count -- number of reads in which variant allele was
+  # seen. Can be 1 variants matching dbSNP alleles ("Y" in match_status
+  # column), must be 2 for novel alleles, for dbSNP positions that don't
+  # match the dbSNP alleles ("N" in match_status column) or for dbSNP
+  # positions where there is an alternate allele.
+  #
+  # alternate_allele_count -- number of reads in which an
+  # alternate_allele is seen. Generally these are seen in only one read
+  # and are probably errors, and should not be mentioned. I n some rare
+  # instances (134 times), both the variant allele and the alternate
+  # allele are seen multiple times.
+  #
+  # total_coverage -- the total number of reads at a given SNP position.
+  #
+  # "genotype" -- "het" if the reference allele is seen at least
+  # once. "." (null) if not. These are the sites that are confidently
+  # heterozygotes. The others provisionally homozygote s, and in cases
+  # where the coverage is deep enough probably they are.
+  if (! $self->{reader}) {
+    my @field_names = qw(id chromosome coordinate reference_seq
+			 variant_seq match_status rsid alternate_seq
+			 variant_count alternate_seq_count
+			 total_coverage genotype);
+    my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
+    $self->{reader} = $reader;
+  }
+  return $self->{reader};
 }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+L<GAL::Parser::watson_cshl> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::watson_cshl> requires no configuration files or environment variables.
+L<GAL::Parser::watson_cshl> requires no configuration files or
+environment variables.
 
 =head1 DEPENDENCIES
 
-None.
+L<GAL::Parser>
+L<GAL::Reader::DelimitedLine>
 
 =head1 INCOMPATIBILITIES
 
@@ -268,7 +275,8 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All
+rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.
@@ -276,25 +284,25 @@ Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights res
 =head1 DISCLAIMER OF WARRANTY
 
 BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
-FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
-OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
-PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
-ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
-YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
-NECESSARY SERVICING, REPAIR, OR CORRECTION.
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.
 
 IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
 WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
-LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
-OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
-THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
 RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
 FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
-SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGES.
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.
 
 =cut
 

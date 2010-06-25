@@ -37,7 +37,7 @@ of key value pairs.  All attributes of the L<GAL::Parser::gff3> object
 can be set in the call to new. An simple example of object creation
 would look like this:
 
-    my $parser = GAL::Parser::gff3->new(file => 'data/feature.gff3');
+    my $parser = GAL::Parser::gff3->new(file => 'feature.gff3');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:

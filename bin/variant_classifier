@@ -5,7 +5,6 @@ use warnings;
 use Getopt::Long;
 use GAL::Annotation;
 use IO::Prompt;
-use DBIx::Class::ResultClass::HashRefInflator;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -81,16 +80,14 @@ my $var_store_args = {class    => $storage,
 my $parser_args = {class => $parser,
                   };
 
-my $fasta_args = {path => $fasta};
-
 my $feat_store = GAL::Annotation->new(storage => $feat_store_args,
 				      parser  => $parser_args,
-				      fasta   => $fasta_args,
+				      fasta   => $fasta,
 				     );
 
 my $var_store = GAL::Annotation->new(storage => $var_store_args,
 				     parser  => $parser_args,
-				     fasta   => $fasta_args,
+				     fasta   => $fasta,
 				    );
 
 if ($create) {
@@ -105,47 +102,46 @@ if ($create) {
 
 my $features = $feat_store->schema->resultset('Feature');
 my $variants = $var_store->schema->resultset('Feature');
-my $atts =     $var_store->schema->resultset('Attribute');
-
-#$variants->result_class('DBIx::Class::ResultClass::HashRefInflator');
-#$atts->result_class('DBIx::Class::ResultClass::HashRefInflator');
+# my $atts =     $var_store->schema->resultset('Attribute');
 
 my $mrnas = $features->search({type => 'mRNA'});
 while (my $mrna = $mrnas->next) {
   my $mrna_id = $mrna->feature_id;
   my $CDSs = $mrna->CDSs;
   while (my $CDS = $CDSs->next) {
-    my $bins = $CDS->feature_bins;
+    my $bins = $CDS->get_feature_bins;
     my $start = $CDS->start;
     my $end   = $CDS->end;
     my %where = (bin   => {'-in' => $bins},
 		 start => {'>='  => $start},
 		 end   => {'<='  => $end},
 		);
-    my $snvs = $variants->search(\%where)->cursor;
+    my $snvs = $variants->search(\%where); # ->cursor
 
-    while (my @snv = $snvs->next) {
-      # my $snv_id = $snv->feature_id;
-      # my $start  = $snv->start;
-      # my $reference_seq = $snv->reference_seq;
-      # my @variant_seqs  = $snv->variant_seq_no_ref;
+    while (my $snv = $snvs->next) { # @snv
+      my $snv_id = $snv->feature_id;
+      my $start  = $snv->start;
+      my $reference_seq = $snv->reference_seq;
+      my @variant_seqs  = $snv->variant_seq_no_ref;
 
-      #####################
-
-      my ($snv_id, $start) = @snv[1, 5];
-      my $att_where = {feature_id => $snv_id,
-#		       att_key    => {'-in' => [qw(Reference_sequence
-#						   Variant_sequence)]}
-		      };
-      my %attributes;
-      my $atts = $atts->search($att_where)->cursor;
-      while (my @att = $atts->next) {
-	push @{$attributes{$att[3]}}, $att[4];
-      }
-      my $reference_seq = $attributes{Reference_seq}[0];
-      my @variant_seqs = grep {$_ ne $reference_seq} @{$attributes{Variant_seq}};
-
-      #####################
+      ###########################################################################
+      # User cursors instead of objects for a bit of a speed up.
+      ###########################################################################
+      #
+      #my ($snv_id, $start) = @snv[1, 5];
+      #my $att_where = {feature_id => $snv_id,
+      #		       att_key    => {'-in' => [qw(Reference_sequence
+      #						   Variant_sequence)]}
+      #		      };
+      #my %attributes;
+      #my $atts = $atts->search($att_where)->cursor;
+      #while (my @att = $atts->next) {
+      #	push @{$attributes{$att[3]}}, $att[4];
+      #}
+      #my $reference_seq = $attributes{Reference_seq}[0];
+      #my @variant_seqs = grep {$_ ne $reference_seq} @{$attributes{Variant_seq}};
+      #
+      ###########################################################################
 
       for my $variant_seq (@variant_seqs) {
 	my $mrna_variant_seq = $variant_seq;

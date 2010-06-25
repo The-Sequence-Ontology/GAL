@@ -38,7 +38,7 @@ method new.  Arguments should be passed to the constructor as a list
 L<GAL::Parser::korean_indel> object can be set in the call to
 new. An simple example of object creation would look like this:
 
-    my $parser = GAL::Parser::korean_indel->new(file => 'data/korean_indel.gff');
+    my $parser = GAL::Parser::korean_indel->new(file => 'korean_indel.gff');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:

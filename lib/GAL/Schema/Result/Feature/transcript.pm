@@ -260,7 +260,7 @@ sub three_prime_UTR_seq {
  Title   : length
  Usage   : $length = $self->length
  Function: Get the length of the mature transcript - the sum of all of it's
-           exon lengths.
+	   exon lengths.
  Returns : An integer
  Args    : None
 
@@ -276,12 +276,11 @@ sub length {
   $length++;
   ##############################
   ##############################
-  $self->warning(message => '');
-  $self->warning(message => ("Make sure that this length is correct!!!!" .
-			     "Length: $length\nSeq Length: "             .
-			     length ($self->mature_seq)
-			    )
-		 );
+  $self->warn(message => ("Make sure that this length is correct!!!!" .
+			  "Length: $length\nSeq Length: "             .
+			  length ($self->mature_seq)
+			 )
+	     );
 
   return $length;
 }
@@ -328,7 +327,7 @@ sub coordinate_map {
     }
     $self->{coordinate_map} = \%coordinate_map;
   }
-  return wantarray %{$self->{coordinate_map}} : $self->{coordinate_map};
+  return wantarray ? %{$self->{coordinate_map}} : $self->{coordinate_map};
 }
 
 #-----------------------------------------------------------------------------

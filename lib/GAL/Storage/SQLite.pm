@@ -280,8 +280,10 @@ sub _open_or_create_database {
   }
   else {
     $self->warn(message => ("A database by the name $database already "      .
-			    "existed, so I'll use it as is.",
-		code    => "using_existing_database : $database");
+			    "existed, so I'll use it as is."
+			    ),
+		code    => "using_existing_database : $database"
+	       );
     $dbh = DBI->connect($self->dsn);
     # $dbh = DBI->connect("dbi:SQLite:dbname=:memory");
     # $dbh->sqlite_backup_from_file($self->database);
@@ -348,7 +350,7 @@ sub load_files {
     while (my $feature = $parser->next_feature_hash) {
       $self->add_features_to_buffer($feature);
     }
-    $self->flush_feature_buffer;
+    $self->flush_buffer;
   }
   $self->index_database;
 }
@@ -393,7 +395,7 @@ sub add_features {
     unless ($rv) {
       my $warn_message = ('The following data failed to insert into the ' .
 			  'feature table : ');
-      my $warn_code = 'bad_feature_table_insert :'
+      my $warn_code = 'bad_feature_table_insert :';
       my $data = join ', ', @{$feat_row};
       $warn_message .= $data;
       $warn_code    .= $data;
@@ -416,7 +418,7 @@ sub add_features {
     unless ($rv) {
       my $warn_message = ('The following data failed to insert into the ' .
 			  'attribute table : ');
-      my $warn_code = 'bad_attribute_table_insert :'
+      my $warn_code = 'bad_attribute_table_insert :';
       my $data = join ', ', @{$att_row};
       $warn_message .= $data;
       $warn_code    .= $data;
@@ -438,7 +440,7 @@ sub add_features {
     unless ($rv) {
       my $warn_message = ('The following data failed to insert into the ' .
 			  'relationship table : ');
-      my $warn_code = 'bad_relationship_table_insert :'
+      my $warn_code = 'bad_relationship_table_insert :';
       my $data = join ', ', @{$rel_row};
       $warn_message .= $data;
       $warn_code    .= $data;

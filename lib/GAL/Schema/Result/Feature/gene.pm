@@ -89,7 +89,7 @@ sub mRNAs {
   #TODO: GAL::lib::GAL::Schema::Result::Feature::gene::mRNA
   #TODO: should use SO directly.
 
-  my $mRNAs = $self->children->search({type => 'mRNA');
+  my $mRNAs = $self->children->search({type => 'mRNA'});
   return $mRNAs;
 
 }

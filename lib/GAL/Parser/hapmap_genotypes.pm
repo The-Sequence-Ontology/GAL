@@ -84,12 +84,7 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# $record is a hash reference that contains the keys assigned
-	# in the $self->fields call in _initialize_args above
-
-	# Fill in the first 8 columns for GFF3
-	# See http://www.sequenceontology.org/gff3.html for details.
-	my $feature_id = join ':', @record{qw(seqid source type start end)};
+	my $feature_id = join ':', @{$record}{qw(seqid source type start end)};
 	my $seqid      = $record->{seqid};
 	my $source     = $record->{source};
 	my $type       = $record->{type};

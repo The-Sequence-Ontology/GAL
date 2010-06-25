@@ -1183,12 +1183,12 @@ This document describes GAL::Storage version 0.01
  Args    : Value to set add_feature to.
 
 =cut
-=head2 flush_feature_buffer
+=head2 flush_buffer
 
- Title   : flush_feature_buffer
- Usage   : $self->flush_feature_buffer()
- Function: Get/Set value of flush_feature_buffer.
- Returns : Value of flush_feature_buffer.
+ Title   : flush_buffer
+ Usage   : $self->flush_buffer()
+ Function: Get/Set value of flush_buffer.
+ Returns : Value of flush_buffer.
  Args    : Value to set add_feature to.
 
 =cut

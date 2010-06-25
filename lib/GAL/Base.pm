@@ -29,7 +29,41 @@ for other classes during object construction.  In addition it provides
 a wide range of utility functions that are expected to be widly
 applicable throughout the library.
 
-=head1 METHODS
+=head1 CONSTRUCTOR
+
+GAL::Base is not intended to by instantiated on it's own.  It does
+however, handle object creation for the rest of the library.  Each
+class in GAL calls:
+
+    my $self = $class->SUPER::new(@args);
+
+This means that GAL::Base - at the bottom of the inheritance chain
+does the actual object creation.  It creates the new object based on
+the calling class, and then checks to see if there is a 'class'
+argument provided.  If there is it calls the class attribute, which
+GAL::Base provides, and reblesses the object using the value to the
+class argument as a subclass of the current calling class.  This
+allows this kind of an idiom for any class that has subclasses:
+
+    my $parser = GAL::Parser->(class => 'gff3');
+
+That invocation would return a GAL::Parser::gff3 object instead of a
+GAL::Parser object.
+
+L<GAL::Base> provides the following attributes to all other classes in
+the GAL.
+
+=over 4
+
+=item * C<< fasta => '/path/to/fasta/files/' >>
+
+This optional parameter defines a path to fasta files that are (or
+will be) indexed and available to all objects in the library.
+
+=item * C<< class => 'subclass' >>
+
+This optional parameter will cause the current object to be reblessed
+as the given subclass of the calling object.
 
 =cut
 
@@ -40,25 +74,36 @@ applicable throughout the library.
 =head2 new
 
      Title   : new
-     Usage   : GAL::Base->new();
-     Function: Creates a GAL::Base object;
-     Returns : A GAL::Base object
-     Args    : fasta => '/path/to/fasta/files/'
+     Usage   : GAL::SomeClass->new();
+     Function: Creates on object of the calling class
+     Returns : An object of the calling class
+     Args    : See the attributes described above
 
 =cut
 
 sub new {
 	my ($class, @args) = @_;
-	my $self = bless {}, ref($class) || $class;
-	$self->_initialize_args(@args);
+	$class = ref($class) || $class;
+	my $self = bless {}, $class;
+
+	my $args = $self->prepare_args(@args);
+
+	# Call attribute class first so that objects get reblessed
+	# into the appropriate subclass before they set their
+	# attributes.
+	if ($args->{class}) {
+	  $self = $self->class($args->{class});
+	  delete $args->{class};
+	}
+
+	$self->_initialize_args($args);
 	return $self;
 }
 
 #-----------------------------------------------------------------------------
 
 sub _initialize_args {
-	my ($self, @args) = @_;
-	my $args = $self->prepare_args(\@args);
+	my ($self, $args) = @_;
 
 	######################################################################
 	# This block of code handels class attributes.  Use the
@@ -66,15 +111,22 @@ sub _initialize_args {
 	# this class.  You must have identically named get/set methods
 	# for each attribute.  Leave the rest of this block alone!
 	######################################################################
-	my @valid_attributes = qw(fasta); # Set valid class attributes here
+	my @valid_attributes = qw(fasta class); # Set valid class attributes here
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 	return $args;
 }
 
 #-----------------------------------------------------------------------------
-#---------------------------------- Attributes -------------------------------
+#-------------------------------- Attributes ---------------------------------
 #-----------------------------------------------------------------------------
+
+=head1  ATTRIBUTES
+
+All attributes can be supplied as parameters to the constructor as a
+list (or referenece) of key value pairs.
+
+=cut
 
 =head2 fasta
 
@@ -98,8 +150,33 @@ sub _initialize_args {
  }
 
 #-----------------------------------------------------------------------------
+
+=head2 class
+
+  Title   : class
+  Usage   : $class = $self->class($subclass);
+  Function: Reblesses an object into the appropriate subclass.
+  Returns : A object blessed into $subclass
+  Args    : A class name of a subclass of the calling object.
+
+=cut
+
+ sub class {
+   my ($self, $subclass) = @_;
+
+   my $class = ref($self);
+   $subclass =~ s/$class//;
+   $subclass = $class . "::$subclass";
+   $self->load_module($subclass);
+   bless $self, $subclass;
+   return $self;
+ }
+
+#-----------------------------------------------------------------------------
 #------------------------------------ Methods --------------------------------
 #-----------------------------------------------------------------------------
+
+=head1 METHODS
 
 =head2 throw
 
@@ -108,7 +185,7 @@ sub _initialize_args {
  Function: Throw an error - print an error message and die.
  Returns : None
  Args    : message => $err_msg  # Free text description of error
-           code    => $err_code # single_word_code_for_error
+	   code    => $err_code # single_word_code_for_error
 
 =cut
 
@@ -407,7 +484,7 @@ sub revcomp {
  Returns : An array of bins that the given
 	   range falls in.
  Args    : A hash reference with key values seqid, start, end (i.e. a
-	   feature hash)
+	   feature hash) or an object with methods seqid, start, end.
 
 =cut
 
@@ -415,7 +492,26 @@ sub get_feature_bins {
 
     my ($self, $feature) = @_;
 
-    my ($seqid, $start, $end) = @{$feature}{qw(seqid start end)};
+    my ($seqid, $start, $end);
+    if (ref $feature eq 'HASH') {
+      ($seqid, $start, $end) = @{$feature}{qw(seqid start end)};
+    }
+    elsif (blessed $feature && $feature->can('seqid') &&
+	   $feature->can('start') && $feature->can('end')) {
+      ($seqid, $start, $end) = ($feature->seqid, $feature->start,
+				$feature->end)
+    }
+    else {
+      my $data = ref $feature || $feature;
+      $self->throw(code    => 'invalid_arguments_to_get_feature_bins : $data',
+		   message => ('GAL::Base::get_feature_bins was called with ' .
+			       'invalid arguments.  It must have either a '   .
+			       'hash with the keys qw(seqid start end) or '   .
+			       'an object with those same keys as methods.  ' .
+			       "You provided $data"
+			       )
+		  );
+    }
     my @feature_bins;
     my $count;
     my $single_bin;
@@ -671,9 +767,9 @@ sub float_gt {
  Title   : float_ge
  Usage   : $base->float_ge(0.0000123, 0.0000124, 7);
  Function: Return true if the first number given is greater than or equal
-           to (>=) the second number at a given level of accuracy.
+	   to (>=) the second number at a given level of accuracy.
  Returns : 1 if the first number is greater than or equal to the second,
-           otherwise 0
+	   otherwise 0
  Args    : The two values to compare and optionally a integer value for
 	   the accuracy.  Accuracy defaults to 6 decimal places.
 
@@ -698,18 +794,27 @@ sub float_ge {
 
 =item C<< invalid_arguments_to_prepare_args >>
 
-<GAL::Base::prepare_args> accepts an array, a hash or a reference to either
-an array or hash, but it was passed something different.
+C<GAL::Base::prepare_args> accepts an array, a hash or a reference to
+either an array or hash, but it was passed something different.
 
 =item C<< invalid_ipuac_nucleotide_code >>
 
-<GAL::Base::expand_iupac_nt_codes> was passed a charachter that is not a valid
-IUPAC nucleotide code (http://en.wikipedia.org/wiki/Nucleic_acid_notation).
+C<GAL::Base::expand_iupac_nt_codes> was passed a charachter that is
+not a valid IUPAC nucleotide code
+(http://en.wikipedia.org/wiki/Nucleic_acid_notation).
 
 =item C<< failed_to_load_module >>
 
-<GAL::Base::load_module> was unable to load (require) the specified module.
-The module may not be installed or it may have a compile time error.
+C<GAL::Base::load_module> was unable to load (require) the specified
+module.  The module may not be installed or it may have a compile time
+error.
+
+=item C<< invalid_arguments_to_get_feature_bins >>
+
+C<GAL::Base::get_feature_bins> was called with invalid arguments.  It
+must have either a hash with the keys qw(seqid start end) or an object
+with those same keys as methods.  The error message will try to give
+you some idea of what arguments were passed.
 
 =back
 

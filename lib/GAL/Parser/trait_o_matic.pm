@@ -4,12 +4,9 @@ use strict;
 use vars qw($VERSION);
 use GAL::Reader::DelimitedLine;
 
-$VERSION = '0.01';
-use base qw(GAL::Parser);
-
 =head1 NAME
 
-GAL::Parser::trait_o_matic - <One line description of module's purpose here>
+GAL::Parser::trait_o_matic - Parse TRAIT-O-MATIC SNP files
 
 =head1 VERSION
 
@@ -17,20 +14,42 @@ This document describes GAL::Parser::trait_o_matic version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::trait_o_matic;
+    my $parser = GAL::Parser::trait_o_matic->new(file =>
+	     'trait_o_matic.gff');
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    while (my $feature_hash = $parser->next_feature_hash) {
+	print $parser->to_gff3($feature_hash) . "\n";
+    }
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+L<GAL::Parser::trait_o_matic> provides a parser for TRAIT-O-MATIC SNP
+data (http://snp.med.harvard.edu/).
 
-=head1 METHODS
+=head1 Constructor
+
+New L<GAL::Parser::trait_o_matic> objects are created by the class
+method new.  Arguments should be passed to the constructor as a list
+(or reference) of key value pairs.  All attributes of the
+L<GAL::Parser::trait_o_matic> object can be set in the call to new. An
+simple example of object creation would look like this:
+
+    my $parser = GAL::Parser::trait_o_matic->new(file => 'trait_o_matic.gff');
+
+The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+=item * C<< file => feature_file.txt >>
+
+This optional parameter provides the filename for the file containing
+the data to be parsed. While this parameter is optional either it, or
+the following fh parameter must be set.
+
+=item * C<< fh => feature_file.txt >>
+
+This optional parameter provides a filehandle to read data from. While
+this parameter is optional either it, or the following fh parameter
+must be set.
 
 =cut
 
@@ -42,7 +61,7 @@ This document describes GAL::Parser::trait_o_matic version 0.01
      Usage   : GAL::Parser::trait_o_matic->new();
      Function: Creates a GAL::Parser::trait_o_matic object;
      Returns : A GAL::Parser::trait_o_matic object
-     Args    :
+     Args    : See the attributes described above.
 
 =cut
 
@@ -84,71 +103,71 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
- 	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP01_NA20431_Church.gff <==
- 	# chr1	SIQ2	SNP	2266060	2266060	.	+	.	alleles A/C;ref_allele T
-   	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP02_NA21070_Halamka.gff <==
- 	# chr1	maq	SNP	3751339	3751339	.	+	.	alleles T;ref_allele C;read_depth 255
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP03_NA21660_Dyson.gff <==
- 	# chr1	maq	SNP	1708759	1708759	.	+	.	alleles A;ref_allele T;read_depth 8
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP04_NA21677_Angrist.gff <==
- 	# chr21	.	SNP	9719804	9719804	255	+	.	alleles C;ref_allele T;read_depth 135
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP05_21687_Maxey.gff <==
- 	# chr1	maq	SNP	3751339	3751339	.	+	.	alleles T;ref_allele C;read_depth 79
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP06_NA21730_Pinker.gff <==
- 	# chr1	maq	SNP	2431201	2431201	.	+	.	alleles C/G;ref_allele G;read_depth 22
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP07_NA21731_Batchelder.gff <==
- 	# chr1	maq	SNP	3751339	3751339	.	+	.	alleles C/T;ref_allele C;read_depth 78
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP08_NA21781_Lapidus.gff <==
- 	# chr1	maq	SNP	1708759	1708759	.	+	.	alleles A;ref_allele T;read_depth 23
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP09_NA21833_Gill.gff <==
- 	# chr10	MAQ	SNP	10000011	10000011	.	+	.	alleles C
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP10_NA21846_Sherley.gff <==
- 	# chr1	maq	SNP	1946645	1946645	.	+	.	alleles A/C;ref_allele A;read_depth 34
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP11_NA_GatesSr.gff <==
- 	# chr10	-	-	53571	53571	.	+	.	alleles C
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP12_NA_GatesJr.gff <==
- 	# chr10	-	-	60592	60592	.	+	.	alleles T
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA07022_Anonymous.gff <==
- 	# chr10	SIQ2	SNP	10000005	10000005	.	+	.	alleles G;ref_allele T
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA12156_Anonymous.gff <==
- 	# chr1	MAQ	SNP	861078	861078	.	+	.	alleles C;ref allele C
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA12878_Anonymous.gff <==
- 	# chr1	MAQ	SNP	861078	861078	.	+	.	alleles C;ref allele C
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA18507_Anonymous.gff <==
- 	# chr1	NA18507	SNP	18455	18455	.	+	.	alleles T/G;id 000000001
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA18517_Anonymous.gff <==
- 	# chr1	MAQ	SNP	59374	59374	.	+	.	alleles G;ref allele A
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA18555_Anonymous.gff <==
- 	# chr1	MAQ	SNP	59374	59374	.	+	.	alleles G;ref allele A
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA18956_Anonymous.gff <==
- 	# chr1	MAQ	SNP	59374	59374	.	+	.	alleles G;ref allele A
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA19129_Anonymous.gff <==
- 	# chr1	MAQ	SNP	59374	59374	.	+	.	alleles G;ref allele A
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA19240_Anonymous.gff <==
- 	# chr1	asm	SNP	28095	28095	.	+	.	alleles G;ref_allele A;db_xref dbsnp:rs806727;call_score 61;ID 819
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_-Ai.gff <==
- 	# chr1	TRGFF	SNP	798785	798785	.	+	.	 alleles A;ref_allele G
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Anonymous_Chinese_Male.gff <==
- 	# chr1	SoapSNP	SNP	4793	4793	25.0	+	.	ID YHSNP0128643;alleles A/G;counts 48/26;ref_allele A;status novel
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Anonymous_Korean_Male.gff <==
- 	# chr10	GSNAP	SNP	100000568	100000568	.	+	.	alleles T/A;ref_allele A;read_depth 30
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_D-kgao.gff <==
- 	# chr1	TRGFF	SNP	850871	850871	.	+	.	 alleles C;ref_allele G
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Gaq-o.gff <==
- 	# chr1	TRGFF	SNP	516656	516656	.	+	.	 alleles G;ref_allele A
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_-Gubi.gff <==
- 	# chr1	TRGFF	SNP	257	257	.	+	.	 alleles A/C;ref_allele A
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Kim.gff <==
- 	# chr10	maq	SNP	56397	56397	.	+	.	alleles C/T;ref_allele C
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Quake.gff <==
- 	# chr1	HELICOS	SNP	237448542	237448542	.	+	.	alleles A/A;ref_allele G
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Tutu.gff <==
- 	# chr1	TRGFF	SNP	6120	6120	.	+	.	 alleles G/C;ref_allele G
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Venter.gff <==
- 	# chr10	CV	snp	10000005	10000005	.	+	.	alleles T/G;db_xref dbsnp:rs4747840;id 1103649859189;method Method1;ref_allele T;rmr 0;tr 1
-  	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Watson.gff <==
- 	# chr1	JW	snp	41921	41921	.	+	.	alleles G/C;SNP BJW-1117373;counts 2/2;ref_allele G
- 
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP01_NA20431_Church.gff <==
+	# chr1	SIQ2	SNP	2266060	2266060	.	+	.	alleles A/C;ref_allele T
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP02_NA21070_Halamka.gff <==
+	# chr1	maq	SNP	3751339	3751339	.	+	.	alleles T;ref_allele C;read_depth 255
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP03_NA21660_Dyson.gff <==
+	# chr1	maq	SNP	1708759	1708759	.	+	.	alleles A;ref_allele T;read_depth 8
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP04_NA21677_Angrist.gff <==
+	# chr21	.	SNP	9719804	9719804	255	+	.	alleles C;ref_allele T;read_depth 135
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP05_21687_Maxey.gff <==
+	# chr1	maq	SNP	3751339	3751339	.	+	.	alleles T;ref_allele C;read_depth 79
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP06_NA21730_Pinker.gff <==
+	# chr1	maq	SNP	2431201	2431201	.	+	.	alleles C/G;ref_allele G;read_depth 22
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP07_NA21731_Batchelder.gff <==
+	# chr1	maq	SNP	3751339	3751339	.	+	.	alleles C/T;ref_allele C;read_depth 78
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP08_NA21781_Lapidus.gff <==
+	# chr1	maq	SNP	1708759	1708759	.	+	.	alleles A;ref_allele T;read_depth 23
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP09_NA21833_Gill.gff <==
+	# chr10	MAQ	SNP	10000011	10000011	.	+	.	alleles C
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP10_NA21846_Sherley.gff <==
+	# chr1	maq	SNP	1946645	1946645	.	+	.	alleles A/C;ref_allele A;read_depth 34
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP11_NA_GatesSr.gff <==
+	# chr10	-	-	53571	53571	.	+	.	alleles C
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP12_NA_GatesJr.gff <==
+	# chr10	-	-	60592	60592	.	+	.	alleles T
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA07022_Anonymous.gff <==
+	# chr10	SIQ2	SNP	10000005	10000005	.	+	.	alleles G;ref_allele T
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA12156_Anonymous.gff <==
+	# chr1	MAQ	SNP	861078	861078	.	+	.	alleles C;ref allele C
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA12878_Anonymous.gff <==
+	# chr1	MAQ	SNP	861078	861078	.	+	.	alleles C;ref allele C
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA18507_Anonymous.gff <==
+	# chr1	NA18507	SNP	18455	18455	.	+	.	alleles T/G;id 000000001
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA18517_Anonymous.gff <==
+	# chr1	MAQ	SNP	59374	59374	.	+	.	alleles G;ref allele A
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA18555_Anonymous.gff <==
+	# chr1	MAQ	SNP	59374	59374	.	+	.	alleles G;ref allele A
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA18956_Anonymous.gff <==
+	# chr1	MAQ	SNP	59374	59374	.	+	.	alleles G;ref allele A
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA19129_Anonymous.gff <==
+	# chr1	MAQ	SNP	59374	59374	.	+	.	alleles G;ref allele A
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA19240_Anonymous.gff <==
+	# chr1	asm	SNP	28095	28095	.	+	.	alleles G;ref_allele A;db_xref dbsnp:rs806727;call_score 61;ID 819
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_-Ai.gff <==
+	# chr1	TRGFF	SNP	798785	798785	.	+	.	 alleles A;ref_allele G
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Anonymous_Chinese_Male.gff <==
+	# chr1	SoapSNP	SNP	4793	4793	25.0	+	.	ID YHSNP0128643;alleles A/G;counts 48/26;ref_allele A;status novel
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Anonymous_Korean_Male.gff <==
+	# chr10	GSNAP	SNP	100000568	100000568	.	+	.	alleles T/A;ref_allele A;read_depth 30
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_D-kgao.gff <==
+	# chr1	TRGFF	SNP	850871	850871	.	+	.	 alleles C;ref_allele G
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Gaq-o.gff <==
+	# chr1	TRGFF	SNP	516656	516656	.	+	.	 alleles G;ref_allele A
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_-Gubi.gff <==
+	# chr1	TRGFF	SNP	257	257	.	+	.	 alleles A/C;ref_allele A
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Kim.gff <==
+	# chr10	maq	SNP	56397	56397	.	+	.	alleles C/T;ref_allele C
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Quake.gff <==
+	# chr1	HELICOS	SNP	237448542	237448542	.	+	.	alleles A/A;ref_allele G
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Tutu.gff <==
+	# chr1	TRGFF	SNP	6120	6120	.	+	.	 alleles G/C;ref_allele G
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Venter.gff <==
+	# chr10	CV	snp	10000005	10000005	.	+	.	alleles T/G;db_xref dbsnp:rs4747840;id 1103649859189;method Method1;ref_allele T;rmr 0;tr 1
+	# ==> /home/bmoore/Projects/10-05-17_Trait-o-Matic_Genomes/PGP_NA_Watson.gff <==
+	# chr1	JW	snp	41921	41921	.	+	.	alleles G/C;SNP BJW-1117373;counts 2/2;ref_allele G
+
 	my $feature_id = join ':', @{$record}{qw(seqid source type start end)};
 	my ($seqid, $source, $type, $start, $end, $score, $strand, $phase, $attributes_text) =
 	    @{$record}{qw(seqid source type start end score strand phase attributes)};
@@ -189,7 +208,7 @@ sub parse_record {
 
 	# Here are all of the attriute keys they use
 	# alleles    = Variant_seq
-	# call_score = Don't use 
+	# call_score = Don't use
 	# counts     = Variant_reads
 	# db_xref    = Dbxref
 	# id	     = ID
@@ -240,7 +259,7 @@ sub parse_record {
 			  Variant_seq   => \@variant_seqs,
 			  Reference_seq => [$reference_seq],
 			  );
-			  
+
 	$attributes{Variant_reads} = \@variant_reads if scalar @variant_reads;
 	$attributes{Total_reads}   = [$total_reads]  if defined $total_reads;
 	$attributes{Dbxref}        = \@dbxrefs       if scalar @dbxrefs;
@@ -261,49 +280,41 @@ sub parse_record {
 
 #-----------------------------------------------------------------------------
 
+=head2 reader
+
+ Title   : reader
+ Usage   : $a = $self->reader
+ Function: Return the reader object.
+ Returns : A L<GAL::Reader::DelimitedLine> singleton.
+ Args    : None
+
+=cut
+
 sub reader {
-    my $self = shift;
-    
-    if (! $self->{reader}) {
-	# The column names for the incoming data
-	my @field_names = qw(seqid source type start end score strand phase
-			     attributes);
-	my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
-	$self->{reader} = $reader;
-    }
-    return $self->{reader};
+  my $self = shift;
+
+  if (! $self->{reader}) {
+    my @field_names = qw(seqid source type start end score strand phase attributes);
+    my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
+    $self->{reader} = $reader;
+  }
+  return $self->{reader};
 }
 
-#-----------------------------------------------------------------------------                                                                                                   
+#-----------------------------------------------------------------------------
+
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+L<GAL::Parser::trait_o_matic> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::trait_o_matic> requires no configuration files or environment variables.
+L<GAL::Parser::trait_o_matic> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-None.
+L<GAL::Parser>
+L<GAL::Reader::DelimitedLine>
 
 =head1 INCOMPATIBILITIES
 
@@ -322,7 +333,8 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All
+rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.
@@ -330,25 +342,25 @@ Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights res
 =head1 DISCLAIMER OF WARRANTY
 
 BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
-FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
-OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
-PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER
-EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
-ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
-YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
-NECESSARY SERVICING, REPAIR, OR CORRECTION.
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE "AS IS" WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.
 
 IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
 WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
-LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
-OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
-THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
 RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
 FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
-SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGES.
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.
 
 =cut
 
