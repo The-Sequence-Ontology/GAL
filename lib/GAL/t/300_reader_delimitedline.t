@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 5;
+use Test::More tests => 9;
 
 BEGIN {
 	use lib '../../';
@@ -27,6 +27,19 @@ ok($reader->field_names(qw(seqid source type start end score strand phase
 
 # TEST 5
 ok($reader->next_record, '$reader->next_record');
+
+# TEST 6
+ok($reader->comments('This is a comment'), '$reader->comments');
+
+# TEST 7
+ok(my @comments = $reader->comments, '$reader->comments');
+
+# TEST 8
+ok($reader->headers('This is a header'), '$reader->headers');
+
+# TEST 9
+ok(my @headers = $reader->headers, '$reader->headers');
+
 
 ################################################################################
 ################################# Ways to Test #################################

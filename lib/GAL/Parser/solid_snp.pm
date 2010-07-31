@@ -107,7 +107,7 @@ sub parse_record {
 	my ($self, $record) = @_;
 
 	my $seqid      = $record->{chr};
-	my $source     = 'ABI_SOLiD';
+	my $source     = 'SOLiD';
 	my $type       = 'SNV';
 	my $start      = $record->{pos};
 	my $end        = $record->{pos};

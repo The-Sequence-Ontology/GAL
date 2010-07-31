@@ -119,11 +119,11 @@ sub parse_record {
 	my $end        = $record->{end};
 	my $score      = $record->{score};
 	my $strand     = $record->{strand};
-	my $phase      = $record->{phase};
+	my $phase      = '.';
 
 	$type = $type eq 'SNP' ? 'SNV' : $type;
 
-	# chr1SoapSnpSNPSNP4793479325+.ID=YHSNP0128643; status=novel; ref=A; allele=A/G; support1=48; support2=26;
+	# chr1 SoapSnp SNP SNP 4793 4793 25 + . ID=YHSNP0128643; status=novel; ref=A; allele=A/G; support1=48; support2=26;
 	# chr1SoapSNPSNP6434643448+.ID=YHSNP0128644; status=novel; ref=G; allele=A/G; support1=10; support2=11;
 	# chr1SoapSNPSNP938969389651+.ID=rs4287120; status=dbSNP; ref=T; allele=C/T; support1=5; support2=4; location=MSTB1:LTR/MaLR;
 	# chr1SoapSNPSNP22570722570743+.ID=rs6603780; status=dbSNP; ref=C; allele=C/G; support1=23; support2=12;
@@ -157,11 +157,12 @@ sub parse_record {
 
 	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
-	my $attributes = {Reference_seq => [$reference_seq],
+	my $attributes = {ID            => [$id],
+			  Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
 			  Variant_reads => \@variant_reads,
-			  Total_reads      => [$total_reads],
-			  Genotype         => [$genotype],
+			  Total_reads   => [$total_reads],
+			  Genotype      => [$genotype],
 			 };
 
 	my $feature_data = {feature_id => $id,

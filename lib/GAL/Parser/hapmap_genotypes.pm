@@ -1,4 +1,4 @@
-package GAL::Parser::hapmap_genotype;
+package GAL::Parser::hapmap_genotypes;
 
 use strict;
 use vars qw($VERSION);
@@ -64,9 +64,20 @@ sub _initialize_args {
 	# for each attribute.  Leave the rest of this block alone!
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
-	my @valid_attributes = qw(file fh); # Set valid class attributes here
+	my @valid_attributes = qw(file fh header_count); # Set valid class attributes here
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
+}
+
+#-----------------------------------------------------------------------------
+
+sub header_count {
+    my ($self, $header_count) = @_;
+    
+    if ($header_count) {
+	$self->{header_count} = $header_count;
+    }
+    return $self->{header_count};
 }
 
 #-----------------------------------------------------------------------------
@@ -82,74 +93,87 @@ sub _initialize_args {
 =cut
 
 sub parse_record {
-	my ($self, $record) = @_;
+    my ($self, $data) = @_;
+    
+    # rsID alleles chrom pos strand assembly# center protLSID
+    # assayLSID panelLSID QCcode NA18484 NA18485 NA18486
+    
+    # Col1: refSNP rs# identifier at the time of release (NB might merge 
+    #       with another rs# in the future)
+    # Col2: SNP alleles according to dbSNP
+    # Col3: chromosome that SNP maps to 
+    # Col4: chromosome position of SNP, in basepairs on reference sequence
+    # Col5: strand of reference sequence that SNP maps to
+    # Col6: version of reference sequence assembly
+    # Col7: Center where genotyping was done
+    # Col8: HapMap genotype center that produced the genotypes
+    # Col9: LSID for HapMap protocol used for genotyping
+    # Col10: LSID for HapMap assay used for genotyping
+    # Col11: LSID for panel of individuals genotyped
+    # Col12: QC-code, currently 'QC+' for all entries (for future use)
+    # Col13: and on: observed genotypes of samples, one per column, sample 
+    # identifiers in column headers (Coriell catalog numbers, example: 
+    # NA10847). Duplicate samples have .dup suffix.
+    
+    my %record;
+    @record{qw(rsID alleles chrom pos strand assembly center
+	       protLSID assayLSID panelLSID QCcode)} = splice(@{$data}, 0, 11);
+    
+    my $seqid      = $record{chrom};
+    my @protocol_data = split /:/, $record{protLSID};
+    my $source     = join ':', ($record{center}, $protocol_data[4]);
+    my $type       = 'SNV';
+    my $start      = $record{pos};
+    my $end        = $start;
+    my $feature_id = join ':', ($source, $seqid, $start);
+    my $score      = '.';
+    my $strand     = $record{strand};
+    my $phase      = '.';
+    
+    my $reference_seq ||= uc $self->fasta->seq($seqid, $start, $end);
+    $reference_seq = $self->revcomp($reference_seq) if $strand eq '-';
+    
+    my %variant_seqs;
+    my ($header) = $self->reader->headers;
+    my @header_data = split /\s/, $header;
+    splice(@header_data, 0, 11);
+    @variant_seqs{@header_data} = @{$data};
+    
+    my @features;
+    for my $individual (sort keys %variant_seqs) {
+	my $this_feature_id = join ':', ($individual, $feature_id);
+	my %variant_seqs_hash = map {$_ => 1 } split //, $variant_seqs{$individual};
+	my @variant_seqs = keys %variant_seqs_hash;
 
-	my $feature_id = join ':', @{$record}{qw(seqid source type start end)};
-	my $seqid      = $record->{seqid};
-	my $source     = $record->{source};
-	my $type       = $record->{type};
-	my $start      = $record->{start};
-	my $end        = $record->{end};
-	my $score      = $record->{score};
-	my $strand     = $record->{strand};
-	my $phase      = $record->{phase};
-
-	# Create the attributes hash
-	# See http://www.sequenceontology.org/gvf.html
-
-	# Assign the reference and variant sequences:
-	# Reference_seq=A
-	# The order of the Variant_seqs matters for indexing Variant_effect
-	# - see below
-	# Variant_seq=G,A
-	my ($reference_seq, @variant_seqs) = split m|/|, $record->{variant_seq};
-
-	# Assign the variant seq read counts if available:
-	# Variant_reads=8,6
-
-	# Assign the total number of reads covering this position:
-	# Total_reads=16
-
-	# Assign the genotype and probability if available:
-	# Genotype=homozygous
-
+	# Make sure that at least one variant sequence is not N
+	next unless grep {$_ ne 'N'} @variant_seqs;
+	# Make sure that at least one variant sequence differs from
+        # the reference sequence.
+	next unless grep {$_ ne $reference_seq} @variant_seqs;
+	
 	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
-
-	# Create the attribute hash reference.  Note that all values
-	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested keys include
-	# (from the GFF3 spec), but are not limited to: ID, Name,
-	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
-	# Ontology_term. Note that attribute names are case
-	# sensitive. "Parent" is not the same as "parent". All
-	# attributes that begin with an uppercase letter are reserved
-	# for later use. Attributes that begin with a lowercase letter
-	# can be used freely by applications.
-
-	# For sequence_alteration features the suggested keys include:
-	# ID, Reference_seq, Variant_seq, Variant_reads Total_reads,
-	# Genotype, Intersected_feature, Variant_effect, Copy_number
-
+	
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
 			  Genotype      => [$genotype],
-			  ID            => [$feature_id],
-			 };
-
-	my $feature_data = {feature_id => $feature_id,
-			    seqid      => $seqid,
-			    source     => $source,
-			    type       => $type,
-			    start      => $start,
-			    end        => $end,
-			    score      => $score,
-			    strand     => $strand,
-			    phase      => $phase,
-			    attributes => $attributes,
-			   };
-
-	return $feature_data;
+			  ID            => [$this_feature_id],
+			  individual    => [$individual],
+		      };
+	
+	my $feature = {feature_id => $this_feature_id,
+		       seqid      => $seqid,
+		       source     => $source,
+		       type       => $type,
+		       start      => $start,
+		       end        => $end,
+		       score      => $score,
+		       strand     => $strand,
+		       phase      => $phase,
+		       attributes => $attributes,
+		   };
+	push @features, $feature;
+    }
+    return scalar @features ? \@features : undef;
 }
 
 #-----------------------------------------------------------------------------
@@ -159,9 +183,12 @@ sub reader {
     
     if (! $self->{reader}) {
 	# The column names for the incoming data
-	my @field_names = qw(seqid source type start end score strand phase
-			     attributes);
-	my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
+	# my @field_names = qw(seqid source type start end score strand phase
+	#	 	     attributes);
+	my $header_count = $self->header_count;
+	$header_count = defined $header_count ? $header_count : 1;
+	my $reader = GAL::Reader::DelimitedLine->new(field_separator => qr/\s/,
+						     header_count    => $header_count);
 	$self->{reader} = $reader;
     }
     return $self->{reader};
