@@ -141,7 +141,7 @@ list (or referenece) of key value pairs.
  sub fasta {
    my ($self, $fasta_path) = @_;
 
-   if (! $self->{fasta} || $fasta_path ) {
+   if ($fasta_path) {
      # $fasta_path ||= $self->config('default_fasta_path');
      my $fasta_index = Bio::DB::Fasta->new($fasta_path);
      $self->{fasta} = $fasta_index;

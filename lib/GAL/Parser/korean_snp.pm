@@ -110,7 +110,7 @@ sub parse_record {
 
 	my $id         = $record->{id};
 	my $seqid      = $record->{chromosome};
-	my $source     = 'Illumina_GA';
+	my $source     = 'KOBIC';
 	my $type       = 'SNV';
 	my $start      = $record->{location};
 	my $end        = $record->{location};

@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use Getopt::Long;
 use GAL::Parser;
+use Bio::DB::Fasta;
+
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -70,7 +72,7 @@ my $class = "GAL::Parser::$parser";
 eval "require $class";
 die $@ if $@;
 
-if (-r $pragma) {
+if ($pragma && -r $pragma) {
     open(my $IN, '<', $pragma) or die "Can't open $pragma for reading\n";
     print (<$IN>);
     close $IN;

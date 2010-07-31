@@ -1,4 +1,4 @@
-package GAL::Parser::quake;
+package GAL::Parser::quake_snp;
 
 use strict;
 use vars qw($VERSION);
@@ -116,7 +116,7 @@ sub parse_record {
 	$chromosome = 'MT' if $chromosome eq '25';
 
 	my $seqid = 'chr' . $chromosome;
-	my $source     = 'Quake';
+	my $source     = 'Helicos';
 	my $type       = 'SNV';
 	my $start      = $position;
 	my $end        = $position;

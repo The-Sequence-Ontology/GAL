@@ -168,17 +168,45 @@ sub parse_record {
 	my $seqid      = 'chr' . $record->{chromosome};
 	my $source     = 'Celera';
 	my $type       = ''; # Assigned below
-	my $start      = $record->{start}++;
+	my $start      = ++$record->{start};
 	my $end        = $record->{end};
 	my $score      = '.';
 	my $strand     = $record->{orientation};
 	my $phase      = '.';
 
 
+	my ($their_genotype, $variant_type) =
+	  $record->{variant_type} =~ /(.*?)_(.*)/;
+
+	return undef unless $variant_type eq 'SNP';
+
+	my %type_map = (deletion               => 'nucleotide_deletion',
+			insertion              => 'nucleotide_insertion',
+			mixed_sequence_variant => 'sequence_alteration',
+			MNP                    => 'MNP',
+			SNP                    => 'SNV',
+		       );
+
+	$type = $type_map{$variant_type};
+
+	my $reference_seq = uc $self->fasta->seq($seqid, $start, $end);
+        $reference_seq = $self->revcomp($reference_seq) if $strand eq '-';
+
 	my ($seq_text) = split /;/, $record->{seqs};
-	my ($reference_seq, @variant_seqs) = split m|/|, $seq_text;
-	unshift @variant_seqs, $reference_seq
-	  if $record->{variant_type} =~ /^heterozygous/;
+	my @variant_seqs = split m|/|, $seq_text;
+	shift @variant_seqs if $their_genotype eq 'homozygous';
+
+	# if ($reference_seq ne $real_ref) {
+	#     $self->warn(code    => 'reference_seq_mismatch',
+	# 		message => ('The reference sequence given for this record ' .
+	# 			    'does not match the reference sequence in the ' .
+	# 			    'given fasta files.'
+	# 			    )
+	# 		);
+	# }
+	
+	#unshift @variant_seqs, $reference_seq
+	#  if $record->{variant_type} =~ /^heterozygous/;
 
         my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
@@ -190,18 +218,6 @@ sub parse_record {
 	#   22525 heterozygous_MNP
 	#   21480 heterozygous_mixed_sequence_variant
 	#   14838 homozygous_MNP
-
-	my ($their_genotype, $variant_type) =
-	  $record->{variant_type} =~ /(.*?)_(.*)/;
-
-	my %type_map = (deletion               => 'nucleotide_deletion',
-			insertion              => 'nucleotide_insertion',
-			mixed_sequence_variant => 'sequence_alteration',
-			MNP                    => 'MNP',
-			SNP                    => 'SNV',
-		       );
-
-	$type = $type_map{$variant_type};
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
@@ -252,7 +268,14 @@ sub reader {
 
 =head1 DIAGNOSTICS
 
-L<GAL::Parser::venter_snp> does not throw any warnings or errors.
+=over 4
+
+=item reference_seq_mismatch
+
+The reference sequence given for this record does not match the
+reference sequence in the given fasta files.
+
+=back
 
 =head1 CONFIGURATION AND ENVIRONMENT
 

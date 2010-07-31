@@ -9,7 +9,7 @@ use List::MoreUtils;
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
 #-----------------------------------------------------------------------------
-my $usage = "
+my $usage = '
 
 Synopsis:
 
@@ -22,209 +22,364 @@ for which GAL has a parser).
 
 Options:
 
-  ids          Load a list of IDs (or other values) into the hash ref \$ids
-               which will be used by include and exclude and is also
-               available to code refs for custom includes and excludes.
+All arguments given on the command line not associated with one of the
+following argument flags are considered to be feature files to be
+parsed and operated on.
 
-  include      Include only those features who's IDs match the ids hashref.
+--Input/Output Options--
 
-  exclude      Exclude those features who's IDs match the ids hashref.
+  format|f        The format of the input file. While this tool is
+		  called gff_tool, most of the commands below will
+		  operate on any kind of input file that the GAL
+		  library has a parser for.  By default the input is
+		  GFF3 and the script has a GFF3 parser on board, so
+		  the GAL library is not required unless other feature
+		  parsers are needed.  The argument to this command is
+		  the name of a GAL::Parser subclass. [gff3]
 
-  merge        Merge takes a gff file (perhaps the concatenation of two 
-               and combines the features.  If two features shares an 
-               ID only the first one is printed.
-               features in the first file will replace any features in the
-               second file that share the same ID.
+  in_place|i      Do an in-place edit of the file. Be careful - no
+		  backup copy of your original file will be created!
 
-  blend        Blend takes a GFF3 file (perhaps the concatenation of two or more files) and uniquely blends the attributes for
-               features that share the same ID.  If two features have
-               the same ID, but conflict other ways (i.e. the first 8
-               columns) then blend will use the values from the first
-               feature encountered but still blend the attributes.
+  out_ext|o       If input is coming from a file(s) and you want
+		  output to be written to a file(s) of the same name
+		  with an added extension, then give the extension
+		  here and gff_tool will do the right thing by using
+		  the same file name with the given argument as an
+		  additional extenstion.
 
-  sort         Use the given code ref for sorting. (Not yet implimented)
+  fasta|j         Provide the path to a directory containing the fasta
+		  file(s) associated with a given feature file.  This
+		  argument is required by some (but not all) of the
+		  other commands.  Bio::DB::Fasta is used to index the
+		  fasta file.  The sequence of each feature is made
+		  available to any code reference given via the code
+		  argument.
 
-  grep         Print only those features that match the given pattern. (Not yet implimented)
+--Include/Exclude Options--
 
-  filter       Print only those features that return true from the
-	       given code ref.
+The following filters are applied in addition to any other
+manipulations just before a feature (or it\'s sequence) is printed,
+and so if a feature is altered by other commands the filter will apply
+to the altered copy of the feature.  All filters given are applied.
 
-  alter        Apply the given code ref to each feature and then print.
+  ids|d           Provide a file that contains a list of IDs (or other
+		  values).  The values loaded be used by the
+		  include/exclude commands described below and will
+		  also be made available as a hash reference ($i) to
+		  the any code reference given.
 
-  validate     Simple validation for the file. (Not yet implimented)
+  include|n       Include only those features whos IDs match the
+		  values provided by the ids argument above.
 
-  summarize    Provide simple summary details and statistics for the file
-               that may be useful in QC.
+  exclude|e       Exclude those features whos IDs match the the values
+		  provided by ids argument above.
 
-  hash_ag      Give a code ref that will be used to stuff features into \%hash_ag.
+  code|c          A code reference that will be used by some of the
+		  following commands below and applied in turn to each
+		  feature as described.  All code references will have
+		  available to the the following variables:
 
-  list_ag      Give a code ref that will be used to stuff features into \@list_ag. (Not yet implimented)
+		      $i - A hash reference of the values loaded from the
+			   file given by the ids argument.
+		      $f - A hash reference for the current feature (see
+			   below for more details on the structure of the
+			   hash reference).
+		      $t - A hash reference for the attributes associated
+			   with the current feature (see below for more
+			   details on the structure of the hash reference).
+		      $s - The sequence of the current feature.  Actually
+			   $s is a a code reference that will return the
+			   sequence for the current feature.  This prevents
+			   the code from loading the sequence for each
+			   feature unless necessary.
+		      $d - A Bio::DB::Fasta object for the fasta sequences
+			   given by the fasta argument described above.
 
-  ag_code      A code reference that will be applied to each key or element in
-               \%hash_ag or \@list_ag.
+  filter|t        Use the code reference provided with the code
+		  argument described above to filter the features.
+		  Print only those features that return true from the
+		  given code ref.
 
-  stat         Return simple stats on the file. (Not yet implimented)
+--Modify Options--
 
-  fasta        Parse the given fasta file making it available to code
-               references.  If a value is given that is not a readable file then
-               the script will attempt to parse a ##FASTA section from the GFF3
-               file before any features are processed. (Not yet implimented)
+  merge|m         Merge takes a feature file(s) and combines the
+		  features.  If gff_tool encounters a second feature
+		  that shares an ID with a previously encountered
+		  feature then both of those features are passed to
+		  the given code reference and the feature that is
+		  returned by the code reference will be saved.  If no
+		  code reference is given, then the first feature
+		  encountered will be saved and a warning issued.
 
-  to_fasta     Print a fasta sequence for each feature. (Not yet implimented)
+  blend|b
 
-  add_fasta    Add a fasta file to a GFF3 file ##FASTA section. (Not yet implimented)
+		  Blend takes a feature file(s) and uniquely blends
+		  the attributes for features that share the same ID.
+		  If two features have the same ID, but conflict in
+		  ways other than the attributes (i.e. seqid, source,
+		  type, start, end, strand, phase values) then blend
+		  will use any code reference provided to the code
+		  argument to resolve which feature to save as
+		  described above for the merge command.  If no code
+		  reference is available then blend will keep the
+		  values from the first feature encountered, then
+		  blend the attributes and issue a warning.
 
-  strip_fasta  Remove the ##FASTA section from a GFF3 file. (Not yet implimented)
+  sort|s          Sort the feature file using the code reference given
+		  by the code argument described above.  (Not yet
+		  implimented)
 
-  add_ID       Add ID attributes where they don't already exist. (Not yet implimented)
+  alter|a         Apply the code reference given by the code argument
+		  described above to each feature.  This is identical
+		  to the filter command described above, but any
+		  alteration made the the feature by the code
+		  reference is kept.
 
-  format       The format of the input file. [gff3] (Not yet implimented)
+  hash_ag|h
 
-  in_place     Do an in-place edit to the file. [false] (Not yet implimented)
+		  The hash_ag argument takes a code reference.  A
+		  second code reference passed to the code argument is
+		  also required.  The function uses the code reference
+		  supplied by the code argument described above to
+		  create a hash (%h).  This may be done, for example,
+		  by pushing all features onto the values of %h keyed
+		  by seqid or type.  After all features have been been
+		  iterated over (and possibly stored) this way,
+		  another loop is run over each key of %h and the code
+		  reference provided to this argument is run for each
+		  iteration through that loop.  The variables made
+		  available within this loop are as follows:
 
-  gff_pragmas  Interactively add GFF3 style pragmas to the top of the file.
+		      %h - The hash created as described above.
+		      $k - The current key.
+		      $v - An current value.
 
-  gvf_pragmas  Interactively add GVF style pragmas to the top of the file.
+		  See the Examples section below.
 
-Notes:
+--Reporting Options--
 
-All code refs have available to them the current GAL::Parser object
-(\$parser), the feature hash reference (\$f) and the attributes of
-that feature as a separate hash reference (\$a).  Operations
-that shouldn't change the feature - like grep and filter - won't
-change it.  The \$a are the same as the ones located in
-\$f->{attributes} but \$a will clobber the
-\$f->{attributes} before printing in alter operations.
-Regardless of what you do to those variables, the original version of
-the feature will be printed.  Operations that should change the
-feature, like alter and ag_code will print the altered versions of
-those variables.  If you want to filter and alter at the same time you
-should use list_ag to filter and then ag_code to alter.
+  validate|v
 
-The structure of the feature hash references discussed above are:
+		  The validate command provides simple validation for
+		  GFF3 and GVF files.  Constraints on values and
+		  attributes are checked as described in the GFF3 and
+		  GVF specification.  If a ##gvf-version pragma is
+		  encountered then GVF constraints will be applied in
+		  addition to GFF3 constraints, otherwise the file
+		  will be validated as GFF3.  Values that are
+		  constrained by the GVF or GFF3 specification to be
+		  SO terms are checked but not SO relationships are
+		  not currently enforced.  A SO.obo file can be passed
+		  as an argument to the validate argument and this
+		  file will be used to validate the SO terms used in
+		  the file.  If no SO file is given, gff_tools will
+		  attempt to access the the current SO file from the
+		  SO website.  If no SO file is available by any of
+		  the above methods, then no validation of SO terms
+		  will be done.  An error report will be printed to
+		  STDOUT.
 
-\$f = {feature_id => \$feature_id, # Same as the value of the ID attribute
-       seqid      => \$seqid,
-       source     => \$source,
-       type       => \$type,
-       start      => \$start,
-       end        => \$end,
-       score      => \$score,
-       strand     => \$strand,
-       phase      => \$phase,
-       attributes => \$a,
-      }
+  stats|u	  Return simple summary statistics for the given file.
+		  (Not yet implimented)
 
-\$a = {tag1 => [value1],
-       tag2 => [value1, value2],
-      }
+--Add/Extract Options--
 
-";
+  sequence|p      Print a fasta sequence for each feature instead of
+		  the feature. Requires the fasta argument (Not yet
+		  implimented)
+
+  features|x      Print only feature lines, removing all meta-data,
+                  comments, empty lines and fasta from a GFF file.
+
+  fasta_only|q    Print only the fasta sequences from the ##FASTA
+                  section from a GFF3 file.
+
+  fasta_no|Q      Remove the ##FASTA section from a GFF3 file.
+
+  fasta_add|r     Add a fasta file to the GFF3 output in a ##FASTA
+		  section.
+
+  meta_only|y     Print only the meta-data lines (pragmas, comments and
+		  empty lines) from a GFF file.
+
+  meta_no|Y       Print only the meta-data lines (pragmas, comments and
+		  empty lines) from a GFF file.
+
+  meta_add|z      Add a file containing meta-data to the begining of 
+                  a GFF file.
+
+  pragmas|w       Interactively add GFF3/GVF pragmas to the top of the
+		  file.  Use GFF3 or GVF (case insensitive) as an
+		  argument to signify which pragma style to
+		  create. (Not yet implimented)
+
+  add_ID|v        Add ID attributes where they dont already
+		  exist. (Not yet implimented)
+
+Code References:
+
+All code refs have available to them the current feature as a hash
+reference ($f), the attributes of the current feature as a separate
+hash reference ($t), any list of values loaded with the ids argument
+($i), the sequence of the current feature ($s) and the current
+Bio::DB::Fasta object ($d) if the fasta argument was given.  Changes
+made by code references can change any of the values in the variables
+mentioned above, but those changes will be discarded before the
+feature is printed except when the alter argument is given.  The
+attributes located in $t are the same as the ones located in
+$f->{attributes} but when the alter command is in effect the values in
+$t will clobber the $f->{attributes} before the feature is printed.
+
+The structure of hash references discussed above are:
+
+$f = {feature_id => $feature_id, # Same as the value of the ID attribute
+      seqid      => $seqid,
+      source     => $source,
+      type       => $type,
+      start      => $start,
+      end        => $end,
+      score      => $score,
+      strand     => $strand,
+      phase      => $phase,
+      attributes => $a,
+     }
+
+$t = {tag1 => [value1],
+      tag2 => [value1, value2],
+     }
+
+Examples:
+
+gff_tool --hash_ag "push @{$hash_ag{$f->{type}}}, $f"       \
+	   --code "my @x = sort {($a->{end} - $a->{start})  \
+	   <=> ($b->{end} - $b->{start})} @$value;shift @x" \
+	   features.gff3
+
+';
+
+my ($help, $format, $in_place, $out_ext, $fasta, $ids, $include,
+    $exclude, $code, $filter, $merge, $blend, $sort, $alter, $hash_ag,
+    $validate, $stats, $sequence, $fasta_only, $fasta_no, $fasta_add,
+    $meta_only, $meta_no, $header_add, $add_ID, $pragmas, $features);
 
 
-my ($help, $ids_file, $include, $exclude, $merge, $blend, $sort_code, 
-    $grep_code, $filter_code, $alter_code, $validate, $hash_ag,
-    $list_ag, $ag_code, $stat, $fasta, $to_fasta, $add_fasta,
-    $no_fasta, $add_ID, $format, $in_place);
-
-my $opt_success = GetOptions('help'        => \$help,
-			     'ids=s'       => \$ids_file,
-			     'include'     => \$include,
-			     'exclude'     => \$exclude,
-                             'merge=s'     => \$merge,
-                             'blend'       => \$blend,
-			     'sort=s'      => \$sort_code,
-			     'grep=s'      => \$grep_code,
-			     'filter=s'    => \$filter_code,
-			     'alter=s'     => \$alter_code,
-			     'validate=s'  => \$validate,
-			     'hash_ag=s'   => \$hash_ag,
-			     'list_ag=s'   => \$list_ag,
-			     'ag_code=s'   => \$ag_code,
-			     'stat=s'      => \$stat,
-			     'fasta=s'     => \$fasta,
-			     'to_fasta=s'  => \$to_fasta,
-			     'add_fasta=s' => \$add_fasta,
-			     'no_fasta=s'  => \$no_fasta,
-			     'add_ID=s'    => \$add_ID,
-			     'format=s'    => \$format,
-			     'in_place'    => \$in_place,
-			      );
+my $opt_success = GetOptions('format|f=s'      => $format,
+			     'in_place|i'      => $in_place,
+			     'out_ext|o=s'     => $out_ext,
+			     'fasta|j=s'       => $fasta,
+			     'ids|d=s'	       => $ids,
+			     'include|n'       => $include,
+			     'exclude|e'       => $exclude,
+			     'code|c=s'	       => $code,
+			     'filter|t'	       => $filter,
+			     'merge|m'	       => $merge,
+			     'blend|b'	       => $blend,
+			     'sort|s'	       => $sort,
+			     'alter|a'	       => $alter,
+			     'hash_ag|h=s'     => $hash_ag,
+			     'validate|v'      => $validate,
+			     'stats|u'	       => $stats,
+			     'sequence|p'      => $sequence,
+			     'features|x'      => $features,
+			     'fasta_only|r'    => $fasta_only,
+			     'fasta_no|R'      => $fasta_no,
+			     'fasta_add|q=s'   => $fasta_add,
+			     'meta_only|y'     => $meta_only,
+			     'meta_no|Y'       => $meta_no,
+			     'meta_add|z=s'    => $meta_add,
+			     'pragmas|w=s'     => $pragmas,
+			     'add_ID|v'	       => $add_ID,
+                            );
 
 die $usage if $help || ! $opt_success;
 
 $format ||= 'gff3';
-my $parser_class = "GAL::Parser::$format";
-eval "require $parser_class";
-die "Failed to load $parser_class" if $@;
 
-die $usage if ($ids_file && ! -r $ids_file);
-
+die "FATAL : unable_to_open_file : $ids_file\n" if ($ids_file && ! -r $ids_file);
 my $ids = parse_ids($ids_file) if ($ids_file && -r $ids_file);
 
-my $file = shift;
-die $usage unless (($file && -r $file) || ! -t STDIN);
-
-my ($IN, $OUT);
-
-if (! -t STDIN) {
-	open ($IN, "<&=STDIN")   or die "Can't open STDIN:\n$!\n";
-}
-else {
-	open ($IN, "<", $file)   or die "Can't open $file for reading: $!\n";
+my @files = @ARGV;
+die "$usage\n\nMust give one or more feature files\n\n" unless (scalar @files || ! -t STDIN);
+for my $file (@files) {
+ die "FATAL : unable_to_open_file : $file\n" if ! -r $file;
 }
 
-if ($in_place) {
-	unlink $file;
-	open ($OUT, ">", $file)   or die "Can't open $file for writing:\n$!\n";
-}
-else {
-	open ($OUT, ">&=STDOUT") or die "Can't open STDOUT for writing:\n$!\n";
-}
+my $STDIN_FINISHED;
 
-my $parser = $parser_class->new(fh     => $IN,
-				format => $format,
-			       );
+my $d = parse_fasta($fasta) if $fasta;
+my $i = parser_ids($ids) if $ids;
 
-merge_gff($parser) if $merge;
-blend_gff($parser) if $blend;
-filter_gff($parser, $filter_code) if $filter_code;
-alter_gff($parser, $alter_code)   if $alter_code;
-hash_aggregate_gff($parser, $hash_ag, $ag_code) if $hash_ag && $ag_code;
-
+# Move the filter code to the passes_filters sub
+filter($filter_code) if $filter;
+#merge()		 if $merge;
+blend()	     	         if $blend;
+#sort_gff()		 if $sort;
+alter()                  if $alter;
+validate()		 if $validate;
+hash_ag($hash_ag)        if $hash_ag;
+#stats()		 if $stats;
+sequence()		 if $sequence;
+features()               if $features;
+fasta_only()		 if $fasta_only;
+fasta_no()		 if $fasta_no;
+fasta_add()		 if $fasta_add;
+meta_only()		 if $meta_only;
+meta_no()		 if $meta_no;
+meta_add()		 if $meta_add;
+add_ID()		 if $add_ID;
+#pragma($pragma)	 if $pragma;
 
 #-----------------------------------------------------------------------------
 #-------------------------------- SUBROUTINES --------------------------------
 #-----------------------------------------------------------------------------
 
-sub parse_ids {
-
-	my $file = shift;
-
-	open ($IN, "<", $file)   or die "Can't open $file for reading: $!\n";
-
-	my %ids = map {chomp;$_ => 1} (<$IN>);
-
-	return \%ids;
-}
-
-
+#-----------------------------------------------------------------------------
+#  filter|t        Use the code reference provided with the code
+#		  argument described above to filter the features.
+#		  Print only those features that return true from the
+#		  given code ref.
+#  Examples:
+#  gff_tool --filter --code 'return 1 if $f->{score} < 100'
+#  gff_tool --filter --code 'return 1 unless $t->{Genotype} =~ /homozygous/i'
 #-----------------------------------------------------------------------------
 
-sub fails_filters {
+sub filter {
 
-	my $feature = shift;
+    my $code = shift;
 
-	my $fail;
+    while (my ($parser, $file) = get_next_parser()) {
+	last unless $parser;
+	my $OUT = fh_out($file);
+	while (my $f_original = $parser->next_feature_hash) {
 
-	if ($ids) {
-		$fail++ if ($include && ! $ids->{$feature->{feature_id}});
-		$fail++ if ($exclude &&   $ids->{$feature->{feature_id}});
+	    my $f = $f_original;
+	    my $a = $f->{attributes};
+
+	    my $return_value = eval $code;
+	    die "Fatal Error in code ref: $code\n$@\n" if $@;
+	    next unless $return_value;
+
+	    print $OUT $parser->to_gff3($f_original);
+	    print $OUT "\n";
 	}
-
-	return $fail;
+    }
 }
 
+#-----------------------------------------------------------------------------
+#  merge|m        Merge takes a feature file(s) and combines the
+#		  features.  If gff_tool encounters a second feature
+#		  that shares an ID with a previously encountered
+#		  feature then both of those features are passed to
+#		  the given code reference and the feature that is
+#		  returned by the code reference will be saved.  If no
+#		  code reference is given, then the first feature
+#		  encountered will be saved and a warning issued.
+#  Examples:
+#
+#  Merge two gff files keeping the feature with the greater Variant_freq
+#  if two features have the same ID.
+#
+#  gff_tool --merge --code 'return sort {$a->{Variant_freq} <=> $b->{Variant_freq} ($af, $bf)}'
 #-----------------------------------------------------------------------------
 
 sub merge_gff {
@@ -232,23 +387,47 @@ sub merge_gff {
     my $parser = shift;
 
     die "gff_tool (merge) not yet implimented!\n";
-    
+
 }
+
+#-----------------------------------------------------------------------------
+#  blend|b
+#
+#		  Blend takes a feature file(s) and uniquely blends
+#		  the attributes for features that share the same ID.
+#		  If two features have the same ID, but conflict in
+#		  ways other than the attributes (i.e. seqid, source,
+#		  type, start, end, strand, phase values) then blend
+#		  will use any code reference provided to the code
+#		  argument to resolve which feature to save as
+#		  described above for the merge command.  If no code
+#		  reference is available then blend will keep the
+#		  values from the first feature encountered, then
+#		  blend the attributes and issue a warning.
+#
+#  Examples:
+#
+#  Blend two GFF files always keeping the last feature encountered if two
+#  features share the same ID.
+#
+#  gff_tool --blend --code 'return $bf'
 #-----------------------------------------------------------------------------
 
 sub blend_gff {
 
-    my $parser = shift;
-
     my %features;
-    my $count = 0;
-    while (my $feature = $parser->next_feature_hash) {
-	my $feature_id = $feature->{feature_id};
-	$feature->{count} = $count++;
-	push @{$features{$feature_id}}, $feature;
+    while (my $parser = get_next_parser()) {
+	my $count = 0;
+	while (my $feature = $parser->next_feature_hash) {
+	    my $feature_id = $feature->{feature_id};
+	    $feature->{count} = $count++;
+	    push @{$features{$feature_id}}, $feature;
+	}
     }
 
-    for my $feature_id (sort {$features{$a}[0]{count} <=> 
+    my $OUT = fh_out();
+
+    for my $feature_id (sort {$features{$a}[0]{count} <=>
 			      $features{$b}[0]{count}} keys %features) {
 	my @feature_group = @{$features{$feature_id}};
 	my %blend_attributes;
@@ -262,7 +441,7 @@ sub blend_gff {
 		my $attributes = $feature->{attributes};
 		if (! %base_feature) {
 		    @base_feature{qw(feature_id seqid source type start end score strand phase)} =
-			@{$feature}{qw(feature_id seqid source type start end score strand phase)}; 
+			@{$feature}{qw(feature_id seqid source type start end score strand phase)};
 		}
 		for my $tag (keys %{$attributes}) {
 		    my @values = @{$attributes->{$tag}};
@@ -280,12 +459,15 @@ sub blend_gff {
 	    }
 	    $base_feature{attributes} = \%blend_attributes;
 	}
-	print $parser->to_gff3(\%base_feature);
-	print "\n";
-	print '';
+	print $OUT to_gff3(\%base_feature);
     }
 }
 
+#-----------------------------------------------------------------------------
+#  sort|s         Sort the feature file using the code reference given
+#		  by the code argument described above.  (Not yet
+#		  implimented)
+#
 #-----------------------------------------------------------------------------
 
 sub sort_gff {
@@ -295,169 +477,580 @@ sub sort_gff {
 }
 
 #-----------------------------------------------------------------------------
-
-sub print_gff {
-
-	while (my $feature = $parser->next_feature_hash) {
-		next if fails_filters($feature);
-
-		print $parser->to_gff3($feature);
-
-	}
-}
-
-#-----------------------------------------------------------------------------
-
-sub grep_gff {
-
-	die "gff_tool (grep) not yet implimented!\n";
-
-}
-
-#-----------------------------------------------------------------------------
-
-sub filter_gff {
-
-	my ($parser, $code) = @_;
-
-	while (my $f_original = $parser->next_feature_hash) {
-
-		my $f = $f_original;
-		my $a = $f->{attributes};
-
-		my $return_value = eval $code;
-                die "Fatal Error in code ref: $code\n$@\n" if $@;
-                next unless $return_value;
-
-		print $parser->to_gff3($f_original);
-	}
-}
-
+#  alter|a        Apply the code reference given by the code argument
+#		  described above to each feature.  This is identical
+#		  to the filter command described above, but any
+#		  alteration made the the feature by the code
+#		  reference is kept.
+#
 #-----------------------------------------------------------------------------
 
 sub alter_gff {
 
-	my ($parser, $code) = @_;
+    my $code = shift;
 
+    while (my ($parser, $file) = get_next_parser()) {
+	last unless $parser;
+	my $OUT = fh_out($file);
 	while (my $f = $parser->next_feature_hash) {
 
-		my $a = $f->{attributes};
+	    my $a = $f->{attributes};
 
-		my $return_value = eval $code;
-                die "Fatal Error in code ref: $code\n$@\n" if $@;
+	    my $return_value = eval $code;
+	    die "Fatal Error in code ref: $code\n$@\n" if $@;
 
-		$f->{attributes} = $a;
+	    $f->{attributes} = $a;
 
-		print $parser->to_gff3($f);
+	    print $OUT $parser->to_gff3($f);
+	    print $OUT "\n";
 	}
+    }
 }
 
 #-----------------------------------------------------------------------------
+#  hash_ag|h
+#
+#		  The hash_ag argument takes a code reference.  A
+#		  second code reference passed to the code argument is
+#		  also required.  The function uses the code reference
+#		  supplied by the code argument described above to
+#		  create a hash (%h).  This may be done, for example,
+#		  by pushing all features onto the values of %h keyed
+#		  by seqid or type.  After all features have been been
+#		  iterated over (and possibly stored) this way,
+#		  another loop is run over each key of %h and the code
+#		  reference provided to this argument is run for each
+#		  iteration through that loop.  The variables made
+#		  available within this loop are as follows:
+#
+#		      %h - The hash created as described above.
+#		      $k - The current key.
+#		      $v - An current value.
+#
+#		  See the Examples section below.
+#-----------------------------------------------------------------------------
 
-sub validate_gff {
+sub hash_ag {
 
-	die "gff_tool (validate) not yet implimented!\n";
+    my ($hash_ag, $ag_code) = @_;
 
+    my %hash_ag;
+    while (my $parser = get_next_parser()) {
+	while (my $f = $parser->next_feature_hash) {
 
+	    my $a = $f->{attributes};
+
+	    my $return_value = eval $hash_ag;
+	    die "Fatal Error in code ref: $hash_ag\n$@\n" if $@;
+	}
+    }
+
+    my $OUT = fh_out();
+    for my $key (keys %hash_ag) {
+
+	my $value = $hash_ag{$key};
+
+	my (@f) = eval $ag_code;
+	die "Fatal Error in code ref: $ag_code\n$@\n" if $@;
+	next unless @f;
+
+	print $OUT to_gff3(\@f);
+    }
 }
 
 #-----------------------------------------------------------------------------
+#
+#sub list_aggregate_gff {
+#
+#    my ($list_ag, $ag_code) = @_;
+#
+#    die "\n\ngff_tool (list_ag) function is written, but untested\n\n";
+#
+#    my @list_ag;
+#    while (my $parser = get_next_parser()) {
+#	while (my $f = $parser->next_feature_hash) {
+#
+#	    my $a = $f->{attributes};
+#
+#	    my $return_value = eval $list_ag;
+#	    die "Fatal Error in code ref: $list_ag\n$@\n" if $@;
+#	}
+#    }
+#
+#    my $OUT = fh_out();
+#    for my $element (@list_ag) {
+#
+#	my $f = eval $ag_code;
+#	die "Fatal Error in code ref: $ag_code\n$@\n" if $@;
+#	next unless $f;
+#
+#	print $OUT to_gff3($f);
+#    }
+#}
+#
+#-----------------------------------------------------------------------------
 
-sub hash_aggregate_gff {
+#-----------------------------------------------------------------------------
+#  validate|v
+#
+#		  The validate command provides simple validation for
+#		  GFF3 and GVF files.  Constraints on values and
+#		  attributes are checked as described in the GFF3 and
+#		  GVF specification.  If a ##gvf-version pragma is
+#		  encountered then GVF constraints will be applied in
+#		  addition to GFF3 constraints, otherwise the file
+#		  will be validated as GFF3.  Values that are
+#		  constrained by the GVF or GFF3 specification to be
+#		  SO terms are checked but not SO relationships are
+#		  not currently enforced.  A SO.obo file can be passed
+#		  as an argument to the validate argument and this
+#		  file will be used to validate the SO terms used in
+#		  the file.  If no SO file is given, gff_tools will
+#		  attempt to access the the current SO file from the
+#		  SO website.  If no SO file is available by any of
+#		  the above methods, then no validation of SO terms
+#		  will be done.  An error report will be printed to
+#		  STDOUT.
+#-----------------------------------------------------------------------------
 
-	my ($parser, $hash_ag, $ag_code) = @_;
+sub validate_gff3 {
 
-
-	my %hash_ag;
-	while (my $f = $parser->next_feature_hash) {
-
-		my $a = $f->{attributes};
-
-		my $return_value = eval $hash_ag;
-                die "Fatal Error in code ref: $hash_ag\n$@\n" if $@;
-	}
-
-	for my $key (keys %hash_ag) {
-
-		my $value = $hash_ag{$key};
-
-		my $f = eval $ag_code;
-                die "Fatal Error in code ref: $ag_code\n$@\n" if $@;
-                next unless $f;
-
-		print $parser->to_gff3($f);
-	}
+#    my $so_file = shift;
+#
+#    my ($sequence_features, $sequence_alterations, $sequence_variants,
+#	$part_of_closure) = parse_so($so_file);
+#
+#    for my $file (@files) {
+#	print "Validating: $file\n";
+#	open($IN, '<', $file) or
+#	    die "FATAL : cant_open_file_for_reading : $file\n";
+#      LINE:
+#	while ($line = <$IN>) {
+#	    next LINE if $line =~ /^\#[^\#]/;
+#	    next LINE if $line =~ /^\s*$/;
+#	    if ($line =~ /^\#\#gff-version/) {
+#
+#	    }
+#	    if ($line =~ /^\#\#gvf-version\s+(.*)/) {
+#		close $IN;
+#		validate_gvf($file);
+#		last LINE;
+#	    }
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#sub parse_so {
+#
+#    my $so_file = shift;
+#
+#    my $SO;
+#    if ($so_file && -e $so_file && -r $so_file) {
+#	open($SO, '<', $so_file) or
+#	    die "FATAL : cant_open_file_for_reading : $so_file\n";
+#    }
+#    else {
+#	open($SO, '-|', 'curl http://www.sequenceontology.org/resources/obo_files/current_release.obo') or die
+#	    "FATAL : cant_open_webaddress_for_reading : http://www.sequenceontology.org/resources/obo_files/current_release.obo\n";
+#    }
+#
+#    local $/;
+#    my $so_file_slurp = <$SO>;
+#
+#    my @terms = ($so_file_slurp =~ /\[TERM\](.*?)\n\n/gs);
+#
+#    my %part_of;
+#    my %is_a;
+#    my %names2ids;
+#    my %ids;
+#
+#  TERM:
+#    for my $term (@terms) {
+#	my @lines = split /\n/;
+#	my %term;
+#      LINE:
+#	for my $line (@lines) {
+#	    next TERM if $line =~ /^is_obsolete: true/;
+#	    next LINE if $line =~ /^(alt_id|
+#				     comment|
+#				     consider|
+#				     created_by|
+#				     creation_date|
+#				     def|
+#				     disjoint_from|
+#				     intersection_of|
+#				     is_symmetric|
+#				     is_transitive|
+#				     subset|
+#				     synonym|
+#				     xref|
+#				     )\s*:/w;
+#
+#	    if ($line =~ /^id:/) {
+#		my ($tag, $id) = split /\s+/, $line;
+#		$term{id} = $id;
+#	    }
+#	    if ($line =~ /^is_a:/) {
+#		my ($tag, $is_a) = split /\s+/, $line;
+#		push @{$term{is_a}}, $is_a;
+#	    }
+#	    if ($line =~ /^name:/) {
+#		my ($tag, $name) = split /\s+/, $line;
+#		push @{$term{name}}, $name;
+#	    }
+#	    if ($line =~ /^relationship:/) {
+#		my ($tag, $relationship, $object) = split /\s+/, $line;
+#		push @{$term{relationship}{$relationship}}, $object;
+#	    }
+#	}
+#	$ids{$term{id}}++;
+#	$names2ids{$term{name}} = $term{id};
+#	map {push @{$is_a{$term{id}}}, $_}    @{$term{is_a}};
+#	map {push @{$part_of{$term{id}}}, $_} @{$term{relationship}{part_of}};
+#    }
+#
+#    my $sequence_features    = get_all_children_of('SO:0000110', \%is_a);
+#    my $sequence_alterations = get_all_children_of('SO:0001059', \%is_a);
+#    my $sequence_variants    = get_all_children_of('SO:0001060', \%is_a);
+#
+#    my %part_of_closure;
+#    for my $subject (keys %part_of) {
+#	my $object = $part_of{$subject};
+#	$part_of_closure{$subject}{$object}++;
+#	my $subject_children = get_all_children_of($subject, \%is_a);
+#	my $object_children  = get_all_children_of($object,  \%is_a);
+#	for my $subject_child (keys %{$subject_children}) {
+#	    for my $object_child (keys %{object_children}) {
+#		$part_of_closure{$subject_child}{$object_child}++;
+#	    }
+#	}
+#    }
+#    return ($sequence_features, $sequence_alterations, $sequence_variants,
+#	    $part_of_closure);
 }
 
 #-----------------------------------------------------------------------------
-
-sub list_aggregate_gff {
-
-	my ($parser, $list_ag, $ag_code) = @_;
-
-
-	my @list_ag;
-	while (my $f = $parser->next_feature_hash) {
-
-		my $a = $f->{attributes};
-
-		my $return_value = eval $list_ag;
-                die "Fatal Error in code ref: $list_ag\n$@\n" if $@;
-	}
-
-	for my $element (@list_ag) {
-
-		my $f = eval $ag_code;
-                die "Fatal Error in code ref: $ag_code\n$@\n" if $@;
-                next unless $f;
-
-		print $parser->to_gff3($f);
-	}
-}
-
+#  stats|u	  Return simple summary statistics for the given file.
+#		  (Not yet implimented)
 #-----------------------------------------------------------------------------
 
 sub stats {
 
 	die "gff_tool (stats) not yet implimented!\n";
 
-
 }
 
 #-----------------------------------------------------------------------------
+#  fasta_feature|p Print a fasta sequence for each feature instead of
+#		  the feature. Requires the fasta argument (Not yet
+#		  implimented)
+#-----------------------------------------------------------------------------
 
-sub to_fasta {
+sub fasta_feature {
 
 	die "gff_tool (to_fasta) not yet implimented!\n";
 
-
 }
 
 #-----------------------------------------------------------------------------
+#  fasta_add|q    Add a fasta file to the GFF3 output in a ##FASTA
+#		  section.
+#-----------------------------------------------------------------------------
 
-sub add_fasta {
+sub fasta_add {
 
-	die "gff_tool (add_fasta) not yet implimented!\n";
+    die "\n\ngff_tool (add_fasta) function is written, but untested\n\n";
 
-
+    die "Can't open $add_fasta for reading\n" unless -r $add_fasta;
+    for my $file (@files) {
+	open(my $OUT, '<<', $file) or die "Can't open $file for appending\n";
+	print $OUT "\n## FASTA\n";
+	print $OUT `cat $add_fasta`;
+	close $OUT;
+    }
 }
 
 #-----------------------------------------------------------------------------
+#  fasta_only|r   Print only the fasta section from a GFF3 file
+#-----------------------------------------------------------------------------
 
-sub no_fasta {
+sub fasta_only {
 
-	die "gff_tool (no_fasta) not yet implimented!\n";
+    die "\n\ngff_tool (strip_fasta) function is written, but untested\n\n";
 
-
+    for my $file (@files) {
+	unlink $file or die "Can't unlink $file\n$!\n";
+	open (my $OUT, '>', $file) or die "Can't open $file for writing :\n$!\n";
+	open (my $IN, '<', $file) or die "Can't open $file for reading :\n$!\n";
+	my $fasta_flag;
+	while (<$IN>) {
+	    $fasta_flag++ if /^\#\#\s*FASTA/;
+	    next unless $fasta_flag;
+	    print $OUT, $_;
+	}
+    }
 }
 
+#-----------------------------------------------------------------------------
+#  fasta_no|R Print the pragmas, comments and features, but not the fasta 
+#             section from a GFF3 file.
+#-----------------------------------------------------------------------------
+
+sub fasta_no {
+
+    die "\n\ngff_tool (fasta_no) function is written, but untested\n\n";
+
+    for my $file (@files) {
+	unlink $file or die "Can't unlink $file\n$!\n";
+	open (my $OUT, '>', $file) or die "Can't open $file for writing :\n$!\n";
+	open (my $IN, '<', $file) or die "Can't open $file for reading :\n$!\n";
+	while (<$IN>) {
+	    last if /^\#\#\s*FASTA/;
+	    print $OUT, $_;
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+#  add_ID|v        Add ID attributes where they dont already
+#		  exist. (Not yet implimented)
 #-----------------------------------------------------------------------------
 
 sub add_ID {
 
 	die "gff_tool (add_ID) not yet implimented!\n";
 
+}
+
+#-----------------------------------------------------------------------------
+#  pragmas|w  Interactively add GFF3/GVF pragmas to the top of the
+#		  file.  Use GFF3 or GVF (case insensitive) as an
+#		  argument to signify which pragma style to
+#		  create. (Not yet implimented)
+#-----------------------------------------------------------------------------
+
+sub pragmas {
+
+	die "gff_tool (gff_pragmas) not yet implimented!\n";
 
 }
 
 #-----------------------------------------------------------------------------
+#  headers_only|y Print only the headers lines (pragmas, comments and
+#		  whitespace up to the first feature line) from a GFF
+#		  file.
+#-----------------------------------------------------------------------------
+
+sub headers_only {
+
+    for my $file (@files) {
+	open (my $IN, '<', $file) or die "Can't open $file for reading :\n$!\n";
+	my $OUT = fh_out($file);
+	while (<$IN>) {
+	    last if /^\s*\#\#\s*FASTA/;
+	    next unless /^\s*\#/ || /^\s*$/;
+	    print $OUT $_;
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+#  headers_no|Y   Print everything except headers lines (pragmas, comments and
+#		  whitespace up to the first feature line) from a GFF
+#		  file.
+#-----------------------------------------------------------------------------
+
+sub headers_no {
+
+    for my $file (@files) {
+	open (my $IN, '<', $file) or die "Can't open $file for reading :\n$!\n";
+	my $OUT = fh_out($file);
+	while (<$IN>) {
+	    last if /^\s*\#\#\s*FASTA/;
+	    next if /^\s*\#/ || /^\s*$/;
+	    print $OUT $_;
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+#  header_add|z    Add a header file to the begining of a GFF file.
+#-----------------------------------------------------------------------------
+
+sub headers_add {
+
+    for my $file (@files) {
+	open (my $IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
+	open (my $HEAD, '<', $add_headers) or die "Can't open $add_headers for reading:\n$!\n";
+	my $OUT = fh_out($file);
+	print $OUT (<$HEAD>);
+	print $OUT (<$IN>);
+    }
+
+}
+
+#-----------------------------------------------------------------------------
+#  features|x     Print only feature lines, removing all headers, comments,
+#		  empty lines and fasta from a GFF file.
+#-----------------------------------------------------------------------------
+
+sub features {
+
+    for my $file (@files) {
+	open (my $IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
+	my $OUT = fh_out($file);
+	while (<$IN>) {
+	    last if /^\s*\#\#\s*FASTA/;
+	    next if /^\s*\#/ || /^\s*$/;
+	    print $OUT $_;
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub parse_ids {
+
+	my $file = shift;
+
+	open (my $IN, "<", $file)   or die "Can't open $file for reading: $!\n";
+
+	my %ids = map {chomp;$_ => 1} (<$IN>);
+
+	return \%ids;
+}
+
+
+#-----------------------------------------------------------------------------
+
+sub fails_filters {
+
+	my $feature = shift;
+
+	my $fail;
+
+	#Move the filter sub code here
+
+	if ($ids) {
+		$fail++ if ($include && ! $ids->{$feature->{feature_id}});
+		$fail++ if ($exclude &&   $ids->{$feature->{feature_id}});
+	}
+
+	return $fail;
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_gff {
+
+    while (my ($parser, $file) = get_next_parser()) {
+	last unless $parser;
+	my $OUT = fh_out($file);
+	while (my $feature = $parser->next_feature_hash) {
+	    next if fails_filters($feature);
+	    print $OUT $parser->to_gff3($feature);
+	    print $OUT "\n";
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub get_next_parser {
+
+    my $file = shift @files;
+
+    my $IN;
+    if (! $file && ! -t STDIN && ! $STDIN_FINISHED) {
+	open ($IN, "<&=STDIN")   or die "Can't open STDIN:\n$!\n";
+	$STDIN_FINISHED++;
+    }
+    elsif ($file) {
+	open ($IN, "<", $file)   or die "Can't open $file for reading: $!\n";
+    }
+    else {
+	return undef;
+    }
+
+    my $parser = GAL::Parser->new(fh     => $IN,
+				  class  => $format,
+			       );
+    return wantarray ? ($parser, $file) : $parser;
+}
+
+#-----------------------------------------------------------------------------
+
+sub fh_out {
+
+    my $file = shift;
+
+    my $OUT;
+    if ($in_place && $file) {
+	unlink $file;
+	open ($OUT, ">", $file)   or die "Can't open $file for writing:\n$!\n";
+    }
+    elsif ($out_ext && $file) {
+	$file .= $out_ext;
+	open ($OUT, ">", $file)   or die "Can't open $file for writing:\n$!\n";
+    }
+    else {
+	open ($OUT, ">&=STDOUT") or die "Can't open STDOUT for writing:\n$!\n";
+    }
+    return $OUT;
+}
+
+#-----------------------------------------------------------------------------
+
+sub to_gff3 {
+
+    my $features = shift;
+
+    my %ATTRB_ORDER = (ID                    => 1,
+		       Name                  => 2,
+		       Alias                 => 3,
+		       Parent                => 4,
+		       Target                => 5,
+		       Gap                   => 6,
+		       Derives_from          => 7,
+		       Note                  => 8,
+		       Dbxref                => 9,
+		       Ontology_term         => 10,
+		       Variant_seq           => 11,
+		       Reference_seq         => 12,
+		       Variant_reads         => 13,
+		       Total_reads	     => 14,
+		       Genotype	     => 15,
+		       Variant_effect        => 16,
+		       Variant_copy_number   => 17,
+		       Reference_copy_number => 18,
+		       );
+
+    $features = [$features] unless ref $features eq 'ARRAY';
+
+    my $gff3_text;
+    for my $feature (@{$features}) {
+	my $attribute_text;
+	for my $key (sort {($ATTRB_ORDER{$a} || 99) <=> ($ATTRB_ORDER{$b} || 99) ||
+			       $a cmp $b}
+		     keys %{$feature->{attributes}}) {
+	    my $value_text = join ',', @{$feature->{attributes}{$key}};
+	    $attribute_text .= "$key=$value_text;";
+	}
+
+	my $feature_text = join "\t", ($feature->{seqid},
+				    $feature->{source},
+				    $feature->{type},
+				    $feature->{start},
+				    $feature->{end},
+				    $feature->{score},
+				    $feature->{strand},
+				    $feature->{phase},
+				    $attribute_text,
+				    );
+
+	$gff3_text .= "$feature_text\n";
+    }
+    return $gff3_text;
+}

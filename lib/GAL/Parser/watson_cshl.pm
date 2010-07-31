@@ -111,7 +111,7 @@ sub parse_record {
 
 	my $id         = $record->{id};
 	my $seqid      = $record->{chromosome};
-	my $source     = 'JDW_CSHL';
+	my $source     = 'CSHL';
 
 	my $type       = 'SNV';
 	my $start      = $record->{coordinate};

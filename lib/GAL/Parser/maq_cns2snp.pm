@@ -98,7 +98,7 @@ sub _initialize_args {
  Usage   : $a = $self->parse_record();
  Function: Parse the data from a record.
  Returns : A hash ref needed by Feature.pm to create a Feature object
- Args    : A hash ref of fields that this sub can understand (In this case GFF3).
+ Args    : A hash ref or array ref of data from the L<GAL::Reader> object
 
 =cut
 
@@ -160,20 +160,19 @@ sub reader {
   my $self = shift;
 
   if (! $self->{reader}) {
-	# Each line consists of chromosome, position, reference base,
-	# consensus base, Phred-like consensus quality, read depth,
-	# the average number of hits of reads covering this position,
-	# the highest mapping quality of the reads covering the
-	# position, the minimum consensus quality in the 3bp flanking
-	# regions at each side of the site (6bp in total), the second
-	# best call, log likelihood ratio of the second best and the
-	# third best call, and the third best call.
-	$self->fields([qw(chr pos ref_base con_base con_qual read_depth
-                          ave_hits_elsewhere highest_map_qual
-                          min_con_qual_3b_flank second_best_call
-                          log_likelihood_2nd_3rd_call
-                          third_best_call)]);
-    my @field_names = qw();
+      # Each line consists of chromosome, position, reference base,
+      # consensus base, Phred-like consensus quality, read depth,
+      # the average number of hits of reads covering this position,
+      # the highest mapping quality of the reads covering the
+      # position, the minimum consensus quality in the 3bp flanking
+      # regions at each side of the site (6bp in total), the second
+      # best call, log likelihood ratio of the second best and the
+      # third best call, and the third best call.
+      my @field_names = qw(chr pos ref_base con_base con_qual read_depth
+			   ave_hits_elsewhere highest_map_qual
+			   min_con_qual_3b_flank second_best_call
+			   log_likelihood_2nd_3rd_call
+			   third_best_call);
     my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
     $self->{reader} = $reader;
   }

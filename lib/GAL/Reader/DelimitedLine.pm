@@ -67,12 +67,12 @@ This optional attribute provides a regular expression that will be
 used to skip comment lines.  The default is "^\s*#" - lines whos first
 non-whitespace charachter is a '#'.
 
-=item * C<< header => 1 >>
+=item * C<< header_count => 1 >>
 
 This optional attribute provides the ability to instruct the parser to
 skip header lines.  An integer i<n> value is provided that will cause
-the parser to skip the first i<n> lines of the file to be skipped.
-The skipped lines will be added to the L</"comments"> stack.
+the parser to skip the first i<n> lines of the file.  The skipped
+lines will be added to the L</"headers"> stack.
 
 The following attributes are inhereted from L<GAL::Reader>:
 
@@ -127,7 +127,7 @@ sub _initialize_args {
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
 	my @valid_attributes = qw(field_names field_separator
-                                  comment_delimiter);
+                                  comment_delimiter header_count);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 	return $args;
@@ -217,34 +217,30 @@ sub comment_delimiter {
 
 #-----------------------------------------------------------------------------
 
-=head2 header
+=head2 header_count
 
- Title   : header
- Usage   : $self->header("\t");
- Function: Set a flag for files containing headers.  Default is undef.
+ Title   : header_count
+ Usage   : $self->header_count(1);
+ Function: Set an value for files containing headers.  Default is undef.
            If the header attribute is set to a positive integer value then
            that many lines will be skipped from the top of the file and
-           those lines will be added to the L</"comments"> stack.
- Returns : Nothing
+           those lines will be added to the L</"headers"> stack.
+ Returns : The current value of header_count
  Args    : An integer 0 or greater.
 
 =cut
 
-sub header {
+sub header_count {
 
-  my ($self, $header) = @_;
+  my ($self, $header_count) = @_;
 
   my $return_value;
-  if ($header) {
-    $self->{header} = $header;
+  #TODO: Put a closure here to dectect if header_count is being set more
+  #TODO: than once and warn.
+  if ($header_count) {
+    $self->{header_count} = $header_count;
   }
-  elsif ($self->{header} > 0) {
-    $return_value = $self->{header};
-    $self->{header}--;
-  }
-  else {
-    return undef;
-  }
+  return $self->{header_count};
 }
 
 #-----------------------------------------------------------------------------
@@ -266,28 +262,56 @@ sub header {
 =cut
 
 sub next_record {
-	my $self = shift;
-	my $fh = $self->fh;
-	my $line;
-	my $comment_delimiter = $self->comment_delimiter;
-	my $field_separator   = $self->field_separator;
-	while ($line = <$fh>) {
-	  chomp $line;
-	  if ($line =~ $comment_delimiter) {
+    my $self = shift;
+    my $fh = $self->fh;
+    my $line;
+    my $comment_delimiter = $self->comment_delimiter;
+    my $field_separator   = $self->field_separator;
+  LINE:
+    while ($line = <$fh>) {
+	chomp $line;
+	if ($line =~ $comment_delimiter) {
 	    $self->comments($line);
-	    next;
-	  }
-	  last;
+	    next LINE;
 	}
-	return undef unless defined $line;
-	my @record_array = split $field_separator, $line;
-	if (ref $self->{field_names} eq 'ARRAY') {
-	  my %record_hash;
-	  @record_hash{@{$self->{field_names}}} = @record_array;
-	  return wantarray ? %record_hash : \%record_hash;
+	if ($self->header_count > 0) {
+	    push @{$self->{headers}}, $line;
+	    $self->{header_count}--;
+	    next LINE;
 	}
-	return wantarray ? @record_array : \@record_array;
+	last;
+    }
+    return undef unless defined $line;
+    my @record_array = split $field_separator, $line;
+    if (ref $self->{field_names} eq 'ARRAY') {
+	my %record_hash;
+	@record_hash{@{$self->{field_names}}} = @record_array;
+	return wantarray ? %record_hash : \%record_hash;
+    }
+    return wantarray ? @record_array : \@record_array;
 }
+
+#-----------------------------------------------------------------------------
+
+=head2 headers
+
+ Title   : headers
+ Usage   : @headers = $reader->headers($line);
+ Function: Add a line of data to the headers stack and/or return all the
+           headers in the stack.
+ Returns : An array or array reference of headers.
+ Args    : A header.
+
+=cut
+
+sub headers {
+	my ($self, $header) = @_;
+
+	push @{$self->{headers}}, $header if $header;
+	return wantarray ? @{$self->{headers}} : $self->{headers};
+}
+
+#-----------------------------------------------------------------------------
 
 =head2 comments
 
@@ -303,7 +327,7 @@ sub next_record {
 sub comments {
 	my ($self, $comment) = @_;
 
-	push @{$self->{comments}} if $comment;
+	push @{$self->{comments}}, $comment if $comment;
 	return wantarray ? @{$self->{comments}} : $self->{comments};
 }
 
