@@ -77,18 +77,18 @@ my $var_store_args = {class    => $storage,
 		      password => $password,
 		     };
 
-my $parser_args = {class => $parser,
-                  };
-
 my $feat_store = GAL::Annotation->new(storage => $feat_store_args,
-				      parser  => $parser_args,
 				      fasta   => $fasta,
 				     );
 
 my $var_store = GAL::Annotation->new(storage => $var_store_args,
-				     parser  => $parser_args,
 				     fasta   => $fasta,
 				    );
+
+if ($parser) {
+    $feat_store->parser(class => $parser);
+    $var_store->parser(class => $parser);
+}
 
 if ($create) {
   $feat_store->load_files(files => $feature_file,
@@ -97,7 +97,7 @@ if ($create) {
   $var_store->load_files(files => $variant_file,
 			 mode  => 'overwrite',
 			);
-  die;
+  exit 0;
 }
 
 my $features = $feat_store->schema->resultset('Feature');
