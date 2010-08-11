@@ -14,7 +14,7 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $parser = GAL::Parser::soap_snp->new(file => 'data/soap_snp.gff');
+my $parser = GAL::Parser::soap_snp->new(file => 'data/soap_snp.txt');
 
 # TEST 2
 isa_ok($parser, 'GAL::Parser::soap_snp');
