@@ -90,9 +90,6 @@ sub _initialize_args {
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 
-	# Set the column headers from your incoming data file here
-	# These will become the keys in your $record hash reference below.
-	$self->fields([qw(chromosome start end reference_seq variant_seq)]);
 }
 
 #-----------------------------------------------------------------------------
@@ -110,8 +107,6 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	# $self->throw(message => 'This parser should be tested and evaluated before use');
-
 	my $seqid      = $record->{chromosome};
 	my $source     = 'GAL';
 	my $type       = 'SNV';
@@ -122,7 +117,7 @@ sub parse_record {
 	my $phase      = '.';
 	my $id         = join ':', ($seqid, $source, $type, $start);
 
-	my $reference_seq = $record->{reference_seq};
+	# my $reference_seq = $record->{reference_seq};
 	my @variant_seqs  = $self->expand_iupac_nt_codes($record->{variant_seq});
 	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
@@ -149,20 +144,25 @@ sub parse_record {
 
 #-----------------------------------------------------------------------------
 
-=head2 foo
+=head2 reader
 
- Title   : foo
- Usage   : $a = $self->foo();
- Function: Get/Set the value of foo.
- Returns : The value of foo.
- Args    : A value to set foo to.
+ Title   : reader
+ Usage   : $a = $self->reader
+  Function: Return the reader object.
+ Returns : A L<GAL::Reader::DelimitedLine> singleton.
+ Args    : None
 
 =cut
 
-sub foo {
-	my ($self, $value) = @_;
-	$self->{foo} = $value if defined $value;
-	return $self->{foo};
+sub reader {
+    my $self = shift;
+
+    if (! $self->{reader}) {
+	my @field_names = qw(chromosome start variant_seq);
+	my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
+	$self->{reader} = $reader;
+    }
+    return $self->{reader};
 }
 
 #-----------------------------------------------------------------------------
