@@ -35,7 +35,7 @@ my $feat_store = GAL::Annotation->new(storage => $feat_store_args,
 				     );
 
 $feat_store->load_files(files => $feature_file,
-			  mode  => 'overwrite',
+			mode  => 'overwrite',
 			 );
 my $features = $feat_store->schema->resultset('Feature');
 
