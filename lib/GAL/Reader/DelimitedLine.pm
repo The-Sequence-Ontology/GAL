@@ -271,13 +271,18 @@ sub next_record {
 	my $line;
 	my $comment_delimiter = $self->comment_delimiter;
 	my $field_separator   = $self->field_separator;
+      LINE:
 	while ($line = <$fh>) {
 	  chomp $line;
 	  if ($line =~ $comment_delimiter) {
 	    $self->comments($line);
-	    next;
+	    next LINE;
 	  }
-	  last;
+	  if ($line =~ /^\s*$/) {
+	    $self->comments($line);
+	    next LINE;
+	  }
+	  last LINE;
 	}
 	return undef unless defined $line;
 	my @record_array = split $field_separator, $line;
@@ -292,7 +297,7 @@ sub next_record {
 =head2 comments
 
  Title   : comments
- Usage   : $commnet = $reader->comments($line);
+ Usage   : $comment = $reader->comments($line);
  Function: Add a comment (as defined by L</"comment_delimiter">) to the
            comments stack or return all the comments in the stack.
  Returns : An array or array reference of comments.

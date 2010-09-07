@@ -5,6 +5,7 @@ use vars qw($VERSION);
 
 $VERSION = '0.01';
 use base qw(GAL::Storage);
+use DBI;
 
 =head1 NAME
 

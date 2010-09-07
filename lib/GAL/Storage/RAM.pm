@@ -6,6 +6,10 @@ use vars qw($VERSION);
 $VERSION = '0.01';
 use base qw(GAL::Storage);
 
+use GAL::Feature;
+use Scalar::Util qw(weaken);
+use Time::HiRes qw(gettimeofday tv_interval);
+
 =head1 NAME
 
 GAL::Storage::RAM - RAM feature storage for GAL
@@ -32,7 +36,7 @@ of key value pairs.  All attributes of the Storage object can be set
 in the call to new. An simple example of object creation would look
 like this:
 
-    my $parser = GAL::Storage::RAM->new(dsn => 'dbi:RAM:db_name);
+    my $storage = GAL::Storage::RAM->new(dsn => 'dbi:RAM:db_name);
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
@@ -133,7 +137,7 @@ sub _initialize_args {
  Function: Load a file(s) into the database
  Returns : Nothing
  Args    : An scalar string or array reference containing the name(s) of
-           files to load.
+	   files to load.
 
 =cut
 
@@ -154,12 +158,21 @@ sub load_files {
     $parser = $self->annotation->parser;
   }
 
+  my $t0 = [gettimeofday];
+
+  my $counter = 0;
   for my $file (@{$files}) {
     $parser->file($file);
     while (my $feature = $parser->next_feature_hash) {
       $self->add_features($feature);
+      unless ($counter % 10000) {
+	my $elapsed = tv_interval($t0);
+	print STDERR "$counter\t$elapsed\n";
+      }
+      $counter++;
     }
   }
+  $self->close_indices;
 }
 
 #-----------------------------------------------------------------------------
@@ -179,58 +192,357 @@ sub add_features {
 
   $features = ref $features eq 'ARRAY' ? $features : [$features];
 
-  my $feature_idx = scalar @{$self->{_features}};
+  my $feature_index = scalar @{$self->{_features}};
   for my $feature (@{$features}) {
 
-    my ($feature_id, $seqid, $source, $type, $start, $end, $strand, $phase, $attrbs) = 
-      @{$feature}{qw(feature_id seqid source type start end strand phase attrbs)};
+    my ($feature_id, $seqid, $source, $type, $start, $end, $strand, $phase, $attributes) =
+      @{$feature}{qw(feature_id seqid source type start end strand phase attributes)};
 
-    my $this_feature_idx = $feature_idx++;
+    my $this_feature_index = $feature_index++;
     my ($bin) = $self->get_feature_bins($feature);
-    my $individual_id = $attrbs->{individual}[0];
-    @{$feature}{qw(idx, bin, individual_id)} = ($this_feature_idx, $bin, $individual_id);
-    push @{$self->{_features}}, $feature;
+    my $individual_id = $attributes->{individual}[0];
+    my $weak_self = $self;
+    weaken $weak_self;
 
-    $self->{_indices}{feature_id}{$feature_id} = $this_feature_idx;
-    push @{$self->{_indices}{seqid}{$seqid}}, $this_feature_idx;
-    push @{$self->{_indices}{source}{$source}}, $this_feature_idx;
-    push @{$self->{_indices}{type}{$type}}, $this_feature_idx;
-    push @{$self->{_indices}{bin}{$bin}}, $this_feature_idx;
+    @{$feature}{qw(feature_index bin individual_id storage)} =
+      ($this_feature_index, $bin, $individual_id, $weak_self);
+
+    my $feature_obj = GAL::Feature->new($feature);
+
+    push @{$self->{_features}}, $feature_obj;
+
+    $self->{_indices}{feature_id}{$feature_id} = $this_feature_index;
+    push @{$self->{_indices}{seqid}{$seqid}}, $this_feature_index;
+    push @{$self->{_indices}{source}{$source}}, $this_feature_index;
+    push @{$self->{_indices}{type}{$type}}, $this_feature_index;
+    push @{$self->{_indices}{bin}{$bin}}, $this_feature_index;
 
     my @parents;
-    @parents = @{$attrbs->{Parent}} if exists $attrbs->{Parent};
+    @parents = @{$attributes->{Parent}} if exists $attributes->{Parent};
     for my $parent (@parents) {
-      push @{$self->{_indices}{bin}{attr}{parent}{$parent}}, $this_feature_idx;
-      push @{$self->{_indices}{bin}{attr}{children}{$this_feature_idx}}, $parent;
+      push @{$self->{_indices}{parent}{$this_feature_index}}, $parent;
+      push @{$self->{_indices}{child}{$parent}}, $this_feature_index;
     }
 
     my @var_effects;
-    @var_effects = @{$attrbs->{Variant_effect}} if exists $attrbs->{Variant_effect};
+    @var_effects = @{$attributes->{Variant_effect}} if exists $attributes->{Variant_effect};
     for my $var_effect (@var_effects) {
       my ($effect) = split /\s+/, $var_effect;
-      push @{$self->{_indices}{bin}{attr}{variant_effect}{$var_effect}}, $this_feature_idx;
+      push @{$self->{_indices}{variant_effect}{$var_effect}}, $this_feature_index;
     }
   }
 }
 
 #-----------------------------------------------------------------------------
+
+sub close_indices {
+
+  my $self = shift;
+
+  for my $feature_idx (keys %{$self->{_indices}{parent}}) {
+    my $parents = $self->{_indices}{parent}{$feature_idx};
+    map {$_ = $self->{_indices}{feature_id}{$_}} @{$parents};
+  }
+
+  my %child_index;
+  for my $feature_id (keys %{$self->{_indices}{child}}) {
+    my $feature_idx = $self->{_indices}{feature_id}{$feature_id};
+    $child_index{$feature_idx} = $self->{_indices}{child}{$feature_id};
+  }
+  $self->{_indices}{child} = \%child_index;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 search
+
+ Title   : search
+ Usage   : $self->search();
+ Function: Get/Set value of search.
+ Returns : Value of search.
+ Args    : Value to set search to.
+
+=cut
+
+sub search {
+  my ($self, $where, $order) = @_;
+  
+  my %ids;
+  my $initialized;
+  my @columns = qw(feature_id bin seqid type source start end score strand phase);
+  #TODO : Set this at indexing time based on column cardinality;
+  for my $column (@columns) {
+    next unless exists $where->{$column};
+    my $values = $where->{$column};
+    $values = ref $values eq 'ARRAY' ? $values : [$values];
+    for my $value (@{$values}) {
+      my @these_ids;
+      if (exists $self->{_indices}{$column}) {
+	if (exists $self->{_indices}{$column}{$value}) {
+	  @these_ids = @{$self->{_indices}{$column}{$value}};
+	  if ($initialized) {
+	    @these_ids = grep {exists $ids{$_}} @these_ids;
+	  }
+	}
+	else {
+	  @these_ids = ();
+	}
+      }
+      else {
+	@ids{(0 .. scalar @{$self->{_features}} - 1)} = () unless $initialized;
+	$initialized++;
+	my $operator = 'eq';
+	if (ref $value eq 'HASH') {
+	  ($operator, $value) = %{$value};
+	}
+	for my $id (keys %ids) {
+	  my $feature = $self->{_features}[$id];
+	  if ($operator eq 'eq') {
+	    push @these_ids, $id if $feature->{$column} eq $value;
+	  }
+	  elsif ($operator eq '==') {
+	    push @these_ids, $id if $feature->{$column} == $value;
+	  }
+	  elsif ($operator eq '<=') {
+	    push @these_ids, $id if $feature->{$column} <= $value;
+	  }
+	  elsif ($operator eq '>=') {
+	    push @these_ids, $id if $feature->{$column} >= $value;
+	  }
+	  elsif ($operator eq '=~') {
+	    push @these_ids, $id if $feature->{$column} =~ $value;
+	  }
+	  else {
+	    $self->throw(message => "FATAL : invalid_operator_in_search : $operator\n");
+	  }
+	}
+      }
+      %ids = map {$_ => 1} @these_ids;
+      $initialized++;
+    }
+  }
+  my @features = @{$self->{_features}}[keys %ids];
+  return wantarray ? @features : \@features;
+}
+
+#	#TODO: Do this at indexing time
+#	my %index_order = (seqid  => 1,
+#			   source => 2,
+#			   type   => 3,
+#			  );
 #
-#=head2 get_children
+#	my %index_where = @{$where}{keys %index_order};
 #
-# Title   : get_children
-# Usage   : $self->get_children();
-# Function: Get/Set value of get_children.
-# Returns : Value of get_children.
-# Args    : Value to set get_children to.
+#	my %non_index_where = @{$where}{qw(start end score strand phase)};
 #
-#=cut
+#	my  = sort {$constraint_order{$a} <=>
+#				$constraint_order{$b}}
+#	  keys %{$where};
 #
-#sub get_children {
-#	my $self = shift;
-#	$self->not_implemented('get_children');
-#}
 #
-##-----------------------------------------------------------------------------
+#	$where = {seqid  => 'chr1',
+#		  source => [qw(FlyBase RefSeq)],
+#		  type   => 'mRNA',
+#		 };
+#
+#	$where = {seqid => 'chr1',
+#		  type  => {'!=' => 'mRNA'}
+#		 };
+#
+#
+#	$where = [{seqid => 'chr1'}
+#		  {type  => 'mRNA'}
+#		 ];
+#
+#
+#
+#
+#
+#
+#	for my $column (keys %{$where}) {
+#	  my $value = $where->{$column};
+#	  #if (ref $value eq 'HASH') {
+#	  #  my $ids = $self->get_with_operator($column, $value)
+#	  #}
+#	  if (ref $value eq 'ARRAY') {
+#	    my @and_ids;
+#	    for my $this_value (@{$value}) {
+#	      if (ref $this_value eq 'HASH') {
+#		push @and_ids, $self->get_with_operator($column, $this_value);
+#	      }
+#	      else {
+#		push @and_ids, @{$self->{_indices}{$column}{$this_value}};
+#		$ids = $self->intersection($ids, $ids);
+#	      }
+#	      #else {
+#	      #  my $these_ids = $self->{_features}}[$self->{_indices}{$key}{$value},
+#	      #				      $these_ids = $self->uniq($these_ids),
+#	      #				      $ids = $self->intersection($ids, $these_ids),
+#	      #				     ]
+#	      #}
+#	    }
+#	  }
+#	  my @ids = $self->_constrain($where);
+#	}
+#	$ids = $self->_constrain($where, $self->{_features});
+#
+#       }
+# return wantarray ? @{$ids} : $ids;
+# }
+
+#-----------------------------------------------------------------------------
+
+=head2 select_features
+
+ Title   : select_features
+ Usage   : $self->select_features();
+ Function: Get/Set value of select_features.
+ Returns : Value of select_features.
+ Args    : Value to set select_features to.
+
+=cut
+
+sub select_features {
+	my ($self, $where, $order) = @_;
+
+	my $ids = [];
+	$ids = $self->_constrain($where, $self->{_features});
+
+	return wantarray ? @{$ids} : $ids;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 constrain
+
+ Title   : constrain
+ Usage   : $self->constrain();
+ Function: Get/Set value of constrain.
+ Returns : Value of constrain.
+ Args    : Value to set constrain to.
+
+=cut
+
+sub select {
+  my ($self, $where, $ids) = @_;
+
+  # my %where  = (
+  #	      user   => 'nwiger',
+  #	      status => ['assigned', 'in-progress', 'pending'];
+  #	     );
+  #
+  # my %where  = (
+  #	      user   => 'nwiger',
+  #	      status => { '!=', 'completed' }
+  #	     );
+
+  for my $column (keys %{$where}) {
+    my $value = $where->{$column};
+    if (ref $value eq 'HASH') {
+      my $ids = $self->get_with_operator($column, $value)
+    }
+    elsif (ref $value eq 'ARRAY') {
+      my @and_ids;
+      for my $this_value (@{$value}) {
+	if (ref $this_value eq 'HASH') {
+		push @and_ids, $self->get_with_operator($column, $this_value);
+	}
+	else {
+	  push @and_ids, @{$self->{_indices}{$column}{$this_value}};
+	  $ids = $self->intersection($ids, $ids);
+	}
+	#else {
+	#  my $these_ids = $self->{_features}}[$self->{_indices}{$key}{$value},
+	#				      $these_ids = $self->uniq($these_ids),
+	#				      $ids = $self->intersection($ids, $these_ids),
+	#				     ]
+	#}
+      }
+    }
+    my @ids = $self->_constrain($where);
+  }
+  return wantarray ? @{$ids} : $ids;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 next_feature
+
+ Title   : next_feature
+ Usage   : $self->next_feature();
+ Function: Get/Set value of next_feature.
+ Returns : Value of next_feature.
+ Args    : Value to set next_feature to.
+
+=cut
+
+sub next_feature {
+	my $self = shift;
+	return $self->{_features}[$self->counter];
+}
+
+#-----------------------------------------------------------------------------
+
+sub counter {
+  my $self = shift;
+  $self->{_counter} ||= 0;
+  return $self->{_counter}++;
+}
+
+#-----------------------------------------------------------------------------
+
+
+    # search
+    # search_pattern
+    # find
+    # cursor
+    # single
+    # get_column
+    # slice
+    # storage
+    # count
+    # reset
+    # all
+    # next
+    # previous
+    # first
+    # last
+    # delete
+    # delete_all
+    # pager
+    # reset_pager
+    # next_page
+    # previous_page
+    # first_page
+    # last_page
+    ## find_or_new
+    ## create
+    ## find_or_create
+    ## update_or_create
+    ## update_or_new
+    # order_by
+
+#-----------------------------------------------------------------------------
+
+=head2 get_children
+
+ Title   : get_children
+ Usage   : $self->get_children();
+ Function: Get/Set value of get_children.
+ Returns : Value of get_children.
+ Args    : Value to set get_children to.
+
+=cut
+
+sub get_children {
+	my ($self, $feature_id) = @_;
+	my $feature_idx = $self->{_indices}{feature_id}{$feature_id};
+	my @child_idxs = $self->{_indices}{child}{$feature_idx} ? @{$self->{_indices}{child}{$feature_idx}} : ();
+	my @children = defined $child_idxs[0] ? @{$self->{_features}}[@child_idxs] : ();
+	return wantarray ? @children : \@children;
+}
+
+#-----------------------------------------------------------------------------
 #
 #=head2 get_children_recursively
 #
@@ -247,24 +559,27 @@ sub add_features {
 #  $self->not_implemented('get_children_recursively');
 #}
 #
-##-----------------------------------------------------------------------------
-#
-#=head2 get_parents
-#
-# Title   : get_parents
-# Usage   : $self->get_parents();
-# Function: Get/Set value of get_parents.
-# Returns : Value of get_parents.
-# Args    : Value to set get_parents to.
-#
-#=cut
-#
-#sub get_parents {
-#  my $self = shift;
-#  $self->not_implemented('get_parents');
-#}
-#
-##-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
+
+=head2 get_parents
+
+ Title   : get_parents
+ Usage   : $self->get_parents();
+ Function: Get/Set value of get_parents.
+ Returns : Value of get_parents.
+ Args    : Value to set get_parents to.
+
+=cut
+
+sub get_parents {
+	my ($self, $feature_id) = @_;
+	my $feature_idx = $self->{_indices}{feature_id}{$feature_id};
+	my @parent_idxs = $self->{_indices}{parent}{$feature_idx} ? @{$self->{_indices}{parent}{$feature_idx}} : ();
+	my @parents = defined $parent_idxs[0] ? @{$self->{_features}}[@parent_idxs] : ();
+	return wantarray ? @parents : \@parents;
+}
+
+#-----------------------------------------------------------------------------
 #
 #=head2 get_parents_recursively
 #

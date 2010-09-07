@@ -3,6 +3,7 @@ package GAL::Base;
 use strict;
 use vars qw($VERSION);
 use Carp qw(croak cluck);
+use Scalar::Util qw(blessed weaken);
 use Bio::DB::Fasta
 
 $VERSION = '0.01';
@@ -363,19 +364,20 @@ sub set_attributes {
 	$args ||= {};
 
 	for my $attribute (@valid_attributes) {
-		next unless exists $args->{$attribute};
-		if (exists $self->{$attribute}) {
-			my $package = __PACKAGE__;
-			my $caller = ref($self);
-			my $warning_message =
-			  ("$package is about to reset the value of $attribute " .
-			   "on behalf of a $caller object.  This is probably "   .
-			   "a bad idea.");
-			$self->warn(message => $warning_message);
-		}
-		$self->$attribute($args->{$attribute});
-		delete $args->{$attribute};
+	  next unless exists $args->{$attribute};
+	  if (exists $self->{$attribute}) {
+	    my $package = __PACKAGE__;
+	    my $caller = ref($self);
+	    my $warning_message =
+	      ("$package is about to reset the value of $attribute " .
+	       "on behalf of a $caller object.  This is probably "   .
+	       "a bad idea.");
+	    $self->warn(message => $warning_message);
+	  }
+	  $self->$attribute($args->{$attribute});
+	  delete $args->{$attribute};
 	}
+	return $args;
 }
 
 #-----------------------------------------------------------------------------

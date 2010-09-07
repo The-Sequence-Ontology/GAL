@@ -1,34 +1,46 @@
 package GAL::Feature::sequence_alteration;
 
 use strict;
-use vars qw($VERSION);
-
-
-$VERSION = '0.01';
+use warnings;
 use base qw(GAL::Feature);
 
 =head1 NAME
 
-GAL::Feature::sequence_alteration - <One line description of module's purpose here>
+GAL::Feature::sequence_alteration - A
+sequence_alteration object for the GAL library
 
 =head1 VERSION
 
-This document describes GAL::Feature::sequence_alteration version 0.01
+This document describes
+GAL::Feature::sequence_alteration version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Feature::sequence_alteration;
+    use GAL::Annotation
+    my $var_store = GAL::Annotation->new(storage => $var_store_args,
+					 parser  => $parser_args,
+					 fasta   => $fasta_args,
+					);
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+      $var_store->load_files(files => $variant_file,
+			     mode  => 'overwrite',
+			    );
+    my $variants = $var_store->schema->resultset('Feature');
+    my $snvs = $variants->search(\%where);
+
+    while (my @snv = $snvs->next) {
+      my $snv_id = $snv->feature_id;
+      my $start  = $snv->start;
+      my $reference_seq = $snv->reference_seq;
+      my @variant_seqs  = $snv->variant_seqs;
+    }
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+<GAL::Feature::sequence_alteration> provides a
+<GAL::Feature> subclass for sequence_alteration
+specific behavior.  See documentation for
+<GAL::Feature> for more methods and details.
 
 =head1 METHODS
 
@@ -36,114 +48,77 @@ This document describes GAL::Feature::sequence_alteration version 0.01
 
 #-----------------------------------------------------------------------------
 
-=head2 new
+=head2 variant_seq
 
-     Title   : new
-     Usage   : GAL::Feature::sequence_alteration->new();
-     Function: Creates a sequence_alteration object;
-     Returns : A sequence_alteration object
-     Args    :
-
-=cut
-
-sub new {
-	my ($class, @args) = @_;
-	my $self = $class->SUPER::new(@args);
-	return $self;
-}
-
-#-----------------------------------------------------------------------------
-
-sub _initialize_args {
-	my ($self, @args) = @_;
-
-	######################################################################
-	# This block of code handels class attributes.  Use the
-	# @valid_attributes below to define the valid attributes for
-	# this class.  You must have identically named get/set methods
-	# for each attribute.  Leave the rest of this block alone!
-	######################################################################
-	my $args = $self->SUPER::_initialize_args(@args);
-	# Set valid class attributes here
-	my @valid_attributes = qw(seqid source type start end score strand
-				  phase attributes reference_allele
-				  variant_allele reference_reads variant_reads
-				  total_reads genotype genotype_probability
-				  variant_locations variant_effects);
-	$self->set_attributes($args, @valid_attributes);
-	######################################################################
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 reference_allele
-
- Title   : reference_allele
- Usage   : $self->reference_allele();
- Function: Get/Set value of reference_allele.
- Returns : Value of reference_allele.
- Args    : Value to set reference_allele to.
+ Title   : variant_seq
+ Usage   : $variant_seq = $self->variant_seq
+ Function: Get the value(s) for the features Variant_seq attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
 
 =cut
 
-sub reference_allele {
-  my ($self, $value) = @_;
-  $self->{attributes}{reference_allele}[0] = $value if defined $value;
-  return $self->{attributes}{reference_allele}[0];
+sub variant_seq {
+  my $self = shift;
+  my $variant_seqs = $self->attribute_value('Variant_seq');
+  return wantarray ? @{$variant_seqs} : $variant_seqs;
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 variant_allele
+=head2 variant_seq_no_ref
 
- Title   : variant_allele
- Usage   : $self->variant_allele();
- Function: Get/Set value of variant_allele.
- Returns : Value of variant_allele.
- Args    : Value to set variant_allele to.
+ Title   : variant_seq_no_ref
+ Usage   : $variant_seq_no_ref = $self->variant_seq_no_ref
+ Function: Get the value(s) for the features Variant_seq attribute, but
+           remove the reference sequence if it is present.
+ Returns : An array or reference of sequences.
+ Args    : None
 
 =cut
 
-sub variant_allele {
-  my ($self, $value) = @_;
-  $self->{attributes}{variant_allele}[0] = $value if defined $value;
-  return $self->{attributes}{variant_allele}[0];
+sub variant_seq_no_ref {
+  my $self = shift;
+  my $reference_seq = $self->reference_seq;
+  my @variant_seqs_no_ref = grep {$_ ne $reference_seq}
+    $self->attribute_value('Variant_seq');
+  return wantarray ? @variant_seqs_no_ref : \@variant_seqs_no_ref;
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 reference_reads
+=head2 reference_seq
 
- Title   : reference_reads
- Usage   : $self->reference_reads();
- Function: Get/Set value of reference_reads.
- Returns : Value of reference_reads.
- Args    : Value to set reference_reads to.
+ Title   : reference_seq
+ Usage   : $reference_seq = $self->reference_seq
+ Function: Get the value(s) for the features Reference_seq attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
 
 =cut
 
-sub reference_reads {
-  my ($self, $value) = @_;
-  $self->{attributes}{reference_reads}[0] = $value if defined $value;
-  return $self->{attributes}{reference_reads}[0];
+sub reference_seq {
+  my $self = shift;
+  my $reference_seq = $self->attribute_value('Reference_seq');
+  return $reference_seq->[0];
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 variant_reads
+=head2 Variant_reads
 
- Title   : variant_reads
- Usage   : $self->variant_reads();
- Function: Get/Set value of variant_reads.
- Returns : Value of variant_reads.
- Args    : Value to set variant_reads to.
+ Title   : Variant_reads
+ Usage   : $Variant_reads = $self->Variant_reads
+ Function: Get the value(s) for the features Variant_reads attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
 
 =cut
 
 sub variant_reads {
-  my ($self, $value) = @_;
-  $self->{attributes}{variant_reads}[0] = $value if defined $value;
-  return $self->{attributes}{variant_reads}[0];
+  my $self = shift;
+  my $variant_reads = $self->attribute_value('Variant_reads');
+  return wantarray ? @{$variant_reads} : $variant_reads;
 }
 
 #-----------------------------------------------------------------------------
@@ -151,17 +126,17 @@ sub variant_reads {
 =head2 total_reads
 
  Title   : total_reads
- Usage   : $self->total_reads();
- Function: Get/Set value of total_reads.
- Returns : Value of total_reads.
- Args    : Value to set total_reads to.
+ Usage   : $total_reads = $self->total_reads
+ Function: Get the value(s) for the features Total_reads attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
 
 =cut
 
 sub total_reads {
-  my ($self, $value) = @_;
-  $self->{attributes}{total_reads}[0] = $value if defined $value;
-  return $self->{attributes}{total_reads}[0];
+  my $self = shift;
+  my $total_reads = $self->attribute_value('Total_reads');
+  return wantarray ? @{$total_reads} : $total_reads;
 }
 
 #-----------------------------------------------------------------------------
@@ -169,147 +144,88 @@ sub total_reads {
 =head2 genotype
 
  Title   : genotype
- Usage   : $self->genotype();
- Function: Get/Set value of genotype.
- Returns : Value of genotype.
- Args    : Value to set genotype to.
+ Usage   : $genotype = $self->genotype
+ Function: Get the value(s) for the features Genotype attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
 
 =cut
 
 sub genotype {
-  my ($self, $value) = @_;
-  $self->{attributes}{genotype}[0] = $value if defined $value;
-  return $self->{attributes}{genotype}[0];
+  my $self = shift;
+  my $genotype = $self->attribute_value('Genotype');
+  return $genotype->[0];
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 genotype_probability
+=head2 variant_effect
 
- Title   : genotype_probability
- Usage   : $self->genotype_probability();
- Function: Get/Set value of genotype_probability.
- Returns : Value of genotype_probability.
- Args    : Value to set genotype_probability to.
+ Title   : variant_effect
+ Usage   : $variant_effect = $self->variant_effect
+ Function: Get the value(s) for the features Variant_effect attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
 
 =cut
 
-sub genotype_probability {
-  my ($self, $value) = @_;
-  $self->{attributes}{genotype_probability}[0] = $value if defined $value;
-  return $self->{attributes}{genotype_probability}[0];
+sub variant_effect {
+  my $self = shift;
+  my $variant_effect = $self->attribute_value('Variant_effect');
+  return wantarray ? @{$variant_effect} : $variant_effect;
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 intersected_types
+=head2 variant_copy_number
 
- Title   : intersected_types
- Usage   : $self->intersected_types();
- Function: Get/Set value of intersected_types.
- Returns : Value of intersected_types.
- Args    : Value to set intersected_types to.
+ Title   : variant_copy_number
+ Usage   : $variant_copy_number = $self->variant_copy_number
+ Function: Get the value(s) for the features Variant_copy_number attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
 
 =cut
 
-sub intersected_types {
-  my ($self, $value) = @_;
-  push @{$self->{attributes}{intersected_type}}, @{$value} if
-    defined $value->[0];
-  return wantarray ? @{$self->{attributes}{intersected_type}} :
-    $self->{attributes}{intersected_type};
+sub variant_copy_number {
+  my $self = shift;
+  my $variant_copy_number = $self->attribute_value('Variant_copy_number');
+  return wantarray ? @{$variant_copy_number} : $variant_copy_number;
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 intersected_xrefs
+=head2 reference_copy_number
 
- Title   : intersected_xrefs
- Usage   : $self->intersected_xrefs();
- Function: Get/Set value of intersected_xrefs.
- Returns : Value of intersected_xrefs.
- Args    : Value to set intersected_xrefs to.
-
-=cut
-
-sub intersected_xrefs {
-  my ($self, $value) = @_;
-  push @{$self->{attributes}{intersected_xref}}, @{$value} if
-    defined $value->[0];
-  return wantarray ? @{$self->{attributes}{intersected_xref}} :
-    $self->{attributes}{intersected_xref};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 variant_effects
-
- Title   : variant_effects
- Usage   : $self->variant_effects();
- Function: Get/Set value of variant_effects.
- Returns : Value of variant_effects.
- Args    : Value to set variant_effects to.
+ Title   : reference_copy_number
+ Usage   : $reference_copy_number = $self->reference_copy_number
+ Function: Get the value(s) for the features Reference_copy_number attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
 
 =cut
 
-sub variant_effects {
-  my ($self, $value) = @_;
-  push @{$self->{attributes}{variant_effect}}, @{$value} if
-    defined $value->[0];
-  return wantarray ? @{$self->{attributes}{variant_effect}} :
-    $self->{attributes}{variant_effect};
-}
-
-
-#-----------------------------------------------------------------------------
-
-=head2 foo
-
- Title   : foo
- Usage   : $a = $self->foo();
- Function: Get/Set the value of foo.
- Returns : The value of foo.
- Args    : A value to set foo to.
-
-=cut
-
-sub foo {
-	my ($self, $value) = @_;
-	$self->{foo} = $value if defined $value;
-	return $self->{foo};
+sub reference_copy_number {
+  my $self = shift;
+  my $reference_copy_number = $self->attribute_value('Reference_copy_number');
+  return $reference_copy_number->[0];
 }
 
 #-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-     List every single error and warning message that the module can
-     generate (even the ones that will "never happen"), with a full
-     explanation of each problem, one or more likely causes, and any
-     suggested remedies.
-
-=over
-
-=item C<< Error message here, perhaps with %s placeholders >>
-
-[Description of error here]
-
-=item C<< Another error message here >>
-
-[Description of error here]
-
-[Et cetera, et cetera]
-
-=back
+<GAL::Feature::sequence_alteration> throws no warnings
+or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Feature::sequence_alteration> requires no configuration files or environment variables.
+<GAL::Feature::sequence_alteration> requires no
+configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-None.
+<GAL::Feature::sequence_feature>
 
 =head1 INCOMPATIBILITIES
 
@@ -328,7 +244,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2009, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.

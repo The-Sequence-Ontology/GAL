@@ -1,0 +1,120 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Storage::RAM;
+use GAL::Storage::File;
+use Time::HiRes qw(gettimeofday tv_interval);
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+variant_classifier annotations.gff3 variants.gvf path/to/fasta 
+
+Description:
+
+This script will take a genome annotation file, a variant file and a
+fasta file(s) and classify the functional effects (synonymous,
+non-synonymous etc.) of the variants against mRNA annotations.
+
+";
+
+my ($feature_file, $variant_file, $fasta) = @ARGV;
+
+die $usage unless ($feature_file && $variant_file && $fasta);
+
+my $variants = GAL::Storage::File->new(file => $variant_file,
+				       parser  => 'gff3_fast',
+				      );
+
+my $features = GAL::Storage::RAM->new(fasta   => $fasta,
+				     );
+
+$features->load_files({files => $feature_file,
+		      parser  => 'gff3_fast',
+		      });
+
+
+my $mRNAs = $features->search({seqid => 'chr19',
+			       type  => 'mRNA',
+			       start => {'>=' => 10000},
+			       end   => {'<=' => 1000000}
+			      });
+
+my $t0 = [gettimeofday];
+my $counter = 0;
+while (my $variant = $variants->next_feature) {
+  my $v_id = $variant->feature_id;
+  my $v_start = $variant->start;
+  my $v_end = $variant->end;
+  my @bins = $variant->get_feature_bins($variant);
+  my @feature_ids;
+  map {push @feature_ids, @{$features->{_indices}{bin}{$_}} if $features->{_indices}{bin}{$_}} @bins;
+  my @features = @{$features->{_features}}[@feature_ids];
+  @features = grep {$_->start <= $v_start && $_->end >= $v_end && $_->type eq 'CDS'} @features;
+
+  for my $feature (@features) {
+
+    my $f_id    = $feature->feature_id;
+    my $f_start = $feature->start;
+    my $f_end   = $feature->end;
+    print join "\t", ($v_id, $f_id, $f_start, $v_start, $f_end);
+    print "\n";
+    print '';
+  }
+
+  unless (++$counter % 10000) {
+    my $elapsed = tv_interval($t0);
+    print STDERR "$counter\t$elapsed\n";
+  }
+}
+
+#       for my $variant_seq (@variant_seqs) {
+# 	my $mrna_variant_seq = $variant_seq;
+# 	$mrna_variant_seq = $mrna->annotation->revcomp($variant_seq)
+# 	  if $mrna->strand eq '-';
+# 	my ($ref_codon, $offset) = $mrna->codon_at_location($start);
+# 	my $ref_aa = $mrna->annotation->translate($ref_codon);
+# 	my $var_codon = $ref_codon;
+# 	substr($var_codon, $offset, 1, $mrna_variant_seq);
+# 	my $var_aa = $mrna->annotation->translate($var_codon);
+# 	my $effect;
+# 	if ($ref_aa eq $var_aa) {
+# 	  $effect = 'synonymous_codon';
+# 	}
+# 	elsif ($ref_aa eq '*') {
+# 	  $effect = 'stop_lost';
+# 	}
+# 	elsif ($var_aa eq '*') {
+# 	  $effect = 'stop_gained';
+# 	}
+# 	else {
+# 	  $effect = 'non_synonymous_codon';
+# 	}
+# 	print join "\t", ($mrna_id,
+# 			  $snv_id,
+# 			  $reference_seq,
+# 			  $variant_seq,
+# 			  $ref_codon,
+# 			  $var_codon,
+# 			  $ref_aa,
+# 			  $var_aa,
+# 			  $effect,
+# 			 );
+# 	print "\n";
+# 	print '';
+#       }
+#     }
+#   }
+# }
+
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------

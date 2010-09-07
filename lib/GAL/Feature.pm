@@ -49,6 +49,38 @@ This document describes GAL::Feature version 0.01
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
+
+
+	# Map feature types to a parent that has an subclass.
+	my %FEATURE_MAP = (gene            => 'gene',
+			   transcript      => 'transcript',
+			   mRNA            => 'mrna',
+			   exon            => 'exon',
+			   intron          => 'intron',
+			   three_prime_UTR => 'three_prime_utr',
+			   five_prime_UTR  => 'five_prime_utr',
+			  );
+
+	# Eventually get this from SO at runtime.
+	my @sequence_alterations = qw(copy_number_variation deletion indel
+				      insertion duplication tandem_duplication
+				      transgenic_insertion inversion substitution
+				      MNP SNV SNP point_mutation transition
+				      purine_transition A_to_G_transition
+				      G_to_A_transition pyrimidine_transition
+				      C_to_T_transition T_to_C_transition transversion
+				      purine_to_pyrimidine_transversion
+				      A_to_C_transversion A_to_T_transversion
+				      G_to_C_transversion G_to_T_transversion
+				      pyrimidine_to_purine_transversion
+				      C_to_A_transversion C_to_G_transversion
+				      T_to_A_transversion T_to_G_transversion
+				      complex_substitution sequence_length_variation
+				      simple_sequence_length_variation translocation);
+
+	$class = 'GAL::Feature::' . ($FEATURE_MAP{$self->{type}} || 'sequence_feature');
+	$self->load_module($class);
+	bless $self, $class;
 	return $self;
 }
 
@@ -57,7 +89,7 @@ sub new {
 sub _initialize_args {
 	my ($self, @args) = @_;
 
-        ######################################################################
+	######################################################################
 	# This block of code handels class attributes.  Use the
 	# @valid_attributes below to define the valid attributes for
 	# this class.  You must have identically named get/set methods
@@ -65,10 +97,93 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(seqid source type start end score strand
-				  phase attributes);
-	$self->set_attributes($args, @valid_attributes);
+	my @valid_attributes = qw(feature_id individual_id bin storage seqid
+				  source type start end score strand phase
+				  attributes storage);
+	$self->set_attributes($args, @valid_attributes, 1);
 	######################################################################
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 feature_id
+
+ Title   : feature_id
+ Usage   : $self->feature_id();
+ Function: Get value of feature_id
+ Returns : Value of feature_id.
+ Args    : N/A
+
+=cut
+
+sub feature_id {
+  my ($self, $feature_id) = @_;
+  if ($feature_id) {
+    $self->{feature_id} = $feature_id;
+  }
+  if (! $self->{feature_id}) {
+    $self->{feature_id} ||= join ':', ($self->{seqid},
+				       $self->{source},
+				       $self->{type},
+				       $self->{start},
+				       $self->{end},
+				      );
+  }
+  return $self->{feature_id};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 individual_id
+
+ Title   : individual_id
+ Usage   : $self->individual_id();
+ Function: Get/Set value of individual_id.
+ Returns : Value of individual_id.
+ Args    : Value to set individual_id to.
+
+=cut
+
+sub individual_id {
+  my ($self, $value) = @_;
+  $self->{individual_id} = $value if defined $value;
+  return $self->{individual_id};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 bin
+
+ Title   : bin
+ Usage   : $self->bin();
+ Function: Get/Set value of bin.
+ Returns : Value of bin.
+ Args    : Value to set bin to.
+
+=cut
+
+sub bin {
+  my ($self, $value) = @_;
+  $self->{bin} = $value if defined $value;
+  return $self->{bin};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 storage
+
+ Title   : storage
+ Usage   : $self->storage();
+ Function: Get/Set value of storage.
+ Returns : Value of storage.
+ Args    : Value to set storage to.
+
+=cut
+
+sub storage {
+  my ($self, $value) = @_;
+  $self->{storage} = $value if defined $value;
+  return $self->{storage};
 }
 
 #-----------------------------------------------------------------------------
@@ -233,30 +348,6 @@ sub attributes {
   return $self->{attributes};
 }
 
-
-#-----------------------------------------------------------------------------
-
-=head2 id
-
- Title   : id
- Usage   : $self->id();
- Function: Get value of id.
- Returns : Value of id.
- Args    : N/A
-
-=cut
-
-sub id {
-  my $self = shift;
-  my $id =   $self->{attributes}{ID}[0];
-  $id ||= join ':', ($self->{seqid},
-		     $self->{source},
-		     $self->{type},
-		     $self->{start},
-		     $self->{end},
-		    );
-  return $id;
-}
 
 #-----------------------------------------------------------------------------
 
@@ -484,57 +575,6 @@ sub has_attribute_value {
 
 #-----------------------------------------------------------------------------
 
-=head2 to_gff3
-
- Title   : to_gff3
- Usage   : print $self->to_gff3();
- Function: Print the feature in GFF3 format
- Returns : The feautre stringified in a GFF3 format.
- Args    : N/A
-
-=cut
-
-
-#
-# MOVE ME TO BASE.PM AND DELETE ME FROM PARSER ALSO
-#
-
-
-sub to_gff3 {
-	my $self = shift;
-
-	my $attrb_text;
-
-	my $gff3_text = join "\t", ($self->seqid,
-				    $self->source,
-				    $self->type,
-				    $self->start,
-				    $self->end,
-				    $self->score,
-				    $self->strand,
-				    $self->phase,
-				   );
-
-	my $att_text = 'ID=' . $self->id . ';';
-	if (my @parents = $self->parents) {
-		$att_text .= 'Parent=' . join ',', @parents . ';';
-	}
-	if ($self->name) {
-		$att_text .= 'Name=' . $self->name . ';';
-	}
-	for my $tag ($self->get_attribute_tags) {
-		next if $tag =~ /^(ID|Parent|Name)$/;
-		my @values = $self->get_attribute_values($tag);
-		my $value_text = join ',', @values;
-		$att_text .= "$tag=$value_text;";
-	}
-	$gff3_text .= "\t$att_text";
-
-	return $gff3_text;
-}
-
-#-----------------------------------------------------------------------------
-
 =head2 children
 
  Title   : children
@@ -542,13 +582,13 @@ sub to_gff3 {
  Function: Get this feature's immediate children
  Returns : A list of Feature objects
  Args    : Optionally a valid SO term(s) (scalar or array ref) defining what
-           type(s) of children to return.
+	   type(s) of children to return.
 
 =cut
 
 sub children {
   my ($self, $type) = @_;
-  my $children = $self->storage->get_children($self->feature_id, $type);
+  my $children = $self->storage->get_children($self->feature_id);
   return wantarray ? @{$children} : $children;
 }
 
@@ -561,7 +601,7 @@ sub children {
  Function: Get this feature's children recursively.
  Returns : A list of Feature objects
  Args    : Optionally a valid SO term(s) (scalar or array ref) defining what
-           type(s) of children to return.
+	   type(s) of children to return.
 
 =cut
 
@@ -573,6 +613,25 @@ sub children_recursive {
 
 #-----------------------------------------------------------------------------
 
+=head2 parents
+
+ Title   : parents
+ Usage   : $self->parents($type);
+ Function: Get this feature's parents.
+ Returns : A list of Feature objects
+ Args    : Optionally a valid SO term(s) (scalar or array ref) defining what
+	   type(s) of parent to return.
+
+=cut
+
+sub parents {
+  my ($self, $type) = @_;
+  my $parents = $self->storage->get_parents($self->feature_id);
+  return wantarray ? @{$parents} : $parents;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 parents_recursive
 
  Title   : parents_recursive
@@ -580,7 +639,7 @@ sub children_recursive {
  Function: Get this feature's parents recursively.
  Returns : A list of Feature objects
  Args    : Optionally a valid SO term(s) (scalar or array ref) defining what
-           type(s) of parent to return.
+	   type(s) of parent to return.
 
 =cut
 
