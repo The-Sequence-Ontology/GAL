@@ -153,9 +153,9 @@ sub search {
 
     # TODO: Pull out pattern match contraints and impliment them here.
 
-    my $ids = $self->storage->select_ids($constraints, $order);
+    my $ids = $self->storage->search($constraints, $order);
     return GAL::FeatureSet->new(storage    => $self->storage,
-				annotation => $self->annotation,
+				#annotation => $self->annotation,
 				ids        => $ids
 			       );
 }

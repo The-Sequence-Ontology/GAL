@@ -273,55 +273,88 @@ sub search {
   #TODO : Set this at indexing time based on column cardinality;
   for my $column (@columns) {
     next unless exists $where->{$column};
+    my %these_ids;
     my $values = $where->{$column};
     $values = ref $values eq 'ARRAY' ? $values : [$values];
     for my $value (@{$values}) {
-      my @these_ids;
+      # If this column is indexed.
       if (exists $self->{_indices}{$column}) {
+	# If this value exists in the index.
 	if (exists $self->{_indices}{$column}{$value}) {
-	  @these_ids = @{$self->{_indices}{$column}{$value}};
-	  if ($initialized) {
-	    @these_ids = grep {exists $ids{$_}} @these_ids;
-	  }
-	}
-	else {
-	  @these_ids = ();
+	  @these_ids{@{$self->{_indices}{$column}{$value}}} = ();
 	}
       }
+      # If this column is NOT indexed.
       else {
-	@ids{(0 .. scalar @{$self->{_features}} - 1)} = () unless $initialized;
-	$initialized++;
-	my $operator = 'eq';
+	my %check_ids;
+	if ($initialized) {
+	  %check_ids = %ids;
+	  }
+	else {
+	  @check_ids{(0 .. scalar @{$self->{_features}} - 1)} = ();
+	}
+	my $operator ||= 'eq';
 	if (ref $value eq 'HASH') {
 	  ($operator, $value) = %{$value};
 	}
-	for my $id (keys %ids) {
+	for my $id (keys %check_ids) {
 	  my $feature = $self->{_features}[$id];
+	  # != ne
 	  if ($operator eq 'eq') {
-	    push @these_ids, $id if $feature->{$column} eq $value;
+	    $these_ids{$id}++ if $feature->{$column} eq $value;
+	  }
+	  elsif ($operator eq 'ne') {
+	    $these_ids{$id}++ if $feature->{$column} ne $value;
 	  }
 	  elsif ($operator eq '==') {
-	    push @these_ids, $id if $feature->{$column} == $value;
+	    $these_ids{$id}++ if $feature->{$column} == $value;
+	  }
+	  elsif ($operator eq '!=') {
+	    $these_ids{$id}++ if $feature->{$column} != $value;
 	  }
 	  elsif ($operator eq '<=') {
-	    push @these_ids, $id if $feature->{$column} <= $value;
+	    $these_ids{$id}++ if $feature->{$column} <= $value;
 	  }
 	  elsif ($operator eq '>=') {
-	    push @these_ids, $id if $feature->{$column} >= $value;
-	  }
-	  elsif ($operator eq '=~') {
-	    push @these_ids, $id if $feature->{$column} =~ $value;
+	    $these_ids{$id}++ if $feature->{$column} >= $value;
 	  }
 	  else {
 	    $self->throw(message => "FATAL : invalid_operator_in_search : $operator\n");
 	  }
 	}
       }
-      %ids = map {$_ => 1} @these_ids;
-      $initialized++;
+      if ($initialized) {
+	%ids = map {next unless exists $ids{$_};$_ => 1} keys %these_ids;
+      }
+      else {
+	%ids = %these_ids;
+	$initialized++;
+      }
     }
   }
   my @features = @{$self->{_features}}[keys %ids];
+  if ($order) {
+    my ($direction, $column) = %{$order};
+    if ($direction eq '-asc') {
+      if (grep {$column eq $_} qw(start end score)) {
+	@features = sort {$a->{$column} <=> $b->{$column}} @features;
+      }
+      else {
+	@features = sort {$a->{$column} cmp $b->{$column}} @features;
+      }
+    }
+    elsif ($direction eq '-desc') {
+      if (grep {$column eq $_} qw(start end score)) {
+	@features = sort {$b->{$column} <=> $a->{$column}} @features;
+      }
+      else {
+	@features = sort {$b->{$column} cmp $a->{$column}} @features;
+      }
+    }
+    else {
+      $self->throw(message => "FATAL : invalid_order_direction : $direction");
+    }
+  }
   return wantarray ? @features : \@features;
 }
 
