@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use base qw(GAL::Base);
-use GAL::Schema;
 use Scalar::Util qw(weaken);
 
 use vars qw($VERSION);
@@ -184,9 +183,8 @@ sub parser {
   my ($self, @args) = @_;
 
   if (! $self->{parser} || @args) {
-    my $class = 'GAL::Parser';
-    $self->load_module($class);
-    my $parser = $class->new(@args);
+    @args ||= (class => 'gff3');
+    $parser = GAL::Parser->new(@_);
     my $weak_self = $self;
     weaken $weak_self;
     $parser->annotation($weak_self);
@@ -214,9 +212,8 @@ sub storage {
   my ($self, @args) = @_;
 
   if (! $self->{storage}) {
-    my $class = 'GAL::Storage';
-    $self->load_module($class);
-    my $storage = $class->new(@args);
+    @args ||= (class => 'RAM');
+    $storage = GAL::Storage->new(@_);
     my $weak_self = $self;
     weaken $weak_self;
     $storage->annotation($weak_self);
@@ -239,91 +236,246 @@ details.
 
 =head1 Methods
 
-=head2 features
+=head2 connect
 
-  Title   : features
-  Usage   : $self->features();
-  Function: Return a GAL::Schema::Result::Feature object (a 
-            DBIx::Class::ResultSet for all features).
-  Returns : A GAL::Schema::Result::Feature object
-  Args    : A query appropriate for DBIx::Class::ResultSet::search
+ Title   : connect
+ Usage   : $a = $self->connect();
+ Function: 
+ Returns : 
+ Args    : 
 
 =cut
 
-sub features {
-  my ($self, $query) = shift;
-  my $features = $self->schema->resultset('Feature');
-  return $query ? $features->search->($query) : $features;
+sub connect {
+	my ($self, @args) = @_;
+	my $args = $self->prepare_args(@args);
+	$args = ref $args eq 'HASH' ? $args : {dsn => $args};
+	$self->storage->connect($args);
+	return $self;
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 schema
 
-  Title   : schema
-  Usage   : $self->schema();
-  Function: Create and/or return the DBIx::Class::Schema object
-  Returns : DBIx::Class::Schema object.
-  Args    : N/A - Arguments are provided by the GAL::Storage object.
+=head2 load
+
+ Title   : load
+ Usage   : $a = $self->load();
+ Function: 
+ Returns : 
+ Args    : 
 
 =cut
 
-sub schema {
-    my $self = shift;
+sub load {
+	my ($self, $args) = @_;
 
-    # Create the schema if it doesn't exist
-    if (! $self->{schema}) {
-	# We should be able to reuse the Annotation dbh here!
-	# my $schema = GAL::Schema->connect([sub {$self->storage->dbh}]);
-	my $schema = GAL::Schema->connect($self->storage->dsn,
-					  $self->storage->user,
-					  $self->storage->password,
-					  );
-	# If we're using SQLite we should be using a larger cache_size;
-	# but why doesn't this seem to help?  Do this in the Storage object
-	# $schema->storage->dbh_do(sub {
-	#			     my ($storage, $dbh) = @_;
-	#			     $dbh->do('PRAGMA cache_size = 800000');
-	#			   },
-	#			  );
-	my $weak_self = $self;
-	weaken $weak_self;
-	$schema->annotation($weak_self); # See GAL::SchemaAnnotation
-	$self->{schema} = $schema;
-    }
-    return $self->{schema};
+	my $args = $self->prepare_args(@args);
+	my $parser = $self->parser;
+	if (ref $args eq 'HASH') {
+	  $args->{parser} ||= $parser;
+	}
+	else {
+	  $args = {files => $args, parser => $parser};
+	}
+	$self->storage->load_files($args);
+	return $self;
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 load_files
 
- Title   : load_files
- Usage   : $a = $self->load_files();
- Function: Parse and store all of the features in a file.
- Returns : N/A
- Args    : (files => \@feature_files,
-	    mode  => 'overwrite',
-	   )
- Notes   : Default
+=head2 all
+
+ Title   : all
+ Usage   : $a = $self->all();
+ Function: 
+ Returns : 
+ Args    : 
 
 =cut
 
-sub load_files {
-  my ($self, @args) = @_;
-  my $args = $self->prepare_args(\@args);
-  # TODO: This functionality should be in GAL::Storage.pm
-  my ($mode, $files) = @{$args}{qw/mode files/};
-  $mode ||= 'append';
-  if ($mode eq 'overwrite') {
-    $self->storage->drop_database;
-    $self->storage->load_files($files);
-  }
-  elsif ($mode eq 'append') {
-    $self->storage->load_files($files);
-  }
+sub all {
+	my $self = @_;
+
+	my @features = $self->storage->select_all($self->{_set_handle});
+	map {$self->_inflate_feature($_)} @features unless $self->no_inflate;
+
+	return wantarray ? @features : \@features;
 }
 
+#-----------------------------------------------------------------------------
+
+
+=head2 next
+
+ Title   : next
+ Usage   : $a = $self->next();
+ Function: 
+ Returns : 
+ Args    : 
+
+=cut
+
+sub next {
+	my $self = shift;
+
+	my $feature = $self->storage->fetch_next_feature($self->{_set_handle});
+	$feature = $self->_inflate($feature) unless $self->no_inflate;
+
+	return $feature;
+
+}
+
+#-----------------------------------------------------------------------------
+
+
+=head2 search
+
+ Title   : search
+ Usage   : $a = $self->search();
+ Function: 
+ Returns : 
+ Args    : 
+
+=cut
+
+sub search {
+	my ($self, $where, $order) = @_;
+
+	my $set_handle = $self->storage->search($where, $order);
+	$self->{_set_handle} = $set_handle;
+	return $self;
+}
+
+#-----------------------------------------------------------------------------
+
+
+=head2 find
+
+ Title   : find
+ Usage   : $a = $self->find();
+ Function: 
+ Returns : 
+ Args    : 
+
+=cut
+
+sub find {
+	my ($self, $where) = @_;
+
+	my $feature = $self->storage->find($where);
+	$feature = $self->_inflate($feature) unless $self->no_inflate;
+
+	return;
+}
+
+#-----------------------------------------------------------------------------
+
+
+=head2 _inflate
+
+ Title   : _inflate
+ Usage   : $a = $self->_inflate();
+ Function: 
+ Returns : 
+ Args    : 
+
+=cut
+
+sub _inflate {
+	my ($self, $args) = @_;
+
+	return;
+}
+
+# #-----------------------------------------------------------------------------
+# 
+# =head2 features
+# 
+#   Title   : features
+#   Usage   : $self->features();
+#   Function: Return a GAL::Schema::Result::Feature object (a 
+#             DBIx::Class::ResultSet for all features).
+#   Returns : A GAL::Schema::Result::Feature object
+#   Args    : A query appropriate for DBIx::Class::ResultSet::search
+# 
+# =cut
+# 
+# sub features {
+#   my ($self, $query) = shift;
+#   my $features = $self->schema->resultset('Feature');
+#   return $query ? $features->search->($query) : $features;
+# }
+# 
+# #-----------------------------------------------------------------------------
+# 
+# =head2 schema
+# 
+#   Title   : schema
+#   Usage   : $self->schema();
+#   Function: Create and/or return the DBIx::Class::Schema object
+#   Returns : DBIx::Class::Schema object.
+#   Args    : N/A - Arguments are provided by the GAL::Storage object.
+# 
+# =cut
+# 
+# sub schema {
+#     my $self = shift;
+# 
+#     # Create the schema if it doesn't exist
+#     if (! $self->{schema}) {
+# 	# We should be able to reuse the Annotation dbh here!
+# 	# my $schema = GAL::Schema->connect([sub {$self->storage->dbh}]);
+# 	my $schema = GAL::Schema->connect($self->storage->dsn,
+# 					  $self->storage->user,
+# 					  $self->storage->password,
+# 					  );
+# 	# If we're using SQLite we should be using a larger cache_size;
+# 	# but why doesn't this seem to help?  Do this in the Storage object
+# 	# $schema->storage->dbh_do(sub {
+# 	#			     my ($storage, $dbh) = @_;
+# 	#			     $dbh->do('PRAGMA cache_size = 800000');
+# 	#			   },
+# 	#			  );
+# 	my $weak_self = $self;
+# 	weaken $weak_self;
+# 	$schema->annotation($weak_self); # See GAL::SchemaAnnotation
+# 	$self->{schema} = $schema;
+#     }
+#     return $self->{schema};
+# }
+# 
+# #-----------------------------------------------------------------------------
+# 
+# =head2 load_files
+# 
+#  Title   : load_files
+#  Usage   : $a = $self->load_files();
+#  Function: Parse and store all of the features in a file.
+#  Returns : N/A
+#  Args    : (files => \@feature_files,
+# 	    mode  => 'overwrite',
+# 	   )
+#  Notes   : Default
+# 
+# =cut
+# 
+# sub load_files {
+#   my ($self, @args) = @_;
+#   my $args = $self->prepare_args(\@args);
+#   # TODO: This functionality should be in GAL::Storage.pm
+#   my ($mode, $files) = @{$args}{qw/mode files/};
+#   $mode ||= 'append';
+#   if ($mode eq 'overwrite') {
+#     $self->storage->drop_database;
+#     $self->storage->load_files($files);
+#   }
+#   elsif ($mode eq 'append') {
+#     $self->storage->load_files($files);
+#   }
+# }
+# 
 # #-----------------------------------------------------------------------------
 #
 # =head2 add_feature

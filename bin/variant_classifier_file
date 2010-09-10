@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use GAL::Storage::RAM;
+use GAL::Annotation;
 use GAL::Parser::gff3_fast;
 use Time::HiRes qw(gettimeofday tv_interval);
 
@@ -29,24 +29,17 @@ my ($feature_file, $variant_file, $fasta) = @ARGV;
 
 die $usage unless ($feature_file && $variant_file && $fasta);
 
-my $variants = GAL::Parser::gff3_fast->new(file => $variant_file,
-					  );
+my $variant_parser = GAL::Parser::gff3_fast->new(file => $variant_file,
+						);
 
-my $features = GAL::Storage::RAM->new(fasta   => $fasta,
-				     );
+my $features = GAL::Annotation->new(storage => 'RAM',
+				    fasta   => $fasta,
+				    parser  => 'gff3_fast',
+				   );
 
 $features->load_files({files => $feature_file,
-		      parser  => 'gff3_fast',
 		      });
 
-
-my $mRNAs = $features->search({seqid => 'chr19',
-			       type  => 'mRNA',
-			       start => {'>=' => 10000},
-			       end   => {'<=' => 1000000}
-			      },
-			      {-asc => 'start'}
-			     );
 
 my $t0 = [gettimeofday];
 my $counter = 0;
@@ -54,9 +47,10 @@ while (my $variant = $variants->next_feature_hash) {
   my $v_seqid = $variant->{seqid};
   my $v_id = $variant->{feature_id};
   my $v_start = $variant->{start};
+  my $variant_seq = $variant->{attributes}{Variant_seq};
   my @bins = $variants->get_feature_bins($variant);
 
-  my $mRNAs = $features->search({seqid => $v_seqid,
+  my $mRNAs = $features->search({seqid  => $v_seqid,
 				 type   => 'mRNA',
 				 bin    => \@bins,
 				 start  => {'<=' => $v_start},
@@ -64,7 +58,18 @@ while (my $variant = $variants->next_feature_hash) {
 				}
 			       );
 
-  for my $mRNA (@{$mRNAs}) {
+  while ($mRNA = $mRNAs->next) {
+
+    my $mrna_variant_seq = $variant_seq;
+    $mrna_variant_seq = $mrna->annotation->revcomp($variant_seq)
+      if $mrna->strand eq '-';
+    my ($ref_codon, $offset) = $mrna->codon_at_location($v_start);
+    my $ref_aa = $mrna->annotation->translate($ref_codon);
+    my $var_codon = $ref_codon;
+    substr($var_codon, $offset, 1, $mrna_variant_seq);
+    my $var_aa = $mrna->annotation->translate($var_codon);
+
+
 
     my $f_id    = $mRNA->feature_id;
     my $f_start = $mRNA->start;
@@ -81,14 +86,6 @@ while (my $variant = $variants->next_feature_hash) {
 }
 
 #       for my $variant_seq (@variant_seqs) {
-# 	my $mrna_variant_seq = $variant_seq;
-# 	$mrna_variant_seq = $mrna->annotation->revcomp($variant_seq)
-# 	  if $mrna->strand eq '-';
-# 	my ($ref_codon, $offset) = $mrna->codon_at_location($start);
-# 	my $ref_aa = $mrna->annotation->translate($ref_codon);
-# 	my $var_codon = $ref_codon;
-# 	substr($var_codon, $offset, 1, $mrna_variant_seq);
-# 	my $var_aa = $mrna->annotation->translate($var_codon);
 # 	my $effect;
 # 	if ($ref_aa eq $var_aa) {
 # 	  $effect = 'synonymous_codon';
