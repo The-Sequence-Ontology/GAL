@@ -5,6 +5,11 @@ use vars qw($VERSION);
 
 $VERSION = '0.01';
 use base qw(GAL::Storage);
+use File::Temp qw(tempfile);
+use GAL::Parser::gff3;
+
+use Time::HiRes qw(gettimeofday tv_interval);
+my $t0 = [gettimeofday];
 
 =head1 NAME
 
@@ -270,6 +275,7 @@ sub drop_database {
   }
   return;
 }
+
 #-----------------------------------------------------------------------------
 
 =head2 _open_or_create_database
@@ -285,7 +291,7 @@ sub drop_database {
 sub _open_or_create_database {
   my $self = shift;
 
-  my @databases = DBI->data_sources($self->driver,
+  my @databases = DBI->data_sources('mysql',
 				    {user     => $self->user,
 				     password => $self->password,
 				    }
@@ -323,6 +329,55 @@ sub _open_or_create_database {
 
 #-----------------------------------------------------------------------------
 
+=head2 _load_schema
+
+ Title   : _load_schema
+ Usage   : $self->_load_schema();
+ Function: Get/Set value of _load_schema.
+ Returns : Value of _load_schema.
+ Args    : Value to set _load_schema to.
+
+=cut
+
+sub _load_schema {
+  my ($self, $dbh) = @_;
+
+    $dbh->do("DROP TABLE IF EXISTS feature");
+    $dbh->do("DROP TABLE IF EXISTS attribute");
+    $dbh->do("DROP TABLE IF EXISTS relationship");
+    $dbh->do("CREATE TABLE feature ("    .
+            "subject_id VARCHAR(255), " .
+            "feature_id VARCHAR(255), " .
+            "seqid      VARCHAR(255), " .
+            "source     VARCHAR(255), " .
+            "type       VARCHAR(255), " .
+            "start      INT, "          .
+            "end        INT, "          .
+            "score      VARCHAR(255), " .
+            "strand     VARCHAR(1), "   .
+            "phase      VARCHAR(1),"    .
+            "bin        VARCHAR(15))"
+           );
+    $dbh->do("CREATE TABLE attribute ("  .
+            "attribute_id INT NOT NULL AUTO_INCREMENT, " .
+            "subject_id VARCHAR(255), " .
+            "feature_id VARCHAR(255), " .
+            "att_key    VARCHAR(255), "    .
+            "att_value  TEXT, "  .
+            "PRIMARY KEY (attribute_id))"
+           );
+    $dbh->do("CREATE TABLE relationship ("  .
+            "subject_id   VARCHAR(255), " .
+            "parent       VARCHAR(255), " .
+            "child        VARCHAR(255), "    .
+            "relationship VARCHAR(255)) "
+           );
+  my $self = shift;
+}
+
+
+#-----------------------------------------------------------------------------
+
 =head2 index_database
 
  Title   : index_database
@@ -338,20 +393,102 @@ sub index_database {
   my $self = shift;
   my $dbh  = $self->dbh;
 
+
+  print STDERR "Creating db indexes\n";
   # Create feature indeces
   $dbh->do("CREATE INDEX feat_feature_id_index USING BTREE ON feature (feature_id)");
+  my $e = tv_interval($t0);
+  print STDERR "$e\n";
+
   # $dbh->do("CREATE INDEX feat_seqid_start_end_index USING BTREE ON feature (seqid, start, end)");
   $dbh->do("CREATE INDEX feat_bin_index USING BTREE ON feature (bin)");
   # $dbh->do("CREATE INDEX feat_type_index USING BTREE ON feature (type)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
 
   # Create attribute indeces
   $dbh->do("CREATE INDEX att_feature_id_index USING BTREE ON attribute (feature_id)");
   # $dbh->do("CREATE INDEX att_key_value_index USING BTREE ON attribute (att_key, att_value)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
 
   # Create relationship indeces
   $dbh->do("CREATE INDEX rel_parent_index USING BTREE ON relationship (parent)");
   $dbh->do("CREATE INDEX rel_child_index  USING BTREE ON relationship (child)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
 
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 load_files
+
+ Title   : load_files
+ Usage   : $self->load_files();
+ Function: Get/Set value of load_file.
+ Returns : Value of load_file.
+ Args    : Value to set load_file to.
+
+=cut
+
+sub load_files {
+
+  my ($self, $files) = @_;
+
+  $files = ref $files eq 'ARRAY' ? $files : [$files];
+
+  my $temp_dir;
+  ($temp_dir) = grep {-d $_} qw(/tmp .) unless ($temp_dir &&-d $temp_dir);
+
+  my ($FEAT_TEMP,  $feat_filename)  = tempfile('gal_feat_XXXXXX',
+					       SUFFIX => '.tmp',
+					       DIR    => $temp_dir,
+					       UNLINK => 0,
+					      );
+
+  my ($ATT_TEMP,  $att_filename)  = tempfile('gal_att_XXXXXX',
+					     SUFFIX => '.tmp',
+					     DIR    => $temp_dir,
+					     UNLINK => 0,
+					    );
+
+  my ($REL_TEMP,  $rel_filename)  = tempfile('gal_rel_XXXXXX',
+					     SUFFIX => '.tmp',
+					     DIR    => $temp_dir,
+					     UNLINK => 0,
+					    );
+
+  chmod (0444, $feat_filename, $att_filename, $rel_filename);
+
+  my $counter;
+  for my $file (@{$files}) {
+
+    my $parser = GAL::Parser::gff3->new(file => $file);
+
+    while (my $feature = $parser->next_feature_hash) {
+      my ($feature_rows, $attribute_rows, $relationship_rows) = $self->prepare_features($feature);
+
+      for my $feature_row (@{$feature_rows}) {
+	print $FEAT_TEMP join "\t", @{$feature_row};
+	print $FEAT_TEMP "\n";
+      }
+
+      for my $attribute_row (@{$attribute_rows}) {
+	print $ATT_TEMP  join "\t", @{$attribute_row};
+	print $ATT_TEMP "\n";
+      }
+      for my $relationship_row (@{$relationship_rows}) {
+	print $REL_TEMP join "\t", @{$relationship_row};
+	print $REL_TEMP "\n";
+      }
+      unless (++$counter % 10000) {
+	my $e = tv_interval($t0);
+	print STDERR "print $counter\t$e (" . int($counter/$e) . ")\r";
+      }
+    }
+  }
+  $self->_load_temp_files($feat_filename, $att_filename, $rel_filename);
 }
 
 #-----------------------------------------------------------------------------
@@ -369,13 +506,20 @@ sub _load_temp_files {
 
   my $dbh = $self->dbh;
 
+  print STDERR "\nLoading tempfiles\n";
   $dbh->do("LOAD DATA INFILE '$feat_filename' INTO TABLE feature " .
 	   "(subject_id, feature_id, seqid, source, type, start, " .
 	   "end, score, strand, phase, bin)");
+  my $e = tv_interval($t0);
+  print STDERR "$e\n";
   $dbh->do("LOAD DATA INFILE '$att_filename'  INTO TABLE attribute " .
 	   "(attribute_id, subject_id, feature_id, att_key, att_value)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
   $dbh->do("LOAD DATA INFILE '$rel_filename'  INTO TABLE relationship " .
 	   "(subject_id, parent, child)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
   $self->index_database;
 }
 
