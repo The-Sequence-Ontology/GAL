@@ -148,7 +148,7 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(annotation class dsn user password);
+	my @valid_attributes = qw(annotation class dsn database user password);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }

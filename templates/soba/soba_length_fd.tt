@@ -1,0 +1,22 @@
+<table>
+  <tr>
+    <th>Source</th>
+    <th>Type</th>
+    <th>Count</th>
+  </tr>
+  [%- FOR source = data.keys -%]
+  [%- FOR type = data.$source.keys %]
+  <tr>
+    <td>[% source %]</td>
+    <td>[% type %]</td>
+  </tr>
+  <tr>
+    <td colspan=2>
+<pre>
+[% data.$source.$type %]
+</pre>
+  </td>
+  </tr>
+  [% END -%]
+  [%- END -%]
+</table>

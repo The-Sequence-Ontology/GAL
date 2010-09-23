@@ -1,0 +1,50 @@
+[% USE Number.Format %]
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+  <head>
+    <title>SOBAcl Table</title>
+     <style type="text/css">
+       table {
+              border: 1px solid;
+              border-collapse: collapse;
+             }
+       td {
+       	   border: 1px solid;
+       	   border-collapse: collapse;
+           text-align: right;
+           padding-left: 5px;
+           padding-right: 5px;
+          }
+       th {
+           border: 1px solid;
+       	   border-collapse: collapse;
+       	   background: lightGrey;
+       	   }
+       th.row_head {
+       		   text-align: left;
+       		   }
+     </style>
+  </head>
+  <body>
+    <table>
+      [%- FOR row = data.keys.first -%]
+      <tr>
+        <th></th>
+        [%- FOR column = data.$row.keys %]
+        <th>[% column UNLESS column == '_row_summary'%]</th>
+        [%- END %]
+      </tr>
+      [%- END %]
+      [%- FOR row = data.keys %]
+      <tr>
+        <th class="row_head">[% row %]</th>
+        [%- FOR column = data.$row.keys %]
+        <td>[% data.$row.$column.stats.mean | format_number IF data.$row.$column.stats.mean && column != '_row_summary' %]</td>
+        [%- END %]
+      </tr>
+      [%- END %]
+    </table>
+  </body>
+</html>

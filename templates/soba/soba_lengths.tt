@@ -1,0 +1,20 @@
+<table>
+  <tr>
+    <th>Source</th>
+    <th>Type</th>
+    <th>Count</th>
+  </tr>
+  [%- FOR source = data.keys -%]
+  [%- FOR type = data.$source.keys %]
+  <tr>
+    <td>[% source %]</td>
+    <td>[% type %]</td>
+    <td>[% data.$source.$type.stats.count %]</td>
+    <td>[% data.$source.$type.stats.min %]</td>
+    <td>[% data.$source.$type.stats.mean | format('%.1f')%]</td>
+    <td>[% data.$source.$type.stats.max %]</td>
+    <td>[% data.$source.$type.footprint %]</td>
+  </tr>
+  [% END -%]
+  [%- END -%]
+</table>
