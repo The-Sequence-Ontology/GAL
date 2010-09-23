@@ -1,0 +1,19 @@
+<table>
+  [%- FOR row = data.keys -%]
+  <tr>
+    <th></th>
+    [%- FOR column = data.$row.keys %]
+    <th></th>
+    <th>[% column %]</th>
+    [%- END %]
+  </tr>
+  [%- END %]
+  [%- FOR row = data.keys %]
+  <tr>
+    <th>[% row %]</th>
+    [%- FOR column = data.$row.keys %]
+    <td>[% data.$row.$column.stats.mean %]</td>
+    [%- END %]
+  </tr>
+  [%- END %]
+</table>

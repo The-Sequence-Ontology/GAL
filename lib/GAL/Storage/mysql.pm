@@ -140,7 +140,7 @@ sub _initialize_args {
 
 =cut
 
-sub scheme {'dbi'}
+sub scheme {'DBI'}
 
 #-----------------------------------------------------------------------------
 
@@ -323,6 +323,7 @@ sub _open_or_create_database {
 		code    => "using_existing_database : $database");
     $dbh = DBI->connect($self->dsn, $self->user,
 			$self->password);
+    $self->_load_schema($dbh);
   }
   return $dbh;
 }
@@ -395,25 +396,35 @@ sub index_database {
 
 
   print STDERR "Creating db indexes\n";
+  print STDERR "Creating feature_id_index\n";
   # Create feature indeces
   $dbh->do("CREATE INDEX feat_feature_id_index USING BTREE ON feature (feature_id)");
   my $e = tv_interval($t0);
   print STDERR "$e\n";
-
-  # $dbh->do("CREATE INDEX feat_seqid_start_end_index USING BTREE ON feature (seqid, start, end)");
-  $dbh->do("CREATE INDEX feat_bin_index USING BTREE ON feature (bin)");
-  # $dbh->do("CREATE INDEX feat_type_index USING BTREE ON feature (type)");
+  print STDERR "Creating feat_source_index\n";
+  $dbh->do("CREATE INDEX feat_source_index USING BTREE ON feature (source)");
   $e = tv_interval($t0);
   print STDERR "$e\n";
+  print STDERR "Creating feat_type_index\n";
+  $dbh->do("CREATE INDEX feat_type_index USING BTREE ON feature (type)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
+  print STDERR "Creating feat_bin_index\n";
+  $dbh->do("CREATE INDEX feat_bin_index USING BTREE ON feature (bin)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
+  print STDERR "Creating attribute_feature_id_index\n";
 
   # Create attribute indeces
   $dbh->do("CREATE INDEX att_feature_id_index USING BTREE ON attribute (feature_id)");
-  # $dbh->do("CREATE INDEX att_key_value_index USING BTREE ON attribute (att_key, att_value)");
   $e = tv_interval($t0);
   print STDERR "$e\n";
+  print STDERR "Creating attribute_feature_id_index\n";
 
-  # Create relationship indeces
   $dbh->do("CREATE INDEX rel_parent_index USING BTREE ON relationship (parent)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
+  print STDERR "Creating rel_parent_index\n";
   $dbh->do("CREATE INDEX rel_child_index  USING BTREE ON relationship (child)");
   $e = tv_interval($t0);
   print STDERR "$e\n";
