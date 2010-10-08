@@ -29,12 +29,13 @@ Options:
   --trim_qual	  Remove reads that don't pass quality filter
   --guess_format  Guess which format (Sanger Solexa/Illumina 1.0 or
 		  Illumina 1.3) the file is.
+  --verbose       Talk to me baby!
 
 ";
 
 
 my ($help, $count, $lengths, $quals, $total, $ill2sanger, $sol2sanger,
-    $trim_qual, $guess_format);
+    $trim_qual, $guess_format, $verbose);
 my $opt_success = GetOptions('help'         => \$help,
 			     'count'	    => \$count,
 			     'lengths'	    => \$lengths,
@@ -44,11 +45,14 @@ my $opt_success = GetOptions('help'         => \$help,
 			     'sol2sanger'      => \$sol2sanger,
 			     'trim_qual'    => \$trim_qual,
 			     'guess_format' => \$guess_format,
+			     'verbose'      => \$verbose,
 			      );
 
 die $usage if $help || ! $opt_success;
 
 my $file = shift;
+
+die $usage unless -r $file;
 
 if ($count) {
     read_count($file);
@@ -229,21 +233,35 @@ sub make_read_iterator {
     my $file = shift;
 
     my $IN;
-    if (! -t STDIN) {
-	open ($IN, "<&=STDIN") or die "Can't open STDIN\n";
-    }
-    else {
-	open ($IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
-    }
+    my $line_count = 1;
+    my $read_count = 1;
+#    if (! -t STDIN) {
+#	open ($IN, "<&=STDIN") or die "Can't open STDIN\n";
+#    }
+#    else {
+    open ($IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
+#    }
 
     return sub {
-	my @data = (<$IN>, <$IN>, <$IN>, <$IN>);
-	while ($data[0] !~ /^@/ && $data[2] !~ /^\+/) {
-	    shift @data;
-	    push @data, <$IN>;
+        my @data;
+	for (0 .. 3) {
+	    my $line = <$IN>;
+	    return undef unless defined $line;
+	    push @data, $line;
 	}
-	#die "FATAL : invalid_format : ID line = $id\n" unless $id =~ /^@/;
-	#die "FATAL : invalid_format : ID2 line = $id2\n" unless $id2 =~ /^\+/;
-	return @fields ? \@fields : undef;
+	chomp @data;
+	my $failed;
+        while ($data[0] !~ /^@/ && $data[2] !~ /^\+/) {
+	    warn "WARN : skipping_bad_lines : " . join("\t", @data) . "\n";
+            shift @data;
+	    my $line = <$IN>;
+	    return undef unless defined $line;
+            push @data, $line;
+	    $line_count++;
+	    die "FATAL : bad_fastq_format : " if ++$failed > 3;
+        }
+	print STDERR "line: $line_count\t read: $read_count\r" if ($verbose && ! (($read_count / 4) % 1000));
+	$line_count += 4; $read_count++;
+        return @data ? \@data : undef;
     };
 }

@@ -210,7 +210,7 @@ sub clean_file {
     my $iterator = make_iterator($file, $region);
 
     while (my $a = &{$iterator}) {
-	next if (($a->{flag} & $UNMAPPED) && $a->{map} != 0);
+	next if (($a->{flag} & $UNMAPPED) && ($a->{map} != 0 || $a->{cigar} ne '*'));
 	print_alignment($a);
     }
 }
@@ -221,17 +221,18 @@ sub print_alignment {
 
     my $a = shift;
 
-    my @opts;
-    if (ref $a->{opt}) {
+    my @opts = ();
+    if (ref $a->{opt} eq 'HASH') {
 	my $opts = $a->{opt};
 	for my $key (keys %{$opts}) {
 	    push @opts, join ':', ($key, @{$opts->{$key}}{qw(type value)});
 	}
-	my $a->{opt} = join "\t", @opts;
     }
-    print join "\t", @{$a}{qw(qname flag rname pos map ciagr mrnm mpos isize
-			      seq qual)};
-    print "\t" . $a->{opt} if $a->{opt};
+    else {
+	@opts = @{$a->{opt}};
+    }
+    print join "\t", (@{$a}{qw(qname flag rname pos map cigar mrnm mpos isize
+			      seq qual)}, @opts);
     print "\n";
 }
 
@@ -273,7 +274,7 @@ sub make_iterator {
 		# RNAME  Reference sequence NAME
 		# POS    1-based leftmost POSition/coordinate of clipped sequence
 		# MAP    QMAPping Quality (Phred-scaled)
-		# CIAGR  extended CIGAR string
+		# CIGAR  extended CIGAR string
 		# MRNM   Mate Reference sequence NaMe (‘=’ if same as RNAME)
 		# MPOS   1-based Mate POSistion
 		# ISIZE  Inferred insert SIZE
@@ -281,7 +282,8 @@ sub make_iterator {
 		# QUAL   query QUALity (ASCII-33 gives the Phred base quality)
 		# OPT    variable OPTional fields in the format TAG:VTYPE:VALUE
 		my %alignment;
-		@alignment{qw(qname flag rname pos map ciagr mrnm mpos isize seq qual opt)} = split /\t/, $line;
+		my @opts;
+		(@alignment{qw(qname flag rname pos map cigar mrnm mpos isize seq qual)}, @opts) = split /\t/, $line;
 		if ($options) {
 		    my %opts;
 		    my $opt_text = $alignment{opt};
@@ -292,6 +294,9 @@ sub make_iterator {
 			$opts{$tag}{type} = $type;
 		    }
 		    $alignment{opt} = \%opts;
+		}
+		else {
+		    $alignment{opt} = \@opts;
 		}
 		return %alignment ? \%alignment : undef;
 	    }
