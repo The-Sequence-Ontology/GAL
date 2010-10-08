@@ -38,21 +38,26 @@ Options:
 
   --bam     Output is in BAM format
 
+  --headers Print headers with output
+
 ";
 
 
-my ($help, $summary, $filter, $clean, $region, $bam);
+my ($help, $summary, $filter, $clean, $region, $bam, $headers);
 my $opt_success = GetOptions('help'     => \$help,
 			     'summary'  => \$summary,
 			     'filter=s' => \$filter,
 			     'clean'    => \$clean,
 			     'region=s' => \$region,
 			     'bam'      => \$bam,
+			     'headers'  => \$headers,
 			     );
 
 die $usage if $help || ! $opt_success;
 
 $region ||= '';
+
+my %HEADERS;
 
 my $PAIRED        = 0x0001; # 1
 my $PAIR_MAPPED   = 0x0002; # 2
@@ -75,6 +80,9 @@ if ($summary) {
 elsif ($filter) {
     apply_filter($file);
 }
+elsif ($clean) {
+    clean_file($file);
+}
 
 #-----------------------------------------------------------------------------
 #-------------------------------- SUBROUTINES --------------------------------
@@ -84,7 +92,7 @@ sub build_summary {
 
     my $file = shift;
 
-    my $next_alignment = make_iterator($file, $region);
+    my $iterator = make_iterator($file, $region);
 
     my %sets;
     my $isizes = Statistics::Descriptive::Sparse->new();
@@ -101,7 +109,7 @@ sub build_summary {
 
     my $bar_graph = Text::Graph->new('Bar', maxlen => 50, showval => 1);
 
-    while (my $a = &{$next_alignment}) {
+    while (my $a = &{$iterator}) {
 	$count++;
 	my ($qname, $flag, $rname, $pos, $mapq, $cigar, $mrnm,
 	    $mpos, $isize, $seq, $qual, $opt)
@@ -126,7 +134,7 @@ sub build_summary {
 	($flag & $DUPLICATE)     && $flags{duplicate}++;
 
 	$mapped_length += $seq_length unless ($flag & $UNMAPPED);
-	$mapped_length += $seq_length if ($flag & $PARI_MAPPED);
+	$mapped_length += $seq_length if ($flag & $PAIR_MAPPED);
 
 	$rnames{$rname}++;
 	$sets{$rname} ||= Set::IntSpan::Fast->new();
@@ -189,6 +197,42 @@ sub build_summary {
 
 sub apply_filter {
 
+    die "FATAL : function_not_implimented : apply_filter\n";
+
+}
+
+#-----------------------------------------------------------------------------
+
+sub clean_file {
+
+    my $file = shift;
+
+    my $iterator = make_iterator($file, $region);
+
+    while (my $a = &{$iterator}) {
+	next if (($a->{flag} & $UNMAPPED) && $a->{map} != 0);
+	print_alignment($a);
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_alignment {
+
+    my $a = shift;
+
+    my @opts;
+    if (ref $a->{opt}) {
+	my $opts = $a->{opt};
+	for my $key (keys %{$opts}) {
+	    push @opts, join ':', ($key, @{$opts->{$key}}{qw(type value)});
+	}
+	my $a->{opt} = join "\t", @opts;
+    }
+    print join "\t", @{$a}{qw(qname flag rname pos map ciagr mrnm mpos isize
+			      seq qual)};
+    print "\t" . $a->{opt} if $a->{opt};
+    print "\n";
 }
 
 #-----------------------------------------------------------------------------
@@ -211,7 +255,19 @@ sub make_iterator {
 	sub {
 	  LINE:
 	    while (my $line  = <$IN>) {
-		next if $line =~/^@/;
+		chomp $line;
+		if ($line =~/^@/) {
+		    if ($headers) {
+			print "$line\n";
+		    }
+		    my ($head_tag, $pair_text) = split /\s+/, $line;
+		    my @pairs = split /\s+/, $pair_text;
+		    for my $pair (@pairs) {
+			my ($key, $value) = split /:/, $pair;
+			$HEADERS{$head_tag}{$key} = $value;
+		    }
+		    next LINE;
+		}
 		# QNAME  Query (pair) NAME
 		# FLAG   bitwise FLAG
 		# RNAME  Reference sequence NAME
@@ -232,11 +288,12 @@ sub make_iterator {
 		    my @opt_pairs = split /\t/, $opt_text;
 		    for my $opt_pair (@opt_pairs) {
 			my ($tag, $type, $value) = split /:/, $opt_pair;
-			$opts{$tag} = $value;
+			$opts{$tag}{value} = $value;
+			$opts{$tag}{type} = $type;
 		    }
 		    $alignment{opt} = \%opts;
 		}
-	    return \%alignment;
+		return %alignment ? \%alignment : undef;
 	    }
 	}
 }
