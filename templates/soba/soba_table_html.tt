@@ -1,18 +1,17 @@
 <table>
-  [%- FOR row = data.keys -%]
+  [%- FOR row = data_set.keys.first -%]
   <tr>
     <th></th>
-    [%- FOR column = data.$row.keys %]
-    <th></th>
+    [%- FOR column = data_set.$row.keys %]
     <th>[% column %]</th>
     [%- END %]
   </tr>
   [%- END %]
-  [%- FOR row = data.keys %]
+  [%- FOR row = data_set.keys %]
   <tr>
     <th>[% row %]</th>
-    [%- FOR column = data.$row.keys %]
-    <td>[% data.$row.$column.stats.mean %]</td>
+    [%- FOR column = data_set.$row.keys %]
+    <td>[% data_set.$row.$column.stats.$data_type %]</td>
     [%- END %]
   </tr>
   [%- END %]

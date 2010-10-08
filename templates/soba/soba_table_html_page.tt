@@ -1,4 +1,4 @@
-[% USE Number.Format %]
+[%- USE Number.Format -%]
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -29,19 +29,19 @@
   </head>
   <body>
     <table>
-      [%- FOR row = data.keys.first -%]
+      [%- FOR row = data_set.keys.first -%]
       <tr>
         <th></th>
-        [%- FOR column = data.$row.keys %]
+        [%- FOR column = data_set.$row.keys %]
         <th>[% column UNLESS column == '_row_summary'%]</th>
         [%- END %]
       </tr>
       [%- END %]
-      [%- FOR row = data.keys %]
+      [%- FOR row = data_set.keys %]
       <tr>
         <th class="row_head">[% row %]</th>
-        [%- FOR column = data.$row.keys %]
-        <td>[% data.$row.$column.stats.mean | format_number IF data.$row.$column.stats.mean && column != '_row_summary' %]</td>
+        [%- FOR column = data_set.$row.keys %]
+        <td>[% data_set.$row.$column.stats.$data_type | format_number IF data_set.$row.$column.stats.$data_type && column != '_row_summary' %]</td>
         [%- END %]
       </tr>
       [%- END %]
