@@ -90,6 +90,7 @@ print "# Conversion by omicia_omim2gvf (barry.moore\@genetics.utah.edu\n\n";
 	# Get all possible codons spanning this location
 	my $reference_seq  = $fasta_db->seq($seqid, $start, $start);
 	my $codons_seq = $fasta_db->seq($seqid, $start - 2, $start + 2);
+	$codons_seq = revcomp($codons_seq) if $strand eq '-';
 	my %nt_offsets = (substr($codons_seq, 0, 3) => 2,
 			  substr($codons_seq, 1, 3) => 1,
 			  substr($codons_seq, 2, 3) => 0,
@@ -141,16 +142,17 @@ sub parse_attributes {
   PAIR:
     for my $pair (@pairs) {
 	my ($tag, @values) = split /\s*=\s*/, $pair;
+	$tag =~ s/\///g;
 	my $value_text = join '', @values;
-	$value_text =~ s/\///g;
+	#$value_text =~ s/\///g;
 	$value_text =~ s/\"//g;
 	$value_text =~ s/\(|\)//g;
-	$value_text =~ s/\s*//g;
+	$value_text =~ s/\s+//g;
 	if ($tag eq 'codon') {
 	    my ($variant_codon, $variant_aa) = split /,/, $value_text;
-	    $variant_codon =~ s/seq=//;
+	    $variant_codon =~ s/seq//;
 	    $variant_aa =~ s/aa://;
-	    my $nt_offset = $nt_offsets->{$codon};
+	    my $nt_offset = $nt_offsets->{$variant_codon};
 	    if (! defined $nt_offset) {
 		warn "Warning : codon_not_found_on_reference : $att_text\n";
 		return undef;
@@ -208,3 +210,10 @@ sub get_genetic_code {
 
 #-----------------------------------------------------------------------------
 
+sub revcomp {
+
+    my $seq = shift;
+    $seq =~ tr/ATGCatgc/TACGtacg/;
+    $seq = reverse $seq;
+    return $seq;
+}

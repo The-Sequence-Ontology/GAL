@@ -237,12 +237,13 @@ sub make_read_iterator {
     }
 
     return sub {
-	my $id   = <$IN>;
-	my $seq  = <$IN>;
-	my $id2  = <$IN>;
-	my $qual = <$IN>;
-	die "FATAL : invalid_format : ID line = $id\n" unless $id =~ /^@/;
-	die "FATAL : invalid_format : ID2 line = $id2\n" unless $id2 =~ /^\+/;
-	return ($id && $seq && $id2 && $qual) ? [$id, $seq, $id2, $qual] : undef;
+	my @data = (<$IN>, <$IN>, <$IN>, <$IN>);
+	while ($data[0] !~ /^@/ && $data[2] !~ /^\+/) {
+	    shift @data;
+	    push @data, <$IN>;
+	}
+	#die "FATAL : invalid_format : ID line = $id\n" unless $id =~ /^@/;
+	#die "FATAL : invalid_format : ID2 line = $id2\n" unless $id2 =~ /^\+/;
+	return @fields ? \@fields : undef;
     };
 }

@@ -101,29 +101,16 @@ if ($create) {
 
 my $features = $feat_store->schema->resultset('Feature');
 my $variants = $var_store->schema->resultset('Feature');
-# my $atts =     $var_store->schema->resultset('Attribute');
 
-my $mrnas = $features->search({type => 'mRNA'});
-while (my $mrna = $mrnas->next) {
-    my $mrna_id = $mrna->feature_id;
-    my $CDSs = $mrna->CDSs;
-    while (my $CDS = $CDSs->next) {
-	my $bins = $CDS->get_feature_bins;
-	my $start = $CDS->start;
-	my $end   = $CDS->end;
-	my %where = (bin   => {'-in' => $bins},
-		     start => {'>='  => $start},
-		     end   => {'<='  => $end},
-		     );
-	my $these_variants = $variants->search(\%where); # ->cursor
-	
-	while (my $variant = $these_variants->next) {
+	while (my $variant = $variants->next) {
 	    my $variant_id = $variant->feature_id;
 	    my $seqid = $variant->seqid;
 	    my $type  = $variant->type;
 	    my $start = $variant->start;
 	    my $reference_seq = $variant->reference_seq;
 	    my @variant_seqs  = $variant->variant_seq_no_ref;
+	    my @variant_effects = $variant->variant_effects($features);
+
 	    
 	    for my $variant_seq (@variant_seqs) {
 		my $mrna_variant_seq = $variant_seq;
@@ -165,3 +152,20 @@ while (my $mrna = $mrnas->next) {
 	}
     }
 }
+
+__END__
+
+my $mrnas = $features->search({type => 'mRNA'});
+while (my $mrna = $mrnas->next) {
+    my $mrna_id = $mrna->feature_id;
+    my $CDSs = $mrna->CDSs;
+    while (my $CDS = $CDSs->next) {
+	my $bins = $CDS->get_feature_bins;
+	my $start = $CDS->start;
+	my $end   = $CDS->end;
+	my %where = (bin   => {'-in' => $bins},
+		     start => {'>='  => $start},
+		     end   => {'<='  => $end},
+		     );
+	my $these_variants = $variants->search(\%where); # ->cursor
+	

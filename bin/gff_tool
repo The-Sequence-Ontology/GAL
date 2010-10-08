@@ -196,7 +196,7 @@ to the altered copy of the feature.  All filters given are applied.
 
   fasta_no|Q      Remove the ##FASTA section from a GFF3 file.
 
-  fasta_add|r     Add a fasta file to the GFF3 output in a ##FASTA
+  fasta_add|r     Add the given fasta file to the GFF3 output in a ##FASTA
 		  section.
 
   meta_only|y     Print only the meta-data lines (pragmas, comments and
@@ -257,38 +257,38 @@ gff_tool --hash_ag "push @{$hash_ag{$f->{type}}}, $f"       \
 
 ';
 
-my ($help, $format, $in_place, $out_ext, $fasta, $ids, $include,
+my ($help, $format, $in_place, $out_ext, $fasta, $ids_file, $include,
     $exclude, $code, $filter, $merge, $blend, $sort, $alter, $hash_ag,
     $validate, $stats, $sequence, $fasta_only, $fasta_no, $fasta_add,
-    $meta_only, $meta_no, $header_add, $add_ID, $pragmas, $features);
+    $meta_only, $meta_no, $meta_add, $add_ID, $pragmas, $features);
 
 
-my $opt_success = GetOptions('format|f=s'      => $format,
-			     'in_place|i'      => $in_place,
-			     'out_ext|o=s'     => $out_ext,
-			     'fasta|j=s'       => $fasta,
-			     'ids|d=s'	       => $ids,
-			     'include|n'       => $include,
-			     'exclude|e'       => $exclude,
-			     'code|c=s'	       => $code,
-			     'filter|t'	       => $filter,
-			     'merge|m'	       => $merge,
-			     'blend|b'	       => $blend,
-			     'sort|s'	       => $sort,
-			     'alter|a'	       => $alter,
-			     'hash_ag|h=s'     => $hash_ag,
-			     'validate|v'      => $validate,
-			     'stats|u'	       => $stats,
-			     'sequence|p'      => $sequence,
-			     'features|x'      => $features,
-			     'fasta_only|r'    => $fasta_only,
-			     'fasta_no|R'      => $fasta_no,
-			     'fasta_add|q=s'   => $fasta_add,
-			     'meta_only|y'     => $meta_only,
-			     'meta_no|Y'       => $meta_no,
-			     'meta_add|z=s'    => $meta_add,
-			     'pragmas|w=s'     => $pragmas,
-			     'add_ID|v'	       => $add_ID,
+my $opt_success = GetOptions('format|f=s'      => \$format,
+			     'in_place|i'      => \$in_place,
+			     'out_ext|o=s'     => \$out_ext,
+			     'fasta|j=s'       => \$fasta,
+			     'ids|d=s'	       => \$ids_file,
+			     'include|n'       => \$include,
+			     'exclude|e'       => \$exclude,
+			     'code|c=s'	       => \$code,
+			     'filter|t'	       => \$filter,
+			     'merge|m'	       => \$merge,
+			     'blend|b'	       => \$blend,
+			     'sort|s'	       => \$sort,
+			     'alter|a'	       => \$alter,
+			     'hash_ag|h=s'     => \$hash_ag,
+			     'validate|v'      => \$validate,
+			     'stats|u'	       => \$stats,
+			     'sequence|p'      => \$sequence,
+			     'features|x'      => \$features,
+			     'fasta_only|r'    => \$fasta_only,
+			     'fasta_no|R'      => \$fasta_no,
+			     'fasta_add|q=s'   => \$fasta_add,
+			     'meta_only|y'     => \$meta_only,
+			     'meta_no|Y'       => \$meta_no,
+			     'meta_add|z=s'    => \$meta_add,
+			     'pragmas|w=s'     => \$pragmas,
+			     'add_ID|v'	       => \$add_ID,
                             );
 
 die $usage if $help || ! $opt_success;
@@ -296,7 +296,6 @@ die $usage if $help || ! $opt_success;
 $format ||= 'gff3';
 
 die "FATAL : unable_to_open_file : $ids_file\n" if ($ids_file && ! -r $ids_file);
-my $ids = parse_ids($ids_file) if ($ids_file && -r $ids_file);
 
 my @files = @ARGV;
 die "$usage\n\nMust give one or more feature files\n\n" unless (scalar @files || ! -t STDIN);
@@ -307,10 +306,10 @@ for my $file (@files) {
 my $STDIN_FINISHED;
 
 my $d = parse_fasta($fasta) if $fasta;
-my $i = parser_ids($ids) if $ids;
+my $i = parse_ids($ids_file) if $ids_file;
 
 # Move the filter code to the passes_filters sub
-filter($filter_code) if $filter;
+filter($code)            if $filter;
 #merge()		 if $merge;
 blend()	     	         if $blend;
 #sort_gff()		 if $sort;
@@ -761,13 +760,13 @@ sub fasta_feature {
 
 sub fasta_add {
 
-    die "\n\ngff_tool (add_fasta) function is written, but untested\n\n";
+    die "\n\ngff_tool (fasta_add) function is written, but untested\n\n";
 
-    die "Can't open $add_fasta for reading\n" unless -r $add_fasta;
+    die "Can't open $fasta_add for reading\n" unless -r $fasta_add;
     for my $file (@files) {
 	open(my $OUT, '<<', $file) or die "Can't open $file for appending\n";
 	print $OUT "\n## FASTA\n";
-	print $OUT `cat $add_fasta`;
+	print $OUT `cat $fasta_add`;
 	close $OUT;
     }
 }
@@ -879,11 +878,11 @@ sub headers_no {
 #  header_add|z    Add a header file to the begining of a GFF file.
 #-----------------------------------------------------------------------------
 
-sub headers_add {
+sub meta_add {
 
     for my $file (@files) {
 	open (my $IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
-	open (my $HEAD, '<', $add_headers) or die "Can't open $add_headers for reading:\n$!\n";
+	open (my $HEAD, '<', $meta_add) or die "Can't open $meta_add for reading:\n$!\n";
 	my $OUT = fh_out($file);
 	print $OUT (<$HEAD>);
 	print $OUT (<$IN>);
@@ -933,9 +932,9 @@ sub fails_filters {
 
 	#Move the filter sub code here
 
-	if ($ids) {
-		$fail++ if ($include && ! $ids->{$feature->{feature_id}});
-		$fail++ if ($exclude &&   $ids->{$feature->{feature_id}});
+	if ($i) {
+		$fail++ if ($include && ! $i->{$feature->{feature_id}});
+		$fail++ if ($exclude &&   $i->{$feature->{feature_id}});
 	}
 
 	return $fail;

@@ -1,24 +1,23 @@
-package GAL::Parser::cgi_compact;
+package GAL::Parser::smith_ant_snps;
 
 use strict;
 use vars qw($VERSION);
-
 $VERSION = '0.01';
+
 use base qw(GAL::Parser);
 use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::cgi_compact - Parse Complete Genomics compact files
+GAL::Parser::smith_ant_snps - Parse SMITH_ANT_SNPS files
 
 =head1 VERSION
 
-This document describes GAL::Parser::cgi_compact version 0.01
+This document describes GAL::Parser::smith_ant_snps version 0.01
 
 =head1 SYNOPSIS
 
-    my $parser = GAL::Parser::cgi_compact->new(file =>
-          'CGI-Variations-Compact.csv');
+    my $parser = GAL::Parser::smith_ant_snps.gff->new(file => 'smith_ant_snps.gff');
 
     while (my $feature_hash = $parser->next_feature_hash) {
 	print $parser->to_gff3($feature_hash) . "\n";
@@ -26,34 +25,30 @@ This document describes GAL::Parser::cgi_compact version 0.01
 
 =head1 DESCRIPTION
 
-L<GAL::Parser::cgi_compact> provides a parser for the
-CGI-Variations-Compact.csv format which Complete Genomics provided
-with the sequence data for the Feb 5, 2009 sequencing of the anonymous
-CEPH (cell-line) genome NA07022.
+L<GAL::Parser::smith_ant_snps> provides a parser for SMITH_ANT_SNPS
+data.  This is a one off parser for data that came from Chris Smith
+for the ant genome paper.
 
 =head1 Constructor
 
-New L<GAL::Parser::cgi_compact> objects are created by the class
-method new.  Arguments should be passed to the constructor as a list
-(or reference) of key value pairs.  All attributes of the
-L<GAL::Parser::cgi_compact> object can be set in the call to new. An
+New L<GAL::Parser::smith_ant_snps> objects are created by the class method
+new.  Arguments should be passed to the constructor as a list (or
+reference) of key value pairs.  All attributes of the
+L<GAL::Parser::smith_ant_snps> object can be set in the call to new. An
 simple example of object creation would look like this:
 
-    my $parser = GAL::Parser::cgi_compact->new(file =>
-          'CGI-Variations-Compact.csv');
+    my $parser = GAL::Parser::smith_ant_snps->new(file => 'smith_ant_snps.gff');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
 
-The following attributes are inhereted from L<GAL::Parser>.
-
-=item * C<< file => feature_file.txt >>
+=item * C<< file => feature_file.gff >>
 
 This optional parameter provides the filename for the file containing
 the data to be parsed. While this parameter is optional either it, or
 the following fh parameter must be set.
 
-=item * C<< fh => feature_file.txt >>
+=item * C<< fh => feature_file.gff >>
 
 This optional parameter provides a filehandle to read data from. While
 this parameter is optional either it, or the following fh parameter
@@ -66,9 +61,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::cgi_compact->new();
-     Function: Creates a GAL::Parser::cgi_compact object;
-     Returns : A GAL::Parser::cgi_compact object
+     Usage   : GAL::Parser::smith_ant_snps->new();
+     Function: Creates a GAL::Parser::smith_ant_snps object;
+     Returns : A GAL::Parser::smith_ant_snps object
      Args    : See the attributes described above.
 
 =cut
@@ -91,12 +86,9 @@ sub _initialize_args {
 	# for each attribute.  Leave the rest of this block alone!
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
-	my @valid_attributes = qw(); # Set attributes here.
+	my @valid_attributes = qw(file fh); # Set valid class attributes here
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
-
-	# Set the column headers from your incoming data file here
-	# These will become the keys in your $record hash reference below.
 }
 
 #-----------------------------------------------------------------------------
@@ -114,59 +106,58 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	return undef unless $record->{locus} =~ /^\d+$/;
+	# seqid              start  end    ref	var      total_reads   variant % ?? 
+	# >scf7180001004166  576    576    T  	C	 587  	       11%
+	# >scf7180001005075  31603  31603  T  	A	 548  	       99%
+	# >scf7180001005075  31652  31652  T  	C	 546  	       100%
+	# >scf7180001005075  31490  31490  A  	T	 545  	       99%
+	# >scf7180001005075  31679  31679  A  	G	 512  	       100%
+	# >scf7180001005075  31700  31700  T  	C	 490  	       99%
+	# >scf7180001002780  530    530    G  	A	 458  	       99%
+	# >scf7180001004665  27505  27505  A  	G	 451  	       98%
+	# >scf7180001004295  2127   2127   G  	A	 441  	       98%
+	# >scf7180001005054  5467   5467   T  	C	 422  	       98%      
+	
+	# $record is a hash reference that contains the keys assigned
+	# in the $self->fields call in _initialize_args above
 
-	# locus,contig,begin,end,vartype1,vartype2,reference,seq1,seq2,totalScore
-	# 6,chr1,31843,31844,snp,snp,A,G,G,235
-	# 21,chr1,36532,36533,snp,snp,A,G,G,36
-	# 23,chr1,36970,36971,snp,snp,G,C,C,109
-	# 24,chr1,37154,37155,snp,snp,T,G,G,181
-	# 25,chr1,37354,37355,=,snp,C,C,G,73
-	# 26,chr1,37623,37624,snp,snp,T,C,C,29
-	# 27,chr1,38033,38034,=,snp,A,A,G,54
-
-	# $self->fields([qw(locus contig begin end vartype1 vartype2 reference seq1 seq2 totalScore)]);
 	# Fill in the first 8 columns for GFF3
-	# See http://www.sequenceontology.org/resources/gff3.html for details.
-	my $id         = sprintf 'CG_%09d', $record->{locus};
-	my $seqid      = $record->{contig};
-	my $source     = 'CGI';
-
-	my %types = map {$_, 1} ($record->{vartype1}, $record->{vartype2});
-	my $has_ref_seq;
-	$has_ref_seq++ if $types{'='};
-	delete $types{'='};
-
-	my ($type) = scalar keys %types == 1 ? keys %types : '';
-
-	my %type_map = (snp		    => 'SNV',
-			ins		    => 'nucleotide_insertion',
-			del		    => 'nucleotide_deletion',
-			inv		    => 'inversion',
-		       );
-
-	$type = $type_map{$type} || 'sequence_alteration';
-
-	my $start      = $record->{begin} + 1;
+	# See http://www.sequenceontology.org/gff3.html for details.
+	my $seqid      = $record->{seqid};
+	$seqid =~ s/^>//;
+	my $source     = 'Smith';
+	my $type       = 'SNV';
+	my $start      = $record->{start};
 	my $end        = $record->{end};
-	my $score      = $record->{totalScore};
-	my $strand     = '+';
-	my $phase      = '.';
+	my $score      = '.',
+	my $strand     = '+',
+	my $phase      = '.',
 
-	my $reference_seq = $record->{reference} || '-';
-	my %variant_hash  = map {$_ => 1} ($record->{seq1}, $record->{seq2});
-	$variant_hash{$reference_seq}++ if $has_ref_seq;
-	my @variant_seqs = map {$_ ||= '-'} keys %variant_hash;
+	my $feature_id = join ':', ($seqid, $start);
+	
+	my $variant_seq   = $record->{var};
+	my $reference_seq = $record->{ref};
+	my $fasta_ref ||= uc $self->fasta->seq($seqid, $start, $end);
 
-	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+	$self->warn(message => ("Warning : reference_seq_not_equal_to_fasta : " . 
+				join ', ', values %{$record})
+		    )
+	    unless $reference_seq eq $fasta_ref;
+
+	my $total_reads = $record->{total_reads};
+	my $var_pct = $record->{var_pct};
+	$var_pct =~ s/%//;
+	$var_pct /= 100;
+	# my $variant_reads = sprintf("%.0f", ($total_reads * $var_pct)); 
 
 	my $attributes = {Reference_seq => [$reference_seq],
-			  Variant_seq   => \@variant_seqs,
-			  Genotype         => [$genotype],
-			  ID               => [$id],
-			 };
+			  Variant_seq   => [$variant_seq],
+			  ID            => [$feature_id],
+			  Total_reads   => [$total_reads],
+			  #Variant_reads => [$variant_reads],
+		      };
 
-	my $feature_data = {feature_id => $id,
+	my $feature_data = {feature_id => $feature_id,
 			    seqid      => $seqid,
 			    source     => $source,
 			    type       => $type,
@@ -188,7 +179,7 @@ sub parse_record {
  Title   : reader
  Usage   : $a = $self->reader
  Function: Return the reader object.
- Returns : A GAL::Reader::DelimitedLine singleton.
+ Returns : A L<GAL::Reader::DelimitedLine> singleton.
  Args    : None
 
 =cut
@@ -197,12 +188,8 @@ sub reader {
   my $self = shift;
 
   if (! $self->{reader}) {
-    my @field_names = qw(locus contig begin end vartype1 vartype2 reference
-			 seq1 seq2 totalScore);
-    my $reader = GAL::Reader::DelimitedLine->new(field_separator   => ',',
-						 field_names       => \@field_names,
-						 comment_pattern => qr/^[^\d]/,
-						);
+    my @field_names = qw(seqid start end ref var total_reads var_pct);
+    my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
     $self->{reader} = $reader;
   }
   return $self->{reader};
@@ -212,11 +199,11 @@ sub reader {
 
 =head1 DIAGNOSTICS
 
-<GAL::Parser::cgi_compact> does not throw any warnings or errors.
+L<GAL::Parser::smith_ant_snps> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<GAL::Parser::cgi_compact> requires no configuration files or
+L<GAL::Parser::smith_ant_snps> requires no configuration files or
 environment variables.
 
 =head1 DEPENDENCIES

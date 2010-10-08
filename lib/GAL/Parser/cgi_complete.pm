@@ -276,7 +276,7 @@ sub reader {
 			 seq1 seq2 totalScore);
     my $reader = GAL::Reader::DelimitedLine->new(field_names      => \@field_names,
 						 field_separator   => ',',
-						 comment_delimiter => qr/^\s*#/);
+						 comment_pattern => qr/^\s*#/);
     $self->{reader} = $reader;
   }
   return $self->{reader};

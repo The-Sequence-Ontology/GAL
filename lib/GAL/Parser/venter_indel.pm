@@ -121,44 +121,80 @@ sub parse_record {
 	# $self->fields([qw(chromosome variant_id variant_type start end score
 	# strand phase null seq genotype)]);
 
-	my ($genotype, $type) = split /_/, $record->{genotype};
+	my $type = $record->{variant_type};
+	my ($genotype, $indel_type) = split /_/, $record->{genotype};
 
 	# Fill in the first 8 columns for GFF3
 	my $id         = $record->{variant_id};
 	my $seqid      = 'chr' . $record->{chromosome};
-	my $source     = 'Celera';
-	my ($start, $end);
-	if ($type eq 'Insertion') {
-		$start = $record->{start};
-		$end   = $record->{end};
-	}
-	else {
-		$start = ++$record->{start};
-		$end   = $record->{end};
-	}
+	my $source     = 'Levy_07';
 	my $score      = '.';
 	my $strand     = $record->{strand};
 	my $phase      = '.';
 
-	my ($reference_seq, $variant_seq);
-	if ($type eq 'Deletion') {
-		$reference_seq = $record->{seq};
-		$variant_seq   = '-';
+	my ($start, $end);
+	if ($indel_type eq 'Insertion') {
+		$start = $record->{start};
+		$end   = $record->{end};
 	}
 	else {
-		$reference_seq = '-';
-		$variant_seq   = $record->{seq};
+		$start = $record->{start} + 1;
+		$end   = $record->{end};
+	}
+
+	my ($reference_seq, $variant_seq);
+	if ($indel_type eq 'Deletion') {
+	    $reference_seq = uc $record->{seq};
+	    $variant_seq   = '-';
+	    my $ref_fasta = uc $self->fasta->seq($seqid, $start, $end);
+	    if ($ref_fasta ne $reference_seq) {
+		$reference_seq = $self->revcomp($reference_seq);
+	    }
+	    if ($ref_fasta ne $reference_seq) {
+		my $message = join '', ('The reference sequence given in the ' . 
+					'file does not match the reference '   . 
+					'fasta sequence'
+					);
+		my $code = "FATAL : reference_sequence_mismatch : $reference_seq";
+		$self->throw(message => $message, code => $code);
+	    }
+	    $reference_seq = length($reference_seq) >= 50 ? '~' : $reference_seq;
+	}
+	elsif ($indel_type eq 'Insertion') {
+	    $reference_seq = '-';
+	    $variant_seq   = uc $record->{seq};
+	    $variant_seq = $self->revcomp($variant_seq) if $strand == '-';
+	    $strand = '+';
+	}
+	elsif ($type eq 'assembly_comparison_inversion') {
+	    $reference_seq = uc $self->fasta->seq($seqid, $start, $end);
+	    $reference_seq = length($reference_seq) >= 50 ? '~' : $reference_seq;
+	    $variant_seq = $self->revcomp($reference_seq);
+	    $variant_seq = length($variant_seq) >= 50 ? '~' : $variant_seq;
+	    $strand = '+';
+	}
+	else {
+	    my $message = "Unable to determine variant type";
+	    my $code = "FATAL : unable_to_determine_variant_type : $type";
+	    $self->throw(message => $message, $code => $code);
 	}
 
 	$genotype = lc $genotype;
+	$genotype ||= 'homozygous';
 
-	$type = $type eq 'Deletion' ? 'nucleotide_deletion' : 'nucleotide_insertion';
+	$type = $type eq 'homozygous_indel' ? $indel_type : $type;
+	my %type_map = ('Deletion'  			=> 'deletion',
+			'Insertion' 			=> 'insertion',
+			'assembly_comparison_inversion' => 'inversion',
+			);
+	$type = $type_map{$type};
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => [$variant_seq],
-			  Genotype      => [$genotype],
 			  ID            => [$id],
+			  Genotype      => [$genotype],
 			 };
+
 
 	my $feature_data = {feature_id => $id,
 			    seqid      => $seqid,
