@@ -1,0 +1,244 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use Set::IntSpan::Fast;
+use Statistics::Descriptive;
+use Text::Graph;
+use Text::Graph::DataSet;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+sam_inspector alignments.sam
+
+Description:
+
+This script provides simple line-by-line access to SAM/BAM files.  It allows
+you do do simple filtering and reporting on the files.  Access to BAM files
+requires that samtools in installed and in the current PATH.
+
+Options:
+
+  --summary Print a summary of the SAM file
+
+  --filter  Filter the SAM file based on some criteria
+
+  --clean   Remove invalid lines such as those that have an unmapped
+	    flag and yet still have a mapping quality because bwa mapped
+	    them off the end of the reference.
+
+  --region  Limit analysis to a region by passing a region to samtools
+	    view.  This only works on indexed BAM files.
+
+  --bam     Output is in BAM format
+
+";
+
+
+my ($help, $summary, $filter, $clean, $region, $bam);
+my $opt_success = GetOptions('help'     => \$help,
+			     'summary'  => \$summary,
+			     'filter=s' => \$filter,
+			     'clean'    => \$clean,
+			     'region=s' => \$region,
+			     'bam'      => \$bam,
+			     );
+
+die $usage if $help || ! $opt_success;
+
+$region ||= '';
+
+my $PAIRED        = 0x0001; # 1
+my $PAIR_MAPPED   = 0x0002; # 2
+my $UNMAPPED      = 0x0004; # 4
+my $MATE_UNMAPPED = 0x0008; # 5
+my $REVERSE       = 0x0010; # 16
+my $MATE_REVERSE  = 0x0020; # 32
+my $FIRST_READ    = 0x0040; # 64
+my $SECOND_READ   = 0x0080; # 128
+my $NOT_PRIMARY   = 0x0100; # 256
+my $FAILS         = 0x0200; # 512
+my $DUPLICATE     = 0x0400; # 1024
+
+my $file = shift;
+die $usage unless $file;
+
+if ($summary) {
+    build_summary($file);
+}
+elsif ($filter) {
+    apply_filter($file);
+}
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub build_summary {
+
+    my $file = shift;
+
+    my $next_alignment = make_iterator($file, $region);
+
+    my %sets;
+    my $isizes = Statistics::Descriptive::Sparse->new();
+    my $lengths = Statistics::Descriptive::Sparse->new();
+
+    my $count;
+    my $mapped_length;
+    my $unmapped_length;
+    my %raw_flags;
+    my %flags;
+    my %qnames;
+    my %rnames;
+    my %mapqs;
+
+    my $bar_graph = Text::Graph->new('Bar', maxlen => 50, showval => 1);
+
+    while (my $a = &{$next_alignment}) {
+	$count++;
+	my ($qname, $flag, $rname, $pos, $mapq, $cigar, $mrnm,
+	    $mpos, $isize, $seq, $qual, $opt)
+	    =
+	    @{$a}{qw(qname flag rname pos map cigar mrnm mpos
+		  isize seq qual opt)};
+
+	my $seq_length = length($seq);
+
+	$qnames{$qname}++;
+	$raw_flags{$flag}++;
+	($flag & $PAIRED)        && $flags{paired}++;
+	($flag & $PAIR_MAPPED)   && $flags{pair_mapped}++;
+	($flag & $UNMAPPED)      && $flags{unmapped}++;
+	($flag & $MATE_UNMAPPED) && $flags{mate_unmapped}++;
+	($flag & $REVERSE)       && $flags{reverse}++;
+	($flag & $MATE_REVERSE)  && $flags{mate_reverse}++;
+	($flag & $FIRST_READ)    && $flags{first_read}++;
+	($flag & $SECOND_READ)   && $flags{second_read}++;
+	($flag & $NOT_PRIMARY)   && $flags{not_primary}++;
+	($flag & $FAILS)	 && $flags{fails}++;
+	($flag & $DUPLICATE)     && $flags{duplicate}++;
+
+	$mapped_length += $seq_length unless ($flag & $UNMAPPED);
+	$mapped_length += $seq_length if ($flag & $PARI_MAPPED);
+
+	$rnames{$rname}++;
+	$sets{$rname} ||= Set::IntSpan::Fast->new();
+	$sets{$rname}->add_range($pos, $pos + $seq_length - 1) if $pos;
+	$sets{$rname}->add_range($mpos, $mpos + $seq_length - 1) if $mpos;
+	$mapqs{$mapq}++;
+	$isizes->add_data($isize) if $isize;
+	$lengths->add_data($seq_length);
+    }
+
+    my %coverage;
+    for my $rname (keys %sets) {
+	my $iter = $sets{$rname}->iterate_runs();
+	while (my ( $start, $end ) = $iter->()) {
+	    $coverage{$rname} += ($end - $start + 1);
+	}
+    }
+    my $total_coverage;
+    map {$total_coverage += $_} values %coverage;
+
+    print "TOTAL ALIGNMENTS:  $count\n\n";
+    print "TOTAL LENGTH:  " . $lengths->sum . "\n\n";
+    print "MAPPED LENGTH:  $mapped_length\n\n";
+    print "QNAMES:  " . (scalar keys(%qnames)) . "\n\n";
+
+    print "RNAMES:\n";
+    print $bar_graph->to_string(\%rnames,
+				sort =>
+				sub {sort {my ($x) = ($a =~ /(\d+)/) || 99;
+					   my ($y) = ($b =~ /(\d+)/) || 99;
+					   $x <=> $y || $a cmp $b} @_});
+    print "\n";
+
+    print "Coverage:\n";
+    print $bar_graph->to_string(\%coverage,
+				sort =>
+				sub {sort {my ($x) = ($a =~ /(\d+)/) || 99;
+					   my ($y) = ($b =~ /(\d+)/) || 99;
+					   $x <=> $y || $a cmp $b} @_});
+    print "\n";
+
+    print "TOTAL COVERAGE:  $total_coverage\n\n";
+    print "AVERAGE DEPTH COVERAGE:  " . sprintf("%.2f", $mapped_length / $total_coverage) . "\n\n";
+    print "FLAGS:\n";
+    print $bar_graph->to_string(\%flags, [qw(paired pair_mapped
+					     unmapped mate_unmapped
+					     reverse mate_reverse
+					     first_read second_read
+					     not_primary fails
+					     duplicate)]);
+
+    print "\n\n";
+    print "MAPQ:\n";
+    print $bar_graph->to_string(\%mapqs, sort => sub {sort {$a <=> $b} @_});
+    print "\n\n";
+    print '';
+}
+
+#-----------------------------------------------------------------------------
+
+sub apply_filter {
+
+}
+
+#-----------------------------------------------------------------------------
+
+sub make_iterator {
+
+    my ($file, $region, $options) = @_;
+
+    $file = "samtools view $region $file |" if $file =~ /\.bam$/;
+    my $IN;
+    #if (! -t STDIN) {
+    #	open ($IN, "<&=STDIN") or die "FATAL : cant_open_STDIN :\n";
+    #}
+    #else {
+	open ($IN, $file) or
+	    die "FATAL : cant_open_file_for_reading : $file\n";
+    #}
+
+    return
+	sub {
+	  LINE:
+	    while (my $line  = <$IN>) {
+		next if $line =~/^@/;
+		# QNAME  Query (pair) NAME
+		# FLAG   bitwise FLAG
+		# RNAME  Reference sequence NAME
+		# POS    1-based leftmost POSition/coordinate of clipped sequence
+		# MAP    QMAPping Quality (Phred-scaled)
+		# CIAGR  extended CIGAR string
+		# MRNM   Mate Reference sequence NaMe (‘=’ if same as RNAME)
+		# MPOS   1-based Mate POSistion
+		# ISIZE  Inferred insert SIZE
+		# SEQ    query SEQuence on the same strand as the reference
+		# QUAL   query QUALity (ASCII-33 gives the Phred base quality)
+		# OPT    variable OPTional fields in the format TAG:VTYPE:VALUE
+		my %alignment;
+		@alignment{qw(qname flag rname pos map ciagr mrnm mpos isize seq qual opt)} = split /\t/, $line;
+		if ($options) {
+		    my %opts;
+		    my $opt_text = $alignment{opt};
+		    my @opt_pairs = split /\t/, $opt_text;
+		    for my $opt_pair (@opt_pairs) {
+			my ($tag, $type, $value) = split /:/, $opt_pair;
+			$opts{$tag} = $value;
+		    }
+		    $alignment{opt} = \%opts;
+		}
+	    return \%alignment;
+	    }
+	}
+}
+
+#-----------------------------------------------------------------------------

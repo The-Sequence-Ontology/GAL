@@ -61,7 +61,7 @@ This optional attribute provides a regular expression that will be used
 to split the fields in each line of data.  The default is "\t" - a
 tab.
 
-=item * C<< comment_delimiter => "^\s*#" >>
+=item * C<< comment_pattern => "^\s*#" >>
 
 This optional attribute provides a regular expression that will be
 used to skip comment lines.  The default is "^\s*#" - lines whos first
@@ -127,7 +127,7 @@ sub _initialize_args {
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
 	my @valid_attributes = qw(field_names field_separator
-                                  comment_delimiter header_count);
+                                  comment_pattern header_count);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 	return $args;
@@ -191,10 +191,10 @@ sub field_separator {
 
 #-----------------------------------------------------------------------------
 
-=head2 comment_delimiter
+=head2 comment_pattern
 
- Title   : comment_delimiter
- Usage   : $self->comment_delimiter("\t");
+ Title   : comment_pattern
+ Usage   : $self->comment_pattern("^\#");
  Function: Set the field separator for spliting lines of data.  Default
            is "\t" (tab).
  Returns : The field separator as a complied regular expression.
@@ -202,17 +202,17 @@ sub field_separator {
 
 =cut
 
-sub comment_delimiter {
+sub comment_pattern {
 
-  my ($self, $comment_delimiter) = @_;
+  my ($self, $comment_pattern) = @_;
 
-  if ($comment_delimiter) {
-    $comment_delimiter = qr/$comment_delimiter/
-      unless ref $comment_delimiter eq 'Regexp';
+  if ($comment_pattern) {
+    $comment_pattern = qr/$comment_pattern/
+      unless ref $comment_pattern eq 'Regexp';
   }
-  $self->{comment_delimiter} = $comment_delimiter if $comment_delimiter;
-  $self->{comment_delimiter} ||= qr/^\s*#/;
-  return $self->{comment_delimiter};
+  $self->{comment_pattern} = $comment_pattern if $comment_pattern;
+  $self->{comment_pattern} ||= qr/^\s*#/;
+  return $self->{comment_pattern};
 }
 
 #-----------------------------------------------------------------------------
@@ -265,12 +265,13 @@ sub next_record {
     my $self = shift;
     my $fh = $self->fh;
     my $line;
-    my $comment_delimiter = $self->comment_delimiter;
+    my $comment_pattern = $self->comment_pattern;
     my $field_separator   = $self->field_separator;
   LINE:
     while ($line = <$fh>) {
 	chomp $line;
-	if ($line =~ $comment_delimiter) {
+	next if $line =~ /^\s*$/;
+	if ($line =~ $comment_pattern) {
 	    $self->comments($line);
 	    next LINE;
 	}
@@ -317,7 +318,7 @@ sub headers {
 
  Title   : comments
  Usage   : $commnet = $reader->comments($line);
- Function: Add a comment (as defined by L</"comment_delimiter">) to the
+ Function: Add a comment (as defined by L</"comment_pattern">) to the
            comments stack or return all the comments in the stack.
  Returns : An array or array reference of comments.
  Args    : A comment.

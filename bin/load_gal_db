@@ -12,7 +12,7 @@ my $usage = "
 
 Synopsis:
 
-load_gal_db --driver --db  file
+load_gal_db --driver SQLite --parser gff3 --db_name db_name  file.gff3
 
 Description:
 
@@ -21,6 +21,7 @@ Load a gal_database
 Options:
 
   --driver    (mysql SQLite)
+  --parser    A GAL::Parser subclass
   --user      Database user name
   --password  Database password
   --db_name   Database name
@@ -28,9 +29,10 @@ Options:
 ";
 
 
-my ($help, $driver, $user, $password, $db_name);
+my ($help, $driver, $parser, $user, $password, $db_name);
 my $opt_success = GetOptions('help'       => \$help,
 			     'driver=s'   => \$driver,
+			     'parser=s'   => \$parser,
 			     'user=s'     => \$user,
 			     'password=s' => \$password,
 			     'db_name=s'  => \$db_name,
@@ -49,7 +51,7 @@ my $store_args = {class    => $driver,
 
 my $feat_store = GAL::Annotation->new(storage => $store_args);
 
-$feat_store->parser(class => 'gff3_fast');
+$feat_store->parser(class => $parser);
 
 $feat_store->load_files(files => \@files,
 			mode  => 'overwrite',

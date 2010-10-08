@@ -1,0 +1,12 @@
+
+
+file_doesnt_exist : Levy/HuRef.homozygous_indels.inversion.gff
+############################################################
+GAL::Base is throwing an exception for GAL::Reader
+::DelimitedLine But someone called throw without a
+n appropriate error message in GAL::Reader::Delimi
+tedLine 
+############################################################
+
+
+ at /home/bmoore/GAL/lib/GAL/Parser.pm line 246

@@ -136,6 +136,16 @@ sub parse_record {
 	# chr1	15208  G  A  6   27   60  4   ,aa,    		      		>AB%
 	# chr1	15211  T  G  39  39   60  4   gggg    		      		>@B@            
 
+	# Het indels
+	# chrX  305488   *  +G/+G  7  35  35  3  +G    *  2  1  0  0  0
+	# chrX  719509   *  -C/-C  4  77  93 73  -C    *  3  0  0  0  0
+	# chrX  787510   *  +G/+G 50 119  40  4  +G    *  4  0  0  0  0
+	        
+	# Homo indels
+	# chrX  108090   *  +CT/*   5   98  40  3  +CT   *   3  0  0  0  0
+	# chrX  136584   *  */-c    3   23 218  6  *    -c   5  1  0  0  0
+	# chrX  273736   *  */-cca  29  29  26  3  *  -cca   2  1  0  0  0
+
 	# With columns described as this:
 
 	# http://samtools.sourceforge.net/samtools.shtml  See both main pileup
@@ -166,12 +176,12 @@ sub parse_record {
 	# 9.  read_qual
 	# 10. aln_map_qual
 
-	my $seqid      = 'chr' . $record->{seqid};
+	my $seqid      = $record->{seqid};
 	my $source     = 'SAMtools';
 	my $type       = 'SNV';
 	my $start      = $record->{start};
 	my $id         = join ':', ($seqid, $source, $type, $start);
-	my $end        = $record->{start};
+	my $end;
 	my $score      = $record->{consensus_phred_qual};
 	my $strand     = '+';
 	my $phase      = '.';
@@ -180,7 +190,33 @@ sub parse_record {
 	# See http://www.sequenceontology.org/gvf.html
 
 	my $reference_seq = uc $record->{reference_seq};
-	my @variant_seqs  = $self->expand_iupac_nt_codes($record->{variant_seq});
+	my @variant_seqs;
+	if ($reference_seq eq '*') {
+	    my %var_indel_hash;
+	    @var_indel_hash{(split m|/|, $record->{variant_seq})} = ();
+	    @variant_seqs = keys %var_indel_hash;
+	    map {uc} @variant_seqs;
+	    if (grep {/^\+/} @variant_seqs) {
+		map {s/\+//} @variant_seqs;
+		$type = 'insertion';
+		$reference_seq = '-';
+		map {$_ = $_ eq '*' ? $reference_seq : $_} @variant_seqs;
+	    }
+	    else {
+		map {s/\-//} @variant_seqs;
+		$type = 'deletion';
+		$start = $strand eq '+' ? $start + 1 : $start - 1;
+		my $length = 0;
+		map {$length = length($_) > $length ? length($_) : $length} @variant_seqs;
+		$end = $start + $length - 1;
+		$reference_seq = uc $self->fasta->seq($seqid, $start, $end);	    
+		map {$_ = $_ eq '*' ? $reference_seq : '-'} @variant_seqs;
+	    }
+	}
+	else {
+	    @variant_seqs  = $self->expand_iupac_nt_codes($record->{variant_seq});
+	}
+	$end ||= $start;
 
 	my $total_reads = $record->{variant_reads};
 

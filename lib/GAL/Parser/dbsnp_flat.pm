@@ -72,7 +72,6 @@ sub _initialize_args {
 	# These will become the keys in your $record hash reference below.
 	$self->record_separator("\n\n");
 	$self->field_separator(undef);
-	# $self->comment_delimiter(qr/^[^\d]/);
 	$self->fields([qw(data)]);
 
 }

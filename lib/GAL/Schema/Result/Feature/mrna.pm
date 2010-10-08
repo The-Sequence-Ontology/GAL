@@ -169,7 +169,7 @@ sub frame_at_location {
 		  );
   my ($CDS_location) = $self->map2CDS($location);
   my $modulus = $CDS_location % 3;
-  my $frame = $mod2frame{$modulus};;
+  my $frame = $mod2frame{$modulus};
   return $frame;
 }
 
