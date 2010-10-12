@@ -244,13 +244,13 @@ sub make_iterator {
 
     $file = "samtools view $region $file |" if $file =~ /\.bam$/;
     my $IN;
-    #if (! -t STDIN) {
-    #	open ($IN, "<&=STDIN") or die "FATAL : cant_open_STDIN :\n";
-    #}
-    #else {
-	open ($IN, $file) or
-	    die "FATAL : cant_open_file_for_reading : $file\n";
-    #}
+    if ($file eq '-') {
+    	open ($IN, "<&=STDIN") or die "FATAL : cant_open_STDIN :\n";
+    }
+    else {
+    	open ($IN, $file) or
+    	    die "FATAL : cant_open_file_for_reading : $file\n";
+    }
 
     return
 	sub {

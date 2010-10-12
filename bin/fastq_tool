@@ -235,12 +235,12 @@ sub make_read_iterator {
     my $IN;
     my $line_count = 1;
     my $read_count = 1;
-#    if (! -t STDIN) {
-#	open ($IN, "<&=STDIN") or die "Can't open STDIN\n";
-#    }
-#    else {
-    open ($IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
-#    }
+    if ($file eq '-') {
+	open ($IN, "<&=STDIN") or die "Can't open STDIN\n";
+    }
+    else {
+	open ($IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
+    }
 
     return sub {
         my @data;
