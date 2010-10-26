@@ -2,15 +2,10 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use GAL::Schema;
 use DBI;
 use Template;
-use List::Util;
-use List::MoreUtils;
 use Statistics::Descriptive;
 use Set::IntSpan::Fast;
-use Text::Graph;
-use Text::Graph::DataSet;
 use Text::Table;
 use Number::Format;
 use SQL::Abstract;
@@ -28,7 +23,7 @@ SOBAcl [options] file.gff3
 
 SOBAcl file.gff3 > soba_count.txt
 
-SOBAcl --create_db file.gff3 db_name
+SOBAcl --create db_name file.gff3
 SOBAcl db_name > soba_count.txt
 
 See the Examples section below for more examples.
@@ -37,12 +32,14 @@ Description:
 
 The Sequence Ontology Bioinformatics Analysis command line tool
 (SOBAcl) will generate a variety of reports from the data in GFF3
-files.  The data can optionally first be loaded into a database.  All
-reports can be generated from a database, and some reports can only
-be generated from a database, but many of the reports can also be
-generated directly from a GFF3 file.
+files.  The data can optionally first be loaded into a database.
 
 Options:
+
+  --help       Print this help page and exit.
+
+  --custom    Print a help page with infomation relevant to writing
+	      custom templates.
 
   --title      A title for the table, graph, or report.
 
@@ -69,7 +66,7 @@ Options:
 	       a report on the scores of features. (seqid, source,
 	       type, start, end, [length], score, strand, phase)
 
-  --data_type The data_type parameter indicates how the data described
+  --data_type  The data_type parameter indicates how the data described
 	       in the data parameter should be summarized.  For
 	       example if data is length and data_type is 'mean', then
 	       the mean length would be reported for each grouping of
@@ -77,23 +74,27 @@ Options:
 	       geometric_mead, median, mode, sum, min, max, variance,
 	       standard deviation, range, footprint)
 
-  --layout The layout parameter describes how the data will be
-	       presented.  ([table], lines, bars, hbars, points, linespoints, area, pie)
+  --layout     The layout parameter describes how the data will be
+	       presented.  ([table], lines, bars, hbars, points,
+	       linespoints, area, pie)
 
-  --format The format parameter determines how the output will be
+  --format     The format parameter determines how the output will be
 	       formatted.  For all text based outputs the options are
 	       (text, [tab], html, html_page, pdf).  For all graphical
 	       layouts the options are (jpeg, [png], gif).
-
-  --collapse   Collapse series data onto one graph.
 
   --report     A report summarizes the data in more complex ways than
 	       is possible with a table or a graph.  Available report types are:
 	       gene, attribute, gff, gvf, ontology, invalid_term.
 
+  --template   The name of a Template Toolkit template to process the
+	       data with.
+
+  --collapse   Collapse series data onto one graph.
+
   --so_file    The path to a Sequence Ontology OBO file.
 
-  --select A statement (in SQL or in perl hash or array reference
+  --select     A statement (in SQL or in perl hash or array reference
 	       notation) that will constrain the features that are
 	       used in the report.  For example \"seqid = 'chr1' AND
 	       source = 'FlyBase'\" would only report on features from
@@ -103,30 +104,25 @@ Options:
 	       for use of the hash/array reference notation for
 	       constraints.
 
-  --output For graphics the give value will be used as a filename.  If
+  --output    For graphics the give value will be used as a filename.  If
 	      multiple files are generated then this value will be
 	      prepended to the row/series value to generate the final
 	      filename.  In either case the format type will be added
-	      as an extension, so don't add you own.
+	      as an extension, so don't add your own.
 
-  --driver    The RDMS system used for the given database.  The default
-	      is SQLite, but mysql is also an option;
+  --gd        Pass key=value pairs to the GD::Graph object to customize
+	      charts.
 
-  --user      Database user name.  Defaults to your system user name.
+  --gv        Pass key=value pairs to the Graphviz object to customize
+	      graphs.
 
-  --password  Database password.
+  --gv_node   Pass key=value pairs to the Graphviz->add_node methodto
+	      customize graphs.
 
-  --template  The name of a Template Toolkit template to process the
-	      data with.
+  --gv_edge   Pass key=value pairs to the Graphviz->add_edge method to
+	      customize graphs.
 
   --create    Create a new database and load the given file.
-
-  --append    Append data in the given file to an existing database.
-
-  --custom    Print a help page with infomation relevant to writing
-	      custom templates.
-
-
 
 Graph Options:
 
@@ -178,8 +174,6 @@ start_angle
 suppress_angle
 label
 
-
-
 Examples:
 
 # Create a default report directly from a GFF3 file.
@@ -187,35 +181,34 @@ SOBAcl file.gff3 > soba_type_counts.txt
 SOBAcl file1.gff3 file2.gff3 > soba_type_counts.txt
 
 # Load some data into the database
-SOBAcl --create file.gff3 db_name
-SOBAcl --add file.gff3    db_name
+SOBAcl --create db_name file.gff3
 
 # Create a default report of feature counts from a database
 SOBAcl db_name > soba_count.txt
 
 # Various ways to create feature type length reports in different formats
-SOBAcl --columns seqid --rows type --data length --data_type min --layout table --format html > soba_min_length.html
-SOBAcl --columns source --rows type --data length --data_type max --layout table --format tab > soba_max_length.txt
-SOBAcl --columns file --rows type --data length --data_type footprint --layout table --format html_page > soba_footprint_length.html
+SOBAcl --columns seqid --rows type --data length --data_type min --layout table --format html
+SOBAcl --columns source --rows type --data length --data_type max --layout table --format tab
+SOBAcl --columns file --rows type --data length --data_type footprint --layout table --format html_page
 
 # Variouis ways to create other reports
-SOBAcl --report gene --html_page db_name > soba_gene_models.html
-SOBAcl --report intron_density --format png --dir graphics/ db_name
-SOBAcl --report ontology --dir graphics/ db_name
+SOBAcl --report attributes --format html_page db_name
 
 # Create a custom report by supplying a template
 SOBAcl --report gene_models --limit '{seqid => \"chr1\", source => \"FlyBase\"}' \
        --template my_template.tt db_name > my_gene_models.txt
 
+See the file sobacl_test.sh included with the distribution for lots more examples.
+
 ";
 
 
-my ($help, $title, $columns, $rows, $data, $data_type, $select,
-    $layout, $report, $format, $collapse, $template, $so_file,
-    $output, $USER, $PASSWORD, $driver, %graph, %gv, %gv_node,
-    %gv_edge);
+my ($help, $custom, $title, $columns, $rows, $data, $data_type,
+    $layout, $format, $report, $template, $collapse, $so_file,
+    $select, $output, %graph, %gv, %gv_node, %gv_edge, $create);
 
 my $opt_success = GetOptions('help'	    => \$help,
+			     'custom'       => \$custom,
 			     'title'        => \$title,
 			     'columns=s'    => \$columns,
 			     'rows=s'	    => \$rows,
@@ -228,25 +221,28 @@ my $opt_success = GetOptions('help'	    => \$help,
 			     'collapse'     => \$collapse,
 			     'so_file=s'    => \$so_file,
 			     'output=s'     => \$output,
-			     'user=s'	    => \$USER,
-			     'password=s'   => \$PASSWORD,
-			     'driver=s'     => \$driver,
 			     'template=s'   => \$template,
 			     'graph=s'      => \%graph,
 			     'gv=s'         => \%gv,
 			     'gv_node=s'    => \%gv_node,
 			     'gv_edge=s'    => \%gv_edge,
+			     'create=s'     => \$create,
 			    );
 
 die $usage if ($help || ! $opt_success);
-#die custom_help() if $custom;
+die custom_help() if $custom;
 
-if ($layout eq 'graphviz') {
+if ($layout && $layout eq 'graphviz') {
   $data = 'type';
   $data_type = 'count';
 }
-$data_type = $data_type eq 'range' ? 'sample_range' : $data_type;
 
+if ($data_type) {
+  $data_type = $data_type eq 'range' ? 'sample_range' : $data_type;
+}
+
+my $id_counter;
+my $UNIQ_ID = sub {return sprintf("SOBA_%09d", ++$id_counter)};
 
 my $args = {'title'     => $title,
 	    'columns'   => $columns,
@@ -256,25 +252,20 @@ my $args = {'title'     => $title,
 	    'select'	=> $select,
 	    'layout'	=> $layout,
 	    'format'	=> $format,
+	    'report'    => $report,
 	    'collapse'  => $collapse,
 	    'so_file'   => $so_file,
 	    'output'    => $output,
-	    'user'	=> $USER,
-	    'password'  => $PASSWORD,
-	    'driver'    => $driver,
 	    'template'  => $template,
 	    'graph'     => \%graph,
 	    'gv=s'      => \%gv,
 	    'gv_node'   => \%gv_node,
 	    'gv_edge'   => \%gv_edge,
+	    'create'    => $create,
 	   };
 
 my @db_names = @ARGV;
 die $usage unless @db_names;
-
-my $include_path = $0 . '../templates/soba';
-$include_path =~ s/SOBAcl//;
-my $TT_CONFIG = {INCLUDE_PATH => $include_path};
 
 for my $db_name (@db_names) {
   if ($db_name =~ /\.gff3?(\.gz|\.bz|\.zip)?$/) {
@@ -285,35 +276,45 @@ for my $db_name (@db_names) {
 	       );
   }
   else {
-    $db_name = join ':', ('dbi', $driver, $db_name);
+    $db_name = join ':', ('dbi', 'SQLite', $db_name);
   }
 }
 
 $args->{db_names} = \@db_names;
-if ($report) {
-  if ($report eq 'gene') {
-    make_gene_report($args);
+
+if ($args->{create}) {
+  create_db($args);
+  print "Database $create created\n";
+  exit;
+}
+
+my $include_path = $0 . '../templates/soba';
+$include_path =~ s/SOBAcl//;
+my $TT_CONFIG = {INCLUDE_PATH => $include_path};
+
+if ($args->{report}) {
+  if ($args->{report} eq 'attributes') {
+    my $data_set = build_attribute_data($args);
+    $args->{data_set} = $data_set;
+    create_report($args);
   }
-  elsif ($report eq 'attributes') {
-    make_attribute_report($args);
-  }
-  elsif ($report eq 'gff') {
+  elsif ($args->{report} eq 'gff') {
     make_gff_report($args);
   }
-  elsif ($report eq 'gvf') {
+  elsif ($args->{report} eq 'gvf') {
     make_gvf_report($args);
   }
-  elsif ($report eq 'ontology') {
+  elsif ($args->{report} eq 'ontology') {
     make_ontology_report($args);
   }
-  elsif ($report eq 'invalid_term') {
+  elsif ($args->{report} eq 'invalid_term') {
     make_invalid_term_report($args);
   }
-  elsif ($report eq 'intron_density') {
+  elsif ($args->{report} eq 'intron_density') {
     make_intron_density_report($args);
   }
   else {
-    die "FATAL : invalid_report : $report";
+    die "FATAL : invalid_report : $args->{report}";
   }
   exit;
 }
@@ -325,26 +326,23 @@ $args->{data_type} ||= 'count';
 $args->{layout}    ||= 'table';
 $args->{format}    ||= 'text';
 $args->{output}    ||= 'SOBAcl_graphic';
-$args->{USER}      ||= $ENV{LOGNAME};
-$args->{PASSWORD}  ||= '';
-$args->{driver}    ||= 'SQLite';
 $args->{title}     ||= join ' ', ($args->{rows},  $args->{data}, '(' . $args->{data_type} . ')');
 
-if ($layout eq 'table') {
+if ($args->{layout} eq 'table') {
   my $data_set = build_data($args);
   $args->{data_set} = $data_set;
   make_table($args);
 }
-elsif ($layout =~ /^(lines|bars|hbars|points|linespoints|area|pie)$/) {
-  my $class = "GD::Graph::$layout";
+elsif ($args->{layout} =~ /^(lines|bars|hbars|points|linespoints|area|pie)$/) {
+  my $class = "GD::Graph::$args->{layout}";
   $args->{class} = $class;
   eval "require $class";
   die "FATAL : cant_load_module : $@" if $@;
   my $data_set = build_data($args);
   $args->{data_set} = $data_set;
-  make_graph($args);
+  make_gd_graph($args);
 }
-elsif ($layout eq 'graphviz') {
+elsif ($args->{layout} eq 'graphviz') {
   my $data_set = build_data($args);
   $args->{data_set} = $data_set;
   make_graphviz($args);
@@ -390,7 +388,7 @@ sub build_data {
       }
       elsif ($data eq $rows || $data_type eq 'count') {
 	if ($att_data) {
-	  $datum = 1 if  && exists $f->{attributes}{$data};
+	  $datum = 1 if  exists $f->{attributes}{$data};
 	}
 	else {
 	  $datum = 1;
@@ -509,7 +507,7 @@ sub add_text_table {
 
 #-----------------------------------------------------------------------------
 
-sub make_graph {
+sub make_gd_graph {
   my $args = shift;
 
   # Graph Options:
@@ -554,17 +552,17 @@ sub make_graph {
   # Pie graphs:
   # 3d pie_height start_angle suppress_angle label
 
-  my %graph_args = %{$args->{graph}};
-  my @new_args   = ($graph_args{width} || 400, $graph_args{height} || 300);
-  delete @graph_args{qw(width height)};
+  my %gd_args = %{$args->{gd}};
+  my @new_args   = ($gd_args{width} || 400, $gd_args{height} || 300);
+  delete @gd_args{qw(width height)};
 
-  $graph_args{title}  ||= $args->{title} || $args->{db_name};
-  $graph_args{x_label} ||= $args->{rows};
-  $graph_args{y_label} ||= "$args->{data} ($args->{data_type})";
-  $graph_args{x_label_position} ||= 0.5;
+  $gd_args{title}  ||= $args->{title} || $args->{db_name};
+  $gd_args{x_label} ||= $args->{rows};
+  $gd_args{y_label} ||= "$args->{data} ($args->{data_type})";
+  $gd_args{x_label_position} ||= 0.5;
 
   if ($args->{layout} eq 'area') {
-    delete @graph_args{qw(
+    delete @gd_args{qw(
 
 			   bar_width bar_spacing bargroup_spacing
 			   line_types line_type_scale line_width
@@ -575,7 +573,7 @@ sub make_graph {
 			)};
   }
   elsif ($args->{layout} =~ /^h?bars$/) {
-    delete @graph_args{qw(
+    delete @gd_args{qw(
 
 			   x_tick_number x_min_value x_max_value
 			   x_number_format x_label_skip markers
@@ -585,7 +583,7 @@ sub make_graph {
 			)};
   }
   elsif ($args->{layout} eq 'lines') {
-    delete @graph_args{qw(
+    delete @gd_args{qw(
 
 			   bar_width bar_spacing bargroup_spacing
 			   line_types line_type_scale line_width
@@ -596,7 +594,7 @@ sub make_graph {
 			)};
   }
   elsif ($args->{layout} eq 'linespoints') {
-    delete @graph_args{qw(
+    delete @gd_args{qw(
 
 			   bar_width bar_spacing bargroup_spacing
 			   types default_type 3d pie_height
@@ -605,7 +603,7 @@ sub make_graph {
 			)};
   }
   elsif ($args->{layout} eq 'mixed') {
-    delete @graph_args{qw(
+    delete @gd_args{qw(
 
 			   3d pie_height start_angle suppress_angle
 			   label
@@ -613,7 +611,7 @@ sub make_graph {
 			)};
   }
   elsif ($args->{layout} eq 'pie') {
-    delete @graph_args{qw(
+    delete @gd_args{qw(
 
 			   x_label y_label long_ticks tick_length
 			   x_ticks y_tick_number y_number_format
@@ -637,10 +635,10 @@ sub make_graph {
 
 			)};
     $args->{collapse} = undef;
-    $graph_args{suppress_angle} ||= 10;
+    $gd_args{suppress_angle} ||= 10;
   }
   elsif ($args->{layout} eq 'points') {
-    delete @graph_args{qw(
+    delete @gd_args{qw(
 
 			   bar_width bar_spacing bargroup_spacing
 			   line_types line_type_scale line_width
@@ -653,13 +651,13 @@ sub make_graph {
   my ($data_set, $class, $format, $data_type) =
     @{$args}{qw(data_set class format data_type)};
 
-  my $y_max_value = $graph_args{y_max_value};
+  my $y_max_value = $gd_args{y_max_value};
 
   my ($first_series) = keys %{$data_set};
   my @x_values = sort keys %{$data_set->{$first_series}};
   if ($args->{collapse}) {
-    my @graph_data;
-    push @graph_data, \@x_values;
+    my @gd_data;
+    push @gd_data, \@x_values;
     for my $series (sort keys %{$data_set}) {
       my @series_data;
       for my $x_value (sort keys %{$data_set->{$series}}) {
@@ -669,13 +667,13 @@ sub make_graph {
 	}
 	push @series_data, $datum;
       }
-      push @graph_data, \@series_data;
+      push @gd_data, \@series_data;
     }
     my $graph = $class->new(@new_args);
-    $graph->set(%graph_args, legend_placement => 'RL') or die $graph->error;
+    $graph->set(%gd_args, legend_placement => 'RL') or die $graph->error;
     my @legend_keys = sort keys %{$data_set};
     $graph->set_legend(@legend_keys) if scalar @legend_keys > 1;
-    my $gd = $graph->plot(\@graph_data) or die $graph->error;
+    my $gd = $graph->plot(\@gd_data) or die $graph->error;
 
     my $file   = $args->{output};
     $file =~ s/_$//;
@@ -695,8 +693,8 @@ sub make_graph {
   }
   else {
     for my $series (sort keys %{$data_set}) {
-      my @graph_data;
-      push @graph_data, \@x_values;
+      my @gd_data;
+      push @gd_data, \@x_values;
       my @series_data;
       for my $x_value (sort keys %{$data_set->{series}}) {
 	my $datum = $data_set->{$series}{$x_value}{stats}->$data_type;
@@ -705,10 +703,10 @@ sub make_graph {
 	}
 	push @series_data, $datum;
       }
-      push @graph_data, \@series_data;
+      push @gd_data, \@series_data;
       my $graph = $class->new(@new_args);
-      $graph->set(%graph_args) or die $graph->error;
-      my $gd = $graph->plot(\@graph_data) or die $graph->error;
+      $graph->set(%gd_args) or die $graph->error;
+      my $gd = $graph->plot(\@gd_data) or die $graph->error;
       my $file   = $args->{output};
       $file .= $series;
       $file .= ".$format";
@@ -817,56 +815,45 @@ sub make_graphviz {
 }
 #-----------------------------------------------------------------------------
 
-sub make_attribute_report {
+sub build_attribute_data {
   my $args = shift;
 
-  die "FATAL : report_not_implimented : attribute\n";
+  my $db_names = $args->{db_names};
 
+  my %data_set;
+  for my $db_name (@{$db_names}) {
+    my $feature_iterator = make_iterator($db_name, $select);
+    while (my $f = &{$feature_iterator}) {
+      my ($source, $type, $attributes) = @{$f}{qw(source type attributes)};
+      $data_set{source_count}{$source}++;
+      $data_set{type_count}{$source}{$type}++;
+      for my $key (keys %{$attributes}) {
+	my $type_key = $type . $key;
+	$data_set{source_span}{$source}{$type_key}++;
+	$data_set{att_count}{$source}{$type}{$key}++;
+      }
+    }
+  }
+
+  return \%data_set;
 }
 
 #-----------------------------------------------------------------------------
 
-sub make_gff_report {
+sub create_report {
+
   my $args = shift;
 
-  die "FATAL : report_not_implimented : gff\n";
+  my %templates = (attributes => {'html_page' => 'soba_report_attributes_html.tt',
+				  'text'      => 'soba_report_attributes_text.tt',
+				 },
+		  );
 
-}
+  $template ||= $templates{$args->{report}}{$args->{format}};
 
-#-----------------------------------------------------------------------------
+  my $tt = Template->new($TT_CONFIG);
 
-sub make_gvf_report {
-  my $args = shift;
-
-  die "FATAL : report_not_implimented : gvf\n";
-
-}
-
-#-----------------------------------------------------------------------------
-
-sub make_ontology_report {
-  my $args = shift;
-
-  die "FATAL : report_not_implimented : gvf\n";
-
-}
-
-#-----------------------------------------------------------------------------
-
-sub make_invalid_term_report {
-  my $args = shift;
-
-  die "FATAL : report_not_implimented : invalid_term\n";
-
-}
-
-#-----------------------------------------------------------------------------
-
-sub make_intron_density_report {
-  my $args = shift;
-
-  die "FATAL : report_not_implimented : intron_density\n";
-
+  $tt->process($template, $args);
 }
 
 #-----------------------------------------------------------------------------
@@ -898,6 +885,7 @@ sub make_iterator {
 	    my @values = split /,/, $value_text;
 	    push @{$f{attributes}{$key}}, @values;
 	  }
+	  $f{feature_id} = $f{attributes}{ID} ? $f{attributes}{ID}[0] : &$UNIQ_ID();
 	  if ($select) {
 	  CONSTRAINT:
 	    for my $key (keys %where) {
@@ -920,7 +908,7 @@ sub make_iterator {
       }
     }
   else {
-    my $dbh = DBI->connect($db_name, $USER, $PASSWORD);
+    my $dbh = DBI->connect($db_name);
     my ($where_stmt, @bind);
     if ($select) {
       my %where = eval $select;
@@ -937,7 +925,7 @@ sub make_iterator {
 	my @data = $f_sth->fetchrow_array;
 	return undef unless scalar @data;
 	my %f;
-	@f{qw(subject_id feature_id seqid source type start end score strand phase bin)} = @data;
+	@f{qw( feature_id seqid source type start end score strand phase bin)} = @data;
 	if ($args->{attributes}) {
 	  $a_sth->execute($f{feature_id});
 	  my $as = $a_sth->fetchall_arrayref;
@@ -952,246 +940,234 @@ sub make_iterator {
 
 #-----------------------------------------------------------------------------
 
-__END__
+sub create_db {
 
-#SOBAcl --columns seqid --rows type --data score  --data_type median --layout table --format text dmel-all-r5.30_0001000.gff
-#
-#sub counts {
-#
-#  my ($db_name, $group_by, $template) = @_;
-#
-#  my $feature_iterator = make_iterator($db_name);
-#
-#  my $data_group = make_data_group($group_by);
-#
-#  my %counts;
-#  while (my $f = &{$feature_iterator}) {
-#    # $counts{$f->{source}}{$f->{type}}++;
-#
-#  }
-#
-#  my $tt = Template->new($TT_CONFIG);
-#  $template ||= 'soba_counts.tt';
-#
-#  $tt->process($template, {counts => \%counts})
-#    || die $tt->error();
-#}
-#
-##-----------------------------------------------------------------------------
-#
-#sub lengths {
-#
-#  my ($db_name, $template) = @_;
-#
-#  my $feature_iterator = make_iterator($db_name);
-#
-#  my %data;
-#  while (my $feature = &$feature_iterator) {
-#    my ($source, $type, $start, $end) = @{$feature}{qw(source type start end)};
-#    push @{$data{$source}{$type}}, [$start, $end];
-#  }      my $stat = Statistics::Descriptive::Full->new();
-#
-#  for my $source (keys %data) {
-#    for my $type (keys %{$data{$source}}) {
-#      my $stat = Statistics::Descriptive::Full->new();
-#      my $set = Set::IntSpan::Fast->new();
-#      for my $coordinates (@{$data{$source}{$type}}) {
-#	my ($start, $end) = @{$coordinates};
-#	my $length = $end - $start;
-#	$stat->add_data($length);
-#	$set->add_range($start, $end);
-#      }
-#      my $ranges = $set->iterate_runs();
-#      my $footprint;
-#      while (my ($start, $end) = $ranges->()) {
-#	$footprint += abs($end - $start);
-#      }
-#      $data{$source}{$type} = undef;
-#      $data{$source}{$type}{stats} = $stat;
-#      $data{$source}{$type}{footprint} = $footprint;
-#    }
-#  }
-#
-#  my $tt = Template->new($TT_CONFIG);
-#  $template ||= 'soba_lengths.tt';
-#
-#  $tt->process($template, {data => \%data})
-#    || die $tt->error();
-#}
-#
-##-----------------------------------------------------------------------------
-#
-#sub length_fd {
-#
-#  my ($db_name, $template) = @_;
-#
-#  my $feature_iterator = make_iterator($db_name);
-#
-#  my %data;
-#  while (my $feature = &$feature_iterator) {
-#    my ($source, $type, $start, $end) = @{$feature}{qw(source type start end)};
-#    my $length = $end - $start;
-#    push @{$data{$source}{$type}}, $length;
-#  }
-#  for my $source (keys %data) {
-#    for my $type (keys %{$data{$source}}) {
-#      my $stat = Statistics::Descriptive::Full->new();
-#      my $set = Set::IntSpan::Fast->new();
-#      map {$stat->add_data($_)} @{$data{$source}{$type}};
-#      my $pctl_10 = $stat->percentile(10) || $stat->min;
-#      my $pctl_90 = $stat->percentile(90) || $stat->max;
-#      my $range = abs($pctl_90 - $pctl_10);
-#      my $bin_size = int($range / 10) || 1;
-#      my @bins;
-#      for (my $bin = $pctl_10; $bin < $pctl_90; $bin += $bin_size) {
-#	push @bins, $bin;
-#      }
-#      @bins = ($stat->min, $stat->max) unless scalar @bins >= 2;
-#      my ($min_first, $max_last);
-#      if (scalar @bins && $bins[0] > $stat->min) {
-#	unshift @bins, $stat->min;
-#	$min_first++;
-#      }
-#      if (scalar @bins && $bins[-1] < $stat->max) {
-#	push    @bins, $stat->max;
-#	$max_last++;
-#      }
-#      my $fd = $stat->frequency_distribution_ref(\@bins);
-#      $fd = {$bins[0] => scalar $stat->count} unless $fd;
-#      print "$source\t$type\n";
-#      my $graph = Text::Graph->new('Bar',
-#				   maxlen => 80,
-#				  );
-#
-#      my @data_lines = $graph->make_lines($fd,
-#					   sort => sub { sort { $a <=> $b } @_ },
-#					  );
-#
-#      my $max_label_length = length($stat->max);
-#      my $line_length  = $max_label_length + 84;
-#      map {$_ .= ' ' x (81 - length($_))} @data_lines;
-#      my @labels = map {$_ . (' ' x ($max_label_length - length($_) + 1)) . ': '} @bins;
-#      my $first_line = (shift @labels) . (shift @data_lines) if $min_first;
-#      my $last_line = (pop @labels) . (pop @data_lines) if $max_last;
-#      map {$_ = (shift @labels) . $_} @data_lines;
-#      my @graph_lines;
-#      push @graph_lines, '-' x $line_length;
-#      push @graph_lines, "|\n";
-#      if ($min_first) {
-#	push @graph_lines, "$first_line|\n";
-#	push @graph_lines, ('.' x $line_length) . "|\n";
-#      }
-#      push @graph_lines, join "|\n", @data_lines;
-#      push @graph_lines, "|\n";
-#      if ($max_last) {
-#	push @graph_lines, ('.' x $line_length) . "|\n";
-#	push @graph_lines, "$last_line|\n";
-#      }
-#      push @graph_lines, '-' x $line_length;
-#      push @graph_lines, "|\n";
-#      my $graph_string = join '', @graph_lines;
-#      $data{$source}{$type} = $graph_string;
-#      print "$source\t$type\n";
-#      print "$graph_string\n";
-#      print '';
-#    }
-#  }
-#
-#  my $tt = Template->new($TT_CONFIG);
-#  $template ||= 'soba_length_fd.tt';
-#
-#  $tt->process($template, {data => \%data})
-#    || die $tt->error();
-#}
-#
-#  my ($features, $tt) = @_;
-#
-#  my %data;
-#  for my $source ($features->get_column('source')->func('DISTINCT')) {
-#    for my $type ($features->search({source => $source})->get_column('type')->func('DISTINCT')) {
-#      my $stat = Statistics::Descriptive::Full->new();
-#      my $set = Set::IntSpan::Fast->new();
-#
-#      my %where = (source => $source,
-#		   type   => $type
-#		  );
-#      my $these_features = $features->search(\%where);
-#      # Don't build objects, we don't need them
-#      $these_features->result_class('DBIx::Class::ResultClass::HashRefInflator');
-#
-#      for my $feature ($these_features->all) {
-#	my $start = $feature->{start};
-#	my $end   = $feature->{end};
-#	my $length = abs($end - $start);
-#	$stat->add_data($length);
-#      }
-#      my $pctl_10 = $stat->percentile(10) || $stat->min;
-#      my $pctl_90 = $stat->percentile(90) || $stat->max;
-#      my $range = abs($pctl_90 - $pctl_10);
-#      my $bin_size = int($range / 10) || 1;
-#      my @bins;
-#      for (my $bin = $pctl_10; $bin < $pctl_90; $bin += $bin_size) {
-#	push @bins, $bin;
-#      }
-#      @bins = ($stat->min, $stat->max) unless scalar @bins >= 2;
-#      my ($min_first, $max_last);
-#      if (scalar @bins && $bins[0] > $stat->min) {
-#	unshift @bins, $stat->min;
-#	$min_first++;
-#      }
-#      if (scalar @bins && $bins[-1] < $stat->max) {
-#	push    @bins, $stat->max;
-#	$max_last++;
-#      }
-#      my $fd = $stat->frequency_distribution_ref(\@bins);
-#      $fd = {$bins[0] => scalar $stat->count} unless $fd;
-#      print "$source\t$type\n";
-#      my $graph = Text::Graph->new('Bar',
-#				   maxlen => 80,
-#				  );
-#
-#      my @data_lines = $graph->make_lines($fd,
-#					   sort => sub { sort { $a <=> $b } @_ },
-#					  );
-#
-#      my $max_label_length = length($stat->max);
-#      my $line_length  = $max_label_length + 84;
-#      map {$_ .= ' ' x (81 - length($_))} @data_lines;
-#      my @labels = map {$_ . (' ' x ($max_label_length - length($_) + 1)) . ': '} @bins;
-#      my $first_line = (shift @labels) . (shift @data_lines) if $min_first;
-#      my $last_line = (pop @labels) . (pop @data_lines) if $max_last;
-#      map {$_ = (shift @labels) . $_} @data_lines;
-#      my @graph_lines;
-#      push @graph_lines, '-' x $line_length;
-#      push @graph_lines, "|\n";
-#      if ($min_first) {
-#	push @graph_lines, "$first_line|\n";
-#	push @graph_lines, ('.' x $line_length) . "|\n";
-#      }
-#      push @graph_lines, join "|\n", @data_lines;
-#      push @graph_lines, "|\n";
-#      if ($max_last) {
-#	push @graph_lines, ('.' x $line_length) . "|\n";
-#	push @graph_lines, "$last_line|\n";
-#      }
-#      push @graph_lines, '-' x $line_length;
-#      push @graph_lines, "|\n";
-#      my $graph_string = join '', @graph_lines;
-#      $data{$source}{$type} = $graph_string;
-#    }
-#  }
-#  $tt->process($template, {data => \%data})
-#    || die $tt->error();
-#}
-#
-##-----------------------------------------------------------------------------
-#
-#sub template {
-#
-#  my ($features, $template, $tt);
-#
-#  $tt->process($template, {features => $features})
-#    || die $tt->error();
-#}
-#
-##-----------------------------------------------------------------------------
+  my $args = shift;
+
+  my $db_name = $args->{create};
+
+  my $dsn = join ':', ('dbi', 'SQLite', $db_name);
+
+
+  my $dbh = DBI->connect($dsn);
+
+  $dbh->do("DROP TABLE IF EXISTS feature");
+  $dbh->do("DROP TABLE IF EXISTS attribute");
+  $dbh->do("DROP TABLE IF EXISTS relationship");
+  $dbh->do("CREATE TABLE feature ("    .
+	   "feature_id TEXT, "    .
+	   "seqid      TEXT, "    .
+	   "source     TEXT, "    .
+	   "type       TEXT, "    .
+	   "start      INTEGER, " .
+	   "end        INTEGER, " .
+	   "score      TEXT, "    .
+	   "strand     TEXT, "    .
+	   "phase      TEXT,"     .
+	   "bin        TEXT)"
+	  );
+  $dbh->do("CREATE TABLE attribute ("  .
+	   "attribute_id INTEGER PRIMARY KEY AUTOINCREMENT, " .
+	   "feature_id TEXT, " .
+	   "att_key    TEXT, " .
+	   "att_value  TEXT)"
+	  );
+  $dbh->do("CREATE TABLE relationship ("  .
+	   "parent       TEXT, " .
+	   "child        TEXT, " .
+	   "relationship TEXT) "
+	  );
+
+
+  my @files = @{$args->{db_names}};
+  my @features;
+  my $count = 1;
+  for my $file (@files) {
+    my $feature_iterator = make_iterator($file, $select);
+    while (my $feature = &{$feature_iterator}) {
+      push @features, $feature;
+      add_features($dbh, \@features) unless $count++ % 10000;
+    }
+  }
+  add_features($dbh, \@features);
+
+  # Create feature indeces
+  $dbh->do("CREATE INDEX feat_feature_id_index ON feature (feature_id)");
+  # $dbh->do("CREATE INDEX feat_seqid_start_end_index ON feature (seqid, start, end)");
+  $dbh->do("CREATE INDEX feat_bin_index ON feature (bin)");
+  # $dbh->do("CREATE INDEX feat_type_index ON feature (type)");
+
+  # Create attribute indeces
+  $dbh->do("CREATE INDEX att_feature_id_index ON attribute (feature_id)");
+  # $dbh->do("CREATE INDEX att_key_value_index ON attribute (att_key, att_value)");
+
+  # Create relationship indeces
+  $dbh->do("CREATE INDEX rel_parent_index ON relationship (parent)");
+  $dbh->do("CREATE INDEX rel_child_index ON relationship (child)");
+  $dbh->disconnect;
+}
+
+#-----------------------------------------------------------------------------
+
+sub add_features {
+
+  my ($dbh, $features) = @_;
+
+  my ($feat_rows, $att_rows, $rel_rows) = prepare_features($features);
+  @{$features} = ();
+
+  # "feature_id VARCHAR(255), " .
+  # "seqid      VARCHAR(255), " .
+  # "source     VARCHAR(255), " .
+  # "type       VARCHAR(255), " .
+  # "start      INT, "          .
+  # "end        INT, "          .
+  # "score      VARCHAR(255), " .
+  # "strand     VARCHAR(1), "   .
+  # "phase      VARCHAR(1),"    .
+  # "bin        VARCHAR(15))"
+
+  my $feat_stmt = "INSERT INTO feature VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  my $feat_sth = $dbh->prepare($feat_stmt);
+
+  # http://search.cpan.org/~adamk/DBD-SQLite-1.29/lib/DBD/SQLite.pm#Transactions
+  $dbh->begin_work;
+  for my $feat_row (@{$feat_rows}) {
+    my $rv = $feat_sth->execute(@{$feat_row});
+    unless ($rv) {
+      my $warn_code = 'bad_feature_table_insert :';
+      my $data = join ', ', @{$feat_row};
+      $warn_code    .= $data;
+      warn $warn_code;
+    }
+  }
+
+  # "attribute_id INT NOT NULL AUTO_INCREMENT, " .
+  # "feature_id VARCHAR(255), " .
+  # "att_key    VARCHAR(255), "    .
+  # "att_value  TEXT, "  .
+
+
+  my $att_stmt = "INSERT INTO attribute VALUES (?, ?, ?, ?)";
+  my $att_sth = $dbh->prepare($att_stmt);
+
+  for my $att_row (@{$att_rows}) {
+    my $rv = $att_sth->execute(@{$att_row});
+    unless ($rv) {
+      my $warn_code = 'bad_attribute_table_insert :';
+      my $data = join ', ', @{$att_row};
+      $warn_code    .= $data;
+      warn $warn_code;
+    }
+  }
+
+  # "parent       VARCHAR(255), " .
+  # "child        VARCHAR(255), "    .
+  # "relationship VARCHAR(255)) "
+
+  my $rel_stmt = "INSERT INTO relationship VALUES (?, ?, ?)";
+  my $rel_sth = $dbh->prepare($rel_stmt);
+
+  for my $rel_row (@{$rel_rows}) {
+    my $rv = $rel_sth->execute(@{$rel_row});
+    unless ($rv) {
+      my $warn_code = 'bad_relationship_table_insert :';
+      my $data = join ', ', @{$rel_row};
+      $warn_code    .= $data;
+      warn $warn_code;
+    }
+  }
+  $dbh->commit;
+}
+
+#-----------------------------------------------------------------------------
+
+sub prepare_features {
+
+  my $feature_hashes = shift;
+
+  $feature_hashes = ref $feature_hashes eq 'ARRAY' ? $feature_hashes :
+    [$feature_hashes];
+
+  my (@features, @attributes, @relationships);
+
+  for my $feature_hash (@{$feature_hashes}) {
+    my $feature_id = $feature_hash->{feature_id};
+    my ($bin) = get_feature_bins($feature_hash);
+    my $attributes = $feature_hash->{attributes};
+    my @parents = ref $attributes->{Parent} eq 'ARRAY' ? @{$attributes->{Parent}} : ();
+    my @feature_data = (@{$feature_hash}{qw(feature_id seqid source
+					    type start end score strand
+					    phase)},
+			$bin);
+    push @features, \@feature_data;
+
+    for my $key (keys %{$attributes}) {
+      my @values = @{$attributes->{$key}};
+      for my $value (@values) {
+	push @attributes, [undef, $feature_id, $key, $value];
+      }
+    }
+
+    for my $parent (@parents) {
+      my @relationship_data = ($parent, $feature_id, undef);
+      push @relationships, \@relationship_data;
+    }
+  }
+  return (\@features, \@attributes, \@relationships);
+}
+
+#-----------------------------------------------------------------------------
+
+sub custom_help {
+
+  return
+
+<<CUSTOM;
+
+Custom help hasn't been written yet.
+
+CUSTOM
+
+}
+
+#-----------------------------------------------------------------------------
+
+sub get_feature_bins {
+
+    my $feature = shift;
+
+    my ($seqid, $start, $end);
+    if (ref $feature eq 'HASH') {
+      ($seqid, $start, $end) = @{$feature}{qw(seqid start end)};
+    }
+    elsif (blessed $feature && $feature->can('seqid') &&
+	   $feature->can('start') && $feature->can('end')) {
+      ($seqid, $start, $end) = ($feature->seqid, $feature->start,
+				$feature->end)
+    }
+    else {
+      my $data = ref $feature || $feature;
+      die "FATAL : invalid_arguments_to_get_feature_bins : $data";
+    }
+    my @feature_bins;
+    my $count;
+    my $single_bin;
+    for my $bin_size (128_000, 1_000_000, 8_000_000, 64_000_000,
+		      512_000_000) {
+      $count++;
+      my $start_bin = int($start/$bin_size);
+      my $end_bin   = int($end/$bin_size);
+      my @these_bins = map {$_ = join ':', ($seqid, $count, $_)} ($start_bin .. $end_bin);
+	if (! $single_bin && scalar @these_bins == 1) {
+	    $single_bin = shift @these_bins;
+	}
+	unshift @feature_bins, @these_bins;
+    }
+    unshift @feature_bins, $single_bin;
+    return wantarray ? @feature_bins : \@feature_bins;
+}
+
+#-----------------------------------------------------------------------------
+
+
