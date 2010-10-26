@@ -1,0 +1,54 @@
+[%- USE Number.Format -%]
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+  <head>
+    <title>SOBAcl Table</title>
+     <style type="text/css">
+       table {
+              border: 1px solid;
+              border-collapse: collapse;
+             }
+       td {
+       	   border: 1px solid;
+       	   border-collapse: collapse;
+           text-align: right;
+           padding-left: 5px;
+           padding-right: 5px;
+          }
+     </style>
+  </head>
+  <body>
+    <table>
+      [%- FOR source = data_set.att_count.keys.sort %]
+	<tr>
+        [%- source_span = data_set.source_span.$source.keys.size %]
+        <td class="source" rowspan="[% source_span %]">[% source %]</td> 
+        <td class="source" rowspan="[% source_span %]">[% data_set.source_count.$source %]</td> 
+        [%- FOR type = data_set.att_count.$source.keys.sort %]
+	  [%- UNLESS loop.first %]
+	  <tr>
+	  [%- END %]
+          [%- type_span = data_set.att_count.$source.$type.keys.size %]
+          <td class="type" rowspan="[% type_span %]">[% type %]</td> 
+          <td class="type" rowspan="[% type_span %]">[% data_set.type_count.$source.$type %]</td> 
+          [%- FOR att_key = data_set.att_count.$source.$type.keys.sort %]
+	    [%- UNLESS loop.first %]
+	    <tr>
+	    [%- END %]
+            <td class="att_key">[% att_key %]</td>
+            <td class_"att_count">[% data_set.att_count.$source.$type.$att_key %]</td>
+	    [%- UNLESS loop.last %]
+	    </tr>
+	    [%- END %]
+	  [%- END %]
+	  [%- UNLESS loop.last %]
+	  </tr>
+	  [%- END %]
+        [%- END %]
+ 	</tr>
+      [%- END %]
+    </table>
+  </body>
+</html>
