@@ -14,8 +14,9 @@ ucsc_gtf2gff3 ucsc_file.gtf
 
 Description:
 
-This script will convert UCSC GTF to GFF3 by doing single linkage clustering
-on all transcripts using exon overlap as the criteria for building links.
+This script will convert UCSC knownGene and RefGene tables to GFF3 by
+doing single linkage clustering on all transcripts using exon overlap
+as the criteria for building links.
 
 ";
 
@@ -30,7 +31,7 @@ my $file = shift;
 
 die $usage unless $file;
 
-my $features = parse_gtf($file);
+my $features = parse_gene_table($file);
 my $graph    = build_graph($features);
 my $clusters = get_clusters($graph);
 my $genes    = build_genes($features, $clusters);
@@ -97,16 +98,16 @@ sub build_graph {
     # Improve the effciency here by sorting on the transcript start positions
     # and doing a next TRNSC2 of the loop if we are in features/exons that can't
     # possibly overlap.
-    my @t1_ids = sort {$features->{$a}{end}   <=> $features->{b}{end}} keys %{$features};
-    my @t2_ids = sort {$features->{$a}{start} <=> $features->{b}{start}} keys %{$features};
+    my @t1_ids = sort {$feature->{$a}{end} <=> $feature->{b}{end}} keys %{$features};
+    my @t2_ids = sort {$feature->{$a}{start} <=> $feature->{b}{start}} keys %{$features};
     my $t2_idx_pointer = 0;
     my ($t1_end_max, $t2_start_min);
   T1:
     for my $t1_idx (0 .. scalar @t1_ids) {
-	    my $t1 = $features->{$t1_ids[$t1_idx]};
-	    my $t1_end = $t1->{end};
-	    my $t1_max = $t1_end if $t1_end_max < $t1_end;
-	    my $t1_end_idx_pointer = ? $t1_end > $t1
+	    my $t1     = $features->{$t1_ids[$t1_idx]};
+	    $t1_end = $t1->{end};
+	    if ($t1_end_max < $t1_end) {$t1_max = $t1_end};
+	    $t1_end_idx_pointer = ? $t1_end > $t1
 	  E1:
 	    for my $exon_1 (@{$t1->{exon}}) {
 		  T2:

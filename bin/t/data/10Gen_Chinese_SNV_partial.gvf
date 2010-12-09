@@ -3,18 +3,18 @@
 ##file-version 1.00
 
 ##individual-id Dbxref=PMID=18987735;Gender=Male;Ethnicity=Han Chinese;
-##source_method Source=SOAP;Type=SNV;Dbxref=PMID:18227114,PMID:18987735;Comment=Short Oligonuceotide Alignment Program (SOAP);
-##source_method Source=SOAP;Type=SNV;Dbxref=URI:http://www.yandell-lab.org;Comment=Variants were converted from their original format to GVF with the GAL library available on request from the Yandell Lab;
+##source-method Source=SOAP;Type=SNV;Dbxref=PMID:18227114,PMID:18987735;Comment=Short Oligonuceotide Alignment Program (SOAP);
+##source-method Source=SOAP;Type=SNV;Dbxref=URI:http://www.yandell-lab.org;Comment=Variants were converted from their original format to GVF with the GAL library available on request from the Yandell Lab;
 ##technology-platform Source=SOAP;Type=SNV;Dbxref=URI:http://www.illumina.com;Platform_class=short read sequencing;Platform_name=Illumina GA;Read_type=fragment,pair;Read_length=35;Read_pair_span=135,440;Average_coverage=36;
 ##data-source Source=SOAP;Type=SNV;Dbxref=SRA:SRA009271;Data_type=DNA sequence;Comment=NCBI Short Read Archive (http://www.ncbi.nlm.nih.gov/Traces/sra;
 ##data-source Source=;Type=SNV;Dbxref=dbSNP:Yanhuang1_20080602,dbSNP:Yanhuang1_20080807,dbSNP:Yanhuang1_20080807_a,dbSNP:Yanhuang1_20080807_b,dbSNP:Yanhuang1_20080807_c,dbSNP:Yanhuang1_20080807_d,dbSNP:Yanhuang1_20080807_e;Data_type=sequence variants;Comment=dbSNP submission for Chinese Genome;
-##date Date=08/02/2010;Comment=Variants were converted to GVF on Feb. 8, 2010;
+##file-date 2010-08-02
 
-##individual-description
-## Anonymous Han Chinese
+#individual-description
+# Anonymous Han Chinese
 
-##phenotype-description
-## Healthy
+#phenotype-description
+# Healthy
 
 ##feature-ontology http://sourceforge.net/projects/song/files/SO_Feature_Annotation/sofa_2_4_1/sofa_2_4_1.obo/download
 ##species http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=9606

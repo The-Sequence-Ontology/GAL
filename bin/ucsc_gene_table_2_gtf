@@ -20,7 +20,14 @@ style GTF files from them.
 
 Options:
 
-  table   which UCSC table is this (knownGene|refGene).
+  table   Which UCSC table are you using
+
+          knownGene => knownGene.txt
+          refGene   => refGene.txt
+	  ccdsGene  => ccdsGene.txt
+	  Gencode   => wgEncodeGencodeManualV4.txt
+	  vegaGene  => vegaGene
+	  ensGene   => ensGene
 
 ";
 
@@ -44,26 +51,26 @@ while (<$IN>) {
 	$txEnd, $txStart);
 
 
-    if ($table eq 'refGene') {
-	($bin, $name, $chrom, $strand, $txStart, $txEnd,
-	$cdsStart, $cdsEnd, $exonCount, $exonStarts, $exonEnds,
-	$score, $name2, $cdsStartStat, $cdsEndStat, $exonFrames) =
-	split /\t/, $_;
+    if ($table eq 'knownGene') {
+	($name, $chrom, $strand, $txStart, $txEnd, $cdsStart, $cdsEnd,
+	 $exonCount, $exonStarts, $exonEnds, $proteinID, $alignID) =
+	 split /\t/, $_;
     }
-    elsif ($table eq 'knownGene') {
-	($name, $chrom, $strand, $txStart, $txEnd, $cdsStart,
-	 $cdsEnd, $exonCount, $exonStarts, $exonEnds, $proteinID,
-	 $alignID) = split /\t/, $_;
+    elsif ($table =~ /^(refGene|ccdsGene|Gencode|vegaGene|ensGene)$/) {
+	($bin, $name, $chrom, $strand, $txStart, $txEnd, $cdsStart,
+	$cdsEnd, $exonCount, $exonStarts, $exonEnds, $score, $name2,
+	$cdsStartStat, $cdsEndStat, $exonFrames) = split /\t/, $_;
     }
     else {
-	die "\n\n-format must be either knownGene or refGene\n\n";
+	die "FATAL : invalid_format : $table\n";
     }
 
-    carp "Error : invalid_strand : $name, $strand"   if $strand  !~ /\+|-/;
+    carp  "Error : invalid_strand : $name, $strand"   if $strand  !~ /\+|-/;
     croak "Error : invalid_txStart : $name, $txStart" if $txStart !~ /^\d+$/;
     croak "Error : invalid_txEnd : $name, $txEnd"     if $txEnd   !~ /^\d+$/;
 
-    my $transcript = {seqid      => $chrom,
+    my $transcript = {feature_id => $name,
+		      seqid      => $chrom,
 		      source     => 'UCSC_' . $table,
 		      type       => 'mRNA',
 		      start      => $txStart,
@@ -71,8 +78,8 @@ while (<$IN>) {
 		      score      => '.',
 		      strand     => $strand,
 		      phase      => '.',
-		      attributes => {ID => [$name]}};
-
+		  };
+    
     my @dbxrefs = grep ($name2, $proteinID);
     $transcript->{attributes}{Dbxref} = \@dbxrefs if scalar @dbxrefs;
 
@@ -125,11 +132,9 @@ while (<$IN>) {
 				    coordinates => \@cds_pairs
 				    );
 
-    $transcript->{type} = 'ncRNA' unless scalar @{$CDSs};
+    my $start_codon = build_start_codon($CDSs, $strand);
 
-    write_gff($transcript);
-    write_gff($exons);
-    write_gff($CDSs);
+    write_gff($exons, $CDSs, $start_codon);
 
 }
 
@@ -144,16 +149,15 @@ sub build_child_features {
     my $parent = $args{parent};
     my $type   = $args{type};
     my $coords = $args{coordinates};
-    my $parent_id = $parent->{attributes}{ID}[0];
+    my $parent_id = $parent->{feature_id};
 
     my @features;
     my $count;
     for my $pair (@{$coords}) {
 	my ($start, $end) = @{$pair};
-	my $id = join ':', ($parent_id, $type, ++$count);
 	my %feature = %{$parent};
-	my $attributes = {ID     => [$id],
-			  Parent => [$parent_id],
+	my $attributes = {gene_id       => [$parent_id],
+			  transcript_id => [$parent_id],
 			  };
 
 	@feature{qw(type start end attributes)} =
@@ -166,13 +170,42 @@ sub build_child_features {
 
 #-----------------------------------------------------------------------------
 
+sub build_start_codon {
+
+    my ($CDSs, $strand) = @_;
+
+    return [] unless scalar @{$CDSs};
+
+    my @sorted = sort {$a->{start} <=> $b->{start}} @{$CDSs};
+
+    my %feature = %{$sorted[0]};
+    my ($start, $end);
+    if ($strand eq '-') {
+	my $cds =  $sorted[-1];
+	$end = $cds->{end};
+	$start = $end - 2;
+    }
+    else {
+	my $cds = $sorted[0];
+	$start = $cds->{start};
+	$end = $start + 2;
+    }
+
+	@feature{qw(type start end)} =
+	    ('start_codon', $start, $end);
+
+    return [\%feature];
+}
+
+#-----------------------------------------------------------------------------
+
 sub write_gff {
 
-    my $features = shift;
+    my ($exons, $CDSs, $start_codon) = @_;
 
-    $features = ref $features eq 'ARRAY' ? $features : [$features];
+    my @features = (@{$exons}, @{$CDSs}, @{$start_codon});
 
-    for my $feature (@{$features}) {
+    for my $feature (sort {$a->{start} <=> $b->{start}} @features) {
 	my $attribute_text = get_attribute_text($feature);
 	print join "\t", (@{$feature}{qw(seqid source type start end score
 					 strand phase)},
@@ -189,16 +222,15 @@ sub get_attribute_text {
     my $feature = shift;
     my $attributes = $feature->{attributes};
 
-    my %ORDER = (ID     => 1,
-		 Parent => 2,
-		 Dbxref => 3,
+    my %ORDER = (gene_id       => 1,
+		 transcript_id => 2,
 		 );
 
     my $attribute_text;
     for my $key (sort {$ORDER{$a} <=> $ORDER{$b}} keys %{$attributes}) {
 	my @values = @{$attributes->{$key}};
 	my $value_text = join ',', @values;
-	$attribute_text .= "$key=$value_text;";
+	$attribute_text .= "$key \"$value_text\";";
     }
     return $attribute_text;
 }
