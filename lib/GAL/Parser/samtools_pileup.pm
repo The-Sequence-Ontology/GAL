@@ -214,7 +214,7 @@ sub parse_record {
 	    }
 	}
 	else {
-	    @variant_seqs  = $self->expand_iupac_nt_codes($record->{variant_seq});
+	    @variant_seqs = $self->expand_iupac_nt_codes($record->{variant_seq});
 	}
 	$end ||= $start;
 

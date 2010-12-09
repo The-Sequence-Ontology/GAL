@@ -183,7 +183,9 @@ sub codon_at_location {
   my ($CDS_location) = $self->map2CDS($location);
   my $frame = $self->frame_at_location($location);
   my $codon_start = $CDS_location - $frame;
-  my $codon = substr($CDS_sequence, ($codon_start - 1), 3);
+  $codon_start--;
+  return undef if (($codon_start + 3) > length $CDS_sequence);
+  my $codon = substr($CDS_sequence, $codon_start, 3);
   return wantarray ? ($codon, $frame) : $codon;
 }
 

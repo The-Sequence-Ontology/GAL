@@ -129,6 +129,17 @@ sub parse_record {
 	# Variant_seq=G,A
 	my ($reference_seq, @variant_seqs) = split m|/|, $record->{variant_seq};
 
+	# If you need to look up the reference sequence
+	# Then be sure that you pass (fasta => '/path/to/fasta') as an
+	# argument when instantiating the class.
+	# $reference_seq ||= uc $self->fasta->seq($seqid, $start, $end);
+
+        # If you need to disambiguate IUPAC codes
+	# my @variant_seqs  = $self->expand_iupac_nt_codes($iupac_codes);
+	
+	# If you need to reverse compliment sequence
+	# $reference_seq = $self->revcomp($reference_seq) if $strand eq '-';
+
 	# Assign the variant seq read counts if available:
 	# Variant_reads=8,6
 
@@ -193,8 +204,14 @@ sub reader {
   my $self = shift;
 
   if (! $self->{reader}) {
-    my @field_names = qw();
-    my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
+      
+    # Change the field names in the next line to define how the hash keys
+    # are named for each column in you input file.
+    # If you don't pass field_names as an argument to the reader then
+    # the reader will return an array rather than a hash.
+    my @field_names = qw(seqid source type start end score strand phase att_text);
+    my $reader = GAL::Reader::DelimitedLine->new(field_names     => \@field_names,
+						 field_separator => "\t");
     $self->{reader} = $reader;
   }
   return $self->{reader};
