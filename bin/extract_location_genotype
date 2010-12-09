@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Parser;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+extract_location_genotype --genotype heterozygous variants1.gvf [variants2.gvf ...]
+
+Description:
+
+Extract just seqid, start, end, Variant_seq (sorted) from a GVF file.
+
+Options:
+
+  genotype  Constrain the list of features to a given genotype.
+  location  Print only variant location, not genotype.
+
+";
+
+
+my ($help, $filter_genotype, $location);
+my $opt_success = GetOptions('help'       => \$help,
+			     'genotype=s' => \$filter_genotype,
+			     'location'   => \$location,
+			     );
+
+die $usage if $help || ! $opt_success;
+
+my @files = @ARGV;
+die $usage if grep {! -r $_} @files;
+
+for my $file (@files) {
+
+    my $parser = GAL::Parser->new(class => 'gff3',
+				  file  => $file,
+				  );
+
+    while (my $feature = $parser->next_feature_hash) {
+
+	my $attributes = $feature->{attributes};
+	my @variant_seqs =  sort {$a cmp $b} @{$attributes->{Variant_seq}};
+	push @variant_seqs, $variant_seqs[0] if scalar @variant_seqs == 1;
+	my @data = @{$feature}{qw(seqid start end)};
+	my $genotype = $attributes->{Genotype}[0];
+	next if ($filter_genotype && $filter_genotype ne $genotype);
+	# push @variant_seqs, $variant_seqs[0] if $genotype eq 'homozygous';
+	#@variant_seqs = sort @variant_seqs;
+	push @data, @variant_seqs unless $location;
+	print join ':', @data;
+	print "\n";
+	print '';
+    }
+}

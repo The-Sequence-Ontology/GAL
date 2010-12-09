@@ -109,11 +109,11 @@ while (my $mrna = $mrnas->next) {
     my $CDSs = $mrna->CDSs;
     while (my $CDS = $CDSs->next) {
 	my $bins = $CDS->get_feature_bins;
-	my $start = $CDS->start;
-	my $end   = $CDS->end;
+	my $cds_start = $CDS->start;
+	my $cds_end   = $CDS->end;
 	my %where = (bin   => {'-in' => $bins},
-		     start => {'>='  => $start},
-		     end   => {'<='  => $end},
+		     start => {'>='  => $cds_start},
+		     end   => {'<='  => $cds_end},
 		     );
 	my $these_variants = $variants->search(\%where); # ->cursor
 	
@@ -121,7 +121,7 @@ while (my $mrna = $mrnas->next) {
 	    my $variant_id = $variant->feature_id;
 	    my $seqid = $variant->seqid;
 	    my $type  = $variant->type;
-	    my $start = $variant->start;
+	    my $var_start = $variant->start;
 	    my $reference_seq = $variant->reference_seq;
 	    my @variant_seqs  = $variant->variant_seq_no_ref;
 	    
@@ -129,7 +129,11 @@ while (my $mrna = $mrnas->next) {
 		my $mrna_variant_seq = $variant_seq;
 		$mrna_variant_seq = $mrna->annotation->revcomp($variant_seq)
 		    if $mrna->strand eq '-';
-		my ($ref_codon, $offset) = $mrna->codon_at_location($start);
+		my ($ref_codon, $offset) = $mrna->codon_at_location($var_start);
+		unless ($ref_codon) {
+		    warn "WARN : invalid_codon_lookup : $variant_id\n";
+		    next;
+		}
 		my $ref_aa = $mrna->annotation->translate($ref_codon);
 		my $var_codon = $ref_codon;
 		substr($var_codon, $offset, 1, $mrna_variant_seq);
@@ -148,7 +152,7 @@ while (my $mrna = $mrnas->next) {
 		    $effect = 'non_synonymous_codon';
 		}
 		print join "\t", ($seqid,
-				  $start,
+				  $var_start,
 				  $mrna_id,
 				  $variant_id,
 				  $reference_seq,

@@ -184,6 +184,9 @@ to the altered copy of the feature.  All filters given are applied.
 
 --Add/Extract Options--
 
+  print           Just print the features - applying any include/exclude
+                  along the way.
+
   sequence|p      Print a fasta sequence for each feature instead of
 		  the feature. Requires the fasta argument (Not yet
 		  implimented)
@@ -259,8 +262,9 @@ gff_tool --hash_ag "push @{$hash_ag{$f->{type}}}, $f"       \
 
 my ($help, $format, $in_place, $out_ext, $fasta, $ids_file, $include,
     $exclude, $code, $filter, $merge, $blend, $sort, $alter, $hash_ag,
-    $validate, $stats, $sequence, $fasta_only, $fasta_no, $fasta_add,
-    $meta_only, $meta_no, $meta_add, $add_ID, $pragmas, $features);
+    $validate, $stats, $print_gff, $sequence, $fasta_only, $fasta_no,
+    $fasta_add, $meta_only, $meta_no, $meta_add, $add_ID, $pragmas,
+    $features);
 
 
 my $opt_success = GetOptions('format|f=s'      => \$format,
@@ -280,6 +284,7 @@ my $opt_success = GetOptions('format|f=s'      => \$format,
 			     'validate|v'      => \$validate,
 			     'stats|u'	       => \$stats,
 			     'sequence|p'      => \$sequence,
+                             'print'           => \$print_gff,
 			     'features|x'      => \$features,
 			     'fasta_only|r'    => \$fasta_only,
 			     'fasta_no|R'      => \$fasta_no,
@@ -315,7 +320,7 @@ blend()	     	         if $blend;
 #sort_gff()		 if $sort;
 alter()                  if $alter;
 validate()		 if $validate;
-hash_ag($hash_ag)        if $hash_ag;
+hash_ag($hash_ag, $code) if $hash_ag;
 #stats()		 if $stats;
 sequence()		 if $sequence;
 features()               if $features;
@@ -326,6 +331,7 @@ meta_only()		 if $meta_only;
 meta_no()		 if $meta_no;
 meta_add()		 if $meta_add;
 add_ID()		 if $add_ID;
+print_gff()              if $print_gff;
 #pragma($pragma)	 if $pragma;
 
 #-----------------------------------------------------------------------------
@@ -531,7 +537,7 @@ sub alter_gff {
 
 sub hash_ag {
 
-    my ($hash_ag, $ag_code) = @_;
+    my ($ag_code) = @_;
 
     my %hash_ag;
     while (my $parser = get_next_parser()) {
@@ -549,8 +555,8 @@ sub hash_ag {
 
 	my $value = $hash_ag{$key};
 
-	my (@f) = eval $ag_code;
-	die "Fatal Error in code ref: $ag_code\n$@\n" if $@;
+	my (@f) = eval $code;
+	die "Fatal Error in code ref: $code\n$@\n" if $@;
 	next unless @f;
 
 	print $OUT to_gff3(\@f);
@@ -612,33 +618,649 @@ sub hash_ag {
 #		  STDOUT.
 #-----------------------------------------------------------------------------
 
-sub validate_gff3 {
+sub validate {
 
-#    my $so_file = shift;
-#
-#    my ($sequence_features, $sequence_alterations, $sequence_variants,
-#	$part_of_closure) = parse_so($so_file);
-#
-#    for my $file (@files) {
-#	print "Validating: $file\n";
-#	open($IN, '<', $file) or
-#	    die "FATAL : cant_open_file_for_reading : $file\n";
-#      LINE:
-#	while ($line = <$IN>) {
-#	    next LINE if $line =~ /^\#[^\#]/;
-#	    next LINE if $line =~ /^\s*$/;
-#	    if ($line =~ /^\#\#gff-version/) {
-#
-#	    }
-#	    if ($line =~ /^\#\#gvf-version\s+(.*)/) {
-#		close $IN;
-#		validate_gvf($file);
-#		last LINE;
-#	    }
-#
-#
-#}
-#
+    my $so_terms = get_so_data();
+
+    for my $file (@files) {
+	print "Validating: $file\n";
+	open(my $IN, '<', $file) or
+	    die "FATAL : cant_open_file_for_reading : $file\n";
+
+	my $line_count;
+	my %pragmas;
+	my %errors;
+	my $gff_version;
+	my $gvf_version;
+	my %feature_ids;
+	my %parents;
+      LINE:
+	while (my $line = <$IN>) {
+	    chomp $line;
+	    $line_count++;
+	    next LINE if $line =~ /^\s*$/;
+	    next LINE if $line =~ /^\#[^\#]/;
+	    # Features
+	    if ($line !~ /^\#/) {
+		if ($line !~ /\t/) {
+		    my $error_code = 'invalid_feature_line_not_tab_delimited';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		my @columns = split /\t/, $line;
+		if (scalar @columns != 9) {
+		    my $error_code = 'invalid_feature_line_must_have_nine_columns';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		my ($seqid, $source, $type, $start, $end, $score, $strand,
+		    $phase, $att_text) = @columns;
+		# Seqid Characters
+		if ($seqid =~ /[^a-zA-Z0-9\.:\^\*\$@!\+_\?\-\|]/) {
+		    my $error_code = 'invalid_characters_in_seqid_column';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : ($1) $line\n";
+		}
+		# Seqid and sequence-region
+		if ($pragmas{'sequence-region'} && ! $pragmas{'sequence-region'}{$seqid}) {
+		    my $error_code = 'invalid_seqid_column_no_associated_sequence_region';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Type
+		if (! $so_terms->{$type}) {
+		    my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Start
+		if ($start !~ /^\d+$/) {
+		    my $error_code = 'invalid_start_column_must_be_positive_integer';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		    # Do bounds checking if sequence-region
+		}
+		# End
+		if ($end !~ /^\d+$/) {
+		    my $error_code = 'invalid_end_column_must_be_positive_integer';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		    # Do bounds checking if sequence-region
+		}
+		if ($start > $end) {
+		    my $error_code = 'invalid_feature_coordinates_start_is_greater_than_end';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Score
+		if ($score ne '.' && $score !~ /^\-?\d+\.?\d*e?\-?\d*$/) {
+		    my $error_code = 'invalid_score_column_must_be_real_number';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Strand
+		if ($strand  !~ /^[\.\-+\?]$/) {
+		    my $error_code = 'invalid_strand_column';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Phase
+		if ($phase  !~ /^[\.012]$/) {
+		    my $error_code = 'invalid_character_in_phase_column';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Phase && CDS
+		if ($type eq 'CDS' && $phase  !~ /^[012]$/) {
+		    my $error_code = 'phase_is_required_for_CDS';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Phase ! CDS
+		if ($type ne 'CDS' && $phase  =~ /^[012]$/) {
+		    my $error_code = 'phase_is_given_for_non_CDS_feature_type';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Attributes
+		my %attributes;		
+		my @pairs = split /;/, $att_text;
+	      PAIR:
+		for my $pair (@pairs) {
+		    if ($pair !~ /(=)/) {
+			my $error_code = 'attribute_key_value_pairs_must_be_separated_by_equal_sign';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : ($pair) $line\n";
+			next PAIR;
+		    }
+		    my ($key, $value) = split /=/, $pair;
+		    if (! $key || ! $value) {
+			my $error_code = 'attribute_key_value_pairs_must_be_separated_by_equal_sign';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+			next PAIR;
+		    }
+		    my @values = split /,/, $value;
+		    push @{$attributes{$key}}, @values;
+		}
+		for my $key (sort keys %attributes) {
+		    my @values = @{$attributes{$key}};
+		    # ID
+		    if ($key eq 'ID') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_ID_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_ids = join ' ', @values;
+				warn "WARNING : $error_code : ($all_ids) $line\n";
+			}
+			my $id = $values[0];
+			if (++$feature_ids{$id} > 1) {
+				my $error_code = 'invalid_ID_attribute_not_unique';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($id) $line\n";
+			}
+		    }
+		    # Name
+		    elsif ($key eq 'Name') {
+		    }
+		    # Alias
+		    elsif ($key eq 'Alias') {
+		    }
+		    # Parent
+		    elsif ($key eq 'Parent') {
+			for my $value (@values) {
+			    my $id = $attributes{ID}[0];
+			    $parents{$id}{$value}++;
+			}
+		    }
+		    # Target
+		    elsif ($key eq 'Target') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Target_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			if ($value !~ /\S+\s+\d+\s+\d+\s*[\-+]*/) {
+			    my $error_code = 'invalid_Target_attribute_value';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : ($value) $line\n";
+			}
+		    }
+		    # Gap
+		    elsif ($key eq 'Gap') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Gap_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			# TODO: Validate the CIGAR format
+		    }
+		    # Derives_from
+		    elsif ($key eq 'Derives_from') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Derives_from_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			# TODO: Validate the Derives_from relationships
+		    }
+		    # Note
+		    elsif ($key eq 'Note') {
+		    }
+		    # Dbxref
+		    elsif ($key eq 'Dbxref') {
+			for my $value (@values) {
+			    my ($db, $ID) = split /:/, $value;
+			    # TODO: Validate the Dbxref DB and ID;
+			}
+		    }
+		    # Ontology_term
+		    elsif ($key eq 'Ontology_term') {
+			# TODO: Validate Ontology_term
+		    }
+		    # Is_circular
+		    elsif ($key eq 'Is_circular') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Is_circular_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			# TODO: Validate Is_circular
+		    }
+		    # Variant_seq
+		    elsif ($key eq 'Variant_seq') {
+			for my $value (@values) {
+			    if ($value !~ /[ATGCN]/) {
+				my $error_code = 'invalid_Variant_seq_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }
+		    # Reference_seq
+		    elsif ($key eq 'Reference_seq') {
+			for my $value (@values) {
+			    if ($value !~ /[ATGCN]/) {
+				my $error_code = 'invalid_Reference_seq_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }
+		    # Variant_reads
+		    elsif ($key eq 'Variant_reads') {
+			for my $value (@values) {
+			    if ($value !~ /^\d+$/) {
+				my $error_code = 'invalid_Variant_reads_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }
+		    # Total_reads
+		    elsif ($key eq 'Total_reads') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Total_reads_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			if ($value !~ /^\d+$/) {
+			    my $error_code = 'invalid_Total_reads_attribute_value';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : ($value) $line\n";
+			}
+		    }
+		    # Genotype
+		    elsif ($key eq 'Genotype') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Genotype_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			if ($value !~ /^(hetero|homo|hemi)zygous$/) {
+			    my $error_code = 'invalid_Genotype_attribute_value';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : ($value) $line\n";
+			}
+		    }
+		    # Variant_freq
+		    elsif ($key eq 'Variant_freq') {
+			for my $value (@values) {
+			    if ($value !~ /^\d+\.?\d*\e?\-?\d*/) {
+				my $error_code = 'invalid_Variant_freq_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }
+		    # Variant_effect
+		    elsif ($key eq 'Variant_effect') {
+			my $value = join ',', @values;
+			my ($sequence_variant, $index, $feature_type, @featureIDs) = split /\s+/;
+			# TODO: Validate $sequence_variant
+			if ($index !~ /^[0-3]$/) {
+			    my $error_code = 'invalid_Variant_effect_attribute_index_value';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : ($index) $line\n";
+			}
+			if (! $so_terms->{$feature_type}) {
+			    my $error_code = 'invalid_Variant_effect_attribute_feature_type_value';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : ($feature_type) $line\n";
+			}
+			# TODO: Validate featureIDs
+		    }
+		    # Variant_copy_number
+		    elsif ($key eq 'Variant_copy_number') {
+			for my $value (@values) {
+			    if ($value !~ /^d+$/) {
+				my $error_code = 'invalid_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }
+		    # Reference_copy_number
+		    elsif ($key eq 'Reference_copy_number') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Reference_copy_number_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			for my $value (@values) {
+			    if ($value !~ /^\d+$/) {
+				my $error_code = 'invalid_Reference_copy_number_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }
+		    # Start_range
+		    elsif ($key eq 'Start_range') {
+			for my $value (@values) {
+			    if ($value ne '.' && $value !~ /^\d+$/) {
+				my $error_code = 'invalid_Start_range_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }	
+		    # End_range
+		    elsif ($key eq 'End_range') {
+			my $value = $values[0];
+			for my $value (@values) {
+			    if ($value ne '.' && $value !~ /^\d+$/) {
+				my $error_code = 'invalid_End_range_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }
+		    # Phased
+		    elsif ($key eq 'Phased') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Phased_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			# TODO: Validate the Phased attribute
+		    }
+		}
+	    }
+	    # Pragmas
+	    elsif ($line =~ /^\#\#/) {
+		##gff-version
+		if ($line =~ /^\#\#gff-version/) {
+		    if ($line =~ /^\#\#gff-version\s+(\d+\.?\d*)/) {
+			$pragmas{'gff-version'} = $1;
+		    }
+		    else {
+			my $error_code = 'invalid_gff-version_pragma_value';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##gvf-version
+		elsif ($line =~ /^\#\#gvf-version/) {
+		    if ($line =~ /^\#\#gvf-version\s+(\d+\.?\d*)/) {
+			$pragmas{'gvf-version'} = $1;
+		    }
+		    else {
+			my $error_code = 'invalid_gvf-version_pragma_value';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		###
+		elsif ($line =~ /^\#\#\#/) {
+		    next LINE;
+		}
+		##FASTA
+		elsif ($line =~ /^\#\#FASTA/) {
+		    last LINE;
+		}
+		##sequence-region
+		elsif ($line =~ /^\#\#sequence-region/) {
+		    if ($line =~ /^\#\#(sequence-region)\s+(\S+)\s+(\d+)\s+(\d+)/) {
+			my $pragma_key   = $1;
+			my $seqid        = $2;
+			my $start        = $3;
+			my $end          = $4;
+			$pragmas{$pragma_key}{$seqid} = [$start, $end];
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##feature-ontology
+		elsif ($line =~ /^\#\#feature-ontology/) {
+		    if ($line =~ /^\#\#(feature-ontology)\s+(\S+)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+			# test_uri($pragma_value);
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##attribute-ontology
+		elsif ($line =~ /^\#\#attribute-ontology/) {
+		    if ($line =~ /^\#\#(attribute-ontology)\s+(\S+)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+			# test_uri($pragma_value);
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##source-ontology
+		elsif ($line =~ /^\#\#source-ontology/) {
+		    if ($line =~ /^\#\#(source-ontology)\s+(\S+)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+			# test_uri($pragma_value);
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##species
+		elsif ($line =~ /^\#\#species/) {
+		    if ($line =~ /^\#\#(species)\s+(\S+)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+			# test_uri($pragma_value);
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##genome-build
+		elsif ($line =~ /^\#\#genome-build/) {
+		    if ($line =~ /^\#\#(genome-build)\s+(\S+)\s+(\S+)/) {
+			my $pragma_key = $1;
+			my $source     = $2;
+			my $build_name = $3;
+			$pragmas{$pragma_key}{$source} = $build_name;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##file-date
+		elsif ($line =~ /^\#\#file-date /) {
+		    if ($line =~ /^\#\#(file-date)\s+(20[1-9][0-9]-\d\d-\d\d)/) {
+			my $pragma_key = $1;
+			my $date       = $2;
+			$pragmas{$pragma_key} = $date;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##file-version
+		elsif ($line =~ /^\#\#file-version /) {
+		    if ($line =~ /^\#\#(file-version)\s+(.*?)/) {
+			my $pragma_key = $1;
+			my $version    = $2;
+			$pragmas{$pragma_key} = $version;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##individual-id
+		elsif ($line =~ /^\#\#individual-id/) {
+		    if ($line =~ /^\#\#(individual-id)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##score-method
+		elsif ($line =~ /^\#\#score-method/) {
+		    if ($line =~ /^\#\#(score-method)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##source-method
+		elsif ($line =~ /^\#\#source-method/) {
+		    if ($line =~ /^\#\#(source-method)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##attribute-method
+		elsif ($line =~ /^\#\#attribute-method/) {
+		    if ($line =~ /^\#\#(attribute-method)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##technology-platform
+		elsif ($line =~ /^\#\#technology-platform/) {
+		    if ($line =~ /^\#\#(technology-platform)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##data-source
+		elsif ($line =~ /^\#\#data-source/) {
+		    if ($line =~ /^\#\#(data-source)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##phenotype-description
+		elsif ($line =~ /^\#\#phenotype-description/) {
+		    if ($line =~ /^\#\#(phenotype-description)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##phased-genotypes
+		elsif ($line =~ /^\#\#phased-genotypes/) {
+		    if ($line =~ /^\#\#(phased-genotypes)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		# All other pragmas
+		else { 
+		    $line =~ /^\#\#(\S+)\s*(.*)/;
+		    my $pragma_key   = $1;
+		    my $pragma_value = $2;
+		    my $error_code = 'non_standard_pragma';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		    push @{$pragmas{$pragma_key}}, $pragma_value;
+		}
+	    }
+	}
+	close $IN;
+	print "\n\n";
+	print "Error Summary for $file\n";
+	print '#' x 80;
+	print "\n";
+	if (scalar keys %errors) {
+	    print "Error Code\tCount\n";
+	    for my $error_code (keys %errors) {
+		print "$error_code\t" . scalar @{$errors{$error_code}} . "\n";
+	    }
+	}
+	else {
+	    print "No Errors found in this file\n";
+	}
+	print '#' x 80;
+	print "\n\n";
+    }
+}
+
 ##-----------------------------------------------------------------------------
 #
 #sub parse_so {
@@ -728,7 +1350,7 @@ sub validate_gff3 {
 #    }
 #    return ($sequence_features, $sequence_alterations, $sequence_variants,
 #	    $part_of_closure);
-}
+#}
 
 #-----------------------------------------------------------------------------
 #  stats|u	  Return simple summary statistics for the given file.
@@ -1020,7 +1642,7 @@ sub to_gff3 {
 		       Reference_seq         => 12,
 		       Variant_reads         => 13,
 		       Total_reads	     => 14,
-		       Genotype	     => 15,
+		       Genotype	             => 15,
 		       Variant_effect        => 16,
 		       Variant_copy_number   => 17,
 		       Reference_copy_number => 18,
@@ -1053,3 +1675,4041 @@ sub to_gff3 {
     }
     return $gff3_text;
 }
+
+#-----------------------------------------------------------------------------
+
+sub get_so_data {    
+    my %so_terms = map {chomp;$_ => 1} (<DATA>);
+
+    return \%so_terms;
+}
+
+#-----------------------------------------------------------------------------
+
+__DATA__
+2KB_upstream_variant
+3D_polypeptide_structure_variant
+3_prime_UTR_variant
+500B_downstream_variant
+5KB_downstream_variant
+5KB_upstream_variant
+5_prime_UTR_variant
+aberrant_processed_transcript
+A_box
+A_box_type_1
+A_box_type_2
+active_peptide
+adaptive_island
+adjacent_to
+alanine
+alanine_tRNA_primary_transcript
+alanyl_tRNA
+allele
+allelically_excluded
+allelically_excluded_gene
+allopolyploid
+alpha_beta_motif
+alpha_helix
+alteration_attribute
+alternately_spliced_gene_encodeing_one_transcript
+alternately_spliced_gene_encoding_greater_than_one_transcript
+alternate_sequence_site
+alternatively_spliced
+alternatively_spliced_gene_encoding_greater_than_1_polypeptide_coding_regions_overlapping
+alternatively_spliced_transcript
+alternatively_spliced_transcript_encoding_greater_than_1_polypeptide_different_start_codon_different_stop_codon_coding_regions_non_overlapping
+ambisense_ssRNA_viral_sequence
+amino_acid
+amino_acid_deletion
+amino_acid_insertion
+amino_acid_substitution
+A_minor_RNA_motif
+amplification_origin
+anchor_binding_site
+anchor_region
+aneuploid
+aneuploid_chromosome
+annotation_directed_improved_draft
+anticodon
+anticodon_loop
+antiparallel_beta_strand
+antisense
+antisense_primary_transcript
+antisense_RNA
+apicoplast_chromosome
+apicoplast_gene
+apicoplast_sequence
+aptamer
+archaeal_intron
+archaeosine
+arginine
+arginine_tRNA_primary_transcript
+arginyl_tRNA
+ARS
+asparagine
+asparagine_tRNA_primary_transcript
+asparaginyl_tRNA
+aspartic_acid
+aspartic_acid_tRNA_primary_transcript
+aspartyl_tRNA
+assembly
+assembly_component
+assembly_error_correction
+associated_with
+assortment_derived_aneuploid
+assortment_derived_aneuploid
+assortment_derived_deficiency
+assortment_derived_deficiency
+assortment_derived_deficiency_plus_duplication
+assortment_derived_deficiency_plus_duplication
+assortment_derived_duplication
+assortment_derived_duplication
+assortment_derived_variation
+asx_motif
+asx_turn
+asx_turn_left_handed_type_one
+asx_turn_left_handed_type_two
+asx_turn_right_handed_type_one
+asx_turn_right_handed_type_two
+asymmetric_RNA_internal_loop
+A_to_C_transversion
+A_to_G_transition
+A_to_T_transversion
+attB_site
+attC_site
+attCtn_site
+attenuator
+attI_site
+attL_site
+attP_site
+attR_site
+AU_rich_element
+autocatalytically_spliced_intron
+autopolyploid
+autoregulated
+autosynaptic_chromosome
+BAC
+BAC_clone
+BAC_cloned_genomic_insert
+BAC_end
+bacterial_RNApol_promoter
+bacterial_RNApol_promoter_region
+bacterial_RNApol_promoter_sigma54
+bacterial_RNApol_promoter_sigma_70
+bacterial_terminator
+base
+base_call_error_correction
+base_pair
+B_box
+beta_bulge
+beta_bulge_loop
+beta_bulge_loop_five
+beta_bulge_loop_six
+beta_strand
+beta_turn
+beta_turn_left_handed_type_one
+beta_turn_left_handed_type_two
+beta_turn_right_handed_type_one
+beta_turn_right_handed_type_two
+beta_turn_type_eight
+beta_turn_type_six
+beta_turn_type_six_a
+beta_turn_type_six_a_one
+beta_turn_type_six_a_two
+beta_turn_type_six_b
+bidirectional_promoter
+binding_site
+biochemical_region_of_peptide
+biological_region
+biomaterial_region
+bipartite_duplication
+bipartite_inversion
+blocked_reading_frame
+blunt_end_restriction_enzyme_cleavage_junction
+blunt_end_restriction_enzyme_cleavage_site
+bound_by_factor
+bound_by_nucleic_acid
+bound_by_protein
+branch_site
+BREd_motif
+BREu_motif
+Bruno_response_element
+CAAT_signal
+canonical_five_prime_splice_site
+canonical_splice_site
+canonical_three_prime_splice_site
+cap
+capped
+capped_mRNA
+capped_primary_transcript
+cassette_array_member
+cassette_pseudogene
+catalytic_residue
+catmat_left_handed_four
+catmat_left_handed_three
+catmat_right_handed_four
+catmat_right_handed_three
+C_box
+CCA_tail
+C_cluster
+C_D_box_snoRNA
+C_D_box_snoRNA_encoding
+C_D_box_snoRNA_primary_transcript
+cDNA
+cDNA_clone
+cDNA_match
+CDS
+CDS_fragment
+CDS_independently_known
+CDS_predicted
+CDS_region
+CDS_supported_by_domain_match_data
+CDS_supported_by_EST_or_cDNA_data
+CDS_supported_by_sequence_similarity_data
+central_hydrophobic_region_of_signal_peptide
+centromere
+centromere_DNA_Element_I
+centromere_DNA_Element_II
+centromere_DNA_Element_III
+C_gene
+chimeric_cDNA_clone
+CHiP_seq_region
+chloroplast_chromosome
+chloroplast_DNA
+chloroplast_sequence
+chromoplast_chromosome
+chromoplast_gene
+chromoplast_sequence
+chromosomal_deletion
+chromosomal_duplication
+chromosomal_inversion
+chromosomally_aberrant_genome
+chromosomal_regulatory_element
+chromosomal_structural_element
+chromosomal_translocation
+chromosomal_transposition
+chromosomal_variation_attribute
+chromosome
+chromosome_arm
+chromosome_band
+chromosome_breakage_sequence
+chromosome_breakpoint
+chromosome_fission
+chromosome_number_variation
+chromosome_part
+chromosome_structure_variation
+chromosome_variation
+circular
+circular_double_stranded_DNA_chromosome
+circular_double_stranded_RNA_chromosome
+circular_single_stranded_DNA_chromosome
+circular_single_stranded_RNA_chromosome
+cis_regulatory_frameshift_element
+cis_splice_site
+class_II_RNA
+class_I_RNA
+cleaved_for_gpi_anchor_region
+cleaved_initiator_methionine
+cleaved_peptide_region
+clip
+clone
+clone_attribute
+cloned
+cloned_cDNA
+cloned_cDNA_insert
+cloned_genomic
+cloned_genomic_insert
+cloned_region
+clone_insert
+clone_insert_end
+clone_insert_start
+clone_insert_start
+coding_conserved_region
+coding_end
+coding_exon
+coding_region_of_exon
+coding_sequence_variant
+coding_start
+codon
+codon_redefined
+codon_variant
+coiled_coil
+cointegrated_plasmid
+compensatory_transcript_secondary_structure_variant
+complete_evidence_for_feature
+complex_3D_structural_variant
+complex_change_in_transcript
+complex_change_of_translational_product_variant
+complex_chromosomal_mutation
+complex_substitution
+compositionally_biased_region_of_peptide
+compound_chromosome
+compound_chromosome_arm
+computed_feature
+computed_feature_by_similarity
+conformational_change_variant
+conformational_switch
+conjugative_transposon
+connects_on
+consensus
+consensus_mRNA
+consensus_region
+conservative_amino_acid_substitution
+conservative_missense_codon
+conserved
+conserved_region
+contained_by
+contains
+contig
+contig_collection
+contig_read
+copy_number_change
+copy_number_variation
+core_promoter_element
+cosmid
+cosmid_clone
+covalent_binding_site
+CpG_island
+CRISPR
+CRM
+cross_genome_match
+cross_link
+cryptic
+cryptic_gene
+cryptic_prophage
+cryptic_splice_acceptor
+cryptic_splice_donor
+cryptic_splice_site
+cryptic_splice_site_variant
+cryptogene
+CsrB_RsmB_RNA
+c_terminal_region
+ct_gene
+CTG_start_codon
+C_to_A_transversion
+C_to_G_transversion
+C_to_T_transition
+C_to_T_transition_at_pCpG_site
+cyanelle_chromosome
+cyanelle_gene
+cyanelle_sequence
+cyclic_translocation
+cysteine
+cysteine_tRNA_primary_transcript
+cysteinyl_tRNA
+cytoplasmic_polypeptide_region
+DArT_marker
+databank_entry
+DCE
+DCE_SI
+DCE_SII
+DCE_SIII
+D_cluster
+D_DJ_C_cluster
+D_DJ_cluster
+D_DJ_J_C_cluster
+D_DJ_J_cluster
+decayed_exon
+decreased_transcript_level
+decreased_translational_product_level
+decrease_transcription_rate
+decrease_transcript_stability
+defective_conjugative_transposon
+deficient_interchromosomal_transposition
+deficient_intrachromosomal_transposition
+deficient_inversion
+deficient_translocation
+delete
+delete_U
+deletion
+deletion_breakpoint
+deletion_junction
+derives_from
+designed_sequence
+dexstrosynaptic_chromosome
+D_gene
+D_gene_recombination_feature
+DHU_loop
+dicistronic
+dicistronic_mRNA
+dicistronic_primary_transcript
+dicistronic_transcript
+dif_site
+dihydrouridine
+dinucleotide_repeat_microsatellite_feature
+diplotype
+direct
+direction_attribute
+direct_repeat
+direct_tandem_duplication
+disconnected_from
+dispersed_repeat
+distal_promoter_element
+distant_three_prime_recoding_signal
+disulfide_bond
+D_J_C_cluster
+DJ_C_cluster
+D_J_cluster
+DJ_gene
+DJ_J_C_cluster
+DJ_J_cluster
+D_loop
+DMv1_motif
+DMv2_motif
+DMv3_motif
+DMv4_motif
+DMv5_motif
+DNA
+DNA_aptamer
+DNA_binding_site
+DNA_chromosome
+DNA_constraint_sequence
+DNA_invertase_target_sequence
+DNA_motif
+DNA_replication_mode
+DNAseI_hypersensitive_site
+DNA_sequence_secondary_structure
+DNA_transposon
+DNAzyme
+double
+double_stranded_cDNA
+double_stranded_DNA_chromosome
+double_stranded_RNA_chromosome
+downstream_gene_variant
+DPE1_motif
+DPE_motif
+DRE_motif
+ds_DNA_viral_sequence
+ds_oligo
+DsrA_RNA
+ds_RNA_viral_sequence
+duplication
+duplication_attribute
+dye_terminator_read
+E_box_motif
+edited
+edited_by_A_to_I_substitution
+edited_by_C_insertion_and_dinucleotide_insertion
+edited_by_C_to_U_substitution
+edited_by_G_addition
+edited_CDS
+edited_from
+edited_mRNA
+edited_to
+edited_transcript
+edited_transcript_by_A_to_I_substitution
+edited_transcript_feature
+editing_block
+editing_domain
+editing_variant
+edit_operation
+eight_cutter_restriction_site
+elongated_in_frame_polypeptide_C_terminal
+elongated_in_frame_polypeptide_N_terminal_elongation
+elongated_out_of_frame_polypeptide_C_terminal
+elongated_out_of_frame_polypeptide_N_terminal
+elongated_polypeptide
+elongated_polypeptide_C_terminal
+elongated_polypeptide_N_terminal
+encodes_1_polypeptide
+encodes_alternately_spliced_transcripts
+encodes_alternate_transcription_start_sites
+encodes_different_polypeptides_different_stop
+encodes_disjoint_polypeptides
+encodes_greater_than_1_polypeptide
+encodes_overlapping_peptides
+encodes_overlapping_peptides_different_start
+encodes_overlapping_polypeptides_different_start_and_stop
+endogenous_retroviral_gene
+endogenous_retroviral_sequence
+endonuclease_spliced_intron
+endosomal_localization_signal
+end_overlapping_gene
+engineered
+engineered_DNA
+engineered_episome
+engineered_foreign_gene
+engineered_foreign_region
+engineered_foreign_repetitive_element
+engineered_foreign_transposable_element
+engineered_foreign_transposable_element_gene
+engineered_fusion_gene
+engineered_gene
+engineered_insert
+engineered_plasmid
+engineered_region
+engineered_rescue_region
+engineered_tag
+engineered_transposable_element
+enhanceosome
+enhancer
+enhancer_attribute
+enhancer_binding_site
+enhancer_bound_by_factor
+enhancer_trap_construct
+enzymatic
+enzymatic_RNA
+epigenetically_modified
+epigenetically_modified_gene
+epigenetically_modified_region
+episome
+epitope
+epoxyqueuosine
+EST
+EST_match
+eukaryotic_terminator
+evidence_for_feature
+exemplar
+exemplar_mRNA
+exemplar_of
+exon
+exonic_splice_enhancer
+exon_junction
+exon_loss
+exon_of_single_exon_gene
+exon_region
+experimental_feature
+experimental_feature_attribute
+experimentally_defined_binding_region
+experimentally_determined
+experimental_result_region
+expressed_sequence_assembly
+expressed_sequence_match
+external_transcribed_spacer_region
+extrachromosomal_mobile_genetic_element
+extramembrane_polypeptide_region
+feature_attribute
+fingerprint_map
+finished_by
+finished_genome
+finishes
+five_aminomethyl_two_thiouridine
+five_carbamoylmethyl_two_prime_O_methyluridine
+five_carbamoylmethyluridine
+five_carboxyhydroxymethyl_uridine
+five_carboxyhydroxymethyl_uridine_methyl_ester
+five_carboxymethylaminomethyl_two_prime_O_methyluridine
+five_carboxymethylaminomethyl_two_thiouridine
+five_carboxymethylaminomethyluridine
+five_carboxymethyluridine
+five_formylcytidine
+five_formyl_two_prime_O_methylcytidine
+five_hydroxymethylcytidine
+five_hydroxyuridine
+five_isopentenylaminomethyl_two_prime_O_methyluridine
+five_isopentenylaminomethyl_two_thiouridine
+five_isopentenylaminomethyl_uridine
+five_methoxycarbonylmethyl_two_prime_O_methyluridine
+five_methoxycarbonylmethyl_two_thiouridine
+five_methoxycarbonylmethyluridine
+five_methoxyuridine
+five_methyl_2_thiouridine
+five_methylaminomethyl_two_selenouridine
+five_methylaminomethyl_two_thiouridine
+five_methylaminomethyluridine
+five_methylcytidine
+five_methyldihydrouridine
+five_methyluridine
+five_prime_cis_splice_site
+five_prime_clip
+five_prime_coding_exon
+five_prime_coding_exon_coding_region
+five_prime_coding_exon_noncoding_region
+five_prime_D_heptamer
+five_prime_D_nonamer
+five_prime_D_recombination_signal_sequence
+five_prime_D_spacer
+five_prime_EST
+five_prime_five_prime_overlap
+five_prime_flanking_region
+five_prime_intron
+five_prime_LTR
+five_prime_LTR_component
+five_prime_noncoding_exon
+five_prime_open_reading_frame
+five_prime_recoding_site
+five_prime_restriction_enzyme_junction
+five_prime_RST
+five_prime_terminal_inverted_repeat
+five_prime_three_prime_overlap
+five_prime_UST
+five_prime_UTR
+five_prime_UTR_intron
+five_taurinomethyl_two_thiouridine
+five_taurinomethyluridine
+five_two_prime_O_dimethylcytidine
+five_two_prime_O_dimethyluridine
+flanked
+flanking_region
+flanking_three_prime_quadruplet_recoding_signal
+floxed
+floxed_gene
+foldback_element
+foreign
+foreign_gene
+foreign_transposable_element
+forward
+forward_primer
+fosmid
+fosmid_clone
+four_bp_start_codon
+four_cutter_restriction_site
+four_demethylwyosine
+four_thiouridine
+fragmentary
+fragment_assembly
+frame_restoring_sequence_variant
+frame_restoring_variant
+frameshift
+frameshift_sequence_variation
+frameshift_variant
+free
+free_chromosome_arm
+free_duplication
+free_ring_duplication
+FRT_flanked
+FRT_site
+functional_variant
+fusion
+fusion_gene
+GAGA_motif
+galactosyl_queuosine
+gamma_turn
+gamma_turn_classic
+gamma_turn_inverse
+gap
+GC_rich_promoter_region
+GcvB_RNA
+gene
+gene_array
+gene_array_member
+gene_attribute
+gene_by_genome_location
+gene_by_organelle_of_genome
+gene_by_polyadenylation_attribute
+gene_by_transcript_attribute
+gene_cassette
+gene_cassette_array
+gene_cassette_member
+gene_class
+gene_component_region
+gene_fragment
+gene_fusion
+gene_group
+gene_group_regulatory_region
+gene_member_region
+gene_not_polyadenylated
+gene_part
+gene_rearranged_at_DNA_level
+gene_segment
+gene_sensu_your_favorite_organism
+gene_silenced_by_DNA_methylation
+gene_silenced_by_DNA_modification
+gene_silenced_by_histone_deacetylation
+gene_silenced_by_histone_methylation
+gene_silenced_by_histone_modification
+gene_silenced_by_RNA_interference
+gene_structure_variant
+gene_subarray
+gene_subarray_member
+genetic_marker
+gene_to_gene_feature
+gene_trap_construct
+gene_with_dicistronic_mRNA
+gene_with_dicistronic_primary_transcript
+gene_with_dicistronic_transcript
+gene_with_edited_transcript
+gene_with_mRNA_recoded_by_translational_bypass
+gene_with_mRNA_with_frameshift
+gene_with_polyadenylated_mRNA
+gene_with_polycistronic_transcript
+gene_with_recoded_mRNA
+gene_with_stop_codon_read_through
+gene_with_stop_codon_redefined_as_pyrrolysine
+gene_with_stop_codon_redefined_as_selenocysteine
+gene_with_transcript_with_translational_frameshift
+gene_with_trans_spliced_transcript
+genome
+genome_of
+genomically_contaminated_cDNA_clone
+genomic_clone
+genomic_DNA
+genomic_island
+genotype
+glutamic_acid
+glutamic_acid_tRNA_primary_transcript
+glutamine
+glutamine_tRNA_primary_transcript
+glutaminyl_tRNA
+glutamyl_tRNA
+glycine
+glycine_tRNA_primary_transcript
+glycyl_tRNA
+GNA
+GNA_oligo
+golden_path
+golden_path_fragment
+G_quartet
+gRNA_encoding
+gRNA_gene
+group_1_intron_homing_endonuclease_target_region
+group_IIA_intron
+group_IIB_intron
+group_III_intron
+group_II_intron
+group_I_intron
+G_to_A_transition
+G_to_C_transversion
+G_to_T_transversion
+guided_by
+guide_RNA
+guide_RNA_region
+guides
+H2BK5_monomethylation_site
+H2B_ubiquitination_site
+H3K14_acetylation_site
+H3K18_acetylation_site
+H3K23_acylation
+H3K27_acylation_site
+H3K27_dimethylation_site
+H3K27_methylation_site
+H3K27_monomethylation_site
+H3K27_trimethylation_site
+H3K36_dimethylation_site
+H3K36_methylation_site
+H3K36_monomethylation_site
+H3K36_trimethylation_site
+H3K4_dimethylation_site
+H3K4_methylation_site
+H3K4_monomethylation_site
+H3K4_trimethylation
+H3K79_dimethylation_site
+H3K79_methylation_site
+H3K79_monomethylation_site
+H3K79_trimethylation_site
+H3K9_acetylation_site
+H3K9_dimethylation_site
+H3K9_methylation_site
+H3K9_monomethylation_site
+H3K9_trimethylation_site
+H4K16_acylation_site
+H4K20_monomethylation_site
+H4K5_acylation_site
+H4K8_acylation
+H4K_acylation_region
+H_ACA_box_snoRNA
+H_ACA_box_snoRNA_encoding
+H_ACA_box_snoRNA_primary_transcript
+hammerhead_ribozyme
+haplotype
+haplotype_block
+has_integral_part
+has_origin
+has_part
+has_quality
+helitron
+helix_turn_helix
+heptamer_of_recombination_feature_of_vertebrate_immune_system_gene
+heritable_phenotypic_marker
+hetero_compound_chromosome
+high_identity_region
+high_quality_draft
+histidine
+histidine_tRNA_primary_transcript
+histidyl_tRNA
+histone_acetylation_site
+histone_acylation_region
+histone_binding_site
+histone_methylation_site
+histone_modification
+histone_ubiqitination_site
+homing_endonuclease_binding_site
+homo_compound_chromosome
+homologous
+homologous_region
+homologous_to
+Hoogsteen_base_pair
+H_pseudoknot
+hydrophobic_region_of_peptide
+hydroxywybutosine
+hyperploid
+hypoploid
+iDNA
+immature_peptide_region
+i_motif
+imprinted
+improved_high_quality_draft
+inactive_catalytic_site
+inactive_ligand_binding_site
+incomplete_terminal_codon_variant
+increased_transcript_level
+increased_translational_product_level
+increase_transcription_rate
+increase_transcript_stability
+indel
+independently_known
+inframe_codon_gain
+inframe_codon_loss
+inframe_variant
+initiator_codon_change
+inosine
+INR1_motif
+INR_motif
+insert
+insert_AA
+insert_AU
+insert_C
+insert_CU
+insert_dinucleotide
+insert_G
+insert_GC
+insert_GU
+insertion
+insertional
+insertional_duplication
+insertion_attribute
+insertion_breakpoint
+insertion_sequence
+insertion_site
+insert_U
+inside_intron
+inside_intron_antiparallel
+inside_intron_parallel
+insulator
+insulator_binding_site
+integral_part_of
+integrase_coding_region
+integrated_mobile_genetic_element
+integrated_plasmid
+integration_excision_site
+integron
+intein
+intein_containing
+interband
+interchromosomal
+interchromosomal_duplication
+interchromosomal_mutation
+interchromosomal_transposition
+intergenic_region
+intergenic_variant
+interior_coding_exon
+interior_exon
+interior_intron
+intermediate
+intermediate_element
+internal_eliminated_sequence
+internal_guide_sequence
+internal_ribosome_entry_site
+internal_Shine_Dalgarno_sequence
+internal_transcribed_spacer_region
+internal_UTR
+intrachromosomal
+intrachromosomal_duplication
+intrachromosomal_mutation
+intrachromosomal_transposition
+intramembrane_polypeptide_region
+intrinsically_unstructured_polypeptide_region
+introgressed_chromosome_region
+intron
+intron_attribute
+intron_domain
+intron_gain
+intronic_regulatory_region
+intronic_splice_enhancer
+intron_variant
+invalidated
+invalidated_by_chimeric_cDNA
+invalidated_by_genomic_contamination
+invalidated_by_genomic_polyA_primed_cDNA
+invalidated_by_partial_processing
+invalidated_cDNA_clone
+inversion
+inversion_attribute
+inversion_breakpoint
+inversion_cum_translocation
+inversion_derived_aneuploid_chromosome
+inversion_derived_bipartite_deficiency
+inversion_derived_bipartite_duplication
+inversion_derived_deficiency_plus_aneuploid
+inversion_derived_deficiency_plus_duplication
+inversion_derived_duplication_plus_aneuploid
+inversion_site
+inversion_site_part
+invert
+inverted
+inverted_insertional_duplication
+inverted_interchromosomal_transposition
+inverted_intrachromosomal_transposition
+inverted_repeat
+inverted_ring_chromosome
+inverted_tandem_duplication
+IRLinv_site
+iron_responsive_element
+IRRinv_site
+is_consecutive_sequence_of
+isoleucine
+isoleucine_tRNA_primary_transcript
+isoleucyl_tRNA
+isowyosine
+ISRE
+J_C_cluster
+J_cluster
+J_gene
+J_gene_recombination_feature
+J_heptamer
+J_nonamer
+J_spacer
+junction
+kinetoplast
+kinetoplast_gene
+kozak_sequence
+K_turn_RNA_motif
+laevosynaptic_chromosome
+lambda_clone
+lambda_vector
+large_subunit_rRNA
+left_handed_peptide_helix
+leucine
+leucine_tRNA_primary_transcript
+leucoplast_chromosome
+leucoplast_gene
+leucoplast_sequence
+leucyl_tRNA
+level_of_transcript_variant
+ligand_binding_site
+ligation_based_read
+lincRNA
+lincRNA_gene
+linear
+linear_double_stranded_DNA_chromosome
+linear_double_stranded_RNA_chromosome
+linear_single_stranded_DNA_chromosome
+linear_single_stranded_RNA_chromosome
+LINE_element
+linkage_group
+lipoprotein_signal_peptide
+LNA
+LNA_oligo
+locus_control_region
+long_terminal_repeat
+low_complexity
+low_complexity_region
+loxP_site
+LTR_component
+LTR_retrotransposon
+lysidine
+lysine
+lysine_tRNA_primary_transcript
+lysosomal_localization_signal
+lysyl_tRNA
+macronuclear_chromosome
+macronuclear_sequence
+macronucleus_destined_segment
+major_TSS
+mannosyl_queuosine
+match
+match_part
+match_set
+maternally_imprinted
+maternally_imprinted_gene
+mathematically_defined_repeat
+matrix_attachment_site
+mature_miRNA_variant
+mature_protein_region
+mature_transcript
+mature_transcript_region
+maxicircle
+maxicircle_gene
+maximally_overlaps
+member_of
+member_of_regulon
+membrane_peptide_loop
+membrane_structure
+metabolic_island
+metal_binding_site
+methionine
+methionine_tRNA_primary_transcript
+methionyl_tRNA
+methylated_A
+methylated_base_feature
+methylated_C
+methylation_guide_snoRNA
+methylation_guide_snoRNA_primary_transcript
+methylinosine
+methylwyosine
+MicF_RNA
+microarray_oligo
+micronuclear_chromosome
+micronuclear_sequence
+microsatellite
+minicircle
+minicircle_gene
+mini_exon_donor_RNA
+mini_gene
+minisatellite
+minor_TSS
+minus_10_signal
+minus_12_signal
+minus_1_frameshift
+minus_1_frameshift_variant
+minus_1_translationally_frameshifted
+minus_24_signal
+minus_2_frameshift
+minus_2_frameshift_variant
+minus_35_signal
+miRNA
+miRNA_antiguide
+miRNA_encoding
+miRNA_gene
+miRNA_loop
+miRNA_primary_transcript
+miRNA_primary_transcript_region
+miRNA_stem
+miRNA_target_site
+mirtron
+MITE
+mitochondrial_chromosome
+mitochondrial_DNA
+mitochondrial_sequence
+MNP
+mobile
+mobile_genetic_element
+mobile_intron
+modified_adenosine
+modified_amino_acid_feature
+modified_base
+modified_cytidine
+modified_glycine
+modified_guanosine
+modified_inosine
+modified_L_alanine
+modified_L_arginine
+modified_L_asparagine
+modified_L_aspartic_acid
+modified_L_cysteine
+modified_L_glutamic_acid
+modified_L_glutamine
+modified_L_histidine
+modified_L_isoleucine
+modified_L_leucine
+modified_L_lysine
+modified_L_methionine
+modified_L_phenylalanine
+modified_L_proline
+modified_L_selenocysteine
+modified_L_serine
+modified_L_threonine
+modified_L_tryptophan
+modified_L_tyrosine
+modified_L_valine
+modified_RNA_base_feature
+modified_uridine
+molecular_contact_region
+monocistronic
+monocistronic_mRNA
+monocistronic_primary_transcript
+monocistronic_transcript
+morpholino
+morpholino_oligo
+mRNA
+mRNA_attribute
+mRNA_by_polyadenylation_status
+mRNA_not_polyadenylated
+mRNA_recoded_by_codon_redefinition
+mRNA_recoded_by_translational_bypass
+mRNA_region
+mRNA_with_frameshift
+mRNA_with_minus_1_frameshift
+mRNA_with_minus_2_frameshift
+mRNA_with_plus_1_frameshift
+mRNA_with_plus_2_frameshift
+MTE
+mt_gene
+mutated_variant_site
+mutation_causing_inframe_polypeptide_N_terminal_elongation
+mutation_causing_out_of_frame_polypeptide_C_terminal_elongation
+mutation_causing_out_of_frame_polypeptide_N_terminal_elongation
+mutation_causing_polypeptide_C_terminal_elongation
+mutation_causing_polypeptide_N_terminal_elongation
+mutaton_causing_inframe_polypeptide_C_terminal_elongation
+N2_2_prime_O_dimethylguanosine
+N2_7_2prirme_O_trimethylguanosine
+N2_7_dimethylguanosine
+N2_methylguanosine
+N2_N2_2_prime_O_trimethylguanosine
+N2_N2_7_trimethylguanosine
+N2_N2_dimethylguanosine
+N4_2_prime_O_dimethylcytidine
+N4_acetyl_2_prime_O_methylcytidine
+N4_acetylcytidine
+N4_methylcytidine
+N4_N4_2_prime_O_trimethylcytidine
+N6_2_prime_O_dimethyladenosine
+N6_acetyladenosine
+N6_cis_hydroxyisopentenyl_adenosine
+N6_glycinylcarbamoyladenosine
+N6_hydroxynorvalylcarbamoyladenosine
+N6_isopentenyladenosine
+N6_methyladenosine
+N6_methyl_N6_threonylcarbamoyladenosine
+N6_N6_2_prime_O_trimethyladenosine
+N6_N6_dimethyladenosine
+N6_threonylcarbamoyladenosine
+natural
+natural_plasmid
+natural_transposable_element
+natural_variant_site
+nc_conserved_region
+nc_primary_transcript
+ncRNA
+ncRNA_gene
+nc_transcript_variant
+NDM2_motif
+NDM3_motif
+negatively_autoregulated
+negatively_autoregulated_gene
+negative_sense_ssRNA_viral_sequence
+nested_region
+nested_repeat
+nested_repeat
+nested_tandem_repeat
+nested_transposon
+nested_transposon
+NMD_transcript_variant
+non_adjacent_residues
+nonamer_of_recombination_feature_of_vertebrate_immune_system_gene
+non_canonical_five_prime_splice_site
+non_canonical_splice_site
+non_canonical_start_codon
+non_canonical_three_prime_splice_site
+non_capped_primary_transcript
+noncoding_exon
+noncoding_region_of_exon
+non_conservative_amino_acid_substitution
+non_conservative_missense_codon
+noncontiguous_finished
+non_covalent_binding_site
+non_cytoplasmic_polypeptide_region
+non_functional_homolog_of
+non_LTR_retrotransposon
+non_LTR_retrotransposon_polymeric_tract
+non_protein_coding
+non_synonymous_codon
+non_terminal_residue
+non_transcribed_region
+no_output
+n_terminal_region
+nuclear_chromosome
+nuclear_export_signal
+nuclear_gene
+nuclear_localization_signal
+nuclear_mitochondrial
+nuclear_mt_pseudogene
+nuclear_rim_localization_signal
+nuclear_sequence
+nuclease_binding_site
+nuclease_hypersensitive_site
+nuclease_sensitive_site
+nucleic_acid
+nucleomorph_gene
+nucleomorphic_chromosome
+nucleomorphic_sequence
+nucleotide_binding_site
+nucleotide_match
+nucleotide_motif
+nucleotide_to_protein_binding_site
+octamer_motif
+oligo
+oligo_U_tail
+one_methyladenosine
+one_methylguanosine
+one_methylinosine
+one_methylpseudouridine
+one_methyl_three_three_amino_three_carboxypropyl_pseudouridine
+one_two_prime_O_dimethyladenosine
+one_two_prime_O_dimethylguanosine
+one_two_prime_O_dimethylinosine
+operator
+operon
+operon_member
+ORF
+organelle_sequence
+oriC
+origin_of_replication
+oriT
+oriV
+orphan
+orphan_CDS
+orthologous
+orthologous_region
+orthologous_to
+outron
+overlapping
+overlapping_EST_set
+overlapping_feature_set
+overlaps
+OxyS_RNA
+PAC
+PAC_clone
+PAC_end
+paracentric
+paracentric_inversion
+parallel_beta_strand
+paralogous
+paralogous_region
+paralogous_to
+partial_evidence_for_feature
+partially_characterised_chromosomal_mutation
+partially_processed_cDNA_clone
+part_of
+paternally_imprinted
+paternally_imprinted_gene
+pathogenic_island
+PCR_product
+p_element
+peptide_coil
+peptide_collection
+peptide_helix
+peptide_localization_signal
+peptidyl
+pericentric
+pericentric_inversion
+peroxywybutosine
+phagemid
+phagemid_clone
+Phage_RNA_Polymerase_Promoter
+phage_sequence
+phenylalanine
+phenylalanine_tRNA_primary_transcript
+phenylalanyl_tRNA
+pi_helix
+piRNA
+piRNA_gene
+plasmid
+plasmid_clone
+plasmid_gene
+plasmid_location
+plasmid_vector
+plastid_gene
+plastid_sequence
+plus_1_frameshift
+plus_1_frameshift_variant
+plus_1_translational_frameshift
+plus_1_translationally_frameshifted
+plus_2_frameshift
+plus_2_framshift
+plus_2_translational_frameshift
+PNA
+PNA_oligo
+point_mutation
+polinton
+polyadenylated
+polyadenylated_mRNA
+polyadenylation_variant
+polyA_primed_cDNA_clone
+polyA_sequence
+polyA_signal_sequence
+polyA_site
+polycistronic
+polycistronic_gene
+polycistronic_mRNA
+polycistronic_primary_transcript
+polycistronic_transcript
+polymerase_synthesis_read
+polymer_attribute
+polymorphic_sequence_variant
+polypeptide
+polypeptide_binding_motif
+polypeptide_calcium_ion_contact_site
+polypeptide_catalytic_motif
+polypeptide_cobalt_ion_contact_site
+polypeptide_conserved_motif
+polypeptide_conserved_region
+polypeptide_copper_ion_contact_site
+polypeptide_DNA_contact
+polypeptide_domain
+polypeptide_function_variant
+polypeptide_fusion
+polypeptide_gain_of_function
+polypeptide_iron_ion_contact_site
+polypeptide_ligand_contact
+polypeptide_localization_variant
+polypeptide_loss_of_function
+polypeptide_magnesium_ion_contact_site
+polypeptide_manganese_ion_contact_site
+polypeptide_metal_contact
+polypeptide_molybdenum_ion_contact_site
+polypeptide_motif
+polypeptide_nest_left_right_motif
+polypeptide_nest_motif
+polypeptide_nest_right_left_motif
+polypeptide_nickel_ion_contact_site
+polypeptide_partial_loss_of_function
+polypeptide_post_translational_processing_affected
+polypeptide_post_translational_processing_variant
+polypeptide_region
+polypeptide_repeat
+polypeptide_secondary_structure
+polypeptide_sequence_variant
+polypeptide_sequencing_information
+polypeptide_structural_motif
+polypeptide_structural_region
+polypeptide_truncation
+polypeptide_tungsten_ion_contact_site
+polypeptide_turn_motif
+polypeptide_variation_site
+polypeptide_zinc_ion_contact_site
+polyploid
+polypyrimidine_tract
+position_of
+positively_autoregulated
+positively_autoregulated_gene
+positive_sense_ssRNA_viral_sequence
+possible_assembly_error
+possible_base_call_error
+post_translationally_modified_region
+post_translationally_regulated
+post_translationally_regulated_by_protein_modification
+post_translationally_regulated_by_protein_stability
+post_translationally_regulated_gene
+predicted
+predicted_ab_initio_computation
+predicted_by_ab_initio_computation
+predicted_gene
+pre_edited_mRNA
+pre_edited_region
+pre_miRNA
+primary_transcript
+primary_transcript_attribute
+primary_transcript_region
+primer
+primer_binding_site
+primer_match
+probe
+processed
+processed_from
+processed_into
+processed_pseudogene
+processed_transcript
+processed_transcript_attribute
+proline
+proline_tRNA_primary_transcript
+prolyl_tRNA
+promoter
+promoter_element
+promoter_region
+promoter_targeting_sequence
+promoter_trap_construct
+propeptide
+propeptide_cleavage_site
+prophage
+proplastid_gene
+proplastid_sequence
+protein_binding_site
+protein_coding
+protein_coding_gene
+protein_coding_primary_transcript
+protein_match
+protein_protein_contact
+proviral_gene
+proviral_location
+proviral_region
+proximal_promoter_element
+PSE_motif
+pseudogene
+pseudogene_attribute
+pseudogene_by_unequal_crossing_over
+pseudogenic_exon
+pseudogenic_region
+pseudogenic_rRNA
+pseudogenic_transcript
+pseudogenic_tRNA
+pseudoknot
+pseudouridine
+pseudouridylation_guide_snoRNA
+purine_to_pyrimidine_transversion
+purine_transition
+pyrimidine_to_purine_transversion
+pyrimidine_transition
+pyrosequenced_read
+pyrrolysine
+pyrrolysine_tRNA_primary_transcript
+pyrrolysyl_tRNA
+QTL
+quality_value
+queuosine
+random_sequence
+RAPD
+rasiRNA
+rate_of_transcription_variant
+read
+reading_frame
+read_pair
+reagent
+reagent_attribute
+rearranged_at_DNA_level
+reciprocal
+reciprocal_chromosomal_translocation
+recoded
+recoded_by_translational_bypass
+recoded_codon
+recoded_mRNA
+recoding_pseudoknot
+recoding_stimulatory_region
+recombinationally_inverted_gene
+recombinationally_rearranged
+recombinationally_rearranged_gene
+recombinationally_rearranged_vertebrate_immune_system_gene
+recombination_feature
+recombination_feature_of_rearranged_gene
+recombination_hotspot
+recombination_regulatory_region
+recombination_signal_sequence
+recombined_from
+recombined_to
+recursive_splice_site
+reference_genome
+region
+regulated
+regulatory_promoter_element
+regulatory_region
+regulatory_region_variant
+regulon
+remark
+repeat_component
+repeat_family
+repeat_fragment
+repeat_region
+repeat_unit
+repetitive_element
+replication_regulatory_region
+replicon
+rescue
+rescue_gene
+rescue_mini_gene
+rescue_region
+resolution_site
+restriction_enzyme_binding_site
+restriction_enzyme_cleavage_junction
+restriction_enzyme_cut_site
+restriction_enzyme_recognition_site
+restriction_enzyme_single_strand_overhang
+restriction_fragment
+retinoic_acid_responsive_element
+retrogene
+retron
+retrotransposed
+retrotransposon
+reverse
+reverse_Hoogsteen_base_pair
+reverse_primer
+R_five_prime_LTR_region
+RFLP_fragment
+R_GNA
+R_GNA_oligo
+RH_map
+rho_dependent_bacterial_terminator
+rho_independent_bacterial_terminator
+ribosome_entry_site
+riboswitch
+ribothymidine
+ribozyme
+ribozymic
+right_handed_peptide_helix
+ring_chromosome
+R_LTR_region
+RNA
+RNA_6S
+RNA_aptamer
+RNA_chromosome
+RNA_hook_turn
+RNA_internal_loop
+RNAi_reagent
+RNA_junction_loop
+RNA_motif
+RNApol_II_core_promoter
+RNApol_III_promoter
+RNApol_III_promoter_type_1
+RNApol_III_promoter_type_1_region
+RNApol_III_promoter_type_2
+RNApol_III_promoter_type_2_region
+RNApol_III_promoter_type_3
+RNApol_II_promoter
+RNApol_II_promoter_region
+RNApol_I_promoter
+RNA_polymerase_III_TATA_box
+RNA_polymerase_II_TATA_box
+RNA_polymerase_promoter
+RNA_replication_mode
+RNase_MRP_RNA
+RNase_MRP_RNA_gene
+RNase_P_RNA
+RNase_P_RNA_gene
+RNA_sequence_secondary_structure
+Robertsonian_fusion
+rolling_circle
+RprA_RNA
+RRE_RNA
+rRNA
+rRNA_16S
+rRNA_18S
+rRNA_21S
+rRNA_23S
+rRNA_25S
+rRNA_28S
+rRNA_5_8S
+rRNA_5S
+rRNA_cleavage_RNA
+rRNA_cleavage_snoRNA_primary_transcript
+rRNA_encoding
+rRNA_gene
+rRNA_large_subunit_primary_transcript
+rRNA_primary_transcript
+rRNA_primary_transcript_region
+rRNA_small_subunit_primary_transcript
+RR_tract
+RST
+RST_match
+R_three_prime_LTR_region
+SAGE_tag
+sarcin_like_RNA_motif
+satellite_DNA
+schellmann_loop
+schellmann_loop_seven
+schellmann_loop_six
+score
+scRNA
+scRNA_encoding
+scRNA_gene
+scRNA_primary_transcript
+SECIS_element
+selenocysteine
+selenocysteine_tRNA_primary_transcript
+selenocysteinyl_tRNA
+sequence
+sequence_alteration
+sequence_assembly
+sequence_attribute
+sequence_collection
+sequence_conflict
+sequence_difference
+sequence_feature
+sequence_feature_locating_method
+sequence_length_variation
+sequence_location
+sequence_motif
+sequence_of
+Sequence_Ontology
+sequence_operation
+sequence_rearrangement_feature
+sequence_replication_mode
+sequence_secondary_structure
+sequence_uncertainty
+sequence_variant
+sequence_variant_affecting_3D_structure_of_polypeptide
+sequence_variant_affecting_copy_number
+sequence_variant_affecting_editing
+sequence_variant_affecting_gene_structure
+sequence_variant_affecting_level_of_translational_product
+sequence_variant_affecting_polyadenylation
+sequence_variant_affecting_polypeptide_amino_acid_sequence
+sequence_variant_affecting_polypeptide_function
+sequence_variant_affecting_rate_of_transcription
+sequence_variant_affecting_regulatory_region
+sequence_variant_affecting_splice_acceptor
+sequence_variant_affecting_splice_donor
+sequence_variant_affecting_splicing
+sequence_variant_affecting_transcription
+sequence_variant_affecting_transcript_processing
+sequence_variant_affecting_transcript_secondary_structure
+sequence_variant_affecting_translational_product
+sequence_variant_causes_exon_loss
+sequence_variant_causes_intron_gain
+sequence_variant_causing_amino_acid_coding_codon_change_in_transcript
+sequence_variant_causing_amino_acid_deletion
+sequence_variant_causing_amino_acid_insertion
+sequence_variant_causing_amino_acid_substitution
+sequence_variant_causing_compensatory_transcript_secondary_structure_mutation
+sequence_variant_causing_complex_3D_structural_change
+sequence_variant_causing_complex_change_of_translational_product
+sequence_variant_causing_conformational_change
+sequence_variant_causing_conservative_amino_acid_substitution
+sequence_variant_causing_conservative_missense_codon_change_in_transcript
+sequence_variant_causing_cryptic_splice_acceptor_activation
+sequence_variant_causing_cryptic_splice_activation
+sequence_variant_causing_cryptic_splice_donor_activation
+sequence_variant_causing_gain_of_function_of_polypeptide
+sequence_variant_causing_gene_fusion
+sequence_variant_causing_inactive_catalytic_site
+sequence_variant_causing_inactive_ligand_binding_site
+sequence_variant_causing_initiator_codon_change_in_transcript
+sequence_variant_causing_loss_of_function_of_polypeptide
+sequence_variant_causing_minus_1_frameshift
+sequence_variant_causing_minus_2_frameshift
+sequence_variant_causing_missense_codon_change_in_transcript
+sequence_variant_causing_no_3D_structural_change
+sequence_variant_causing_no_change_in_transcript
+sequence_variant_causing_no_change_of_translational_product
+sequence_variant_causing_nonconservative_amino_acid_substitution
+sequence_variant_causing_nonconservative_missense_codon_change_in_transcript
+sequence_variant_causing_nonsense_codon_change_in_transcript
+sequence_variant_causing_non_synonymous_codon_change_in_transcript
+sequence_variant_causing_partial_loss_of_function_of_polypeptide
+sequence_variant_causing_plus_1_frameshift_mutation
+sequence_variant_causing_plus_2_frameshift
+sequence_variant_causing_polypeptide_elongation
+sequence_variant_causing_polypeptide_fusion
+sequence_variant_causing_polypeptide_localization_change
+sequence_variant_causing_polypeptide_post_translational_processing_change
+sequence_variant_causing_polypeptide_truncation
+sequence_variant_causing_synonymous_codon_change_in_transcript
+sequence_variant_causing_terminator_codon_change_in_transcript
+sequence_variant_decreasing_level_of_translation_product
+sequence_variant_decreasing_rate_of_transcription
+sequence_variant_decreasing_transcript_stability
+sequence_variant_effect
+sequence_variant_increasing_level_of_translation_product
+sequence_variant_increasing_rate_of_transcription
+sequence_variant_increasing_transcript_stability
+sequence_variant_obs
+sequence_variation_affecting_coding_sequence
+sequence_variation_affecting_level_of_transcript
+sequence_variation_affecting_reading_frame
+sequence_variation_affecting_transcript
+sequence_variation_affecting_transcript_sequence
+sequence_variation_decreasing_level_of_transcript
+sequence_variation_increasing_level_of_transcript
+sequencing_primer
+serine
+serine_threonine_motif
+serine_threonine_staple_motif
+serine_threonine_turn
+serine_tRNA_primary_transcript
+seryl_tRNA
+seven_aminomethyl_seven_deazaguanosine
+seven_cyano_seven_deazaguanosine
+seven_deazaguanosine
+seven_methylguanine
+seven_methylguanosine
+S_GNA
+S_GNA_oligo
+shadow_enhancer
+Shine_Dalgarno_sequence
+signal_peptide
+silenced
+silenced_by_DNA_methylation
+silenced_by_DNA_modification
+silenced_by_histone_deacetylation
+silenced_by_histone_methylation
+silenced_by_histone_modification
+silenced_by_RNA_interference
+silenced_gene
+silencer
+silent_mutation
+similar_to
+simple_sequence_length_variation
+SINE_element
+single
+single_stranded_cDNA
+single_stranded_DNA_chromosome
+single_stranded_RNA_chromosome
+single_strand_restriction_enzyme_cleavage_site
+siRNA
+site
+site_specific_recombination_target_region
+six_cutter_restriction_site
+SL1_acceptor_site
+SL2_acceptor_site
+small_regulatory_ncRNA
+small_subunit_rRNA
+snoRNA
+snoRNA_encoding
+snoRNA_gene
+snoRNA_primary_transcript
+SNP
+snRNA
+snRNA_encoding
+snRNA_gene
+snRNA_primary_transcript
+SNV
+solo_LTR
+sonicate_fragment
+SP6_RNA_Polymerase_Promoter
+specific_recombination_site
+splice_acceptor_variant
+spliced_leader_RNA
+splice_donor_variant
+splice_enhancer
+splice_junction
+spliceosomal_intron
+spliceosomal_intron_region
+splice_region_variant
+splice_site
+splice_site_variant
+splicing_feature
+splicing_regulatory_region
+splicing_variant
+spot_42_RNA
+SRP_RNA
+SRP_RNA_encoding
+SRP_RNA_gene
+SRP_RNA_primary_transcript
+ss_oligo
+ss_RNA_viral_sequence
+standard_draft
+start_codon
+started_by
+starts
+status
+status_of_coding_sequence
+stem_loop
+sticky_end_restriction_enzyme_cleavage_site
+stop_codon
+stop_codon_readthrough
+stop_codon_read_through
+stop_codon_redefined_as_pyrrolysine
+stop_codon_redefined_as_selenocysteine
+stop_codon_redefinition_as_pyrrolysine
+stop_codon_redefinition_as_selenocysteine
+stop_codon_signal
+stop_gained
+stop_lost
+stop_retained_variant
+strand_attribute
+stRNA
+stRNA_encoding
+stRNA_gene
+stRNA_primary_transcript
+structural_variant
+STS
+STS_map
+st_turn_left_handed_type_one
+st_turn_left_handed_type_two
+st_turn_right_handed_type_one
+st_turn_right_handed_type_two
+substitute
+substitute_A_to_I
+substitute_C_to_U
+substitution
+sugar_edge_base_pair
+supercontig
+supported_by_domain_match
+supported_by_EST_or_cDNA
+supported_by_sequence_similarity
+symbiosis_island
+symmetric_RNA_internal_loop
+synonymous_codon
+syntenic
+syntenic_region
+synthetic_oligo
+synthetic_sequence
+T3_RNA_Polymerase_Promoter
+T7_RNA_Polymerase_Promoter
+tag
+tandem
+tandem_duplication
+tandem_repeat
+targeting_vector
+target_site_duplication
+TATA_box
+telomerase_RNA
+telomerase_RNA_gene
+telomere
+telomeric_repeat
+template_region
+terminal_codon_variant
+terminal_inverted_repeat
+terminal_inverted_repeat_element
+terminator
+terminator_codon_variant
+terminator_of_type_2_RNApol_III_promoter
+tetraloop
+tetranucleotide_repeat_microsatellite_feature
+TF_binding_site
+theta_replication
+three_methylcytidine
+three_methylpseudouridine
+three_methyluridine
+three_prime_cis_splice_site
+three_prime_clip
+three_prime_coding_exon
+three_prime_coding_exon_coding_region
+three_prime_coding_exon_noncoding_region
+three_prime_D_heptamer
+three_prime_D_nonamer
+three_prime_D_recombination_signal_sequence
+three_prime_D_spacer
+three_prime_EST
+three_prime_five_prime_overlap
+three_prime_flanking_region
+three_prime_intron
+three_prime_LTR
+three_prime_LTR_component
+three_prime_noncoding_exon
+three_prime_RACE_clone
+three_prime_recoding_site
+three_prime_repeat_recoding_signal
+three_prime_restriction_enzyme_junction
+three_prime_RST
+three_prime_stem_loop_structure
+three_prime_terminal_inverted_repeat
+three_prime_three_prime_overlap
+three_prime_UST
+three_prime_UTR
+three_prime_UTR_intron
+three_ten_helix
+three_three_amino_three_carboxypropyl_uridine
+three_two_prime_O_dimethyluridine
+threonine
+threonine_tRNA_primary_transcript
+threonyl_tRNA
+tiling_path
+tiling_path_clone
+tiling_path_fragment
+T_loop
+tmRNA
+tmRNA_acceptor_piece
+tmRNA_coding_piece
+tmRNA_encoding
+tmRNA_gene
+tmRNA_primary_transcript
+tmRNA_region
+TNA
+TNA_oligo
+topologically_defined_region
+topology_attribute
+transcribed_cluster
+transcribed_fragment
+transcribed_from
+transcribed_region
+transcribed_spacer_region
+transcribed_to
+transcript
+transcript_attribute
+transcript_bound_by_nucleic_acid
+transcript_bound_by_protein
+transcript_edited_by_U_insertion/deletion
+transcript_feature
+transcript_function_variant
+transcriptional_cis_regulatory_region
+transcriptionally_constitutive
+transcriptionally_induced
+transcriptionally_regulated
+transcriptionally_repressed
+transcription_end_site
+transcription_regulatory_region
+transcription_variant
+transcript_processing_variant
+transcript_region
+transcript_secondary_structure_variant
+transcript_sequence_variant
+transcript_stability_variant
+transcript_variant
+transcript_with_readthrough_stop_codon
+transcript_with_translational_frameshift
+transgene
+transgene_attribute
+transgenic
+transgenic_insertion
+transgenic_transposable_element
+transition
+transit_peptide
+translated_nucleotide_match
+translates_to
+translational_frameshift
+translationally_frameshifted
+translationally_regulated
+translationally_regulated_gene
+translational_product_function_variant
+translational_product_level_variant
+translational_product_structure_variant
+translation_of
+translation_regulatory_region
+translocate
+translocation
+translocation_breakpoint
+translocation_element
+translocaton_attribute
+transmembrane_polypeptide_region
+transposable_element
+transposable_element_attribute
+transposable_element_flanking_region
+transposable_element_gene
+transposable_element_insertion_site
+transposon_fragment
+trans_splice_acceptor_site
+trans_spliced
+trans_spliced_from
+trans_spliced_mRNA
+trans_splice_donor_site
+trans_spliced_to
+trans_spliced_transcript
+trans_splice_junction
+trans_splice_site
+transversion
+trinucleotide_repeat_microsatellite_feature
+tRNA
+tRNA_encoding
+tRNA_gene
+tRNA_intron
+tRNA_primary_transcript
+tRNA_region
+tryptophan
+tryptophan_tRNA_primary_transcript
+tryptophanyl_tRNA
+TSS
+TSS_region
+T_to_A_transversion
+T_to_C_transition
+T_to_G_transversion
+twintron
+two_methyladenosine
+two_methylthio_N6_cis_hydroxyisopentenyl_adenosine
+two_methylthio_N6_hydroxynorvalyl_carbamoyladenosine
+two_methylthio_N6_isopentenyladenosine
+two_methylthio_N6_methyladenosine
+two_methylthio_N6_threonyl_carbamoyladenosine
+two_prime_O_methyladenosine
+two_prime_O_methylcytidine
+two_prime_O_methylguanosine
+two_prime_O_methylinosine
+two_prime_O_methylpseudouridine
+two_prime_O_methyluridine
+two_prime_O_ribosyladenosine_phosphate
+two_prime_O_ribosylguanosine_phosphate
+two_thiocytidine
+two_thio_two_prime_O_methyluridine
+two_thiouridine
+type_I_enzyme_restriction_site
+type_II_enzyme_restriction_site
+tyrosine
+tyrosine_tRNA_primary_transcript
+tyrosyl_tRNA
+U11_snRNA
+U12_intron
+U12_snRNA
+U14_snoRNA
+U14_snoRNA_primary_transcript
+U1_snRNA
+U2_intron
+U2_snRNA
+U3_five_prime_LTR_region
+U3_LTR_region
+U3_snoRNA
+U3_three_prime_LTR_region
+U4atac_snRNA
+U4_snRNA
+U5_five_prime_LTR_region
+U5_LTR_region
+U5_snRNA
+U5_three_prime_LTR_region
+U6atac_snRNA
+U6_snRNA
+UAA_stop_codon_signal
+UAG_stop_codon_signal
+UGA_stop_codon_signal
+ultracontig
+uncharacterised_chromosomal_mutation
+undermodified_hydroxywybutosine
+unedited_region
+unequally_crossed_over
+unigene_cluster
+uninverted_insertional_duplication
+uninverted_interchromosomal_transposition
+uninverted_intrachromosomal_transposition
+unoriented_insertional_duplication
+unoriented_interchromosomal_transposition
+unoriented_intrachromosomal_transposition
+untranslated_region_polycistronic_mRNA
+upstream_AUG_codon
+upstream_gene_variant
+uridine_five_oxyacetic_acid
+uridine_five_oxyacetic_acid_methyl_ester
+UST
+UST_match
+UTR
+UTR_intron
+UTR_region
+UTR_variant
+validated
+validated_cDNA_clone
+valine
+valine_tRNA_primary_transcript
+valyl_tRNA
+variant_collection
+variant_genome
+variant_of
+vault_RNA
+V_cluster
+V_D_DJ_C_cluster
+V_D_DJ_cluster
+V_D_DJ_J_C_cluster
+V_D_DJ_J_cluster
+VD_gene
+V_D_J_C_cluster
+V_DJ_C_cluster
+VDJ_C_cluster
+V_D_J_cluster
+V_DJ_cluster
+VDJ_gene
+V_DJ_J_C_cluster
+VDJ_J_C_cluster
+V_DJ_J_cluster
+VDJ_J_cluster
+vector_replicon
+vertebrate_immune_system_feature
+vertebrate_immune_system_gene_recombination_feature
+vertebrate_immune_system_gene_recombination_signal_feature
+vertebrate_immune_system_gene_recombination_spacer
+vertebrate_immunoglobulin_T_cell_receptor_gene_cluster
+vertebrate_immunoglobulin_T_cell_receptor_rearranged_gene_cluster
+vertebrate_immunoglobulin_T_cell_receptor_rearranged_segment
+vertebrate_immunoglobulin_T_cell_receptor_segment
+V_gene
+V_gene_recombination_feature
+V_heptamer
+viral_sequence
+virtual_sequence
+V_J_C_cluster
+VJ_C_cluster
+V_J_cluster
+VJ_gene
+VJ_J_C_cluster
+VJ_J_cluster
+V_nonamer
+V_spacer
+V_VDJ_C_cluster
+V_VDJ_cluster
+V_VDJ_J_C_cluster
+V_VDJ_J_cluster
+V_VJ_C_cluster
+V_VJ_cluster
+V_VJ_J_C_cluster
+V_VJ_J_cluster
+WC_base_pair
+whole_genome_sequence_status
+wild_type
+wild_type_rescue_gene
+wobble_base_pair
+wybutosine
+wyosine
+X_element
+X_element_combinatorial_repeat
+YAC
+YAC_clone
+YAC_end
+Y_prime_
+Y_RNA
+adjacent_to
+associated_with
+complete_evidence_for_feature
+connects_on
+contained_by
+contains
+derives_from
+disconnected_from
+edited_from
+edited_to
+evidence_for_feature
+exemplar_of
+finished_by
+finishes
+genome_of
+guided_by
+guides
+has_integral_part
+has_origin
+has_part
+has_quality
+homologous_to
+integral_part_of
+is_consecutive_sequence_of
+maximally_overlaps
+member_of
+non_functional_homolog_of
+orthologous_to
+overlaps
+paralogous_to
+partial_evidence_for_feature
+part_of
+position_of
+processed_from
+processed_into
+recombined_from
+recombined_to
+sequence_of
+similar_to
+SO:0000000
+SO:0000001
+SO:0000002
+SO:0000003
+SO:0000004
+SO:0000005
+SO:0000006
+SO:0000007
+SO:0000008
+SO:0000009
+SO:0000010
+SO:0000011
+SO:0000012
+SO:0000013
+SO:0000014
+SO:0000015
+SO:0000016
+SO:0000017
+SO:0000018
+SO:0000020
+SO:0000021
+SO:0000022
+SO:0000023
+SO:0000024
+SO:0000025
+SO:0000026
+SO:0000027
+SO:0000028
+SO:0000029
+SO:0000030
+SO:0000031
+SO:0000032
+SO:0000033
+SO:0000034
+SO:0000035
+SO:0000036
+SO:0000037
+SO:0000038
+SO:0000039
+SO:0000040
+SO:0000041
+SO:0000042
+SO:0000043
+SO:0000044
+SO:0000045
+SO:0000046
+SO:0000047
+SO:0000048
+SO:0000049
+SO:0000050
+SO:0000051
+SO:0000052
+SO:0000053
+SO:0000054
+SO:0000055
+SO:0000056
+SO:0000057
+SO:0000058
+SO:0000059
+SO:0000060
+SO:0000061
+SO:0000062
+SO:0000063
+SO:0000064
+SO:0000065
+SO:0000066
+SO:0000067
+SO:0000068
+SO:0000069
+SO:0000070
+SO:0000071
+SO:0000072
+SO:0000073
+SO:0000074
+SO:0000075
+SO:0000076
+SO:0000077
+SO:0000078
+SO:0000079
+SO:0000080
+SO:0000081
+SO:0000082
+SO:0000083
+SO:0000084
+SO:0000085
+SO:0000086
+SO:0000087
+SO:0000088
+SO:0000089
+SO:0000090
+SO:0000091
+SO:0000092
+SO:0000093
+SO:0000094
+SO:0000095
+SO:0000096
+SO:0000097
+SO:0000098
+SO:0000099
+SO:0000100
+SO:0000101
+SO:0000102
+SO:0000103
+SO:0000104
+SO:0000105
+SO:0000106
+SO:0000107
+SO:0000108
+SO:0000109
+SO:0000110
+SO:0000111
+SO:0000112
+SO:0000113
+SO:0000114
+SO:0000115
+SO:0000116
+SO:0000117
+SO:0000118
+SO:0000119
+SO:0000120
+SO:0000121
+SO:0000122
+SO:0000123
+SO:0000124
+SO:0000125
+SO:0000126
+SO:0000127
+SO:0000128
+SO:0000129
+SO:0000130
+SO:0000131
+SO:0000132
+SO:0000133
+SO:0000134
+SO:0000135
+SO:0000136
+SO:0000137
+SO:0000138
+SO:0000139
+SO:0000140
+SO:0000141
+SO:0000142
+SO:0000143
+SO:0000144
+SO:0000145
+SO:0000146
+SO:0000147
+SO:0000148
+SO:0000149
+SO:0000150
+SO:0000151
+SO:0000152
+SO:0000153
+SO:0000154
+SO:0000155
+SO:0000156
+SO:0000157
+SO:0000158
+SO:0000159
+SO:0000160
+SO:0000161
+SO:0000162
+SO:0000163
+SO:0000164
+SO:0000165
+SO:0000166
+SO:0000167
+SO:0000168
+SO:0000169
+SO:0000170
+SO:0000171
+SO:0000172
+SO:0000173
+SO:0000174
+SO:0000175
+SO:0000176
+SO:0000177
+SO:0000178
+SO:0000179
+SO:0000180
+SO:0000181
+SO:0000182
+SO:0000183
+SO:0000184
+SO:0000185
+SO:0000186
+SO:0000187
+SO:0000188
+SO:0000189
+SO:0000190
+SO:0000191
+SO:0000192
+SO:0000193
+SO:0000194
+SO:0000195
+SO:0000196
+SO:0000197
+SO:0000198
+SO:0000199
+SO:0000200
+SO:0000201
+SO:0000202
+SO:0000203
+SO:0000204
+SO:0000205
+SO:0000206
+SO:0000207
+SO:0000208
+SO:0000209
+SO:0000210
+SO:0000211
+SO:0000212
+SO:0000213
+SO:0000214
+SO:0000215
+SO:0000216
+SO:0000217
+SO:0000218
+SO:0000219
+SO:0000220
+SO:0000221
+SO:0000222
+SO:0000223
+SO:0000224
+SO:0000225
+SO:0000226
+SO:0000227
+SO:0000228
+SO:0000229
+SO:0000230
+SO:0000231
+SO:0000232
+SO:0000233
+SO:0000234
+SO:0000235
+SO:0000236
+SO:0000237
+SO:0000238
+SO:0000239
+SO:0000240
+SO:0000241
+SO:0000242
+SO:0000243
+SO:0000244
+SO:0000245
+SO:0000246
+SO:0000247
+SO:0000248
+SO:0000249
+SO:0000250
+SO:0000251
+SO:0000252
+SO:0000253
+SO:0000254
+SO:0000255
+SO:0000256
+SO:0000257
+SO:0000258
+SO:0000259
+SO:0000260
+SO:0000261
+SO:0000262
+SO:0000263
+SO:0000264
+SO:0000265
+SO:0000266
+SO:0000267
+SO:0000268
+SO:0000269
+SO:0000270
+SO:0000271
+SO:0000272
+SO:0000273
+SO:0000274
+SO:0000275
+SO:0000276
+SO:0000277
+SO:0000278
+SO:0000279
+SO:0000280
+SO:0000281
+SO:0000282
+SO:0000283
+SO:0000284
+SO:0000285
+SO:0000286
+SO:0000287
+SO:0000288
+SO:0000289
+SO:0000290
+SO:0000291
+SO:0000292
+SO:0000293
+SO:0000294
+SO:0000295
+SO:0000296
+SO:0000297
+SO:0000298
+SO:0000299
+SO:0000300
+SO:0000301
+SO:0000302
+SO:0000303
+SO:0000304
+SO:0000305
+SO:0000306
+SO:0000307
+SO:0000308
+SO:0000309
+SO:0000310
+SO:0000311
+SO:0000312
+SO:0000313
+SO:0000314
+SO:0000315
+SO:0000316
+SO:0000317
+SO:0000318
+SO:0000319
+SO:0000320
+SO:0000321
+SO:0000322
+SO:0000323
+SO:0000324
+SO:0000325
+SO:0000326
+SO:0000327
+SO:0000328
+SO:0000329
+SO:0000330
+SO:0000331
+SO:0000332
+SO:0000333
+SO:0000334
+SO:0000335
+SO:0000336
+SO:0000337
+SO:0000338
+SO:0000339
+SO:0000340
+SO:0000341
+SO:0000342
+SO:0000343
+SO:0000344
+SO:0000345
+SO:0000346
+SO:0000347
+SO:0000348
+SO:0000349
+SO:0000350
+SO:0000351
+SO:0000352
+SO:0000353
+SO:0000354
+SO:0000355
+SO:0000356
+SO:0000357
+SO:0000359
+SO:0000360
+SO:0000361
+SO:0000362
+SO:0000363
+SO:0000364
+SO:0000365
+SO:0000366
+SO:0000367
+SO:0000368
+SO:0000369
+SO:0000370
+SO:0000371
+SO:0000372
+SO:0000373
+SO:0000374
+SO:0000375
+SO:0000376
+SO:0000377
+SO:0000378
+SO:0000379
+SO:0000380
+SO:0000381
+SO:0000382
+SO:0000383
+SO:0000384
+SO:0000385
+SO:0000386
+SO:0000387
+SO:0000388
+SO:0000389
+SO:0000390
+SO:0000391
+SO:0000392
+SO:0000393
+SO:0000394
+SO:0000395
+SO:0000396
+SO:0000397
+SO:0000398
+SO:0000399
+SO:0000400
+SO:0000401
+SO:0000402
+SO:0000403
+SO:0000404
+SO:0000405
+SO:0000406
+SO:0000407
+SO:0000408
+SO:0000409
+SO:0000410
+SO:0000411
+SO:0000412
+SO:0000413
+SO:0000414
+SO:0000415
+SO:0000416
+SO:0000417
+SO:0000418
+SO:0000419
+SO:0000420
+SO:0000421
+SO:0000422
+SO:0000423
+SO:0000424
+SO:0000425
+SO:0000426
+SO:0000427
+SO:0000428
+SO:0000429
+SO:0000430
+SO:0000431
+SO:0000432
+SO:0000433
+SO:0000434
+SO:0000435
+SO:0000436
+SO:0000437
+SO:0000438
+SO:0000439
+SO:0000440
+SO:0000441
+SO:0000442
+SO:0000443
+SO:0000444
+SO:0000445
+SO:0000446
+SO:0000447
+SO:0000448
+SO:0000449
+SO:0000450
+SO:0000451
+SO:0000452
+SO:0000453
+SO:0000454
+SO:0000455
+SO:0000456
+SO:0000457
+SO:0000458
+SO:0000459
+SO:0000460
+SO:0000461
+SO:0000462
+SO:0000463
+SO:0000464
+SO:0000465
+SO:0000466
+SO:0000467
+SO:0000468
+SO:0000469
+SO:0000470
+SO:0000471
+SO:0000472
+SO:0000473
+SO:0000474
+SO:0000475
+SO:0000476
+SO:0000477
+SO:0000478
+SO:0000479
+SO:0000480
+SO:0000481
+SO:0000482
+SO:0000483
+SO:0000484
+SO:0000485
+SO:0000486
+SO:0000487
+SO:0000488
+SO:0000489
+SO:0000490
+SO:0000491
+SO:0000492
+SO:0000493
+SO:0000494
+SO:0000495
+SO:0000496
+SO:0000497
+SO:0000498
+SO:0000499
+SO:0000500
+SO:0000501
+SO:0000502
+SO:0000503
+SO:0000504
+SO:0000505
+SO:0000506
+SO:0000507
+SO:0000508
+SO:0000509
+SO:0000510
+SO:0000511
+SO:0000512
+SO:0000513
+SO:0000514
+SO:0000515
+SO:0000516
+SO:0000517
+SO:0000518
+SO:0000519
+SO:0000520
+SO:0000521
+SO:0000522
+SO:0000523
+SO:0000524
+SO:0000525
+SO:0000526
+SO:0000527
+SO:0000528
+SO:0000529
+SO:0000530
+SO:0000531
+SO:0000532
+SO:0000533
+SO:0000534
+SO:0000535
+SO:0000536
+SO:0000537
+SO:0000538
+SO:0000539
+SO:0000540
+SO:0000541
+SO:0000542
+SO:0000543
+SO:0000544
+SO:0000545
+SO:0000546
+SO:0000547
+SO:0000548
+SO:0000549
+SO:0000550
+SO:0000551
+SO:0000552
+SO:0000553
+SO:0000554
+SO:0000555
+SO:0000556
+SO:0000557
+SO:0000558
+SO:0000559
+SO:0000560
+SO:0000561
+SO:0000562
+SO:0000563
+SO:0000564
+SO:0000565
+SO:0000566
+SO:0000567
+SO:0000568
+SO:0000569
+SO:0000570
+SO:0000571
+SO:0000572
+SO:0000573
+SO:0000574
+SO:0000575
+SO:0000576
+SO:0000577
+SO:0000578
+SO:0000579
+SO:0000580
+SO:0000581
+SO:0000582
+SO:0000583
+SO:0000584
+SO:0000585
+SO:0000586
+SO:0000587
+SO:0000588
+SO:0000589
+SO:0000590
+SO:0000591
+SO:0000592
+SO:0000593
+SO:0000594
+SO:0000595
+SO:0000596
+SO:0000597
+SO:0000598
+SO:0000599
+SO:0000600
+SO:0000601
+SO:0000602
+SO:0000603
+SO:0000604
+SO:0000605
+SO:0000606
+SO:0000607
+SO:0000608
+SO:0000609
+SO:0000610
+SO:0000611
+SO:0000612
+SO:0000613
+SO:0000614
+SO:0000615
+SO:0000616
+SO:0000617
+SO:0000618
+SO:0000619
+SO:0000620
+SO:0000621
+SO:0000622
+SO:0000623
+SO:0000624
+SO:0000625
+SO:0000626
+SO:0000627
+SO:0000628
+SO:0000629
+SO:0000630
+SO:0000631
+SO:0000632
+SO:0000633
+SO:0000634
+SO:0000635
+SO:0000636
+SO:0000637
+SO:0000638
+SO:0000639
+SO:0000640
+SO:0000641
+SO:0000642
+SO:0000643
+SO:0000644
+SO:0000645
+SO:0000646
+SO:0000647
+SO:0000648
+SO:0000649
+SO:0000650
+SO:0000651
+SO:0000652
+SO:0000653
+SO:0000654
+SO:0000655
+SO:0000656
+SO:0000657
+SO:0000658
+SO:0000659
+SO:0000660
+SO:0000661
+SO:0000662
+SO:0000663
+SO:0000664
+SO:0000665
+SO:0000666
+SO:0000667
+SO:0000668
+SO:0000669
+SO:0000670
+SO:0000671
+SO:0000672
+SO:0000673
+SO:0000674
+SO:0000675
+SO:0000676
+SO:0000677
+SO:0000678
+SO:0000679
+SO:0000680
+SO:0000681
+SO:0000682
+SO:0000683
+SO:0000684
+SO:0000685
+SO:0000686
+SO:0000687
+SO:0000688
+SO:0000689
+SO:0000690
+SO:0000691
+SO:0000692
+SO:0000693
+SO:0000694
+SO:0000695
+SO:0000696
+SO:0000697
+SO:0000698
+SO:0000699
+SO:0000700
+SO:0000701
+SO:0000702
+SO:0000703
+SO:0000704
+SO:0000705
+SO:0000706
+SO:0000707
+SO:0000708
+SO:0000709
+SO:0000710
+SO:0000711
+SO:0000712
+SO:0000713
+SO:0000714
+SO:0000715
+SO:0000716
+SO:0000717
+SO:0000718
+SO:0000719
+SO:0000720
+SO:0000721
+SO:0000722
+SO:0000723
+SO:0000724
+SO:0000725
+SO:0000726
+SO:0000727
+SO:0000728
+SO:0000729
+SO:0000730
+SO:0000731
+SO:0000732
+SO:0000733
+SO:0000734
+SO:0000735
+SO:0000736
+SO:0000737
+SO:0000738
+SO:0000739
+SO:0000740
+SO:0000741
+SO:0000742
+SO:0000743
+SO:0000744
+SO:0000745
+SO:0000746
+SO:0000747
+SO:0000748
+SO:0000749
+SO:0000750
+SO:0000751
+SO:0000752
+SO:0000753
+SO:0000754
+SO:0000755
+SO:0000756
+SO:0000757
+SO:0000758
+SO:0000759
+SO:0000760
+SO:0000761
+SO:0000762
+SO:0000763
+SO:0000764
+SO:0000765
+SO:0000766
+SO:0000767
+SO:0000768
+SO:0000769
+SO:0000770
+SO:0000771
+SO:0000772
+SO:0000773
+SO:0000774
+SO:0000775
+SO:0000776
+SO:0000777
+SO:0000778
+SO:0000779
+SO:0000780
+SO:0000781
+SO:0000782
+SO:0000783
+SO:0000784
+SO:0000785
+SO:0000786
+SO:0000787
+SO:0000788
+SO:0000789
+SO:0000790
+SO:0000791
+SO:0000792
+SO:0000793
+SO:0000794
+SO:0000795
+SO:0000796
+SO:0000797
+SO:0000798
+SO:0000799
+SO:0000800
+SO:0000801
+SO:0000802
+SO:0000803
+SO:0000804
+SO:0000805
+SO:0000806
+SO:0000807
+SO:0000808
+SO:0000809
+SO:0000810
+SO:0000811
+SO:0000812
+SO:0000813
+SO:0000814
+SO:0000815
+SO:0000816
+SO:0000817
+SO:0000818
+SO:0000819
+SO:0000820
+SO:0000821
+SO:0000822
+SO:0000823
+SO:0000824
+SO:0000825
+SO:0000828
+SO:0000829
+SO:0000830
+SO:0000831
+SO:0000832
+SO:0000833
+SO:0000834
+SO:0000835
+SO:0000836
+SO:0000837
+SO:0000838
+SO:0000839
+SO:0000840
+SO:0000841
+SO:0000842
+SO:0000843
+SO:0000844
+SO:0000845
+SO:0000846
+SO:0000847
+SO:0000848
+SO:0000849
+SO:0000850
+SO:0000851
+SO:0000852
+SO:0000853
+SO:0000854
+SO:0000855
+SO:0000856
+SO:0000857
+SO:0000858
+SO:0000859
+SO:0000860
+SO:0000861
+SO:0000862
+SO:0000863
+SO:0000864
+SO:0000865
+SO:0000866
+SO:0000867
+SO:0000868
+SO:0000869
+SO:0000870
+SO:0000871
+SO:0000872
+SO:0000873
+SO:0000874
+SO:0000875
+SO:0000876
+SO:0000877
+SO:0000878
+SO:0000879
+SO:0000880
+SO:0000881
+SO:0000882
+SO:0000883
+SO:0000884
+SO:0000885
+SO:0000886
+SO:0000887
+SO:0000888
+SO:0000889
+SO:0000890
+SO:0000891
+SO:0000892
+SO:0000893
+SO:0000894
+SO:0000895
+SO:0000896
+SO:0000897
+SO:0000898
+SO:0000899
+SO:0000900
+SO:0000901
+SO:0000902
+SO:0000903
+SO:0000904
+SO:0000905
+SO:0000906
+SO:0000907
+SO:0000908
+SO:0000909
+SO:0000910
+SO:0000911
+SO:0000912
+SO:0000913
+SO:0000914
+SO:0000915
+SO:0000916
+SO:0000917
+SO:0000918
+SO:0000919
+SO:0000920
+SO:0000921
+SO:0000922
+SO:0000923
+SO:0000924
+SO:0000925
+SO:0000926
+SO:0000927
+SO:0000928
+SO:0000929
+SO:0000930
+SO:0000931
+SO:0000932
+SO:0000933
+SO:0000934
+SO:0000935
+SO:0000936
+SO:0000937
+SO:0000938
+SO:0000939
+SO:0000940
+SO:0000941
+SO:0000942
+SO:0000943
+SO:0000944
+SO:0000945
+SO:0000946
+SO:0000947
+SO:0000948
+SO:0000949
+SO:0000950
+SO:0000951
+SO:0000952
+SO:0000953
+SO:0000954
+SO:0000955
+SO:0000956
+SO:0000957
+SO:0000958
+SO:0000959
+SO:0000960
+SO:0000961
+SO:0000962
+SO:0000963
+SO:0000964
+SO:0000965
+SO:0000966
+SO:0000967
+SO:0000968
+SO:0000969
+SO:0000970
+SO:0000971
+SO:0000972
+SO:0000973
+SO:0000975
+SO:0000976
+SO:0000977
+SO:0000978
+SO:0000979
+SO:0000980
+SO:0000981
+SO:0000982
+SO:0000983
+SO:0000984
+SO:0000985
+SO:0000986
+SO:0000987
+SO:0000988
+SO:0000989
+SO:0000990
+SO:0000991
+SO:0000992
+SO:0000993
+SO:0000994
+SO:0000995
+SO:0000996
+SO:0000997
+SO:0000998
+SO:0000999
+SO:0001000
+SO:0001001
+SO:0001002
+SO:0001003
+SO:0001004
+SO:0001005
+SO:0001006
+SO:0001007
+SO:0001008
+SO:0001009
+SO:0001010
+SO:0001011
+SO:0001012
+SO:0001013
+SO:0001014
+SO:0001015
+SO:0001016
+SO:0001017
+SO:0001018
+SO:0001019
+SO:0001020
+SO:0001021
+SO:0001022
+SO:0001023
+SO:0001024
+SO:0001025
+SO:0001026
+SO:0001027
+SO:0001028
+SO:0001029
+SO:0001030
+SO:0001031
+SO:0001032
+SO:0001033
+SO:0001034
+SO:0001035
+SO:0001036
+SO:0001037
+SO:0001038
+SO:0001039
+SO:0001040
+SO:0001041
+SO:0001042
+SO:0001043
+SO:0001044
+SO:0001045
+SO:0001046
+SO:0001047
+SO:0001048
+SO:0001049
+SO:0001050
+SO:0001051
+SO:0001052
+SO:0001053
+SO:0001054
+SO:0001055
+SO:0001056
+SO:0001057
+SO:0001058
+SO:0001059
+SO:0001060
+SO:0001061
+SO:0001062
+SO:0001063
+SO:0001064
+SO:0001066
+SO:0001067
+SO:0001068
+SO:0001070
+SO:0001071
+SO:0001072
+SO:0001073
+SO:0001074
+SO:0001075
+SO:0001076
+SO:0001077
+SO:0001078
+SO:0001079
+SO:0001080
+SO:0001081
+SO:0001082
+SO:0001083
+SO:0001084
+SO:0001085
+SO:0001086
+SO:0001087
+SO:0001088
+SO:0001089
+SO:0001090
+SO:0001091
+SO:0001092
+SO:0001093
+SO:0001094
+SO:0001095
+SO:0001096
+SO:0001097
+SO:0001098
+SO:0001099
+SO:0001100
+SO:0001101
+SO:0001102
+SO:0001103
+SO:0001104
+SO:0001105
+SO:0001106
+SO:0001107
+SO:0001108
+SO:0001109
+SO:0001110
+SO:0001111
+SO:0001112
+SO:0001113
+SO:0001114
+SO:0001115
+SO:0001116
+SO:0001117
+SO:0001118
+SO:0001119
+SO:0001120
+SO:0001121
+SO:0001122
+SO:0001123
+SO:0001124
+SO:0001125
+SO:0001126
+SO:0001127
+SO:0001128
+SO:0001129
+SO:0001130
+SO:0001131
+SO:0001132
+SO:0001133
+SO:0001134
+SO:0001135
+SO:0001136
+SO:0001137
+SO:0001138
+SO:0001139
+SO:0001140
+SO:0001141
+SO:0001142
+SO:0001143
+SO:0001144
+SO:0001145
+SO:0001146
+SO:0001147
+SO:0001148
+SO:0001149
+SO:0001150
+SO:0001151
+SO:0001152
+SO:0001153
+SO:0001154
+SO:0001155
+SO:0001156
+SO:0001157
+SO:0001158
+SO:0001159
+SO:0001160
+SO:0001161
+SO:0001162
+SO:0001163
+SO:0001164
+SO:0001165
+SO:0001166
+SO:0001167
+SO:0001168
+SO:0001169
+SO:0001170
+SO:0001171
+SO:0001172
+SO:0001173
+SO:0001174
+SO:0001175
+SO:0001176
+SO:0001177
+SO:0001178
+SO:0001179
+SO:0001180
+SO:0001181
+SO:0001182
+SO:0001183
+SO:0001184
+SO:0001185
+SO:0001186
+SO:0001187
+SO:0001188
+SO:0001189
+SO:0001190
+SO:0001191
+SO:0001192
+SO:0001193
+SO:0001194
+SO:0001195
+SO:0001196
+SO:0001197
+SO:0001198
+SO:0001199
+SO:0001200
+SO:0001201
+SO:0001202
+SO:0001203
+SO:0001204
+SO:0001205
+SO:0001206
+SO:0001207
+SO:0001208
+SO:0001209
+SO:0001210
+SO:0001211
+SO:0001212
+SO:0001213
+SO:0001214
+SO:0001215
+SO:0001216
+SO:0001217
+SO:0001218
+SO:0001219
+SO:0001220
+SO:0001221
+SO:0001222
+SO:0001223
+SO:0001224
+SO:0001225
+SO:0001226
+SO:0001227
+SO:0001228
+SO:0001229
+SO:0001230
+SO:0001231
+SO:0001232
+SO:0001233
+SO:0001234
+SO:0001235
+SO:0001236
+SO:0001237
+SO:0001238
+SO:0001239
+SO:0001240
+SO:0001241
+SO:0001243
+SO:0001244
+SO:0001245
+SO:0001246
+SO:0001247
+SO:0001248
+SO:0001249
+SO:0001250
+SO:0001251
+SO:0001252
+SO:0001253
+SO:0001254
+SO:0001255
+SO:0001256
+SO:0001257
+SO:0001258
+SO:0001259
+SO:0001260
+SO:0001261
+SO:0001262
+SO:0001263
+SO:0001264
+SO:0001265
+SO:0001266
+SO:0001267
+SO:0001268
+SO:0001269
+SO:0001270
+SO:0001271
+SO:0001272
+SO:0001273
+SO:0001274
+SO:0001275
+SO:0001276
+SO:0001277
+SO:0001278
+SO:0001279
+SO:0001280
+SO:0001281
+SO:0001282
+SO:0001283
+SO:0001284
+SO:0001285
+SO:0001286
+SO:0001287
+SO:0001288
+SO:0001289
+SO:0001290
+SO:0001291
+SO:0001292
+SO:0001293
+SO:0001294
+SO:0001295
+SO:0001296
+SO:0001297
+SO:0001298
+SO:0001299
+SO:0001300
+SO:0001301
+SO:0001302
+SO:0001303
+SO:0001304
+SO:0001305
+SO:0001306
+SO:0001307
+SO:0001308
+SO:0001309
+SO:0001310
+SO:0001311
+SO:0001312
+SO:0001313
+SO:0001314
+SO:0001315
+SO:0001316
+SO:0001317
+SO:0001318
+SO:0001319
+SO:0001320
+SO:0001321
+SO:0001322
+SO:0001323
+SO:0001324
+SO:0001325
+SO:0001326
+SO:0001327
+SO:0001328
+SO:0001329
+SO:0001330
+SO:0001331
+SO:0001332
+SO:0001333
+SO:0001334
+SO:0001335
+SO:0001336
+SO:0001337
+SO:0001338
+SO:0001339
+SO:0001340
+SO:0001341
+SO:0001342
+SO:0001343
+SO:0001344
+SO:0001345
+SO:0001346
+SO:0001347
+SO:0001348
+SO:0001349
+SO:0001350
+SO:0001351
+SO:0001352
+SO:0001353
+SO:0001354
+SO:0001355
+SO:0001356
+SO:0001357
+SO:0001358
+SO:0001359
+SO:0001360
+SO:0001361
+SO:0001362
+SO:0001363
+SO:0001364
+SO:0001365
+SO:0001366
+SO:0001367
+SO:0001368
+SO:0001369
+SO:0001370
+SO:0001371
+SO:0001372
+SO:0001373
+SO:0001374
+SO:0001375
+SO:0001376
+SO:0001377
+SO:0001378
+SO:0001379
+SO:0001380
+SO:0001381
+SO:0001382
+SO:0001383
+SO:0001384
+SO:0001385
+SO:0001386
+SO:0001387
+SO:0001388
+SO:0001389
+SO:0001390
+SO:0001391
+SO:0001392
+SO:0001393
+SO:0001394
+SO:0001395
+SO:0001396
+SO:0001397
+SO:0001398
+SO:0001399
+SO:0001400
+SO:0001401
+SO:0001402
+SO:0001403
+SO:0001404
+SO:0001405
+SO:0001406
+SO:0001407
+SO:0001408
+SO:0001409
+SO:0001410
+SO:0001411
+SO:0001412
+SO:0001413
+SO:0001414
+SO:0001415
+SO:0001416
+SO:0001417
+SO:0001418
+SO:0001419
+SO:0001420
+SO:0001421
+SO:0001422
+SO:0001423
+SO:0001424
+SO:0001425
+SO:0001426
+SO:0001427
+SO:0001428
+SO:0001429
+SO:0001431
+SO:0001432
+SO:0001433
+SO:0001434
+SO:0001435
+SO:0001436
+SO:0001437
+SO:0001438
+SO:0001439
+SO:0001440
+SO:0001441
+SO:0001442
+SO:0001443
+SO:0001444
+SO:0001445
+SO:0001446
+SO:0001447
+SO:0001448
+SO:0001449
+SO:0001450
+SO:0001451
+SO:0001452
+SO:0001453
+SO:0001454
+SO:0001455
+SO:0001456
+SO:0001457
+SO:0001458
+SO:0001459
+SO:0001460
+SO:0001461
+SO:0001462
+SO:0001463
+SO:0001464
+SO:0001465
+SO:0001466
+SO:0001467
+SO:0001468
+SO:0001469
+SO:0001470
+SO:0001471
+SO:0001472
+SO:0001473
+SO:0001474
+SO:0001475
+SO:0001476
+SO:0001477
+SO:0001478
+SO:0001479
+SO:0001480
+SO:0001481
+SO:0001482
+SO:0001483
+SO:0001484
+SO:0001485
+SO:0001486
+SO:0001487
+SO:0001488
+SO:0001489
+SO:0001490
+SO:0001491
+SO:0001492
+SO:0001493
+SO:0001494
+SO:0001495
+SO:0001496
+SO:0001497
+SO:0001498
+SO:0001499
+SO:0001500
+SO:0001501
+SO:0001502
+SO:0001503
+SO:0001504
+SO:0001505
+SO:0001506
+SO:0001507
+SO:0001508
+SO:0001509
+SO:0001510
+SO:0001511
+SO:0001512
+SO:0001513
+SO:0001514
+SO:0001515
+SO:0001516
+SO:0001517
+SO:0001518
+SO:0001519
+SO:0001520
+SO:0001521
+SO:0001522
+SO:0001523
+SO:0001524
+SO:0001525
+SO:0001526
+SO:0001527
+SO:0001528
+SO:0001529
+SO:0001530
+SO:0001531
+SO:0001532
+SO:0001533
+SO:0001534
+SO:0001535
+SO:0001536
+SO:0001537
+SO:0001538
+SO:0001539
+SO:0001540
+SO:0001541
+SO:0001542
+SO:0001543
+SO:0001544
+SO:0001545
+SO:0001546
+SO:0001547
+SO:0001548
+SO:0001549
+SO:0001550
+SO:0001551
+SO:0001552
+SO:0001553
+SO:0001554
+SO:0001555
+SO:0001556
+SO:0001557
+SO:0001558
+SO:0001559
+SO:0001560
+SO:0001561
+SO:0001562
+SO:0001563
+SO:0001564
+SO:0001565
+SO:0001566
+SO:0001567
+SO:0001568
+SO:0001569
+SO:0001570
+SO:0001571
+SO:0001572
+SO:0001573
+SO:0001574
+SO:0001575
+SO:0001576
+SO:0001577
+SO:0001578
+SO:0001579
+SO:0001580
+SO:0001581
+SO:0001582
+SO:0001583
+SO:0001585
+SO:0001586
+SO:0001587
+SO:0001588
+SO:0001589
+SO:0001590
+SO:0001591
+SO:0001592
+SO:0001593
+SO:0001594
+SO:0001595
+SO:0001596
+SO:0001597
+SO:0001598
+SO:0001599
+SO:0001600
+SO:0001601
+SO:0001602
+SO:0001603
+SO:0001604
+SO:0001605
+SO:0001606
+SO:0001607
+SO:0001608
+SO:0001609
+SO:0001610
+SO:0001611
+SO:0001612
+SO:0001613
+SO:0001614
+SO:0001615
+SO:0001616
+SO:0001617
+SO:0001618
+SO:0001619
+SO:0001620
+SO:0001621
+SO:0001622
+SO:0001623
+SO:0001624
+SO:0001625
+SO:0001626
+SO:0001627
+SO:0001628
+SO:0001629
+SO:0001630
+SO:0001631
+SO:0001632
+SO:0001633
+SO:0001634
+SO:0001635
+SO:0001636
+SO:0001637
+SO:0001638
+SO:0001639
+SO:0001640
+SO:0001641
+SO:0001642
+SO:0001643
+SO:0001644
+SO:0001645
+SO:0001646
+SO:0001647
+SO:0001648
+SO:0001649
+SO:0001650
+SO:0001651
+SO:0001652
+SO:0001653
+SO:0001654
+SO:0001655
+SO:0001656
+SO:0001657
+SO:0001658
+SO:0001659
+SO:0001660
+SO:0001661
+SO:0001662
+SO:0001663
+SO:0001664
+SO:0001665
+SO:0001666
+SO:0001667
+SO:0001668
+SO:0001669
+SO:0001670
+SO:0001671
+SO:0001672
+SO:0001673
+SO:0001674
+SO:0001675
+SO:0001676
+SO:0001677
+SO:0001678
+SO:0001679
+SO:0001680
+SO:0001681
+SO:0001682
+SO:0001683
+SO:0001684
+SO:0001685
+SO:0001686
+SO:0001687
+SO:0001688
+SO:0001689
+SO:0001690
+SO:0001691
+SO:0001692
+SO:0001693
+SO:0001694
+SO:0001695
+SO:0001696
+SO:0001697
+SO:0001700
+SO:0001701
+SO:0001702
+SO:0001703
+SO:0001704
+SO:0001705
+SO:0001706
+SO:0001707
+SO:0001708
+SO:0001709
+SO:0001710
+SO:0001711
+SO:0001712
+SO:0001713
+SO:0001714
+SO:0001715
+SO:0001716
+SO:0001717
+SO:0001718
+SO:0001719
+SO:0001720
+SO:0001721
+SO:0001722
+SO:0001723
+SO:0001724
+SO:0001725
+SO:0001726
+SO:0001727
+SO:0001728
+SO:0001729
+SO:0001730
+SO:0001731
+SO:0001732
+SO:0001733
+SO:0001734
+SO:0001735
+SO:0001736
+SO:0001737
+SO:0001738
+SO:0005836
+SO:0005837
+SO:0005841
+SO:0005843
+SO:0005845
+SO:0005847
+SO:0005848
+SO:0005849
+SO:0005850
+SO:0005851
+SO:0005852
+SO:0005853
+SO:0005854
+SO:0005855
+SO:0005856
+SO:0005857
+SO:0005858
+SO:0100001
+SO:0100002
+SO:0100003
+SO:0100004
+SO:0100005
+SO:0100006
+SO:0100007
+SO:0100008
+SO:0100009
+SO:0100010
+SO:0100011
+SO:0100012
+SO:0100013
+SO:0100014
+SO:0100015
+SO:0100016
+SO:0100017
+SO:0100018
+SO:0100019
+SO:0100020
+SO:0100021
+SO:1000002
+SO:1000005
+SO:1000008
+SO:1000009
+SO:1000010
+SO:1000011
+SO:1000012
+SO:1000013
+SO:1000014
+SO:1000015
+SO:1000016
+SO:1000017
+SO:1000018
+SO:1000019
+SO:1000020
+SO:1000021
+SO:1000022
+SO:1000023
+SO:1000024
+SO:1000025
+SO:1000026
+SO:1000027
+SO:1000028
+SO:1000029
+SO:1000030
+SO:1000031
+SO:1000032
+SO:1000035
+SO:1000036
+SO:1000037
+SO:1000038
+SO:1000039
+SO:1000040
+SO:1000041
+SO:1000042
+SO:1000043
+SO:1000044
+SO:1000045
+SO:1000046
+SO:1000047
+SO:1000048
+SO:1000049
+SO:1000050
+SO:1000054
+SO:1000055
+SO:1000056
+SO:1000057
+SO:1000058
+SO:1000059
+SO:1000060
+SO:1000061
+SO:1000062
+SO:1000063
+SO:1000064
+SO:1000065
+SO:1000066
+SO:1000067
+SO:1000068
+SO:1000069
+SO:1000070
+SO:1000071
+SO:1000072
+SO:1000073
+SO:1000074
+SO:1000075
+SO:1000076
+SO:1000078
+SO:1000079
+SO:1000080
+SO:1000081
+SO:1000082
+SO:1000083
+SO:1000084
+SO:1000085
+SO:1000086
+SO:1000087
+SO:1000088
+SO:1000089
+SO:1000092
+SO:1000093
+SO:1000094
+SO:1000095
+SO:1000096
+SO:1000097
+SO:1000098
+SO:1000099
+SO:1000100
+SO:1000101
+SO:1000102
+SO:1000103
+SO:1000104
+SO:1000105
+SO:1000106
+SO:1000107
+SO:1000108
+SO:1000109
+SO:1000110
+SO:1000111
+SO:1000112
+SO:1000115
+SO:1000116
+SO:1000117
+SO:1000118
+SO:1000119
+SO:1000120
+SO:1000121
+SO:1000122
+SO:1000123
+SO:1000124
+SO:1000125
+SO:1000126
+SO:1000127
+SO:1000132
+SO:1000134
+SO:1000136
+SO:1000138
+SO:1000140
+SO:1000141
+SO:1000142
+SO:1000143
+SO:1000144
+SO:1000145
+SO:1000146
+SO:1000147
+SO:1000148
+SO:1000149
+SO:1000150
+SO:1000151
+SO:1000152
+SO:1000153
+SO:1000154
+SO:1000155
+SO:1000156
+SO:1000157
+SO:1000158
+SO:1000159
+SO:1000160
+SO:1000161
+SO:1000162
+SO:1000170
+SO:1000171
+SO:1000173
+SO:1000175
+SO:1000180
+SO:1000181
+SO:1000182
+SO:1000183
+SO:1000184
+SO:1000185
+SO:1000186
+SO:1001186
+SO:1001187
+SO:1001188
+SO:1001189
+SO:1001190
+SO:1001191
+SO:1001192
+SO:1001193
+SO:1001194
+SO:1001195
+SO:1001196
+SO:1001197
+SO:1001217
+SO:1001244
+SO:1001246
+SO:1001247
+SO:1001249
+SO:1001251
+SO:1001254
+SO:1001255
+SO:1001259
+SO:1001260
+SO:1001261
+SO:1001262
+SO:1001263
+SO:1001264
+SO:1001265
+SO:1001266
+SO:1001267
+SO:1001268
+SO:1001269
+SO:1001270
+SO:1001271
+SO:1001272
+SO:1001273
+SO:1001274
+SO:1001275
+SO:1001277
+SO:1001279
+SO:1001280
+SO:1001281
+SO:1001282
+SO:1001283
+SO:1001284
+SO:1001285
+SO:1001286
+SO:1001287
+SO:1001288
+SO:2000061
+SO:3000000
+started_by
+starts
+transcribed_from
+transcribed_to
+translates_to
+translation_of
+trans_spliced_from
+trans_spliced_to
+variant_of
