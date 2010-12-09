@@ -1,25 +1,23 @@
-package GAL::Parser::chinese_snp;
+package GAL::Parser::evan_snp;
 
 use strict;
 use vars qw($VERSION);
-
 $VERSION = '0.01';
+
 use base qw(GAL::Parser);
 use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::chinese_snp - Parse SNV files from the first Chinese
-genome
+GAL::Parser::evan_snp - Parse EVAN_SNP files
 
 =head1 VERSION
 
-This document describes GAL::Parser::chinese_snp version 0.01
+This document describes GAL::Parser::evan_snp version 0.01
 
 =head1 SYNOPSIS
 
-    my $parser = GAL::Parser::chinese_snp->new(file =>
-             'chinese_snp.gff');
+    my $parser = GAL::Parser::evan_snp->new(file => 'evan_snp.txt');
 
     while (my $feature_hash = $parser->next_feature_hash) {
 	print $parser->to_gff3($feature_hash) . "\n";
@@ -27,20 +25,17 @@ This document describes GAL::Parser::chinese_snp version 0.01
 
 =head1 DESCRIPTION
 
-L<GAL::Parser::chinese_snp> provides a parser for SNV files from the
-first Chinese genome published by Wang, et al. 2008
-(http://www.ncbi.nlm.nih.gov/pubmed/18987735).
+L<GAL::Parser::evan_snp> provides a parser for EVAN_SNP data.
 
 =head1 Constructor
 
-New L<GAL::Parser::chinese_snp> objects are created by the class
-method new.  Arguments should be passed to the constructor as a list
-(or reference) of key value pairs.  All attributes of the
-L<GAL::Parser::chinese_snp> object can be set in the call to new. An
+New L<GAL::Parser::evan_snp> objects are created by the class method
+new.  Arguments should be passed to the constructor as a list (or
+reference) of key value pairs.  All attributes of the
+L<GAL::Parser::evan_snp> object can be set in the call to new. An
 simple example of object creation would look like this:
 
-    my $parser = GAL::Parser::chinese_snp->new(file =>
-             'chinese_snp.gff');
+    my $parser = GAL::Parser::evan_snp->new(file => 'evan_snp.txt');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
@@ -64,9 +59,9 @@ must be set.
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::chinese_snp->new();
-     Function: Creates a GAL::Parser::chinese_snp object;
-     Returns : A GAL::Parser::chinese_snp object
+     Usage   : GAL::Parser::evan_snp->new();
+     Function: Creates a GAL::Parser::evan_snp object;
+     Returns : A GAL::Parser::evan_snp object
      Args    : See the attributes described above.
 
 =cut
@@ -89,7 +84,7 @@ sub _initialize_args {
 	# for each attribute.  Leave the rest of this block alone!
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
-	my @valid_attributes = qw(); # Set valid class attributes here
+	my @valid_attributes = qw(file fh); # Set valid class attributes here
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }
@@ -109,72 +104,29 @@ sub _initialize_args {
 sub parse_record {
 	my ($self, $record) = @_;
 
-	my $original_atts = $self->parse_attributes($record->{attributes});
-
 	my $seqid      = $record->{seqid};
-	my $source     = $record->{source};
-	my $type       = $record->{type};
+	my $source     = 'Evan';
+	my $type       = 'SNV';
 	my $start      = $record->{start};
-	my $end        = $record->{end};
-	my $score      = $record->{score};
-	my $strand     = $record->{strand};
+	my $end        = $record->{start};
+	my $score      = '.';
+	my $strand     = '+';
 	my $phase      = '.';
-	my $alias_xref = $original_atts->{ID}[0];
 
-	$type = $type eq 'SNP' ? 'SNV' : $type;
+	my $feature_id = join ':', ($seqid, $source, $type, $start);
 
-	my $id = join ':', ($seqid, $source, $type, $start);
+	my $reference_seq = uc $record->{reference_seq};
+	my $variant_seq   = uc $record->{variant_seq};
 
-	# chr1 SoapSnp SNP SNP 4793 4793 25 + . ID=YHSNP0128643; status=novel; ref=A; allele=A/G; support1=48; support2=26;
-	# chr1SoapSNPSNP6434643448+.ID=YHSNP0128644; status=novel; ref=G; allele=A/G; support1=10; support2=11;
-	# chr1SoapSNPSNP938969389651+.ID=rs4287120; status=dbSNP; ref=T; allele=C/T; support1=5; support2=4; location=MSTB1:LTR/MaLR;
-	# chr1SoapSNPSNP22570722570743+.ID=rs6603780; status=dbSNP; ref=C; allele=C/G; support1=23; support2=12;
-	# chr1SoapSNPSNP22583922583931+.ID=rs6422503; status=dbSNP; ref=C; allele=A/C; support1=13; support2=5; location=L1P2:LINE/L1;
-	# chr1SoapSNPSNP52684952684976+.ID=YHSNP0128645; status=novel; ref=G; allele=G/T; support1=14; support2=12; location=L1MD3:LINE/L1;
-	# chr1SoapSNPSNP55473155473130+.ID=rs1832728; status=dbSNP; ref=T; allele=C/T; support1=37; support2=12; location=Mitochondrial:Mt-tRNA;
-	# chr1SoapSNPSNP55535355535328+.ID=rs7349153; status=dbSNP; ref=T; allele=C/T; support1=37; support2=9;
-	# chr1SoapSNPSNP55537155537122+.ID=rs9283150; status=dbSNP; ref=G; allele=A/G; support1=46; support2=27;
-	# chr1SoapSNPSNP55677955677945+.ID=rs3949348; status=dbSNP; ref=A; allele=A/G; support1=37; support2=13;
-	# chr1    SoapSNP SNP     774913  774913  74      +       .       ID=rs2905062; status=dbSNP; ref=G; allele=A/A; support1=26; location=MSTD:LTR/MaLR;
-	# chr1    SoapSNP SNP     775852  775852  93      +       .       ID=rs2980300; status=dbSNP; ref=T; allele=C/C; support1=29;
-	# chr1    SoapSNP SNP     777262  777262  43      +       .       ID=rs2905055; status=dbSNP; ref=G; allele=T/T; support1=12;
+	my $genotype = 'hemizygous';
 
-	my $reference_seq = $original_atts->{ref}[0];
-	my @variant_seqs  = split m|/|, $original_atts->{allele}[0];
-
-	shift @variant_seqs if $variant_seqs[0] eq $variant_seqs[1];
-
-	my $support1 = (ref $original_atts->{support1} eq 'ARRAY' ?
-			$original_atts->{support1}[0]             :
-			0
-		       );
-	my $support2 = (ref $original_atts->{support2} eq 'ARRAY' ?
-			$original_atts->{support2}[0]             :
-			0
-		       );
-
-	my @variant_reads = ($support1, $support2);
-
-	my $total_reads = $support1 + $support2;
-
-	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
-
-	my $attributes = {ID            => [$id],
-			  Reference_seq => [$reference_seq],
-			  Variant_seq   => \@variant_seqs,
-			  Variant_reads => \@variant_reads,
-			  Total_reads   => [$total_reads],
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => [$variant_seq],
 			  Genotype      => [$genotype],
+			  ID            => [$feature_id],
 			 };
 
-	if ($alias_xref =~ /^rs\d+$/) {
-	    push @{$attributes->{Dbxref}}, 'dbSNP:' . $alias_xref;
-	}
-	else {
-	    push @{$attributes->{Alias}}, $alias_xref;
-	}
-
-	my $feature_data = {feature_id => $id,
+	my $feature_data = {feature_id => $feature_id,
 			    seqid      => $seqid,
 			    source     => $source,
 			    type       => $type,
@@ -205,7 +157,7 @@ sub reader {
   my $self = shift;
 
   if (! $self->{reader}) {
-    my @field_names = qw(seqid source type start end score strand phase attributes);
+    my @field_names = qw(seqid start reference_seq variant_seq);
     my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
     $self->{reader} = $reader;
   }
@@ -216,11 +168,11 @@ sub reader {
 
 =head1 DIAGNOSTICS
 
-L<GAL::Parser::chinese_snp> does not throw any warnings or errors.
+L<GAL::Parser::evan_snp> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<GAL::Parser::chinese_snp> requires no configuration files or
+L<GAL::Parser::evan_snp> requires no configuration files or
 environment variables.
 
 =head1 DEPENDENCIES
