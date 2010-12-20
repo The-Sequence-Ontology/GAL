@@ -1,4 +1,4 @@
-package GAL::Parser::1000_genomes_genotypes;
+package GAL::Parser::VCFv4_0;
 
 use strict;
 use vars qw($VERSION);
@@ -9,15 +9,15 @@ use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::1000_genomes_genotypes - <One line description of module's purpose here>
+GAL::Parser::VCFv4_0 - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Parser::1000_genomes_genotypes version 0.01
+This document describes GAL::Parser::VCFv4_0 version 0.01
 
 =head1 SYNOPSIS
 
-     use GAL::Parser::1000_genomes_genotypes;
+     use GAL::Parser::VCFv4_0;
 
 =for author to fill in:
      Brief code example(s) here showing commonest usage(s).
@@ -39,9 +39,9 @@ This document describes GAL::Parser::1000_genomes_genotypes version 0.01
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::1000_genomes_genotypes->new();
-     Function: Creates a GAL::Parser::1000_genomes_genotypes object;
-     Returns : A GAL::Parser::1000_genomes_genotypes object
+     Usage   : GAL::Parser::VCFv4_0->new();
+     Function: Creates a GAL::Parser::VCFv4_0 object;
+     Returns : A GAL::Parser::VCFv4_0 object
      Args    :
 
 =cut
@@ -115,7 +115,7 @@ sub parse_record {
     # This allows us to get the data as an array and deal with multiple genotypes per line.
     @record{qw(chrom pos id ref alt qual filter info format)} = splice(@{$data}, 0, 9);
     
-    my $seqid      = 'chr' . $record{chrom};
+    my $seqid      = $record{chrom} =~ /^chr/ ? $record{chrom} : 'chr' . $record{chrom};
     my $source;
     my $type       = 'SNV';
     my $start      = $record{pos};
@@ -284,7 +284,7 @@ sub reader {
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Parser::1000_genomes_genotypes> requires no configuration files or environment variables.
+<GAL::Parser::VCFv4_0> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
