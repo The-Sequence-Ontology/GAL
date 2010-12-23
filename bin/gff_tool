@@ -81,7 +81,7 @@ to the altered copy of the feature.  All filters given are applied.
 
 		      $i - A hash reference of the values loaded from the
 			   file given by the ids argument.
-		      $f - A hash reference for the current feature (see
+		      $xf - A hash reference for the current feature (see
 			   below for more details on the structure of the
 			   hash reference).
 		      $t - A hash reference for the attributes associated
@@ -132,8 +132,8 @@ to the altered copy of the feature.  All filters given are applied.
   alter|a         Apply the code reference given by the code argument
 		  described above to each feature.  This is identical
 		  to the filter command described above, but any
-		  alteration made the the feature by the code
-		  reference is kept.
+		  alteration made to the feature by the code
+		  reference is kept in printing.
 
   hash_ag|h
 
@@ -185,17 +185,17 @@ to the altered copy of the feature.  All filters given are applied.
 --Add/Extract Options--
 
   print           Just print the features - applying any include/exclude
-                  along the way.
+		  along the way.
 
   sequence|p      Print a fasta sequence for each feature instead of
 		  the feature. Requires the fasta argument (Not yet
 		  implimented)
 
   features|x      Print only feature lines, removing all meta-data,
-                  comments, empty lines and fasta from a GFF file.
+		  comments, empty lines and fasta from a GFF file.
 
   fasta_only|q    Print only the fasta sequences from the ##FASTA
-                  section from a GFF3 file.
+		  section from a GFF3 file.
 
   fasta_no|Q      Remove the ##FASTA section from a GFF3 file.
 
@@ -208,8 +208,8 @@ to the altered copy of the feature.  All filters given are applied.
   meta_no|Y       Print only the meta-data lines (pragmas, comments and
 		  empty lines) from a GFF file.
 
-  meta_add|z      Add a file containing meta-data to the begining of 
-                  a GFF file.
+  meta_add|z      Add a file containing meta-data to the begining of
+		  a GFF file.
 
   pragmas|w       Interactively add GFF3/GVF pragmas to the top of the
 		  file.  Use GFF3 or GVF (case insensitive) as an
@@ -218,6 +218,40 @@ to the altered copy of the feature.  All filters given are applied.
 
   add_ID|v        Add ID attributes where they dont already
 		  exist. (Not yet implimented)
+
+
+--Set Operations--
+
+		  All set operations are based on seqid:start:end
+		  unless the set_seq option is set in which case it
+		  becomes seqid:start:end:Reference_seq:Variant_seq.
+		  The Reference_seq is removed from the Variant_seq
+		  list.
+
+  union           The union of all files.  The members that are
+                  present in any file.
+
+  intersection    The intersection of all files.  The members that
+                  are present in all files.
+
+  l_compliment    The left compliment of the files.  The members 
+                  found exclusively in the first file but not in any
+                  subsequent files.
+
+  s_difference    The symetric difference of the files.  The members
+                  found in exactly one file.  Note that the symetric
+                  difference should technically give you the members
+                  that are present in an odd number of files, but on
+                  sets of more than two files that is probably never
+                  what you want in this application, so here we give
+                  you only the memebers that are present in exactly
+                  one file
+
+
+--GVF Options--
+
+  titv           Calculate transition/transversion ratio.
+
 
 Code References:
 
@@ -244,7 +278,7 @@ $f = {feature_id => $feature_id, # Same as the value of the ID attribute
       score      => $score,
       strand     => $strand,
       phase      => $phase,
-      attributes => $a,
+      attributes => $t,
      }
 
 $t = {tag1 => [value1],
@@ -264,7 +298,8 @@ my ($help, $format, $in_place, $out_ext, $fasta, $ids_file, $include,
     $exclude, $code, $filter, $merge, $blend, $sort, $alter, $hash_ag,
     $validate, $stats, $print_gff, $sequence, $fasta_only, $fasta_no,
     $fasta_add, $meta_only, $meta_no, $meta_add, $add_ID, $pragmas,
-    $features);
+    $features, $titv, $union, $intersection, $l_compliment,
+    $s_difference);
 
 
 my $opt_success = GetOptions('format|f=s'      => \$format,
@@ -284,7 +319,7 @@ my $opt_success = GetOptions('format|f=s'      => \$format,
 			     'validate|v'      => \$validate,
 			     'stats|u'	       => \$stats,
 			     'sequence|p'      => \$sequence,
-                             'print'           => \$print_gff,
+			     'print'           => \$print_gff,
 			     'features|x'      => \$features,
 			     'fasta_only|r'    => \$fasta_only,
 			     'fasta_no|R'      => \$fasta_no,
@@ -294,7 +329,12 @@ my $opt_success = GetOptions('format|f=s'      => \$format,
 			     'meta_add|z=s'    => \$meta_add,
 			     'pragmas|w=s'     => \$pragmas,
 			     'add_ID|v'	       => \$add_ID,
-                            );
+			     'titv'            => \$titv,
+			     'union'           => \$union,
+			     'intersection'    => \$intersection,
+			     'l_compliment'    => \$l_compliment,
+			     's_difference'    => \$s_difference,
+			    );
 
 die $usage if $help || ! $opt_success;
 
@@ -316,9 +356,9 @@ my $i = parse_ids($ids_file) if $ids_file;
 # Move the filter code to the passes_filters sub
 filter($code)            if $filter;
 #merge()		 if $merge;
-blend()	     	         if $blend;
+blend()		         if $blend;
 #sort_gff()		 if $sort;
-alter()                  if $alter;
+alter_gff($code)         if $alter;
 validate()		 if $validate;
 hash_ag($hash_ag, $code) if $hash_ag;
 #stats()		 if $stats;
@@ -332,6 +372,11 @@ meta_no()		 if $meta_no;
 meta_add()		 if $meta_add;
 add_ID()		 if $add_ID;
 print_gff()              if $print_gff;
+calc_titv()              if $titv;
+union()                  if $union;
+intersection()           if $intersection;
+l_compliment()           if $l_compliment;
+s_difference()           if $s_difference;
 #pragma($pragma)	 if $pragma;
 
 #-----------------------------------------------------------------------------
@@ -358,14 +403,13 @@ sub filter {
 	while (my $f_original = $parser->next_feature_hash) {
 
 	    my $f = $f_original;
-	    my $a = $f->{attributes};
+	    my $t = $f->{attributes};
 
 	    my $return_value = eval $code;
 	    die "Fatal Error in code ref: $code\n$@\n" if $@;
 	    next unless $return_value;
 
-	    print $OUT $parser->to_gff3($f_original);
-	    print $OUT "\n";
+	    print $OUT to_gff3($f_original);
 	}
     }
 }
@@ -499,15 +543,14 @@ sub alter_gff {
 	my $OUT = fh_out($file);
 	while (my $f = $parser->next_feature_hash) {
 
-	    my $a = $f->{attributes};
+	    my $t = $f->{attributes};
 
 	    my $return_value = eval $code;
 	    die "Fatal Error in code ref: $code\n$@\n" if $@;
 
-	    $f->{attributes} = $a;
+	    $f->{attributes} = $t;
 
-	    print $OUT $parser->to_gff3($f);
-	    print $OUT "\n";
+	    print $OUT to_gff3($f);
 	}
     }
 }
@@ -723,7 +766,7 @@ sub validate {
 		    warn "WARNING : $error_code : $line\n";
 		}
 		# Attributes
-		my %attributes;		
+		my %attributes;
 		my @pairs = split /;/, $att_text;
 	      PAIR:
 		for my $pair (@pairs) {
@@ -838,20 +881,57 @@ sub validate {
 		    # Variant_seq
 		    elsif ($key eq 'Variant_seq') {
 			for my $value (@values) {
-			    if ($value !~ /[ATGCN]/) {
-				my $error_code = 'invalid_Variant_seq_attribute_value';
-				push @{$errors{$error_code}}, [$line_count, $line];
-				warn "WARNING : $error_code : ($value) $line\n";
+			    # TODO: Validate the length of the Variant_seq
+			    if ($type eq 'SNV') {
+				if ($value !~ /[ATGC]/) {
+				    my $error_code = 'invalid_Variant_seq_attribute_value_for_SNV';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+			    }
+			    elsif ($type =~ /^(insertion|indel)$/) {
+				if ($value !~ /[ATGCN]+|~/) {
+				    my $error_code = 'invalid_Variant_seq_attribute_value_insertion_indel';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+				
+			    }
+			    elsif ($type =~ /^(deletion|indel)$/) {
+				if ($value !~ /[ATGCN]+|-/) {
+				    my $error_code = 'invalid_Variant_seq_attribute_value_deletion_indel';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+				
 			    }
 			}
 		    }
 		    # Reference_seq
 		    elsif ($key eq 'Reference_seq') {
 			for my $value (@values) {
-			    if ($value !~ /[ATGCN]/) {
-				my $error_code = 'invalid_Reference_seq_attribute_value';
-				push @{$errors{$error_code}}, [$line_count, $line];
-				warn "WARNING : $error_code : ($value) $line\n";
+			    if ($type eq 'SNV') {
+				if ($value !~ /[ATGC]/) {
+				    my $error_code = 'invalid_Reference_seq_attribute_value_for_SNV';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+			    }
+			    elsif ($type =~ /^(insertion|indel)$/) {
+				if ($value !~ /[ATGCN]+|-/) {
+				    my $error_code = 'invalid_Reference_seq_attribute_value_insertion_indel';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+				
+			    }
+			    elsif ($type =~ /^(deletion|indel)$/) {
+				if ($value !~ /[ATGCN]+|~/) {
+				    my $error_code = 'invalid_Reference_seq_attribute_value_deletion_indel';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+				
 			    }
 			}
 		    }
@@ -958,7 +1038,7 @@ sub validate {
 				warn "WARNING : $error_code : ($value) $line\n";
 			    }
 			}
-		    }	
+		    }
 		    # End_range
 		    elsif ($key eq 'End_range') {
 			my $value = $values[0];
@@ -1231,7 +1311,7 @@ sub validate {
 		    }
 		}
 		# All other pragmas
-		else { 
+		else {
 		    $line =~ /^\#\#(\S+)\s*(.*)/;
 		    my $pragma_key   = $1;
 		    my $pragma_value = $2;
@@ -1415,7 +1495,7 @@ sub fasta_only {
 }
 
 #-----------------------------------------------------------------------------
-#  fasta_no|R Print the pragmas, comments and features, but not the fasta 
+#  fasta_no|R Print the pragmas, comments and features, but not the fasta
 #             section from a GFF3 file.
 #-----------------------------------------------------------------------------
 
@@ -1531,6 +1611,236 @@ sub features {
 }
 
 #-----------------------------------------------------------------------------
+#  union           The union of all files.
+#-----------------------------------------------------------------------------
+
+sub union {
+    my %union;
+    while (my ($parser, $file) = get_next_parser()) {
+	last unless $parser;
+	while (my $f = $parser->next_feature_hash) {
+	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
+	    # if ($set_seq) {
+	    #	my $a = $f->{attributes};
+	    #	my $ref_seq = $a->{Reference_seq}[0];
+	    #	my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
+	    #	$loc_id = join ':', ($loc_id, $ref_seq, $var_seq);
+	    # }
+	    $union{$loc_id} ||= $f;
+	}
+    }
+    my $OUT = fh_out();
+    for my $loc_id (sort keys %union) {
+	my $f = $union{$loc_id};
+	next if fails_filters($f);
+	print $OUT to_gff3($f);
+    }
+}
+
+#-----------------------------------------------------------------------------
+#  intersection    The intersection of all files.
+#-----------------------------------------------------------------------------
+
+sub intersection {
+
+    my (%inter_count, %inter_stash);
+    my $file_count = 1;
+    my ($parser, $file) = get_next_parser();
+    while (my $f = $parser->next_feature_hash) {
+	my $loc_id  = join ':', @{$f}{qw(seqid start end)};
+	# if ($set_seq) {
+	#	my $a = $f->{attributes};
+	#	my $ref_seq = $a->{Reference_seq}[0];
+	#	my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
+	#	$loc_id = join ':', ($loc_id, $ref_seq, $var_seq);
+	# }
+	$inter_stash{$loc_id} ||= $f;
+	$inter_count{$loc_id}++;
+    }
+    while (my ($parser, $file) = get_next_parser()) {
+	last unless $parser;
+	$file_count++;
+	while (my $f = $parser->next_feature_hash) {
+	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
+	    # if ($set_seq) {
+	    #	my $a = $f->{attributes};
+	    #	my $ref_seq = $a->{Reference_seq}[0];
+	    #	my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
+	    #	$loc_id = join ':', ($loc_id, $ref_seq, $var_seq);
+	    # }
+	    $inter_count{$loc_id}++;
+	}
+    }
+    my $OUT = fh_out();
+    for my $loc_id (sort keys %inter_stash) {
+	if ($inter_count{$loc_id} == $file_count) {
+	    my $f = $inter_stash{$loc_id};
+	    next if fails_filters($f);
+	    print $OUT to_gff3($f);
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+#  l_compliment    The members found exclusively in the first file
+#                  but not in any subsequent files.
+#-----------------------------------------------------------------------------
+
+sub l_compliment {
+    my (%comp_stash, %comp_count);
+    my %others;
+    my ($parser, $file) = get_next_parser();
+    while (my $f = $parser->next_feature_hash) {
+	my $loc_id  = join ':', @{$f}{qw(seqid start end)};
+	# if ($set_seq) {
+	#   my $a = $f->{attributes};
+	#   my $ref_seq = $a->{Reference_seq}[0];
+	#   my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
+	#   $loc_id = join ':', ($loc_id, $ref_seq, $var_seq);
+	# }
+	$comp_stash{$loc_id} = $f;
+	$comp_count{$loc_id}++;
+    }
+    my $OUT = fh_out();
+    while (my ($parser, $file) = get_next_parser()) {
+	last unless $parser;
+	while (my $f = $parser->next_feature_hash) {
+	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
+	    # if ($set_seq) {
+	    #	my $a = $f->{attributes};
+	    #	my $ref_seq = $a->{Reference_seq}[0];
+	    #	my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
+	    #	$loc_id = join ':', ($loc_id, $ref_seq, $var_seq);
+	    # }
+	    $comp_count{$loc_id}++;
+	}
+    }
+    for my $loc_id (sort keys %comp_stash) {
+	if ($comp_count{$loc_id} == 1) {
+	    my $f = $comp_stash{$loc_id};
+	    next if fails_filters($f);
+	    print $OUT to_gff3($f);
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+#  s_difference    The members found in exactly one file.
+#-----------------------------------------------------------------------------
+
+sub s_difference {
+    my (%diff_count, %diff_stash);
+    while (my ($parser, $file) = get_next_parser()) {
+	last unless $parser;
+	while (my $f = $parser->next_feature_hash) {
+	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
+	    # if ($set_seq) {
+	    #	my $a = $f->{attributes};
+	    #	my $ref_seq = $a->{Reference_seq}[0];
+	    #	my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
+	    #	$loc_id = join ':', ($loc_id, $ref_seq, $var_seq);
+	    # }
+	    $diff_stash{$loc_id} ||= $f;
+	    $diff_count{$loc_id}++;
+	}
+    }
+    my $OUT = fh_out();
+    for my $loc_id (sort keys %diff_stash) {
+	if ($diff_count{$loc_id} == 1) {
+	    my $f = $diff_stash{$loc_id};
+	    next if fails_filters($f);
+	    print $OUT to_gff3($f);
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+#  titv           Calculate transition/transversion ratio.
+#-----------------------------------------------------------------------------
+
+sub calc_titv {
+
+    my ($ti, $tv);
+
+    while (my ($parser, $file) = get_next_parser()) {
+	last unless $parser;
+	while (my $f = $parser->next_feature_hash) {
+	    my $a = $f->{attributes};
+	    my $ref_seq = $a->{Reference_seq}[0];
+	    my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
+	    if ($ref_seq eq 'A') {
+		if ($var_seq eq 'C') {
+		    $tv++;
+		}
+		elsif ($var_seq eq 'G') {
+		    $ti++;
+		}
+		elsif ($var_seq eq 'T') {
+		    $tv++;
+		}
+		else {
+		    my $line = to_gff3($f);
+		    warn "WARNING : variant_seq_not_handled: $line";
+		}
+	    }
+	    elsif ($ref_seq eq 'C') {
+		if ($var_seq eq 'A') {
+		    $tv++;
+		}
+		elsif ($var_seq eq 'G') {
+		    $tv++;
+		}
+		elsif ($var_seq eq 'T') {
+		    $ti++;
+		}
+		else {
+		    my $line = to_gff3($f);
+		    warn "WARNING : variant_seq_not_handled: $line";
+		}
+	    }
+	    elsif ($ref_seq eq 'G') {
+		if ($var_seq eq 'A') {
+		    $ti++;
+		}
+		elsif ($var_seq eq 'C') {
+		    $tv++;
+		}
+		elsif ($var_seq eq 'T') {
+		    $tv++;
+		}
+		else {
+		    my $line = to_gff3($f);
+		    warn "WARNING : variant_seq_not_handled: $line";
+		}
+	    }
+	    elsif ($ref_seq eq 'T') {
+		if ($var_seq eq 'A') {
+		    $tv++;
+		}
+		elsif ($var_seq eq 'C') {
+		    $ti++;
+		}
+		elsif ($var_seq eq 'G') {
+		    $tv++;
+		}
+		else {
+		    my $line = to_gff3($f);
+		    warn "WARNING : variant_seq_not_handled: $line";
+		}
+	    }
+	    else {
+		my $line = to_gff3($f);
+		warn "WARNING : reference_seq_not_handled: $line";
+	    }
+	}
+    }
+    print "Transitions: $ti\n";
+    print "Transversions: $tv\n";
+    print "Ti/Tv: " . $ti/$tv . "\n";
+}
+
+
+#-----------------------------------------------------------------------------
 
 sub parse_ids {
 
@@ -1571,8 +1881,7 @@ sub print_gff {
 	my $OUT = fh_out($file);
 	while (my $feature = $parser->next_feature_hash) {
 	    next if fails_filters($feature);
-	    print $OUT $parser->to_gff3($feature);
-	    print $OUT "\n";
+	    print $OUT to_gff3($feature);
 	}
     }
 }
@@ -1678,7 +1987,7 @@ sub to_gff3 {
 
 #-----------------------------------------------------------------------------
 
-sub get_so_data {    
+sub get_so_data {
     my %so_terms = map {chomp;$_ => 1} (<DATA>);
 
     return \%so_terms;
