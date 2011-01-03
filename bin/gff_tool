@@ -1632,7 +1632,6 @@ sub union {
     my $OUT = fh_out();
     for my $loc_id (sort keys %union) {
 	my $f = $union{$loc_id};
-	next if fails_filters($f);
 	print $OUT to_gff3($f);
     }
 }
@@ -1675,7 +1674,6 @@ sub intersection {
     for my $loc_id (sort keys %inter_stash) {
 	if ($inter_count{$loc_id} == $file_count) {
 	    my $f = $inter_stash{$loc_id};
-	    next if fails_filters($f);
 	    print $OUT to_gff3($f);
 	}
     }
@@ -1718,7 +1716,6 @@ sub l_compliment {
     for my $loc_id (sort keys %comp_stash) {
 	if ($comp_count{$loc_id} == 1) {
 	    my $f = $comp_stash{$loc_id};
-	    next if fails_filters($f);
 	    print $OUT to_gff3($f);
 	}
     }
@@ -1748,7 +1745,6 @@ sub s_difference {
     for my $loc_id (sort keys %diff_stash) {
 	if ($diff_count{$loc_id} == 1) {
 	    my $f = $diff_stash{$loc_id};
-	    next if fails_filters($f);
 	    print $OUT to_gff3($f);
 	}
     }
@@ -1893,11 +1889,11 @@ sub get_next_parser {
     my $file = shift @files;
 
     my $IN;
-    if (! $file && ! -t STDIN && ! $STDIN_FINISHED) {
-	open ($IN, "<&=STDIN")   or die "Can't open STDIN:\n$!\n";
-	$STDIN_FINISHED++;
-    }
-    elsif ($file) {
+#    if (! $file && ! -t STDIN && ! $STDIN_FINISHED) {
+#	open ($IN, "<&=STDIN")   or die "Can't open STDIN:\n$!\n";
+#	$STDIN_FINISHED++;
+#    }
+    if ($file) {
 	open ($IN, "<", $file)   or die "Can't open $file for reading: $!\n";
     }
     else {
