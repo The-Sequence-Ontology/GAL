@@ -77,11 +77,11 @@ die $usage unless $file;
 if ($summary) {
     build_summary($file);
 }
-elsif ($filter) {
-    apply_filter($file);
-}
 elsif ($clean) {
     clean_file($file);
+}
+else {
+    print_file($file);
 }
 
 #-----------------------------------------------------------------------------
@@ -197,8 +197,27 @@ sub build_summary {
 
 sub apply_filter {
 
-    die "FATAL : function_not_implimented : apply_filter\n";
+    my $a = shift;
 
+    # QNAME  Query (pair) NAME
+    # FLAG   bitwise FLAG
+    # RNAME  Reference sequence NAME
+    # POS    1-based leftmost POSition/coordinate of clipped sequence
+    # MAP    QMAPping Quality (Phred-scaled)
+    # CIGAR  extended CIGAR string
+    # MRNM   Mate Reference sequence NaMe (‘=’ if same as RNAME)
+    # MPOS   1-based Mate POSistion
+    # ISIZE  Inferred insert SIZE
+    # SEQ    query SEQuence on the same strand as the reference
+    # QUAL   query QUALity (ASCII-33 gives the Phred base quality)
+    # OPT    variable OPTional fields in the format TAG:VTYPE:VALUE
+
+    my $o = $a->{opts};
+
+    my $return_value = eval $filter;
+    die "Fatal Error in code ref: $filter\n$@\n" if $@;
+
+    return $return_value;
 }
 
 #-----------------------------------------------------------------------------
@@ -234,6 +253,22 @@ sub print_alignment {
     print join "\t", (@{$a}{qw(qname flag rname pos map cigar mrnm mpos isize
 			      seq qual)}, @opts);
     print "\n";
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_file {
+
+    my $file = shift;
+
+    my $iterator = make_iterator($file, $region);
+
+    while (my $a = &{$iterator}) {
+	print_alignment($a);
+    }
+
+
+
 }
 
 #-----------------------------------------------------------------------------
@@ -297,6 +332,9 @@ sub make_iterator {
 		}
 		else {
 		    $alignment{opt} = \@opts;
+		}
+		if ($filter) {
+		    next LINE unless apply_filter(\%alignment);
 		}
 		return %alignment ? \%alignment : undef;
 	    }
