@@ -17,8 +17,7 @@ gff_tool --format gff3 file.gff3
 
 Description:
 
-A script to do a lot of different operations on a GFF3 file (or any file
-for which GAL has a parser).
+A script to do a lot of different operations on a GFF3 file.
 
 Options:
 
