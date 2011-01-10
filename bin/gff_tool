@@ -2,7 +2,6 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use GAL::Parser;
 use List::Util;
 use List::MoreUtils;
 
@@ -52,7 +51,8 @@ parsed and operated on.
 		  other commands.  Bio::DB::Fasta is used to index the
 		  fasta file.  The sequence of each feature is made
 		  available to any code reference given via the code
-		  argument.
+		  argument.  See below for details of code references.
+                  Not yet implimented
 
 --Include/Exclude Options--
 
@@ -136,22 +136,30 @@ to the altered copy of the feature.  All filters given are applied.
 
   hash_ag|h
 
-		  The hash_ag argument takes a code reference.  A
-		  second code reference passed to the code argument is
-		  also required.  The function uses the code reference
+		  The hash_ag function aggregates all the features in
+		  a file to a hash based on user specified code.  It
+		  then iterates over each key in that has and runs
+		  another block of user specified code on the value(s)
+		  that were stashed in that hash value. This could,
+		  for examples, be used to stash all data into a hash
+		  keyed off the feature type and then calculate and
+		  print the averages score for each feature type.  The
+		  hash_ag argument takes a code reference.  A second
+		  code reference passed to the code argument is also
+		  required.  The function uses the code reference
 		  supplied by the code argument described above to
 		  create a hash (%h).  This may be done, for example,
 		  by pushing all features onto the values of %h keyed
 		  by seqid or type.  After all features have been been
 		  iterated over (and possibly stored) this way,
 		  another loop is run over each key of %h and the code
-		  reference provided to this argument is run for each
-		  iteration through that loop.  The variables made
-		  available within this loop are as follows:
+		  reference provided to the hash_ag argument is run
+		  for each iteration through that loop.  The variables
+		  made available within this loop are as follows:
 
 		      %h - The hash created as described above.
 		      $k - The current key.
-		      $v - An current value.
+		      $v - The current value.
 
 		  See the Examples section below.
 
@@ -309,7 +317,7 @@ my $opt_success = GetOptions('format|f=s'      => \$format,
 			     'include|n'       => \$include,
 			     'exclude|e'       => \$exclude,
 			     'code|c=s'	       => \$code,
-			     'filter|t'	       => \$filter,
+			     'filter|t'        => \$filter,
 			     'merge|m'	       => \$merge,
 			     'blend|b'	       => \$blend,
 			     'sort|s'	       => \$sort,
@@ -353,30 +361,30 @@ my $d = parse_fasta($fasta) if $fasta;
 my $i = parse_ids($ids_file) if $ids_file;
 
 # Move the filter code to the passes_filters sub
-filter($code)            if $filter;
-#merge()		 if $merge;
-blend()		         if $blend;
-#sort_gff()		 if $sort;
-alter_gff($code)         if $alter;
-validate()		 if $validate;
-hash_ag($hash_ag, $code) if $hash_ag;
-#stats()		 if $stats;
-sequence()		 if $sequence;
-features()               if $features;
-fasta_only()		 if $fasta_only;
-fasta_no()		 if $fasta_no;
-fasta_add()		 if $fasta_add;
-meta_only()		 if $meta_only;
-meta_no()		 if $meta_no;
-meta_add()		 if $meta_add;
-add_ID()		 if $add_ID;
-print_gff()              if $print_gff;
-calc_titv()              if $titv;
-union()                  if $union;
-intersection()           if $intersection;
-l_compliment()           if $l_compliment;
-s_difference()           if $s_difference;
-#pragma($pragma)	 if $pragma;
+filter(\@files, $code)            if $filter;
+#merge(\@files)		          if $merge;
+blend_gff(\@files)		  if $blend;
+#sort_gff(\@files)		  if $sort;
+alter_gff(\@files, $code)         if $alter;
+validate(\@files)		  if $validate;
+hash_ag(\@files, $hash_ag, $code) if $hash_ag;
+#stats(\@files)		          if $stats;
+sequence(\@files)		  if $sequence;
+features(\@files)                 if $features;
+fasta_only(\@files)		  if $fasta_only;
+fasta_no(\@files)		  if $fasta_no;
+fasta_add(\@files, $fasta_add)    if $fasta_add;
+meta_only(\@files)		  if $meta_only;
+meta_no(\@files)		  if $meta_no;
+meta_add(\@files)		  if $meta_add;
+add_ID(\@files)		          if $add_ID;
+print_gff(\@files)                if $print_gff;
+calc_titv(\@files)                if $titv;
+union(\@files)                    if $union;
+intersection(\@files)             if $intersection;
+l_compliment(\@files)             if $l_compliment;
+s_difference(\@files)             if $s_difference;
+#pragma($pragma)	          if $pragma;
 
 #-----------------------------------------------------------------------------
 #-------------------------------- SUBROUTINES --------------------------------
@@ -394,12 +402,12 @@ s_difference()           if $s_difference;
 
 sub filter {
 
-    my $code = shift;
+    my ($files, $code) = @_;
 
-    while (my ($parser, $file) = get_next_parser()) {
-	last unless $parser;
+    for my $file (@files) {
+	my $IN  = fh_in($file);
 	my $OUT = fh_out($file);
-	while (my $f_original = $parser->next_feature_hash) {
+	while (my $f_original = next_feature_hash($IN)) {
 
 	    my $f = $f_original;
 	    my $t = $f->{attributes};
@@ -432,7 +440,7 @@ sub filter {
 
 sub merge_gff {
 
-    my $parser = shift;
+    my $files = shift;
 
     die "gff_tool (merge) not yet implimented!\n";
 
@@ -463,10 +471,20 @@ sub merge_gff {
 
 sub blend_gff {
 
+    my $files = shift;
+
+    send_message ('WARN',
+		  'blend_gff_not_thouroughly_tested',
+		  'blend has not been thouroughly tested.  Please help',
+		  'us improve gff_tool by carefully evaluating your',
+		  'output and contacting us if you find errors.  Thanks',
+		  );
+
     my %features;
-    while (my $parser = get_next_parser()) {
+    for my $file (@files) {
+	my $IN  = fh_in($file);
 	my $count = 0;
-	while (my $feature = $parser->next_feature_hash) {
+	while (my $feature = next_feature_hash($IN)) {
 	    my $feature_id = $feature->{feature_id};
 	    $feature->{count} = $count++;
 	    push @{$features{$feature_id}}, $feature;
@@ -535,12 +553,12 @@ sub sort_gff {
 
 sub alter_gff {
 
-    my $code = shift;
+    my ($files, $code) = @_;
 
-    while (my ($parser, $file) = get_next_parser()) {
-	last unless $parser;
+    for my $file (@files) {
+	my $IN = fh_in($file);
 	my $OUT = fh_out($file);
-	while (my $f = $parser->next_feature_hash) {
+	while (my $f = next_feature_hash($IN)) {
 
 	    my $t = $f->{attributes};
 
@@ -566,24 +584,25 @@ sub alter_gff {
 #		  by seqid or type.  After all features have been been
 #		  iterated over (and possibly stored) this way,
 #		  another loop is run over each key of %h and the code
-#		  reference provided to this argument is run for each
+#		  reference provided to the hash_ag argument is run for each
 #		  iteration through that loop.  The variables made
 #		  available within this loop are as follows:
 #
 #		      %h - The hash created as described above.
 #		      $k - The current key.
-#		      $v - An current value.
+#		      $v - The current value.
 #
 #		  See the Examples section below.
 #-----------------------------------------------------------------------------
 
 sub hash_ag {
 
-    my ($ag_code) = @_;
+    my ($files, $ag_code) = @_;
 
     my %hash_ag;
-    while (my $parser = get_next_parser()) {
-	while (my $f = $parser->next_feature_hash) {
+    for my $file (@{$files}) {
+	my $IN = fh_in($file);
+	while (my $f = next_feature_hash($IN)) {
 
 	    my $a = $f->{attributes};
 
@@ -604,38 +623,6 @@ sub hash_ag {
 	print $OUT to_gff3(\@f);
     }
 }
-
-#-----------------------------------------------------------------------------
-#
-#sub list_aggregate_gff {
-#
-#    my ($list_ag, $ag_code) = @_;
-#
-#    die "\n\ngff_tool (list_ag) function is written, but untested\n\n";
-#
-#    my @list_ag;
-#    while (my $parser = get_next_parser()) {
-#	while (my $f = $parser->next_feature_hash) {
-#
-#	    my $a = $f->{attributes};
-#
-#	    my $return_value = eval $list_ag;
-#	    die "Fatal Error in code ref: $list_ag\n$@\n" if $@;
-#	}
-#    }
-#
-#    my $OUT = fh_out();
-#    for my $element (@list_ag) {
-#
-#	my $f = eval $ag_code;
-#	die "Fatal Error in code ref: $ag_code\n$@\n" if $@;
-#	next unless $f;
-#
-#	print $OUT to_gff3($f);
-#    }
-#}
-#
-#-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
 #  validate|v
@@ -776,7 +763,7 @@ sub validate {
 			next PAIR;
 		    }
 		    my ($key, $value) = split /=/, $pair;
-		    if (! $key || ! $value) {
+		    if (! defined $key || ! defined $value) {
 			my $error_code = 'attribute_key_value_pairs_must_be_separated_by_equal_sign';
 			push @{$errors{$error_code}}, [$line_count, $line];
 			warn "WARNING : $error_code : $line\n";
@@ -1461,12 +1448,17 @@ sub fasta_feature {
 
 sub fasta_add {
 
-    die "\n\ngff_tool (fasta_add) function is written, but untested\n\n";
+    my ($files, $fasta_add) = @_;
+    send_message ('WARN',
+		  'fasta_add_not_fully_tested',
+		  'fasta_add) function is written, but untested'
+		  );
 
     die "Can't open $fasta_add for reading\n" unless -r $fasta_add;
-    for my $file (@files) {
+    for my $file (@{$files}) {
+	my ($fasta_section) = `grep -P '^##FASTA' $file`;
 	open(my $OUT, '<<', $file) or die "Can't open $file for appending\n";
-	print $OUT "\n## FASTA\n";
+	print $OUT "\n## FASTA\n"  unless $fasta_section;
 	print $OUT `cat $fasta_add`;
 	close $OUT;
     }
@@ -1614,10 +1606,12 @@ sub features {
 #-----------------------------------------------------------------------------
 
 sub union {
+
+    my $files = shift;
     my %union;
-    while (my ($parser, $file) = get_next_parser()) {
-	last unless $parser;
-	while (my $f = $parser->next_feature_hash) {
+    for my $file (@{$files}) {
+	my $IN = fh_in($file);
+	while (my $f = next_feature_hash($IN)) {
 	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
 	    # if ($set_seq) {
 	    #	my $a = $f->{attributes};
@@ -1641,10 +1635,12 @@ sub union {
 
 sub intersection {
 
+    my $files = shift;
     my (%inter_count, %inter_stash);
     my $file_count = 1;
-    my ($parser, $file) = get_next_parser();
-    while (my $f = $parser->next_feature_hash) {
+    my $file = shift @{$files};
+    my $IN = fh_in($file);
+    while (my $f = next_feature_hash($IN)) {
 	my $loc_id  = join ':', @{$f}{qw(seqid start end)};
 	# if ($set_seq) {
 	#	my $a = $f->{attributes};
@@ -1655,10 +1651,10 @@ sub intersection {
 	$inter_stash{$loc_id} ||= $f;
 	$inter_count{$loc_id}++;
     }
-    while (my ($parser, $file) = get_next_parser()) {
-	last unless $parser;
+    for my $file (@files) {
+	my $IN = fh_in($file);
 	$file_count++;
-	while (my $f = $parser->next_feature_hash) {
+	while (my $f = next_feature_hash($IN)) {
 	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
 	    # if ($set_seq) {
 	    #	my $a = $f->{attributes};
@@ -1684,10 +1680,12 @@ sub intersection {
 #-----------------------------------------------------------------------------
 
 sub l_compliment {
+    my $files = shift;
     my (%comp_stash, %comp_count);
     my %others;
-    my ($parser, $file) = get_next_parser();
-    while (my $f = $parser->next_feature_hash) {
+    my $file = shift @{$files};
+    my $IN = fh_in($file);
+    while (my $f = next_feature_hash($IN)) {
 	my $loc_id  = join ':', @{$f}{qw(seqid start end)};
 	# if ($set_seq) {
 	#   my $a = $f->{attributes};
@@ -1699,9 +1697,9 @@ sub l_compliment {
 	$comp_count{$loc_id}++;
     }
     my $OUT = fh_out();
-    while (my ($parser, $file) = get_next_parser()) {
-	last unless $parser;
-	while (my $f = $parser->next_feature_hash) {
+    for my $file (@files) {
+	my $IN = fh_in($file);
+	while (my $f = next_feature_hash($IN)) {
 	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
 	    # if ($set_seq) {
 	    #	my $a = $f->{attributes};
@@ -1725,10 +1723,11 @@ sub l_compliment {
 #-----------------------------------------------------------------------------
 
 sub s_difference {
+    my $files = shift;
     my (%diff_count, %diff_stash);
-    while (my ($parser, $file) = get_next_parser()) {
-	last unless $parser;
-	while (my $f = $parser->next_feature_hash) {
+    for my $file (@files) {
+	my $IN = fh_in($file);
+	while (my $f = next_feature_hash($IN)) {
 	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
 	    # if ($set_seq) {
 	    #	my $a = $f->{attributes};
@@ -1755,11 +1754,12 @@ sub s_difference {
 
 sub calc_titv {
 
+    my $files = shift;
     my ($ti, $tv);
 
-    while (my ($parser, $file) = get_next_parser()) {
-	last unless $parser;
-	while (my $f = $parser->next_feature_hash) {
+    for my $file (@files) {
+	my $IN = fh_in($file);
+	while (my $f = next_feature_hash($IN)) {
 	    my $a = $f->{attributes};
 	    my $ref_seq = $a->{Reference_seq}[0];
 	    my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
@@ -1871,38 +1871,36 @@ sub fails_filters {
 
 sub print_gff {
 
-    while (my ($parser, $file) = get_next_parser()) {
-	last unless $parser;
+    my $files = shift;
+
+    for my $file (@files) {
+	my $IN = fh_in($file);
 	my $OUT = fh_out($file);
-	while (my $feature = $parser->next_feature_hash) {
-	    next if fails_filters($feature);
-	    print $OUT to_gff3($feature);
+	while (my $f = next_feature_hash($IN)) {
+	    next if fails_filters($f);
+	    print $OUT to_gff3($f);
 	}
     }
 }
 
 #-----------------------------------------------------------------------------
 
-sub get_next_parser {
+sub fh_in {
 
     my $file = shift @files;
 
     my $IN;
-#    if (! $file && ! -t STDIN && ! $STDIN_FINISHED) {
-#	open ($IN, "<&=STDIN")   or die "Can't open STDIN:\n$!\n";
-#	$STDIN_FINISHED++;
-#    }
-    if ($file) {
+    if ($file eq '-') {
+	open ($IN, "<&=STDIN")   or die "Can't open STDIN:\n$!\n";
+    }
+    elsif ($file) {
 	open ($IN, "<", $file)   or die "Can't open $file for reading: $!\n";
     }
     else {
 	return undef;
     }
 
-    my $parser = GAL::Parser->new(fh     => $IN,
-				  class  => $format,
-			       );
-    return wantarray ? ($parser, $file) : $parser;
+    return $IN;
 }
 
 #-----------------------------------------------------------------------------
@@ -1924,6 +1922,37 @@ sub fh_out {
 	open ($OUT, ">&=STDOUT") or die "Can't open STDOUT for writing:\n$!\n";
     }
     return $OUT;
+}
+
+#-----------------------------------------------------------------------------
+
+sub next_feature_hash {
+
+    my $fh = shift;
+
+    my $line = <$fh>;
+    return unless defined $line;
+    return if $line =~ /^\#\#FASTA/;
+    until ($line !~ /^(\#.*|\s+)$/) {
+	$line = <$fh>;
+    }
+    chomp $line;
+
+    my %feature;
+    @feature{qw(seqid source type start end score strand phase attributes)} = 
+	split /\t/, $line;
+
+    my %attributes;
+    my $att_text = $feature{attributes};
+    my @pairs = split /;/, $att_text;
+    for my $pair (@pairs) {
+	my ($key, $value_text) = split /=/, $pair;
+	my @values = split ',', $value_text;
+	push @{$attributes{$key}}, @values;
+    }
+    $feature{feature_id} = $attributes{ID}[0];
+    $feature{attributes} = \%attributes;
+    return wantarray ? %feature : \%feature;
 }
 
 #-----------------------------------------------------------------------------
@@ -1986,6 +2015,22 @@ sub get_so_data {
     my %so_terms = map {chomp;$_ => 1} (<DATA>);
 
     return \%so_terms;
+}
+
+#-----------------------------------------------------------------------------
+
+sub send_message {
+
+    my ($class, $code, @comments) = @_;
+
+    $class ||= 'WARN';
+    $code  ||= 'unknown_warning';
+    my $comment = join ' ', @comments;
+
+    my $message = join ' : ', ($class, $code, $comment);
+
+    print STDERR $message;
+
 }
 
 #-----------------------------------------------------------------------------
