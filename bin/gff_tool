@@ -12,7 +12,8 @@ my $usage = '
 
 Synopsis:
 
-gff_tool --format gff3 file.gff3
+gff_tool --validate file.gff3
+gff_tool --validate file.gvf
 
 Description:
 
@@ -25,15 +26,6 @@ following argument flags are considered to be feature files to be
 parsed and operated on.
 
 --Input/Output Options--
-
-  format|f        The format of the input file. While this tool is
-		  called gff_tool, most of the commands below will
-		  operate on any kind of input file that the GAL
-		  library has a parser for.  By default the input is
-		  GFF3 and the script has a GFF3 parser on board, so
-		  the GAL library is not required unless other feature
-		  parsers are needed.  The argument to this command is
-		  the name of a GAL::Parser subclass. [gff3]
 
   in_place|i      Do an in-place edit of the file. Be careful - no
 		  backup copy of your original file will be created!
@@ -307,7 +299,7 @@ gff_tool --hash_ag "push @{$hash_ag{$f->{type}}}, $f"       \
 
 ';
 
-my ($help, $format, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
+my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
     $include, $exclude, $code, $filter, $merge, $blend, $sort, $alter,
     $hash_ag, $validate, $stats, $print_gff, $sequence, $fasta_only,
     $fasta_no, $fasta_add, $meta_only, $meta_no, $meta_add, $add_ID,
@@ -315,8 +307,7 @@ my ($help, $format, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
     $s_difference);
 
 
-my $opt_success = GetOptions('format|f=s'      => \$format,
-			     'in_place|i'      => \$in_place,
+my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'out_ext|o=s'     => \$out_ext,
 			     'fasta|j=s'       => \$FASTA_FILE,
                              'so_file=s'       => \$SO_FILE,
@@ -351,8 +342,6 @@ my $opt_success = GetOptions('format|f=s'      => \$format,
 			    );
 
 die $usage if $help || ! $opt_success;
-
-$format ||= 'gff3';
 
 die "FATAL : unable_to_open_file : $IDS_FILE\n"   if ($IDS_FILE   && ! -r $IDS_FILE);
 die "FATAL : unable_to_open_file : $FASTA_FILE\n" if ($FASTA_FILE && ! -r $FASTA_FILE);
