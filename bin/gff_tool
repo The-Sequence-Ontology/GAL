@@ -661,6 +661,7 @@ sub validate {
 	my %parents;
 	my %valid_so_terms;
 	# TODO: Add check here that file actually begins with gff-version
+	# TODO: Allow only pragma validation
       LINE:
 	while (my $line = <$IN>) {
 	    chomp $line;
