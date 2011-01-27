@@ -25,6 +25,8 @@ Options:
   --count	  Return the count of reads in the file.
   --lengths	  Print a summary of the read lengths.
   --quals	  Print a summary of quality values.
+  --summary       Print a summary of read counts, lengths and base qualities
+  --total         Print total read length (combined).
   --ill2sanger	  Convert Illumina 1.3+ base quality scores to standard
                   Sanger scores.
   --sol2sanger	  Convert Illumina 1.0 base quality scores to standard
@@ -39,7 +41,7 @@ Options:
 ";
 
 
-my ($help, $count, $lengths, $quals, $total, $summary, $ill2sanger,
+my ($help, $count, $lengths, $quals, $summary, $total, $ill2sanger,
     $sol2sanger, $fastq2fasta, $trim_qual, $guess_format, $grep_seq,
     $verbose);
 
@@ -47,8 +49,8 @@ my $opt_success = GetOptions('help'         => \$help,
 			     'count'	    => \$count,
 			     'lengths'	    => \$lengths,
 			     'quals'	    => \$quals,
-			     'total'	    => \$total,
 			     'summary'      => \$summary,
+			     'total'	    => \$total,
 			     'ill2sanger'   => \$ill2sanger,
 			     'sol2sanger'   => \$sol2sanger,
 			     'fastq2fasta'  => \$fastq2fasta,
@@ -72,6 +74,9 @@ elsif ($lengths) {
 }
 elsif ($quals) {
     quality_summary($file)
+}
+elsif ($summary) {
+    all_summary($file)
 }
 elsif ($total) {
     total_read_length($file)
@@ -132,7 +137,6 @@ sub length_summary {
     print '#' x 50;
     print "\n";
     while (my $read = &$iterator) {
-	chomp @{$read};
 	my $length = length($read->[1]);
 	$stat->add_data($length);
     }
@@ -155,7 +159,6 @@ sub quality_summary {
     print '#' x 50;
     print "\n";
     while (my $read = &$iterator) {
-	chomp @{$read};
 	my @quals = split '', $read->[3];
 	map {$_ = ord} @quals;
 	$stat->add_data(@quals);
@@ -163,6 +166,63 @@ sub quality_summary {
     print ((' ' x 80) . "\r") if $verbose;
     print get_stat_summary($stat);
     print "\n";
+    # print get_stat_histogram($stat);
+}
+
+#-----------------------------------------------------------------------------
+
+sub all_summary {
+    my $file = shift;
+
+    my $iterator = make_read_iterator($file);
+
+    my $read_count;
+    my $total_length;
+    my $length_stat = Statistics::Descriptive::Discrete->new();
+    my $qual_stat   = Statistics::Descriptive::Discrete->new();
+    my %atgc_count;
+    my @read_location_qual;
+    
+    print "Summary\n";
+    print '#' x 50;
+    print "\n";
+    while (my $read = &$iterator) {
+	$read_count++;
+	my $length = length $read->[1];
+	$total_length += $length;
+	$length_stat->add_data($length);
+	my @quals = split '', $read->[3];
+	map {$atgc_count{$_}++} split '', $read->[1];
+	map {$_ = ord} @quals;
+	my $loc = 0;
+	map {$read_location_qual[$loc++] += $_} @quals;
+	$qual_stat->add_data(@quals);
+    }
+    print ((' ' x 80) . "\r") if $verbose;
+    print "Read count\n";
+    print "$read_count\n";
+    print "Total Length\n";
+    print "$total_length\n";
+    print "Length Metrics\n";
+    print get_stat_summary($length_stat);
+    print "\n";
+    print "Quality Metrics\n";
+    print get_stat_summary($qual_stat);
+    print "\n";
+    print "Nucleotide Counts\n";
+    for my $nt (keys %atgc_count) {
+	print uc $nt . ":\t";
+	print $atgc_count{$nt};
+	my $pct = int($atgc_count{$nt} / $total_length * 100);
+	print " ($pct\%)\n";
+    }
+    print "Base Location/Quality Metric\n";
+    my $loc = 1;
+    for my $read_loc (@read_location_qual) {
+	print $loc++ . "\t";
+	printf("%.1f", $read_loc / $read_count);
+	print "\n";
+    }
     # print get_stat_histogram($stat);
 }
 
@@ -191,7 +251,6 @@ sub ill2sanger {
     my $count;
     my $min;
     while (my $read = &$iterator) {
-	chomp @{$read};
 	my @quals = split '', $read->[3];
 	map {$_ = ord} @quals;
 	$stat->add_data(@quals);
@@ -205,7 +264,6 @@ sub ill2sanger {
     $iterator = make_read_iterator($file);
 
     while (my $read = &$iterator) {
-	chomp @{$read};
 	my @quals = split '', $read->[3];
 	map {$_ = chr(ord($_) - $adjust)} @quals;
 	$read->[3] = join '', @quals;
@@ -264,7 +322,6 @@ sub guess_format {
     my $stat = Statistics::Descriptive::Sparse->new();
     
     while (my $read = &$iterator) {
-	chomp @{$read};
 	my @quals = split '', $read->[3];
 	map {$_ = ord} @quals;
 	$stat->add_data(@quals);
