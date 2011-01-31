@@ -138,7 +138,7 @@ sub build_summary {
 	    ($flag & $FIRST_READ)    && $flags{first_read}++;
 	    ($flag & $SECOND_READ)   && $flags{second_read}++;
 	    ($flag & $NOT_PRIMARY)   && $flags{not_primary}++;
-	    ($flag & $FAILS)	 && $flags{fails}++;
+	    ($flag & $FAILS)	     && $flags{fails}++;
 	    ($flag & $DUPLICATE)     && $flags{duplicate}++;
 	    
 	    $mapped_length{$rname} += $a->{length} unless ($flag & $UNMAPPED);
@@ -256,13 +256,14 @@ sub apply_filter {
 
 sub clean_file {
 
-    my $file = shift;
+    my $files = shift;
 
-    my $iterator = make_iterator($file, $region);
-
-    while (my $a = &{$iterator}) {
-	next if (($a->{flag} & $UNMAPPED) && ($a->{map} != 0 || $a->{cigar} ne '*'));
-	print_alignment($a);
+    for my $file (@{$files}) {
+	my $iterator = make_iterator($file, $region);
+	while (my $a = &{$iterator}) {
+	    next if (($a->{flag} & $UNMAPPED) && ($a->{map} != 0 || $a->{cigar} ne '*'));
+	    print_alignment($a);
+	}
     }
 }
 
@@ -319,16 +320,14 @@ sub print_alignment {
 
 sub print_file {
 
-    my $file = shift;
+    my $files = shift;
 
-    my $iterator = make_iterator($file, $region);
-
-    while (my $a = &{$iterator}) {
-	print_alignment($a);
+    for my $file (@{$files}) {
+	my $iterator = make_iterator($file, $region);
+	while (my $a = &{$iterator}) {
+	    print_alignment($a);
+	}
     }
-
-
-
 }
 
 #-----------------------------------------------------------------------------
