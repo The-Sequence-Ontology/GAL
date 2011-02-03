@@ -44,13 +44,13 @@ parsed and operated on.
 		  fasta file.  The sequence of each feature is made
 		  available to any code reference given via the code
 		  argument.  See below for details of code references.
-                  Not yet implimented.
+		  Not yet implimented.
 
   so_file         The location of a Sequence Ontology OBO format file.
-                  The location of the file may also be given with the
-                  environment variable SO_OBO.  If no file an attempt
-                  will be made to retrieve the latest version from the
-                  Sequence Ontology website.
+		  The location of the file may also be given with the
+		  environment variable SO_OBO.  If no file an attempt
+		  will be made to retrieve the latest version from the
+		  Sequence Ontology website.
 
 --Include/Exclude Options--
 
@@ -234,23 +234,23 @@ to the altered copy of the feature.  All filters given are applied.
 		  list.
 
   union           The union of all files.  The members that are
-                  present in any file.
+		  present in any file.
 
   intersection    The intersection of all files.  The members that
-                  are present in all files.
+		  are present in all files.
 
-  l_compliment    The left compliment of the files.  The members 
-                  found exclusively in the first file but not in any
-                  subsequent files.
+  l_compliment    The left compliment of the files.  The members
+		  found exclusively in the first file but not in any
+		  subsequent files.
 
   s_difference    The symetric difference of the files.  The members
-                  found in exactly one file.  Note that the symetric
-                  difference should technically give you the members
-                  that are present in an odd number of files, but on
-                  sets of more than two files that is probably never
-                  what you want in this application, so here we give
-                  you only the memebers that are present in exactly
-                  one file
+		  found in exactly one file.  Note that the symetric
+		  difference should technically give you the members
+		  that are present in an odd number of files, but on
+		  sets of more than two files that is probably never
+		  what you want in this application, so here we give
+		  you only the memebers that are present in exactly
+		  one file
 
 
 --GVF Options--
@@ -310,7 +310,7 @@ my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
 my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'out_ext|o=s'     => \$out_ext,
 			     'fasta|j=s'       => \$FASTA_FILE,
-                             'so_file=s'       => \$SO_FILE,
+			     'so_file=s'       => \$SO_FILE,
 			     'ids|d=s'	       => \$IDS_FILE,
 			     'include|n'       => \$include,
 			     'exclude|e'       => \$exclude,
@@ -882,7 +882,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-				
+
 			    }
 			    elsif ($type eq 'deletion') {
 				if ($value !~ /[ATGCN]+|-/i) {
@@ -890,7 +890,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-				
+
 			    }
 			    elsif ($type eq 'indel') {
 				if ($value !~ /[ATGCN]+|[-~]/i) {
@@ -898,7 +898,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-				
+
 			    }
 			}
 		    }
@@ -918,7 +918,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-				
+
 			    }
 			    elsif ($type eq 'deletion') {
 				if ($value !~ /[ATGCN]+|~/) {
@@ -926,7 +926,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-				
+
 			    }
 			    elsif ($type eq 'indel') {
 				if ($value !~ /[ATGCN]+|[-~]/) {
@@ -934,7 +934,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-				
+
 			    }
 			}
 		    }
@@ -1402,97 +1402,6 @@ sub validate {
 	print "\n\n";
     }
 }
-
-##-----------------------------------------------------------------------------
-#
-#sub parse_so {
-#
-#    my $so_file = shift;
-#
-#    my $SO;
-#    if ($so_file && -e $so_file && -r $so_file) {
-#	open($SO, '<', $so_file) or
-#	    die "FATAL : cant_open_file_for_reading : $so_file\n";
-#    }
-#    else {
-#	open($SO, '-|', 'curl http://www.sequenceontology.org/resources/obo_files/current_release.obo') or die
-#	    "FATAL : cant_open_webaddress_for_reading : http://www.sequenceontology.org/resources/obo_files/current_release.obo\n";
-#    }
-#
-#    local $/;
-#    my $so_file_slurp = <$SO>;
-#
-#    my @terms = ($so_file_slurp =~ /\[TERM\](.*?)\n\n/gs);
-#
-#    my %part_of;
-#    my %is_a;
-#    my %names2ids;
-#    my %ids;
-#
-#  TERM:
-#    for my $term (@terms) {
-#	my @lines = split /\n/;
-#	my %term;
-#      LINE:
-#	for my $line (@lines) {
-#	    next TERM if $line =~ /^is_obsolete: true/;
-#	    next LINE if $line =~ /^(alt_id|
-#				     comment|
-#				     consider|
-#				     created_by|
-#				     creation_date|
-#				     def|
-#				     disjoint_from|
-#				     intersection_of|
-#				     is_symmetric|
-#				     is_transitive|
-#				     subset|
-#				     synonym|
-#				     xref|
-#				     )\s*:/w;
-#
-#	    if ($line =~ /^id:/) {
-#		my ($tag, $id) = split /\s+/, $line;
-#		$term{id} = $id;
-#	    }
-#	    if ($line =~ /^is_a:/) {
-#		my ($tag, $is_a) = split /\s+/, $line;
-#		push @{$term{is_a}}, $is_a;
-#	    }
-#	    if ($line =~ /^name:/) {
-#		my ($tag, $name) = split /\s+/, $line;
-#		push @{$term{name}}, $name;
-#	    }
-#	    if ($line =~ /^relationship:/) {
-#		my ($tag, $relationship, $object) = split /\s+/, $line;
-#		push @{$term{relationship}{$relationship}}, $object;
-#	    }
-#	}
-#	$ids{$term{id}}++;
-#	$names2ids{$term{name}} = $term{id};
-#	map {push @{$is_a{$term{id}}}, $_}    @{$term{is_a}};
-#	map {push @{$part_of{$term{id}}}, $_} @{$term{relationship}{part_of}};
-#    }
-#
-#    my $sequence_features    = get_all_children_of('SO:0000110', \%is_a);
-#    my $sequence_alterations = get_all_children_of('SO:0001059', \%is_a);
-#    my $sequence_variants    = get_all_children_of('SO:0001060', \%is_a);
-#
-#    my %part_of_closure;
-#    for my $subject (keys %part_of) {
-#	my $object = $part_of{$subject};
-#	$part_of_closure{$subject}{$object}++;
-#	my $subject_children = get_all_children_of($subject, \%is_a);
-#	my $object_children  = get_all_children_of($object,  \%is_a);
-#	for my $subject_child (keys %{$subject_children}) {
-#	    for my $object_child (keys %{object_children}) {
-#		$part_of_closure{$subject_child}{$object_child}++;
-#	    }
-#	}
-#    }
-#    return ($sequence_features, $sequence_alterations, $sequence_variants,
-#	    $part_of_closure);
-#}
 
 #-----------------------------------------------------------------------------
 #  stats|u	  Return simple summary statistics for the given file.
@@ -2015,7 +1924,7 @@ sub next_feature_hash {
     chomp $line;
 
     my %feature;
-    @feature{qw(seqid source type start end score strand phase attributes)} = 
+    @feature{qw(seqid source type start end score strand phase attributes)} =
 	split /\t/, $line;
 
     my %attributes;
@@ -2088,7 +1997,7 @@ sub to_gff3 {
 #-----------------------------------------------------------------------------
 
 sub parse_so_file {
-    
+
     $SO_FILE ||= $ENV{SO_OBO};
     $SO_FILE ||= 'curl -s http://www.sequenceontology.org/resources/obo_files/current_release.obo |';
     open (my $IN, $SO_FILE) or die "FATAL : cant_open_file : $SO_FILE\n";
@@ -2098,7 +2007,7 @@ sub parse_so_file {
     $text =~ s/.*?\[Term\]/\[Term\]/s;
 
     my @terms_array = $text =~ /^\[Term\]\n(.*?)\n{2,}/msg;
-    
+
     my %terms;
     my %map;
     my %graph;
@@ -2155,18 +2064,18 @@ sub get_so_children {
 #        if exists $so_data->{graph}{$term_id}{relationships};
 #    for my $relationship (@more_relationships) {
 #	$these_relationships{$so_data->{graph}{$term_id}{relationship}}++;
-#    }	
-#    
+#    }
+#
 #    my %these_children;
 #    for my $relationship (keys %these_relationships) {
 #	map {$these_children{$_}++; $children->{$_}++} @{$term->{relationships}{$relationship}};
 #    }
-    
+
 
     for my $child (keys %{$children}) {
 	next if $seen->{$child};
 	$seen->{$child}++;
-	my ($seen, $children) = get_so_children($so_data, $child, 
+	my ($seen, $children) = get_so_children($so_data, $child,
 						$relationships, $seen,
 						$children);
     }
