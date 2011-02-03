@@ -50,7 +50,7 @@ my ($help, $chr, $metric);
 
 my $opt_success = GetOptions('help'     => \$help,
 			     'chr=s'    => \$chr,
-			     'metric=1' => \$metric,  
+			     'metric=1' => \$metric,
 			     );
 
 die $usage if $help || ! $opt_success;
@@ -59,10 +59,10 @@ my @files = @ARGV;
 $chr = 'chr' . $chr if $chr =~ /^\d+$/;
 
 my $sets = parse_data(@files);
-my $distance = get_distance($data, $metric);
+my $distance = get_distance($sets, $metric);
 
 print <<END_DOC;
-         2
+	 2
 0          0          $distance
 1          $distance          0
 END_DOC
@@ -73,7 +73,7 @@ print "\n";
 #---------------------------------------- SUBS ----------------------------------
 #--------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------
-sub get_distance {
+sub parse_data {
 
     my @files = @_;
 
@@ -82,32 +82,32 @@ sub get_distance {
     my @sets;
     my $i = 0;
     for my $file (@files) {
-	
+
 	my $file = $files[$i++];
 	my $IN;
 	if ($chr) {
-	    open ($IN, '<', "grep -P $chr $file |") or 
-		die "Can't open pipe from $file for reading\n";	    
+	    open ($IN, '<', "grep -P $chr $file |") or
+		die "Can't open pipe from $file for reading\n";
 	}
 	else {
 	    open ($IN, '<', $file) or die "Can't open $file for reading\n";
 	}
 	print STDERR "Info : processing_file : $file\n";
-	
+
 	my $max_offset = 0;
 	my $set = Set::IntSpan::Fast->new();
 	while (my $line = <$IN>) {
 	    chomp;
-	
+
 	    next if $line =~ /^\#/;
 	    next if $line =~ /^\s*$/;
-	
+
 	    my ($seqid, $source, $type, $start, $end) = split(/\t/, $line);
 
 	    warn "Error : bad_line : $line\n" unless ($start =~ /\d+/ &&
 						      $end   =~ /\d+/);
 
-	    $max_offset = $end if $end > $max_offset; 
+	    $max_offset = $end if $end > $max_offset;
 
 	    my $location = join ':', ($seqid, $start, $end);
 	    $set->add($location);
@@ -123,7 +123,7 @@ sub get_distance {
 
 sub get_distance {
 
-    my $sets = shift;
+    my ($sets, $metric) = @_;
 
     my ($set_i, $set_j) = @{$sets};
 
@@ -135,7 +135,7 @@ sub get_distance {
 
     my $distance;
     if ($metric == 2) {
-	$distance = ($comp_i + $comp_j) / ($comp_i + $comp_j + $intersection); 
+	$distance = ($comp_i + $comp_j) / ($comp_i + $comp_j + $intersection);
     }
     else {
 	$distance = ($comp_m)/($comp_m + $intersection);
@@ -143,32 +143,26 @@ sub get_distance {
     $distance = printf("%.4f", $distance);
     print STDERR "D:$distance\n";
     return $distance;
-} 
+}
 #-----------------------------------------------------------------------------
 sub print_matrix {
-        my $distance = shift;
+	my $distance = shift;
 
-        print "         2\n";
+	print "         2\n";
 
-        foreach my $i (0 .. 1) {
-                my @data;
-                foreach my $j (sort keys %{$matrix->{$i}}){
-                        my $sij = substr($matrix->{$i}{$j}, 0, $c - 2);
-                        my $l = $c - length($sij);
-                        my $spacer = " " x $l;
-                        my $string = $spacer . "       " . $sij;
-                        push(@data, $string);
-                }
-                print $i . " " . join(" ", @data) . "\n";
-        }
+	foreach my $i (0 .. 1) {
+		my @data;
+		foreach my $j (sort keys %{$matrix->{$i}}){
+			my $sij = substr($matrix->{$i}{$j}, 0, $c - 2);
+			my $l = $c - length($sij);
+			my $spacer = " " x $l;
+			my $string = $spacer . "       " . $sij;
+			push(@data, $string);
+		}
+		print $i . " " . join(" ", @data) . "\n";
+	}
 
 
 }
 
 #-----------------------------------------------------------------------------
-
-
-
-
-
-
