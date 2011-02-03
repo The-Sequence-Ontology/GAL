@@ -28,20 +28,20 @@ OPTIONS:
 Distance Metrics:
 
 Let i be all of the SNV locations in genome i.
-Let j be all of the var locations in genome j.
+Let j be all of the SNV locations in genome j.
 
-Ci = i-j # Locations unique to i
-Cj = j-i # Locations unique to j
-Cm = max{Ui,Uj} # maximum of Ui, Uj
+Ci = i-j # SNVs unique to i (compliment)
+Cj = j-i # SNVs unique to j (compliment)
+Cm = max{Ci,Cj} # maximum of Ci, Cj
 
 I = i ∩ j # Intersection of i, j
 
 Metric 1:
-    Ns = Um + I
-    d = Um / Ns
+    Ns = Cm + I
+    d  = Cm / Ns
 
 Metric 2:
-    d = (Ui + Uj)/(Ui + Uj + I)
+    d = (Ci + Cj)/(Ci + Cj + I)
 
 ";
 
