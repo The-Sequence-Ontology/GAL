@@ -696,10 +696,19 @@ sub validate {
 		    warn "WARNING : $error_code : $line\n";
 		}
 		# Type
-		if (! $valid_so_terms{$type}) {
+		if ($pragmas{'gvf-version'}) {
+		  if (! $valid_so_terms{sequence_alteration}{$type}) {
 		    my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
 		    push @{$errors{$error_code}}, [$line_count, $line];
 		    warn "WARNING : $error_code : $line\n";
+		  }
+		}
+		else {
+		  if (! $valid_so_terms{sequence_feature}{$type}) {
+		    my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		  }
 		}
 		# Start
 		if ($start !~ /^\d+$/) {
@@ -990,18 +999,23 @@ sub validate {
 		    }
 		    # Variant_effect
 		    elsif ($key eq 'Variant_effect') {
-			my $value = join ',', @values;
-			my ($sequence_variant, $index, $feature_type, @featureIDs) = split /\s+/;
+			my $value = join ' ', @values;
+			my ($sequence_variant, $index, $sequence_feature, @featureIDs) = split /\s+/, $value;
 			# TODO: Validate $sequence_variant
-			if ($index !~ /^[0-3]$/) {
+			if ($index !~ /^\d+$/ || $index > (scalar @{$attributes{Variant_seq}} - 1)) {
 			    my $error_code = 'invalid_Variant_effect_attribute_index_value';
 			    push @{$errors{$error_code}}, [$line_count, $line];
 			    warn "WARNING : $error_code : ($index) $line\n";
 			}
-			if (! $valid_so_terms{$feature_type}) {
-			    my $error_code = 'invalid_Variant_effect_attribute_feature_type_value';
+			if (! $valid_so_terms{sequence_variant}{$sequence_variant}) {
+			    my $error_code = 'invalid_Variant_effect_attribute_sequence_variant_value';
 			    push @{$errors{$error_code}}, [$line_count, $line];
-			    warn "WARNING : $error_code : ($feature_type) $line\n";
+			    warn "WARNING : $error_code : ($sequence_variant) $line\n";
+			}
+			if (! $valid_so_terms{sequence_feature}{$sequence_feature}) {
+			    my $error_code = 'invalid_Variant_effect_attribute_sequence_feature_value';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : ($sequence_feature) $line\n";
 			}
 			# TODO: Validate featureIDs
 		    }
@@ -1110,12 +1124,13 @@ sub validate {
 		    my %relationships = (is_a    => 1,
 					 part_of => 1,
 					 );
+		    # Get valid sequence_feature terms
 		    no warnings;
 		    ($seen, $children) = get_so_children($so_data, 'SO:0000110', \%relationships, $seen, $children);
-		    %valid_so_terms = ('SO:0000110' => 1);
+		    %{$valid_so_terms{sequence_feature}} = ('SO:0000110' => 1);
 		    use warnings;
-		    map {$valid_so_terms{$_}++} keys %{$children};
-		    map {$valid_so_terms{$_}++} @{$so_data->{map}}{keys %valid_so_terms};
+		    map {$valid_so_terms{sequence_feature}{$_}++} keys %{$children};
+		    map {$valid_so_terms{sequence_feature}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_feature}}};
 		    if ($line =~ /^\#\#gff-version\s+(\d+\.?\d*)/) {
 			$pragmas{'gff-version'} = $1;
 		    }
@@ -1132,14 +1147,26 @@ sub validate {
 		    my %relationships = (is_a    => 1,
 					 part_of => 1,
 					 );
+		    # Get valid sequence_alteration terms
 		    no warnings;
 		    ($seen, $children) = get_so_children($so_data, 'SO:0001059', \%relationships, $seen, $children);
 		    use warnings;
-		    %valid_so_terms = ('SO:0001059' => 1,
-				       'SO:0000730' => 1
+		    %{$valid_so_terms{sequence_alteration}} = ('SO:0001059' => 1,
+							       'SO:0000730' => 1
 				       );
-		    map {$valid_so_terms{$_}++} keys %{$children};
-		    map {$valid_so_terms{$_}++} @{$so_data->{map}}{keys %valid_so_terms};
+		    map {$valid_so_terms{sequence_alteration}{$_}++} keys %{$children};
+		    map {$valid_so_terms{sequence_alteration}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_alteration}}};
+
+		    # Get valid sequence_variant terms
+		    $seen = {};
+		    $children = {};
+		    no warnings;
+		    ($seen, $children) = get_so_children($so_data, 'SO:0001060', \%relationships, $seen, $children);
+		    use warnings;
+		    %{$valid_so_terms{sequence_variant}} = ('SO:0001060' => 1);
+		    map {$valid_so_terms{sequence_variant}{$_}++} keys %{$children};
+		    map {$valid_so_terms{sequence_variant}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_variant}}};
+
 		    if ($line =~ /^\#\#gvf-version\s+(\d+\.?\d*)/) {
 			$pragmas{'gvf-version'} = $1;
 		    }

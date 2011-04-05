@@ -1,0 +1,46 @@
+##gff-version 3
+##file-date 2011-03-31
+##genome-build ensembl BROADD2
+##gvf-version 1.05
+##feature-ontology http://song.cvs.sourceforge.net/viewvc/song/ontology/so.obo?revision=1.283
+##data-source Source=ensembl;version=62;url=http://e62.ensembl.org/Canis_lupus_familiaris
+##file-version 62
+##sequence-region 38 1 26897727
+38	dbSNP	insertion	3066945	3066945	.	-	.	ID=44;Variant_seq=G;Variant_effect=5KB_upstream_variant 0 transcript ENSCAFT00000015026;Dbxref=dbSNP_126:rs8910495;Reference_seq=-
+38	dbSNP	SNV	3071907	3071907	.	+	.	ID=45;Variant_seq=A;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000015026;Dbxref=dbSNP_126:rs24042338;Reference_seq=T
+38	dbSNP	SNV	3071908	3071908	.	+	.	ID=46;Variant_seq=T;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000015026;Dbxref=dbSNP_126:rs24042340;Reference_seq=G
+38	dbSNP	insertion	3080702	3080702	.	+	.	ID=47;Variant_seq=A;Dbxref=dbSNP_126:rs9058315;Reference_seq=-
+38	dbSNP	SNV	3096230	3096230	.	+	.	ID=48;Variant_seq=G;Dbxref=dbSNP_126:rs24003521;Reference_seq=C
+38	dbSNP	insertion	3101488	3101488	.	-	.	ID=49;Variant_seq=C;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000015038;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000038393;Dbxref=dbSNP_126:rs9005146;Reference_seq=-
+38	dbSNP	SNV	3102981	3102981	.	+	.	ID=50;Variant_seq=A;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000015038;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000038393;Dbxref=dbSNP_126:rs24017510;Reference_seq=T
+38	dbSNP	SNV	3106017	3106017	.	+	.	ID=51;Variant_seq=C;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000015038;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000038393;Dbxref=dbSNP_126:rs24044145;Reference_seq=A
+38	dbSNP	SNV	3115136	3115136	.	+	.	ID=52;Variant_seq=C;Variant_effect=5KB_upstream_variant 0 transcript ENSCAFT00000015038;Dbxref=dbSNP_126:rs24003481;Reference_seq=A
+38	dbSNP	SNV	3115983	3115983	.	+	.	ID=53;Variant_seq=A;Variant_effect=5KB_upstream_variant 0 transcript ENSCAFT00000015038;Dbxref=dbSNP_126:rs24015954;Reference_seq=T
+38	dbSNP	SNV	3116011	3116011	.	+	.	ID=54;Variant_seq=C;Variant_effect=5KB_upstream_variant 0 transcript ENSCAFT00000015038;Dbxref=dbSNP_126:rs24015955;Reference_seq=T
+38	dbSNP	SNV	3116211	3116211	.	+	.	ID=55;Variant_seq=T;Variant_effect=5KB_upstream_variant 0 transcript ENSCAFT00000015038;Dbxref=dbSNP_126:rs24044798;Reference_seq=C
+38	dbSNP	deletion	3118134	3118134	.	+	.	ID=56;Variant_seq=-;Dbxref=dbSNP_126:rs8589144;Reference_seq=T
+38	dbSNP	SNV	3201223	3201223	.	+	.	ID=171;Variant_seq=C;Dbxref=dbSNP_126:rs24047762;Reference_seq=T
+38	dbSNP	SNV	3204830	3204830	.	+	.	ID=172;Variant_seq=G;Variant_effect=2KB_upstream_variant 0 transcript ENSCAFT00000038101;Variant_effect=2KB_upstream_variant 0 transcript ENSCAFT00000015041;Dbxref=dbSNP_126:rs24034526;Reference_seq=T
+38	dbSNP	SNV	3209935	3209935	.	+	.	ID=173;Variant_seq=A;Variant_effect=500B_downstream_variant 0 transcript ENSCAFT00000038101;Variant_effect=500B_downstream_variant 0 transcript ENSCAFT00000015041;Dbxref=dbSNP_126:rs24036377;Reference_seq=T
+38	dbSNP	SNV	3213432	3213432	.	+	.	ID=174;Variant_seq=G;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000038101;Variant_effect=2KB_upstream_variant 0 transcript ENSCAFT00000015046;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000015041;Variant_effect=5KB_upstream_variant 0 transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24034263;Reference_seq=C
+38	dbSNP	insertion	3213869	3213869	.	+	.	ID=175;Variant_seq=G;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000038101;Variant_effect=2KB_upstream_variant 0 transcript ENSCAFT00000015046;Variant_effect=5KB_upstream_variant 0 transcript ENSCAFT00000037866;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000015041;Dbxref=dbSNP_126:rs8927563;Reference_seq=-
+38	dbSNP	SNV	3215938	3215938	.	+	.	ID=176;Variant_seq=C;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000015046;Variant_effect=2KB_upstream_variant 0 transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24052183;Reference_seq=T
+38	dbSNP	SNV	3219398	3219398	.	+	.	ID=177;Variant_seq=C;Variant_effect=synonymous_codon 0 mRNA ENSCAFT00000015046;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24011145;Reference_seq=T
+38	dbSNP	SNV	3221513	3221513	.	+	.	ID=178;Variant_seq=G;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000015046;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24048820;Reference_seq=A
+38	dbSNP	SNV	3221537	3221537	.	+	.	ID=179;Variant_seq=C;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000015046;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24048819;Reference_seq=G
+38	dbSNP	SNV	3221732	3221732	.	+	.	ID=180;Variant_seq=A;Variant_effect=synonymous_codon 0 mRNA ENSCAFT00000015046;Variant_effect=splice_region_variant 0 primary_transcript ENSCAFT00000015046;Variant_effect=synonymous_codon 0 mRNA ENSCAFT00000037866;Variant_effect=splice_region_variant 0 primary_transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24048817;Reference_seq=G
+38	dbSNP	SNV	3221929	3221929	.	+	.	ID=181;Variant_seq=T;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000015046;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24048815;Reference_seq=C
+38	dbSNP	SNV	3222059	3222059	.	+	.	ID=182;Variant_seq=G;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000015046;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24048813;Reference_seq=C
+38	dbSNP	SNV	3222069	3222069	.	+	.	ID=183;Variant_seq=T;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000015046;Variant_effect=intron_variant 0 primary_transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24048811;Reference_seq=C
+38	dbSNP	SNV	3222292	3222292	.	+	.	ID=184;Variant_seq=T;Variant_effect=non_synonymous_codon 0 mRNA ENSCAFT00000015046;Variant_effect=non_synonymous_codon 0 mRNA ENSCAFT00000037866;Dbxref=dbSNP_126:rs24048809;Reference_seq=C
+38	dbSNP	SNV	3222304	3222304	.	+	.	ID=185;Variant_seq=C;Variant_effect=non_synonymous_codon 0 mRNA ENSCAFT00000015046;Variant_effect=non_synonymous_codon 0 mRNA ENSCAFT00000037866;Dbxref=dbSNP_126:rs24048807;Reference_seq=T
+38	dbSNP	SNV	3222440	3222440	.	+	.	ID=186;Variant_seq=G;Variant_effect=3_prime_UTR_variant 0 mRNA ENSCAFT00000015046;Variant_effect=500B_downstream_variant 0 transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24048798;Reference_seq=A
+38	dbSNP	SNV	3222557	3222557	.	+	.	ID=187;Variant_seq=T;Variant_effect=3_prime_UTR_variant 0 mRNA ENSCAFT00000015046;Variant_effect=500B_downstream_variant 0 transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24048796;Reference_seq=C
+38	dbSNP	SNV	3222563	3222563	.	+	.	ID=188;Variant_seq=C;Variant_effect=3_prime_UTR_variant 0 mRNA ENSCAFT00000015046;Variant_effect=500B_downstream_variant 0 transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24048794;Reference_seq=A
+38	dbSNP	SNV	3222732	3222732	.	+	.	ID=189;Variant_seq=C;Variant_effect=3_prime_UTR_variant 0 mRNA ENSCAFT00000015046;Variant_effect=500B_downstream_variant 0 transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24029017;Reference_seq=T
+38	dbSNP	SNV	3222792	3222792	.	+	.	ID=190;Variant_seq=A;Variant_effect=3_prime_UTR_variant 0 mRNA ENSCAFT00000015046;Variant_effect=500B_downstream_variant 0 transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24029016;Reference_seq=G
+38	dbSNP	SNV	3222952	3222952	.	+	.	ID=191;Variant_seq=T;Variant_effect=3_prime_UTR_variant 0 mRNA ENSCAFT00000015046;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24029015;Reference_seq=C
+38	dbSNP	SNV	3223210	3223210	.	+	.	ID=192;Variant_seq=C;Variant_effect=500B_downstream_variant 0 transcript ENSCAFT00000015046;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24038028;Reference_seq=T
+38	dbSNP	SNV	3223680	3223680	.	+	.	ID=193;Variant_seq=C;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000015046;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24029006;Reference_seq=A
+38	dbSNP	SNV	3227192	3227192	.	+	.	ID=194;Variant_seq=G;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000015046;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24042438;Reference_seq=A
+38	dbSNP	SNV	3227193	3227193	.	+	.	ID=195;Variant_seq=T;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000015046;Variant_effect=5KB_downstream_variant 0 transcript ENSCAFT00000037866;Dbxref=dbSNP_126:rs24042442;Reference_seq=C
