@@ -73,7 +73,7 @@ sub _initialize_args {
 
 sub header_count {
     my ($self, $header_count) = @_;
-    
+
     if ($header_count) {
 	$self->{header_count} = $header_count;
     }
@@ -94,12 +94,11 @@ sub header_count {
 
 sub parse_record {
     my ($self, $data) = @_;
-    
+
     ##fileformat=VCFv4.0
     ##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
     ##INFO=<ID=HM2,Number=0,Type=Flag,Description="HapMap2 membership">
     ##INFO=<ID=HM3,Number=0,Type=Flag,Description="HapMap3 membership">
-    ##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral Allele, ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/pilot_data/technical/reference/ancestral_alignments/README">
     ##reference=human_b36_both.fasta
     ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
     ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
@@ -107,14 +106,14 @@ sub parse_record {
     ##rsIDs=dbSNP b129 mapped to NCBI 36.3, August 10, 2009
     ##INFO=<ID=AC,Number=.,Type=Integer,Description="Allele count in genotypes">
     ##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
-    #CHROM POS ID REF ALT QUAL FILTER INFO FORMAT 
-    
+    #CHROM POS ID REF ALT QUAL FILTER INFO FORMAT SAMPLE1
+
     my %record;
 
     # We didn't get $data as a hash because we didn't give field names to the reader.
     # This allows us to get the data as an array and deal with multiple genotypes per line.
     @record{qw(chrom pos id ref alt qual filter info format)} = splice(@{$data}, 0, 9);
-    
+
     my $seqid      = $record{chrom} =~ /^chr/ ? $record{chrom} : 'chr' . $record{chrom};
     my $source;
     my $type       = 'SNV';
@@ -123,14 +122,14 @@ sub parse_record {
     my $score      = $record{qual};
     my $strand     = '+',
     my $phase      = '.';
-    
-    my $reference_seq = $record{ref};
-    # my $ref_from_fasta ||= uc $self->fasta->seq($seqid, $start, $end);
-    # $self->warn(message => 'WARNING : reference_seq_does_not_match_fasta : ' .
-    # 		join "\t". @{$data})
-    # 	unless $reference_seq = $ref_from_fasta;
-    
-    my @seqs = ($reference_seq, split /,/, $record{alt});
+
+    my $reference_seq = uc $record{ref};
+
+    my @variant_seqs = split /,/, $record{alt};
+    map {$_ = uc $_} @variant_seqs;
+
+    my @all_seqs = ($reference_seq, @variant_seqs);
+
 
     # INFO Column Keys
     # VFC 4.0
@@ -169,18 +168,48 @@ sub parse_record {
 	my %individual_hash;
 	map {$individual_hash{$_} = shift @individual_values} @format_order;
 
-	my ($var1, $phased, $var2) = 
+	my ($var1, $phased, $var2) =
 	    split //, $individual_hash{GT};
-	my %variant_seq_hash = map {$_ => 1} @seqs[$var1, $var2];
+	my $this_ref = $reference_seq;
+
+	my %variant_seq_hash = map {$_ => 1} @all_seqs[$var1, $var2];
 	my @variant_seqs = keys %variant_seq_hash;
+
+	my @these_all_seqs = ($this_ref, @variant_seqs);
+	my @lengths = map {length($_)} @these_all_seqs;
+
+	#INDEL
+	if (grep {$_ != 1} @lengths) {
+	  my ($min_length) = sort {$a <=> $b} @lengths;
+	  map {substr($_, 0, $min_length, '')} @these_all_seqs;
+	  map {$_ ||= '-'} @these_all_seqs;
+	  my $start_adjust = length($reference_seq) - length($these_all_seqs[0]);
+	  $start += $start_adjust;
+	  my $end_adjust = length($these_all_seqs[0]) - 1;
+	  $end = $start + $end_adjust;
+
+	  $this_ref = shift @these_all_seqs;
+	  @variant_seqs = @these_all_seqs;
+
+	  if ($this_ref eq '-') {
+	    $type = 'nucleotide_insertion';
+	  }
+	  elsif (grep {$_ eq '-'} @variant_seqs) {
+	    $type = 'nucleotide_deletion';
+	  }
+	  else {
+	    $type = 'substitution';
+	  }
+	}
+
 	my $read_count = $individual_hash{DP};
 
 	# Make sure that at least one variant sequence differs from
-        # the reference sequence.
-	next unless grep {$_ ne $reference_seq} @variant_seqs;
-	
+	# the reference sequence.
+	next unless grep {$_ ne $this_ref} @variant_seqs;
+
 	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
-	
+
 	# Format Column Keys
 	# GT : genotype, encoded as alleles values separated by either of
 	# ”/” or “|”, e.g. The allele values are 0 for the reference
@@ -211,18 +240,16 @@ sub parse_record {
 	# -10log_10p(genotype call is wrong) (Numeric)
 	# HQ : haplotype qualities, two phred qualities comma separated
 	# (Numeric)
-	
+
 	my $source = $individual_id;
 	my $feature_id = join ':', ($seqid, $source, $start);
-	my $dbxref = 'dbSNP:' . $record{id};
 
-	my $attributes = {Reference_seq => [$reference_seq],
+	my $attributes = {Reference_seq => [$this_ref],
 			  Variant_seq   => \@variant_seqs,
 			  Genotype      => [$genotype],
 			  ID            => [$feature_id],
-			  Dbxref        => [$dbxref],
 		      };
-	
+
 	my $feature = {feature_id => $feature_id,
 		       seqid      => $seqid,
 		       source     => $individual_id,
