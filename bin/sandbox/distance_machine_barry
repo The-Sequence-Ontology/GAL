@@ -5,7 +5,6 @@ use warnings;
 
 use FileHandle;
 use Getopt::Long;
-use Set::IntSpan::Fast;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -48,17 +47,19 @@ Metric 2:
 
 my ($help, $chr, $metric);
 
-my $opt_success = GetOptions('help'     => \$help,
-			     'chr=s'    => \$chr,
-			     'metric=1' => \$metric,
+my $opt_success = GetOptions('help|h'     => \$help,
+			     'chr|c=s'    => \$chr,
+			     'metric|m=i' => \$metric,  
 			     );
 
 die $usage if $help || ! $opt_success;
 
-my @files = @ARGV;
-$chr = 'chr' . $chr if $chr =~ /^\d+$/;
+$metric ||= 2;
 
-my $sets = parse_data(@files);
+my @files = @ARGV;
+$chr = 'chr' . $chr if ($chr && $chr =~ /^\d+$/);
+
+my $sets     = parse_data(@files);
 my $distance = get_distance($sets, $metric);
 
 print <<END_DOC;
@@ -77,43 +78,34 @@ sub parse_data {
 
     my @files = @_;
 
-    parse_file($file, $file_number);
-
     my @sets;
-    my $i = 0;
     for my $file (@files) {
 
-	my $file = $files[$i++];
 	my $IN;
 	if ($chr) {
-	    open ($IN, '<', "grep -P $chr $file |") or
+	    open ($IN, '-|', "grep -P $chr $file") or
 		die "Can't open pipe from $file for reading\n";
 	}
 	else {
 	    open ($IN, '<', $file) or die "Can't open $file for reading\n";
 	}
-	print STDERR "Info : processing_file : $file\n";
+	print STDERR "INFO : processing_file : $file\n";
 
-	my $max_offset = 0;
-	my $set = Set::IntSpan::Fast->new();
+	my %set;
 	while (my $line = <$IN>) {
-	    chomp;
-
 	    next if $line =~ /^\#/;
 	    next if $line =~ /^\s*$/;
+	    chomp $line;
 
 	    my ($seqid, $source, $type, $start, $end) = split(/\t/, $line);
 
 	    warn "Error : bad_line : $line\n" unless ($start =~ /\d+/ &&
 						      $end   =~ /\d+/);
 
-	    $max_offset = $end if $end > $max_offset;
-
 	    my $location = join ':', ($seqid, $start, $end);
-	    $set->add($location);
+	    $set{$location}++;
 	}
-	push @sets, $set;
-	print "Info : max_offset : $max_offset\n";
+	push @sets, \%set;
 	close $IN;
     }
     return \@sets;
@@ -127,11 +119,17 @@ sub get_distance {
 
     my ($set_i, $set_j) = @{$sets};
 
-    my $comp_j = $set_i->diff($set_j) || (); # Compliment of set i
-    my $comp_i = $set_j->diff($set_i) || (); # Compliment of set j
+    # my $comp_j = $set_i->diff($set_j) || (); # Compliment of set i
+    # my $comp_i = $set_j->diff($set_i) || (); # Compliment of set j
+    
+    my ($comp_i, $comp_j);
+    map {$comp_i++ unless $set_j->{$_}} keys %{$set_i};
+    map {$comp_j++ unless $set_i->{$_}} keys %{$set_j};
+
 
     my $comp_m = $comp_i > $comp_j ? $comp_i : $comp_j; # Maximum compliment
-    my $intersection = $set_i->intersection($set_j);
+    my $intersection;
+    map {$intersection++ if $set_j->{$_}} keys %{$set_i};
 
     my $distance;
     if ($metric == 2) {
@@ -140,29 +138,9 @@ sub get_distance {
     else {
 	$distance = ($comp_m)/($comp_m + $intersection);
     }
-    $distance = printf("%.4f", $distance);
+    $distance = sprintf("%.4f", $distance);
     print STDERR "D:$distance\n";
     return $distance;
 }
 #-----------------------------------------------------------------------------
-sub print_matrix {
-	my $distance = shift;
 
-	print "         2\n";
-
-	foreach my $i (0 .. 1) {
-		my @data;
-		foreach my $j (sort keys %{$matrix->{$i}}){
-			my $sij = substr($matrix->{$i}{$j}, 0, $c - 2);
-			my $l = $c - length($sij);
-			my $spacer = " " x $l;
-			my $string = $spacer . "       " . $sij;
-			push(@data, $string);
-		}
-		print $i . " " . join(" ", @data) . "\n";
-	}
-
-
-}
-
-#-----------------------------------------------------------------------------

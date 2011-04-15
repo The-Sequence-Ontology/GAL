@@ -1,0 +1,76 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+intron_length file.gff3
+
+Description:
+
+A simple script to determine intron length from a GFF3 file that
+doesn't contain introns.
+
+Options:
+
+  --cds, c
+    Only count coding introns.
+
+";
+
+
+my ($help, $cds);
+my $opt_success = GetOptions('help'    => \$help,
+			     'cds=s'   => \$cds,
+			     );
+
+die $usage if $help || ! $opt_success;
+
+my $use_type = $cds ? 'CDS' : 'exon';
+
+my $file = shift;
+die $usage unless $file;
+open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
+
+my %exon_groups;
+while (<$IN>) {
+
+    next if /^(\#|\s)/;
+    chomp;
+    my ($seqid, $source, $type, $start, $end, $score,
+	$strand, $phase, $attrb_txt)  = split /\t/, $_;
+    next unless $type eq $use_type;
+
+    my %attributes = split /=|;/, $attrb_txt;
+    map {$_ = [split /,/, $_]} values %attributes;
+
+    next unless $attributes{Parent};
+    my @parents = @{$attributes{Parent}};
+
+    map {push @{$exon_groups{$_}}, ($start, $end)} @parents;
+}
+
+for my $parent_id (keys %exon_groups) {
+    my @introns = sort {$a <=> $b} @{$exon_groups{$parent_id}};
+    shift @introns;
+    pop @introns;
+
+    while (my $start = shift @introns) {
+	my $end = shift @introns;
+	my $length = $end - $start + 1;
+	print "$length\n";
+    }
+}
+
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+

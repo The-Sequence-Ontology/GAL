@@ -55,7 +55,9 @@ die $usage if $help || ! $opt_success;
 
 die $usage unless $feature_db;
 
-my $feature_file = @ARGV;
+$driver ||= 'SQLite';
+
+my $feature_file = shift;
 
 my $feat_store_args = {class    => $driver,
 		       database => $feature_db,

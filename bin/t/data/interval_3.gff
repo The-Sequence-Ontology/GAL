@@ -1,0 +1,6 @@
+chr12	test	sequence_feature	3000510	3000658	.	+	.	ID=03;
+chr12	test	sequence_feature	3001169	3001189	.	+	.	ID=05;
+chr12	test	sequence_feature	3001099	3001219	.	+	.	ID=06;
+chr12	test	sequence_feature	3001491	3001511	.	+	.	ID=08;
+chr12	test	sequence_feature	3009665	3009713	.	+	.	ID=10;
+chr12	test	sequence_feature	300665	300713	.	+	.	ID=10;

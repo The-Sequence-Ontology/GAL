@@ -182,7 +182,7 @@ sub parse_record {
 	my $start      = $record->{start};
 	my $id         = join ':', ($seqid, $source, $type, $start);
 	my $end;
-	my $score      = $record->{consensus_phred_qual};
+	my $score      = $record->{snv_phred_qual};
 	my $strand     = '+';
 	my $phase      = '.';
 

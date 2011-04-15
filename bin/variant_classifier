@@ -33,6 +33,7 @@ Options:
   fasta        A path to the fasta files associated with the give features.
   features     The database name for the features.
   variants     The database name for the variants.
+  chr          Limit the analysis to a chromosome.
   user         The database user.  Defaults first to \$ENV{\${driver}_user}
 	       where \$driver is the driver parsed from the dsn. ['']
   password     The database password.   Defaults first to
@@ -42,15 +43,17 @@ Options:
 
 ";
 
-my ($help, $create, $parser, $driver, $fasta, $feature_db, $variant_db, $user,
-    $password, $prompt);
+my ($help, $create, $parser, $driver, $fasta, $feature_db,
+    $variant_db, $limit_chr, $user, $password, $prompt);
+
 my $opt_success = GetOptions('help'          => \$help,
 			     'create'        => \$create,
 			     'parser=s'      => \$parser,
-			     'driver=s'     => \$driver,
+			     'driver=s'      => \$driver,
 			     'fasta=s'       => \$fasta,
 			     'features=s'    => \$feature_db,
 			     'variants=s'    => \$variant_db,
+			     'chr=s'         => \$limit_chr,
 			     'user=s'        => \$user,
 			     'password=s'    => \$password,
 			     'prompt'        => sub {$password = prompt("Password: ", -tty,  -echo => '*')->{value}},
@@ -59,6 +62,9 @@ my $opt_success = GetOptions('help'          => \$help,
 die $usage if $help || ! $opt_success;
 
 die $usage unless $feature_db && $variant_db;
+
+$driver ||= 'SQLite';
+$parser ||= 'gff3';
 
 my ($feature_file, $variant_file) = @ARGV;
 
@@ -103,7 +109,13 @@ my $features = $feat_store->schema->resultset('Feature');
 my $variants = $var_store->schema->resultset('Feature');
 # my $atts =     $var_store->schema->resultset('Attribute');
 
-my $mrnas = $features->search({type => 'mRNA'});
+my %feature_where = (type => 'mRNA');
+if ($limit_chr) {
+    $feature_where{seqid} = $limit_chr;
+}
+
+my $mrnas = $features->search(\%feature_where);
+
 while (my $mrna = $mrnas->next) {
     my $mrna_id = $mrna->feature_id;
     my $CDSs = $mrna->CDSs;
