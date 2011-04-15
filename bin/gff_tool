@@ -256,6 +256,10 @@ to the altered copy of the feature.  All filters given are applied.
 --GVF Options--
 
   titv           Calculate transition/transversion ratio.
+  gvf_stats      Simple SNV stats on a GVF file.
+  gvf_sets       Calculate counts the pairwise intersection and compliment
+                 for all files and the symetric difference for each
+                 file. (Not yet implimented)
 
 
 Code References:
@@ -303,9 +307,8 @@ my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
     $include, $exclude, $code, $filter, $merge, $blend, $sort, $alter,
     $hash_ag, $validate, $stats, $print_gff, $sequence, $fasta_only,
     $fasta_no, $fasta_add, $meta_only, $meta_no, $meta_add, $add_ID,
-    $pragmas, $features, $titv, $union, $intersection, $l_compliment,
-    $s_difference);
-
+    $pragmas, $features, $titv, $gvf_stats, $union, $intersection,
+    $l_compliment, $s_difference, $gvf_sets);
 
 my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'out_ext|o=s'     => \$out_ext,
@@ -335,10 +338,12 @@ my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'pragmas|w=s'     => \$pragmas,
 			     'add_ID|v'	       => \$add_ID,
 			     'titv'            => \$titv,
+                             'gvf_stats'       => \$gvf_stats,
 			     'union'           => \$union,
 			     'intersection'    => \$intersection,
 			     'l_compliment'    => \$l_compliment,
 			     's_difference'    => \$s_difference,
+                             'gvf_sets'        => \$gvf_sets,
 			    );
 
 die $usage if $help || ! $opt_success;
@@ -376,10 +381,12 @@ meta_add(\@files)		  if $meta_add;
 add_ID(\@files)		          if $add_ID;
 print_gff(\@files)                if $print_gff;
 calc_titv(\@files)                if $titv;
+gvf_stats(\@files)                if $gvf_stats;
 union(\@files)                    if $union;
 intersection(\@files)             if $intersection;
 l_compliment(\@files)             if $l_compliment;
 s_difference(\@files)             if $s_difference;
+gvf_sets(\@files)                 if $gvf_sets;
 #pragma($pragma)	                  if $pragma;
 
 #-----------------------------------------------------------------------------
@@ -1708,7 +1715,6 @@ sub l_compliment {
 	$comp_stash{$loc_id} = $f;
 	$comp_count{$loc_id}++;
     }
-    my $OUT = fh_out();
     for my $file (@files) {
 	my $IN = fh_in($file);
 	while (my $f = next_feature_hash($IN)) {
@@ -1722,6 +1728,7 @@ sub l_compliment {
 	    $comp_count{$loc_id}++;
 	}
     }
+    my $OUT = fh_out();
     for my $loc_id (sort keys %comp_stash) {
 	if ($comp_count{$loc_id} == 1) {
 	    my $f = $comp_stash{$loc_id};
@@ -1761,6 +1768,42 @@ sub s_difference {
 }
 
 #-----------------------------------------------------------------------------
+#  gvf_sets       Calculate the pairwise intersection and compliment
+#                 for all files and the symetric difference for each
+#                 file. 
+#-----------------------------------------------------------------------------
+
+sub gvf_sets {
+
+#     my $files = shift;
+#     my (%diff, %comp, %union);
+#     for my $file1 (@files) {
+# 	my $IN = fh_in($file1);
+# 	while (my $f = next_feature_hash($IN)) {
+# 	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
+# 	    # if ($set_seq) {
+# 	    #	my $a = $f->{attributes};
+# 	    #	my $ref_seq = $a->{Reference_seq}[0];
+# 	    #	my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
+# 	    #	$loc_id = join ':', ($loc_id, $ref_seq, $var_seq);
+# 	    # }
+# 	    $diff_stash{$loc_id} ||= $f;
+# 	    $diff_count{$loc_id}++;
+# 	}
+# 	for my $file2 (@files) {
+# 	    my $IN = fh_in($file2);
+# 	    while (my $f = next_feature_hash($IN)) {
+#     }
+#     my $OUT = fh_out();
+#     for my $loc_id (sort keys %diff_stash) {
+# 	if ($diff_count{$loc_id} == 1) {
+# 	    my $f = $diff_stash{$loc_id};
+# 	    print $OUT to_gff3($f);
+# 	}
+#     }
+}
+
+#-----------------------------------------------------------------------------
 #  titv           Calculate transition/transversion ratio.
 #-----------------------------------------------------------------------------
 
@@ -1771,6 +1814,8 @@ sub calc_titv {
 
     for my $file (@files) {
 	my $IN = fh_in($file);
+	print "$file\t";
+	($ti, $tv) = ();
 	while (my $f = next_feature_hash($IN)) {
 	    my $a = $f->{attributes};
 	    my $ref_seq = $a->{Reference_seq}[0];
@@ -1840,12 +1885,114 @@ sub calc_titv {
 		warn "WARNING : reference_seq_not_handled: $line";
 	    }
 	}
+	my $ti_tv_ratio = $tv ? $ti/$tv : 'NaN';
+	print join "\t", ($ti, $tv, $ti_tv_ratio);
+	print "\n";
     }
-    print "Transitions: $ti\n";
-    print "Transversions: $tv\n";
-    print "Ti/Tv: " . $ti/$tv . "\n";
 }
 
+
+#-----------------------------------------------------------------------------
+#  gvf_stats           Simple SNV stats on a GVF file.
+#-----------------------------------------------------------------------------
+
+sub gvf_stats {
+
+    my $files = shift;
+    my ($count, $ti, $tv, $het, $hom);
+
+    print join "\t", qw(File Count Het Hom Het/Hom Ti Tv Ti/Tv);
+    print "\n";
+    for my $file (@files) {
+	my $IN = fh_in($file);
+	($count, $ti, $tv, $het, $hom) = ();
+	while (my $f = next_feature_hash($IN)) {
+	    next unless $f->{type} eq 'SNV';
+	    my $a = $f->{attributes};
+	    next unless ref $a->{Variant_seq} eq 'ARRAY';
+	    next unless ref $a->{Reference_seq} eq 'ARRAY';
+	    $count++;
+	    if (scalar @{$a->{Variant_seq}} > 1) {
+		$het++;
+	    }
+	    else {
+		$hom++;
+	    }
+	    my $ref_seq = $a->{Reference_seq}[0];
+	    my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
+	    if ($ref_seq eq 'A') {
+		if ($var_seq eq 'C') {
+		    $tv++;
+		}
+		elsif ($var_seq eq 'G') {
+		    $ti++;
+		}
+		elsif ($var_seq eq 'T') {
+		    $tv++;
+		}
+		else {
+		    my $line = to_gff3($f);
+		    warn "WARNING : variant_seq_not_handled: $line";
+		}
+	    }
+	    elsif ($ref_seq eq 'C') {
+		if ($var_seq eq 'A') {
+		    $tv++;
+		}
+		elsif ($var_seq eq 'G') {
+		    $tv++;
+		}
+		elsif ($var_seq eq 'T') {
+		    $ti++;
+		}
+		else {
+		    my $line = to_gff3($f);
+		    warn "WARNING : variant_seq_not_handled: $line";
+		}
+	    }
+	    elsif ($ref_seq eq 'G') {
+		if ($var_seq eq 'A') {
+		    $ti++;
+		}
+		elsif ($var_seq eq 'C') {
+		    $tv++;
+		}
+		elsif ($var_seq eq 'T') {
+		    $tv++;
+		}
+		else {
+		    my $line = to_gff3($f);
+		    warn "WARNING : variant_seq_not_handled: $line";
+		}
+	    }
+	    elsif ($ref_seq eq 'T') {
+		if ($var_seq eq 'A') {
+		    $tv++;
+		}
+		elsif ($var_seq eq 'C') {
+		    $ti++;
+		}
+		elsif ($var_seq eq 'G') {
+		    $tv++;
+		}
+		else {
+		    my $line = to_gff3($f);
+		    warn "WARNING : variant_seq_not_handled: $line";
+		}
+	    }
+	    else {
+		my $line = to_gff3($f);
+		warn "WARNING : reference_seq_not_handled: $line";
+	    }
+	}
+	$hom = 0 if ! defined $hom;
+	$het = 0 if ! defined $het;
+	my $het_hom_ratio = $hom ? $het/$hom : 'NaN';
+	my $ti_tv_ratio   = $tv  ? $ti/$tv   : 'NaN';
+	print join "\t", ($file, $count, $het, $hom, $het_hom_ratio, $ti, $tv, $ti_tv_ratio);
+	print "\n";
+    }
+}
 
 #-----------------------------------------------------------------------------
 
@@ -1899,7 +2046,7 @@ sub print_gff {
 
 sub fh_in {
 
-    my $file = shift @files;
+    my $file = shift;
 
     my $IN;
     if ($file eq '-') {
@@ -1957,8 +2104,18 @@ sub next_feature_hash {
     my %attributes;
     my $att_text = $feature{attributes};
     my @pairs = split /;/, $att_text;
+    if (! defined $att_text) {
+	warn "Warn : no_attributes : ($att_text) $line\n" unless defined $att_text;
+    }
     for my $pair (@pairs) {
 	my ($key, $value_text) = split /=/, $pair;
+	if (! defined $key || ! defined $value_text) {
+	    warn "Warn : attribute_with_no_key : ($pair) $line\n"
+		unless defined $key;
+	    warn "Warn : attribute_with_no_value : ($pair) $line\n"
+		unless defined $value_text;
+	    next;
+	}
 	my @values = split ',', $value_text;
 	push @{$attributes{$key}}, @values;
     }

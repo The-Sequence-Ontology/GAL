@@ -1,0 +1,59 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+distance_tree_rename distance_machine.matrix outtree
+
+Description:
+
+This script takes a distance_machine matrix file and a phylip outtree
+file and renames the nodes in the phylip outtree file.
+
+";
+
+
+my ($help);
+my $opt_success = GetOptions('help'    => \$help,
+			      );
+
+die $usage if $help || ! $opt_success;
+
+my ($matrix_file, $outtree_file) = @ARGV;
+
+die $usage unless (-r $matrix_file && -r $outtree_file);
+open (my $IN, '<', $matrix_file) or die
+    "Can't open $matrix_file for reading\n$!\n";
+
+my @names = grep {/^\#/} (<$IN>);
+
+my %name_index;
+
+for (@names) {
+    my ($junk, $index, $name) = split;
+    $name =~ s/\.gvf//;
+    $name =~ s/_SNV//;
+    $name =~ s/10Gen_//;
+    $name_index{$index} = $name;
+}
+
+close $IN;
+
+open ($IN, '<', $outtree_file) or die
+    "Can't open $outtree_file for reading\n$!\n";
+
+while (<$IN>) {
+    s/(\d+):/$name_index{$1}:/g;
+    print;
+}
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------

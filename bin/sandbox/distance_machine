@@ -79,7 +79,8 @@ sub parse_file {
 	while (defined(my $line = <$fh>)){
 		chomp($line);
 
-		next if $line =~ /^#/;
+		next if $line =~ /^\#/;
+		next if $line =~ /^\s*$/;
 
 		next if defined($chr) && $line !~ /^chr$chr\t/;
 

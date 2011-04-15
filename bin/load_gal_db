@@ -41,7 +41,13 @@ my $opt_success = GetOptions('help'       => \$help,
 die $usage if $help || ! $opt_success;
 
 my @files = @ARGV;
+die $usage unless @files;
 die $usage if grep {! -r $_} @files;
+$driver ||= 'SQLite';
+$parser ||= 'gff3';
+if (! $db_name) {
+    ($db_name = $files[0]) =~ s/\.gvf/.sqlite/;
+}
 
 my $store_args = {class    => $driver,
 		  database => $db_name,
