@@ -675,71 +675,8 @@ sub validate {
       my $error_code = 'missing_required_gff-version_or_gvf-version_pragma';
       push @{$errors{$error_code}}, [1, $line];
       warn "WARNING : $error_code : Assuming this file is \#\#gff-version 3 for validation.\n";
-      push @stack, $line;
+      push @stack, ("\#\#gff-version 3", $line);
       $line_count--;
-      my $line = "\#\#gff-version 3";
-    }
-    ##gff-version
-    if ($line =~ /^\#\#gff-version/) {
-      chomp $line;
-      $line_count++;
-      my $seen = {};
-      my $children = {};
-      my %relationships = (is_a    => 1,
-			   part_of => 1,
-			  );
-      # Get valid sequence_feature terms
-      no warnings;
-      ($seen, $children) = get_so_children($so_data, 'SO:0000110', \%relationships, $seen, $children);
-      %{$valid_so_terms{sequence_feature}} = ('SO:0000110' => 1);
-      use warnings;
-      map {$valid_so_terms{sequence_feature}{$_}++} keys %{$children};
-      map {$valid_so_terms{sequence_feature}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_feature}}};
-      if ($line =~ /^\#\#gff-version\s+(\d+\.?\d*)/) {
-	$pragmas{'gff-version'} = $1;
-      }
-      else {
-	my $error_code = 'invalid_gff-version_pragma_value';
-	push @{$errors{$error_code}}, [$line_count, $line];
-	warn "WARNING : $error_code : $line\n";
-      }
-    }
-    ##gvf-version
-    elsif ($line =~ /^\#\#gvf-version/) {
-      $line_count++;
-      my $seen = {};
-      my $children = {};
-      my %relationships = (is_a    => 1,
-			   part_of => 1,
-			  );
-      # Get valid sequence_alteration terms
-      no warnings;
-      ($seen, $children) = get_so_children($so_data, 'SO:0001059', \%relationships, $seen, $children);
-      use warnings;
-      %{$valid_so_terms{sequence_alteration}} = ('SO:0001059' => 1,
-						 'SO:0000730' => 1
-						);
-      map {$valid_so_terms{sequence_alteration}{$_}++} keys %{$children};
-      map {$valid_so_terms{sequence_alteration}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_alteration}}};
-      
-      # Get valid sequence_variant terms
-      $seen = {};
-      $children = {};
-      no warnings;
-      ($seen, $children) = get_so_children($so_data, 'SO:0001060', \%relationships, $seen, $children);
-      use warnings;
-      %{$valid_so_terms{sequence_variant}} = ('SO:0001060' => 1);
-      map {$valid_so_terms{sequence_variant}{$_}++} keys %{$children};
-      map {$valid_so_terms{sequence_variant}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_variant}}};
-      
-      if ($line =~ /^\#\#gvf-version\s+(\d+\.?\d*)/) {
-	$pragmas{'gvf-version'} = $1;
-      }
-      else {
-	my $error_code = 'invalid_gvf-version_pragma_value';
-	push @{$errors{$error_code}}, [$line_count, $line];
-	warn "WARNING : $error_code : $line\n";
-      }
     }
     
   LINE:
@@ -821,7 +758,7 @@ sub validate {
 	  push @{$errors{$error_code}}, [$line_count, $line];
 	  warn "WARNING : $error_code : $line\n";
 	}
-	# PHASE
+	# Phase
 	if ($phase  !~ /^[\.012]$/) {
 	  my $error_code = 'invalid_character_in_phase_column';
 	  push @{$errors{$error_code}}, [$line_count, $line];
@@ -1196,9 +1133,34 @@ sub validate {
 	}
       }
       # Pragmas
-      elsif ($line =~ /^\#\#/) {
+      else {
+	##gff-version
+	if ($line =~ /^\#\#gff-version/) {
+	  chomp $line;
+	  $line_count++;
+	  my $seen = {};
+	  my $children = {};
+	  my %relationships = (is_a    => 1,
+			       part_of => 1,
+			      );
+	  # Get valid sequence_feature terms
+	  no warnings;
+	  ($seen, $children) = get_so_children($so_data, 'SO:0000110', \%relationships, $seen, $children);
+	  %{$valid_so_terms{sequence_feature}} = ('SO:0000110' => 1);
+	  use warnings;
+	  map {$valid_so_terms{sequence_feature}{$_}++} keys %{$children};
+	  map {$valid_so_terms{sequence_feature}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_feature}}};
+	  if ($line =~ /^\#\#gff-version\s+(\d+\.?\d*)/) {
+	    $pragmas{'gff-version'} = $1;
+	  }
+	  else {
+	    my $error_code = 'invalid_gff-version_pragma_value';
+	    push @{$errors{$error_code}}, [$line_count, $line];
+	    warn "WARNING : $error_code : $line\n";
+	  }
+	}
 	##gvf-version
-	if ($line =~ /^\#\#gvf-version/) {
+	elsif ($line =~ /^\#\#gvf-version/) {
 	  $line_count++;
 	  my $seen = {};
 	  my $children = {};
@@ -1214,7 +1176,7 @@ sub validate {
 						    );
 	  map {$valid_so_terms{sequence_alteration}{$_}++} keys %{$children};
 	  map {$valid_so_terms{sequence_alteration}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_alteration}}};
-	
+	  
 	  # Get valid sequence_variant terms
 	  $seen = {};
 	  $children = {};
@@ -1230,29 +1192,6 @@ sub validate {
 	  }
 	  else {
 	    my $error_code = 'invalid_gvf-version_pragma_value';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	###
-	elsif ($line =~ /^\#\#\#/) {
-	  next LINE;
-	}
-	##FASTA
-	elsif ($line =~ /^\#\#FASTA/) {
-	  last LINE;
-	}
-	##sequence-region
-	elsif ($line =~ /^\#\#sequence-region/) {
-	  if ($line =~ /^\#\#(sequence-region)\s+(\S+)\s+(\d+)\s+(\d+)/) {
-	    my $pragma_key   = $1;
-	    my $seqid        = $2;
-	    my $start        = $3;
-	    my $end          = $4;
-	    $pragmas{$pragma_key}{$seqid} = [$start, $end];
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
 	    push @{$errors{$error_code}}, [$line_count, $line];
 	    warn "WARNING : $error_code : $line\n";
 	  }
@@ -1327,6 +1266,27 @@ sub validate {
 	    warn "WARNING : $error_code : $line\n";
 	  }
 	}
+	elsif ($line =~ /^\#\#sequence-region/) {
+	  if ($line =~ /^\#\#(sequence-region)\s+(\S+)\s+(\d+)\s+(\d+)/) {
+	    my $pragma_key = $1;
+	    my $seqid      = $2;
+	    my $start      = $3;
+	    my $end        = $4;
+	    if (! $seqid || ! $start || ! $end) {
+	      my $error_code = 'missing_sequence-region_pragma_values';
+	      push @{$errors{$error_code}}, [$line_count, $line];
+	      warn "WARNING : $error_code : $line\n";
+	    }
+	    elsif ($start !~ /^\d+$/ || $end !~ /^\d+$/) {
+	      my $error_code = 'invalid_sequence-region_pragma_value';
+	      push @{$errors{$error_code}}, [$line_count, $line];
+	      warn "WARNING : $error_code : $line\n";
+	    }
+	    else {
+	      $pragmas{$pragma_key}{$seqid} = [$start, $end];
+	    }
+	  }
+	}
 	##file-date
 	elsif ($line =~ /^\#\#file-date /) {
 	  if ($line =~ /^\#\#(file-date)\s+(20[1-9][0-9]-\d\d-\d\d)/) {
@@ -1366,7 +1326,7 @@ sub validate {
 	    warn "WARNING : $error_code : $line\n";
 	  }
 	}
- 	##score-method
+	##score-method
 	elsif ($line =~ /^\#\#score-method/) {
 	  if ($line =~ /^\#\#(score-method)\s+(\S+.*)/) {
 	    my $pragma_key   = $1;
@@ -1403,7 +1363,7 @@ sub validate {
 	    my $error_code = 'invalid_pragma_format';
 	    push @{$errors{$error_code}}, [$line_count, $line];
 	    warn "WARNING : $error_code : $line\n";
-  	  }
+	  }
 	}
 	##technology-platform
 	elsif ($line =~ /^\#\#technology-platform/) {
@@ -1469,7 +1429,7 @@ sub validate {
 	}
       }
     }
-
+    
     close $IN;
     print "\n\n";
     print "Error Summary for $file\n";
@@ -1488,7 +1448,7 @@ sub validate {
     print "\n\n";
   }
 }
-
+  
 #-----------------------------------------------------------------------------
 #  stats|u	  Return simple summary statistics for the given file.
 #		  (Not yet implimented)
