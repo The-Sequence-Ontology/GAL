@@ -667,10 +667,15 @@ sub validate {
 	my %feature_ids;
 	my %parents;
 	my %valid_so_terms;
-	# TODO: Add check here that file actually begins with gff-version
-	# TODO: Allow only pragma validation
+
+	my $line = <$IN>;
+	my ($format_type, $version) = split /\t+/;
+	if ($format_type !~ /g[vf]f-version/) {
+	    warn "WARN : 'missing_required_gff-version_or_gvf-version_pragma' : Assuming this file is ##gff-version 3 for validation.\n";
+	    $line eq '##gff-version 3';
+	  }
       LINE:
-	while (my $line = <$IN>) {
+	while ($line ||= <$IN>) {
 	    chomp $line;
 	    $line_count++;
 	    next LINE if $line =~ /^\s*$/;

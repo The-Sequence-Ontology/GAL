@@ -15,9 +15,9 @@ my $usage = "
 Synopsis:
 
 variant_classifier --create --parser gff3 --driver SQLite              \
-                   --fasta path/to/fasta                               \
-                   --features feature.sqlite --variants variant.sqlite \
-                   genome_annotation.gff3 variants.gvf
+		   --fasta path/to/fasta                               \
+		   --features feature.sqlite --variants variant.sqlite \
+		   genome_annotation.gff3 variants.gvf
 
 Description:
 
@@ -74,7 +74,7 @@ my $feat_store_args = {class    => $driver,
 		       database => $feature_db,
 		       user     => $user,
 		       password => $password,
-                   };
+		   };
 
 my $var_store_args = {class    => $driver,
 		      database => $variant_db,
@@ -128,7 +128,7 @@ while (my $mrna = $mrnas->next) {
 		     end   => {'<='  => $cds_end},
 		     );
 	my $these_variants = $variants->search(\%where); # ->cursor
-	
+
 	while (my $variant = $these_variants->next) {
 	    my $variant_id = $variant->feature_id;
 	    my $seqid = $variant->seqid;
@@ -136,7 +136,7 @@ while (my $mrna = $mrnas->next) {
 	    my $var_start = $variant->start;
 	    my $reference_seq = $variant->reference_seq;
 	    my @variant_seqs  = $variant->variant_seq_no_ref;
-	    
+
 	    for my $variant_seq (@variant_seqs) {
 		my $mrna_variant_seq = $variant_seq;
 		$mrna_variant_seq = $mrna->annotation->revcomp($variant_seq)
