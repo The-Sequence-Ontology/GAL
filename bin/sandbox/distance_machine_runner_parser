@@ -144,8 +144,8 @@ sub get_matrix_file {
 	my $i_name = shift;
 	my $j_name = shift;
 
-	my $a = $opt_d.'/'.'matrix.'.$i_name.'.VS.'.$j_name.'.chr'.$c;
-	my $b = $opt_d.'/'.'matrix.'.$j_name.'.VS.'.$i_name.'.chr'.$c;
+	my $a = $opt_d.'/'.'matrix.'.$i_name.'.VS.'.$j_name.'.'.$c;
+	my $b = $opt_d.'/'.'matrix.'.$j_name.'.VS.'.$i_name.'.'.$c;
 
 	my $target;
 
