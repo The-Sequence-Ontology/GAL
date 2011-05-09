@@ -14,7 +14,7 @@ my $usage = "
 
 Synopsis:
 
-distance_machine  --chr <gff3 file> <gff3 file> 
+distance_machine  --chr 9 <gff3 file> <gff3 file> 
 
 Description: gets distance between files 
 
@@ -82,7 +82,7 @@ sub parse_file {
 		next if $line =~ /^\#/;
 		next if $line =~ /^\s*$/;
 
-		next if defined($chr) && $line !~ /^chr$chr\t/;
+		next if defined($chr) && $line !~ /$chr\t/;
 
 		my @fields = split(/\t/, $line);
 

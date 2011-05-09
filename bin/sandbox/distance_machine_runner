@@ -77,7 +77,7 @@ sub run {
 	my $i_file = shift;
 	my $j_file = shift;
 
-	my $out = $opt_o.'/matrix.'.$i_name.'.VS.'.$j_name.'.chr'.$chr;
+	my $out = $opt_o.'/matrix.'.$i_name.'.VS.'.$j_name.'.'.$chr;
 
 	my $command  = $opt_e;
 	   $command .= ' --chr '.$chr unless $chr eq 'all';	
