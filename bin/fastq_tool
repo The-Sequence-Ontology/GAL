@@ -29,12 +29,12 @@ Options:
   --total         Print total read length (combined).
   --ill2sanger	  Convert Illumina 1.3+ base quality scores to standard
                   Sanger scores.
-  --sol2sanger	  Convert Illumina 1.0 base quality scores to standard
+  --sol2sanger	  Convert Solexa/Illumina 1.0 base quality scores to standard
                   Sanger scores.
   --fastq2fasta   Convert to fasta
   --trim_qual	  Remove reads that don't pass quality filter.
-  --guess_format  Guess which format (Sanger Solexa/Illumina 1.0 or
-		  Illumina 1.3) the file is.
+  --guess_format  Guess which format (Sanger Solexa/Illumina 1.0, 1.3, 1.5
+                  or Sanger standard) the file is.
   --grep_seq      Print sequence that match a given Perl regular expression.
   --verbose       Talk to me baby!
 
@@ -335,10 +335,10 @@ sub guess_format {
 		print "Solexa/Illumina 1.0 Format\n";
 	    } 
 	    elsif ($min < 66) {
-		print "Solexa 1.3 Format\n";
+		print "Solexa/Illumina 1.3 Format\n";
 	    } 
 	    else {
-		print "Solexa 1.5+ Format\n";
+		print "Solexa/Illumina 1.5+ Format\n";
 	    } 
 	}
     }
