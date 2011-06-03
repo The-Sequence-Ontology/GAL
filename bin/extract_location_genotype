@@ -52,7 +52,7 @@ for my $file (@files) {
 	next if ($filter_genotype && $filter_genotype ne $genotype);
 	# push @variant_seqs, $variant_seqs[0] if $genotype eq 'homozygous';
 	#@variant_seqs = sort @variant_seqs;
-	push @data, @variant_seqs unless $location;
+	push @data, sort @variant_seqs unless $location;
 	print join ':', @data;
 	print "\n";
 	print '';

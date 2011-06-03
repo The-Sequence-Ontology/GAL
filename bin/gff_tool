@@ -97,6 +97,12 @@ to the altered copy of the feature.  All filters given are applied.
 		  Print only those features that return true from the
 		  given code ref.
 
+  overlaps        Print only those features whose start and end coordinates
+                  overlap those given as an argument to this command.
+                  Coordinates are give as seqid:start-end where start
+                  defaults to 1 and end defaults start or 100,000,000,000
+                  if start is also not defined.
+
 --Modify Options--
 
   merge|m         Merge takes a feature file(s) and combines the
@@ -108,9 +114,7 @@ to the altered copy of the feature.  All filters given are applied.
 		  code reference is given, then the first feature
 		  encountered will be saved and a warning issued.
 
-  blend|b
-
-		  Blend takes a feature file(s) and uniquely blends
+  blend|b	  Blend takes a feature file(s) and uniquely blends
 		  the attributes for features that share the same ID.
 		  If two features have the same ID, but conflict in
 		  ways other than the attributes (i.e. seqid, source,
@@ -123,8 +127,10 @@ to the altered copy of the feature.  All filters given are applied.
 		  blend the attributes and issue a warning.
 
   sort|s          Sort the feature file using the code reference given
-		  by the code argument described above.  (Not yet
-		  implimented)
+		  by the code argument described above.  If no code
+		  argument is given the sort will sort lexigraphically
+		  on seqid and numerically on start and reverse
+		  numerically on end.(Not yet implimented)
 
   alter|a         Apply the code reference given by the code argument
 		  described above to each feature.  This is identical
@@ -257,9 +263,14 @@ to the altered copy of the feature.  All filters given are applied.
 
   titv           Calculate transition/transversion ratio.
   gvf_stats      Simple SNV stats on a GVF file.
+  effect_stats   Category counts for Variant_effect terms.
   gvf_sets       Calculate counts the pairwise intersection and compliment
                  for all files and the symetric difference for each
                  file. (Not yet implimented)
+  fix_gvf        Fix up some common errors in GVF files.  Currently it
+                 changes Genotype=(hetero|homo)zygous attributes to
+                 Zygosity=(hetero|homo)zygous and uniques the
+                 Variant_seq values.
 
 
 Code References:
@@ -304,11 +315,12 @@ gff_tool --hash_ag "push @{$hash_ag{$f->{type}}}, $f"       \
 ';
 
 my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
-    $include, $exclude, $code, $filter, $merge, $blend, $sort, $alter,
-    $hash_ag, $validate, $stats, $print_gff, $sequence, $fasta_only,
-    $fasta_no, $fasta_add, $meta_only, $meta_no, $meta_add, $add_ID,
-    $pragmas, $features, $titv, $gvf_stats, $union, $intersection,
-    $l_compliment, $s_difference, $gvf_sets);
+    $include, $exclude, $code, $filter, $overlaps, $merge, $blend,
+    $sort, $alter, $hash_ag, $validate, $stats, $print_gff, $sequence,
+    $fasta_only, $fasta_no, $fasta_add, $meta_only, $meta_no,
+    $meta_add, $add_ID, $pragmas, $features, $union, $intersection,
+    $l_compliment, $s_difference, $titv, $gvf_stats, $effect_stats,
+    $gvf_sets, $fix_gvf);
 
 my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'out_ext|o=s'     => \$out_ext,
@@ -319,6 +331,7 @@ my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'exclude|e'       => \$exclude,
 			     'code|c=s'	       => \$code,
 			     'filter|t'        => \$filter,
+                             'overlaps=s'      => \$overlaps,
 			     'merge|m'	       => \$merge,
 			     'blend|b'	       => \$blend,
 			     'sort|s'	       => \$sort,
@@ -337,13 +350,15 @@ my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'meta_add|z=s'    => \$meta_add,
 			     'pragmas|w=s'     => \$pragmas,
 			     'add_ID|v'	       => \$add_ID,
-			     'titv'            => \$titv,
-                             'gvf_stats'       => \$gvf_stats,
 			     'union'           => \$union,
 			     'intersection'    => \$intersection,
 			     'l_compliment'    => \$l_compliment,
 			     's_difference'    => \$s_difference,
+			     'titv'            => \$titv,
+                             'gvf_stats'       => \$gvf_stats,
+                             'effect_stats'    => \$effect_stats,
                              'gvf_sets'        => \$gvf_sets,
+                             'fix_gvf'         => \$fix_gvf,
 			    );
 
 die $usage if $help || ! $opt_success;
@@ -363,6 +378,7 @@ my $i = parse_ids($IDS_FILE) if $IDS_FILE;
 
 # Move the filter code to the passes_filters sub
 filter(\@files, $code)            if $filter;
+overlaps(\@files, $overlaps)      if $overlaps;
 merge(\@files)		          if $merge;
 blend_gff(\@files)		  if $blend;
 sort_gff(\@files)		  if $sort;
@@ -380,12 +396,13 @@ meta_no(\@files)		  if $meta_no;
 meta_add(\@files)		  if $meta_add;
 add_ID(\@files)		          if $add_ID;
 print_gff(\@files)                if $print_gff;
-calc_titv(\@files)                if $titv;
-gvf_stats(\@files)                if $gvf_stats;
 union(\@files)                    if $union;
 intersection(\@files)             if $intersection;
 l_compliment(\@files)             if $l_compliment;
 s_difference(\@files)             if $s_difference;
+calc_titv(\@files)                if $titv;
+gvf_stats(\@files)                if $gvf_stats;
+effect_stats(\@files)              if $effect_stats;
 gvf_sets(\@files)                 if $gvf_sets;
 #pragma($pragma)	                  if $pragma;
 
@@ -420,6 +437,44 @@ sub filter {
 	    next unless $return_value;
 
 	    print $OUT to_gff3($f_original);
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+#  overlaps        Print only those features whose start and end coordinates
+#                  overlap those given as an argument to this command.
+#                  Coordinates are give as seqid:start-end where start
+#                  defaults to 1 and end defaults start or 100,000,000,000
+#                  if start is also not defined.
+#
+#  Examples:
+#  gff_tool --overlaps chr1:5000-1000
+#  gff_tool --overlaps chr1:5000       # same as chr1:5000-5000
+#  gff_tool --overlaps chr1            # same as chr1:1-100,000,000,000
+#-----------------------------------------------------------------------------
+
+sub overlaps {
+
+    my ($files, $locus) = @_;
+
+    my ($l_seqid, $l_start, $l_end) = split /[:-]/, $locus;
+    if (! defined $l_start) {
+	$l_start = 1;
+	$l_end   = 100000000000;
+    }
+    $l_end ||= $l_start;
+
+    for my $file (@files) {
+	my $IN  = fh_in($file);
+	my $OUT = fh_out($file);
+	while (my $f = next_feature_hash($IN)) {
+
+	    next if $l_seqid ne $f->{seqid};
+	    next unless $l_start <= $f->{end};
+	    next unless $l_end   >= $f->{start};
+
+	    print $OUT to_gff3($f);
 	}
     }
 }
@@ -541,8 +596,20 @@ sub blend_gff {
 
 sub sort_gff {
 
-	die "gff_tool (sort) not yet implimented!\n";
+    my ($file, $code) = @_;
 
+    die "gff_tool (sort) not yet implimented!\n";
+
+    $code ||= '{$a->{seqid}';
+
+    my $IN = fh_in($file);
+    my $OUT = fh_out($file);
+    while (my $f = next_feature_hash($IN)) {
+
+	my $t = $f->{attributes};
+
+	print $OUT to_gff3($f);
+    }
 }
 
 #-----------------------------------------------------------------------------
@@ -924,8 +991,426 @@ sub validate {
 		  push @{$errors{$error_code}}, [$line_count, $line];
 		  warn "WARNING : $error_code : ($value) $line\n";
 		}
-		
-	      }
+<<<<<<< .mine
+		# Type
+		if ($pragmas{'gvf-version'}) {
+		  if (! $valid_so_terms{sequence_alteration}{$type}) {
+		    my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		  }
+		}
+		else {
+		  if (! $valid_so_terms{sequence_feature}{$type}) {
+		    my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		  }
+		}
+		# Start
+		if ($start !~ /^\d+$/) {
+		    my $error_code = 'invalid_start_column_must_be_positive_integer';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		    # Do bounds checking if sequence-region
+		}
+		# End
+		if ($end !~ /^\d+$/) {
+		    my $error_code = 'invalid_end_column_must_be_positive_integer';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		    # Do bounds checking if sequence-region
+		}
+		if ($start > $end) {
+		    my $error_code = 'invalid_feature_coordinates_start_is_greater_than_end';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Score
+		if ($score ne '.' && $score !~ /^\-?\d+\.?\d*e?\-?\d*$/) {
+		    my $error_code = 'invalid_score_column_must_be_real_number';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Strand
+		if ($strand  !~ /^[\.\-+\?]$/) {
+		    my $error_code = 'invalid_strand_column';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Phase
+		if ($phase  !~ /^[\.012]$/) {
+		    my $error_code = 'invalid_character_in_phase_column';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Phase && CDS
+		if ($type eq 'CDS' && $phase  !~ /^[012]$/) {
+		    my $error_code = 'phase_is_required_for_CDS';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Phase ! CDS
+		if ($type ne 'CDS' && $phase  =~ /^[012]$/) {
+		    my $error_code = 'phase_is_given_for_non_CDS_feature_type';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		}
+		# Attributes
+		my %attributes;
+		my @pairs = split /;/, $att_text;
+	      PAIR:
+		for my $pair (@pairs) {
+		    if ($pair !~ /(=)/) {
+			my $error_code = 'attribute_key_value_pairs_must_be_separated_by_equal_sign';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : ($pair) $line\n";
+			next PAIR;
+		    }
+		    my ($key, $value) = split /=/, $pair;
+		    if (! defined $key || ! defined $value) {
+			my $error_code = 'attribute_key_value_pairs_must_have_key_and_value';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+			next PAIR;
+		    }
+		    my @values = split /,/, $value;
+		    push @{$attributes{$key}}, @values;
+		}
+		for my $key (sort keys %attributes) {
+		    my @values = @{$attributes{$key}};
+		    # ID
+		    if ($key eq 'ID') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_ID_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_ids = join ' ', @values;
+				warn "WARNING : $error_code : ($all_ids) $line\n";
+			}
+			my $id = $values[0];
+			if (++$feature_ids{$id} > 1) {
+				my $error_code = 'invalid_ID_attribute_not_unique';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($id) $line\n";
+			}
+		    }
+		    # Name
+		    elsif ($key eq 'Name') {
+			# No validation on Name values
+		    }
+		    # Alias
+		    elsif ($key eq 'Alias') {
+			# No validation on Name values
+		    }
+		    # Parent
+		    elsif ($key eq 'Parent') {
+			for my $value (@values) {
+			    my $id = $attributes{ID}[0];
+			    $parents{$id}{$value}++;
+			}
+		    }
+		    # Target
+		    elsif ($key eq 'Target') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Target_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			if ($value !~ /\S+\s+\d+\s+\d+\s*[\-+]*/) {
+			    my $error_code = 'invalid_Target_attribute_value';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : ($value) $line\n";
+			}
+		    }
+		    # Gap
+		    elsif ($key eq 'Gap') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Gap_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			# TODO: Validate the CIGAR format
+		    }
+		    # Derives_from
+		    elsif ($key eq 'Derives_from') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Derives_from_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			# TODO: Validate the Derives_from relationships
+		    }
+		    # Note
+		    elsif ($key eq 'Note') {
+		    }
+		    # Dbxref
+		    elsif ($key eq 'Dbxref') {
+			for my $value (@values) {
+			    my ($db, $ID) = split /:/, $value;
+			    # TODO: Validate the Dbxref DB and ID;
+			}
+		    }
+		    # Ontology_term
+		    elsif ($key eq 'Ontology_term') {
+			# TODO: Validate Ontology_term
+		    }
+		    # Is_circular
+		    elsif ($key eq 'Is_circular') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Is_circular_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			# TODO: Validate Is_circular
+		    }
+		    # Variant_seq
+		    elsif ($key eq 'Variant_seq') {
+			for my $value (@values) {
+			    # TODO: Validate the length of the Variant_seq
+			    if ($type eq 'SNV') {
+				if ($value !~ /[ATGCN\.\!]/i) {
+				    my $error_code = 'invalid_Variant_seq_attribute_value_for_SNV';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+			    }
+			    elsif ($type eq 'insertion') {
+				if ($value !~ /[ATGCN]+|~/i) {
+				    my $error_code = 'invalid_Variant_seq_attribute_value_insertion_indel';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+
+			    }
+			    elsif ($type eq 'deletion') {
+				if ($value !~ /[ATGCN]+|-/i) {
+				    my $error_code = 'invalid_Variant_seq_attribute_value_deletion_indel';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+
+			    }
+			    elsif ($type eq 'indel') {
+				if ($value !~ /[ATGCN]+|[-~]/i) {
+				    my $error_code = 'invalid_Variant_seq_attribute_value_deletion_indel';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+
+			    }
+			}
+		    }
+		    # Reference_seq
+		    elsif ($key eq 'Reference_seq') {
+			for my $value (@values) {
+			    if ($type eq 'SNV') {
+				if ($value !~ /[ATGCN]/) {
+				    my $error_code = 'invalid_Reference_seq_attribute_value_for_SNV';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+			    }
+			    elsif ($type eq 'insertion') {
+				if ($value !~ /[ATGCN]+|-/) {
+				    my $error_code = 'invalid_Reference_seq_attribute_value_insertion_indel';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+
+			    }
+			    elsif ($type eq 'deletion') {
+				if ($value !~ /[ATGCN]+|~/) {
+				    my $error_code = 'invalid_Reference_seq_attribute_value_deletion_indel';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+
+			    }
+			    elsif ($type eq 'indel') {
+				if ($value !~ /[ATGCN]+|[-~]/) {
+				    my $error_code = 'invalid_Reference_seq_attribute_value_deletion_indel';
+				    push @{$errors{$error_code}}, [$line_count, $line];
+				    warn "WARNING : $error_code : ($value) $line\n";
+				}
+
+			    }
+			}
+		    }
+		    # Variant_reads
+		    elsif ($key eq 'Variant_reads') {
+			for my $value (@values) {
+			    if ($value !~ /^\d+$/) {
+				my $error_code = 'invalid_Variant_reads_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }
+		    # Total_reads
+		    elsif ($key eq 'Total_reads') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Total_reads_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			if ($value !~ /^\d+$/) {
+			    my $error_code = 'invalid_Total_reads_attribute_value';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : ($value) $line\n";
+			}
+		    }
+		    # Genotype
+		    elsif ($key eq 'Genotype') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Genotype_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			if ($value !~ /^(hetero|homo|hemi)zygous$/) {
+			    my $error_code = 'invalid_Genotype_attribute_value';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : ($value) $line\n";
+			}
+		    }
+		    # Variant_freq
+		    elsif ($key eq 'Variant_freq') {
+			for my $value (@values) {
+			    if ($value !~ /^\d+\.?\d*\e?\-?\d*/) {
+				my $error_code = 'invalid_Variant_freq_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }
+		    # Variant_effect
+		    elsif ($key eq 'Variant_effect') {
+			my $value = join ' ', @values;
+			my ($sequence_variant, $index, $sequence_feature, @featureIDs) = split /\s+/, $value;
+			# TODO: Validate $sequence_variant
+			if ($index !~ /^\d+$/ || $index > (scalar @{$attributes{Variant_seq}} - 1)) {
+			    my $error_code = 'invalid_Variant_effect_attribute_index_value';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : ($index) $line\n";
+			}
+			if (! $valid_so_terms{sequence_variant}{$sequence_variant}) {
+			    my $error_code = 'invalid_Variant_effect_attribute_sequence_variant_value';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : ($sequence_variant) $line\n";
+			}
+			if (! $valid_so_terms{sequence_feature}{$sequence_feature}) {
+			    my $error_code = 'invalid_Variant_effect_attribute_sequence_feature_value';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : ($sequence_feature) $line\n";
+			}
+			# TODO: Validate featureIDs
+		    }
+		    # Variant_copy_number
+		    elsif ($key eq 'Variant_copy_number') {
+			for my $value (@values) {
+			    if ($value !~ /^d+$/) {
+				my $error_code = 'invalid_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }
+		    # Reference_copy_number
+		    elsif ($key eq 'Reference_copy_number') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Reference_copy_number_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			for my $value (@values) {
+			    if ($value !~ /^\d+$/) {
+				my $error_code = 'invalid_Reference_copy_number_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }
+		    # Start_range
+		    elsif ($key eq 'Start_range') {
+			if (scalar @values != 2) {
+			    my $error_code = 'invalid_Start_range_attribute_must_have_2_values';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ',', @values;
+			    warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			if ($values[0] =~ /^\d+$/ && $values[0] > $start) {
+			    my $error_code = 'invalid_Start_range_attribute_values_must_contain_start';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ',', @values;
+			    warn "WARNING : $error_code : ($all_values, $start) $line\n";
+			}
+			if ($values[1] =~ /^\d+$/ && $values[1] < $start) {
+			    my $error_code = 'invalid_Start_range_attribute_values_must_contain_start';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ',', @values;
+			    warn "WARNING : $error_code : ($all_values, $start) $line\n";
+			}
+			for my $value (@values) {
+			    if ($value ne '.' && $value !~ /^\d+$/) {
+				my $error_code = 'invalid_Start_range_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }
+		    # End_range
+		    elsif ($key eq 'End_range') {
+			if (scalar @values != 2) {
+			    my $error_code = 'invalid_Etart_range_attribute_must_have_2_values';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ',', @values;
+			    warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			if ($values[0] =~ /^\d+$/ && $values[0] > $end) {
+			    my $error_code = 'invalid_End_range_attribute_values_must_contain_end';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ',', @values;
+			    warn "WARNING : $error_code : ($all_values, $end) $line\n";
+			}
+			if ($values[1] =~ /^\d+$/ && $values[1] < $end) {
+			    my $error_code = 'invalid_End_range_attribute_values_must_contain_end';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ',', @values;
+			    warn "WARNING : $error_code : ($all_values, $end) $line\n";
+			}
+			for my $value (@values) {
+			    if ($value ne '.' && $value !~ /^\d+$/) {
+				my $error_code = 'invalid_End_range_attribute_value';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				warn "WARNING : $error_code : ($value) $line\n";
+			    }
+			}
+		    }
+		    # Phased
+		    elsif ($key eq 'Phased') {
+			if (scalar @values > 1) {
+				my $error_code = 'invalid_Phased_attribute_multiple_values';
+				push @{$errors{$error_code}}, [$line_count, $line];
+				my $all_values = join ' ', @values;
+				warn "WARNING : $error_code : ($all_values) $line\n";
+			}
+			my $value = $values[0];
+			# TODO: Validate the Phased attribute
+		    }
+		}
 	    }
 	  }
 	  # Reference_seq
@@ -1743,6 +2228,7 @@ sub l_compliment {
     my $OUT = fh_out();
     for my $loc_id (sort keys %comp_stash) {
 	if ($comp_count{$loc_id} == 1) {
+	    next unless exists $comp_stash{$loc_id};
 	    my $f = $comp_stash{$loc_id};
 	    print $OUT to_gff3($f);
 	}
@@ -1913,7 +2399,7 @@ sub gvf_stats {
     my $files = shift;
     my ($count, $ti, $tv, $het, $hom);
 
-    print join "\t", qw(File Count Het Hom Het/Hom Ti Tv Ti/Tv);
+    print join "\t", qw(File Count Het Hom Het/Hom Pct_Het Ti Tv Ti/Tv);
     print "\n";
     for my $file (@files) {
 	my $IN = fh_in($file);
@@ -2001,7 +2487,42 @@ sub gvf_stats {
 	$het = 0 if ! defined $het;
 	my $het_hom_ratio = $hom ? $het/$hom : 'NaN';
 	my $ti_tv_ratio   = $tv  ? $ti/$tv   : 'NaN';
-	print join "\t", ($file, $count, $het, $hom, $het_hom_ratio, $ti, $tv, $ti_tv_ratio);
+	print join "\t", ($file, $count, $het, $hom, $het_hom_ratio, $het/($het + $hom)*100, $ti, $tv, $ti_tv_ratio);
+	print "\n";
+    }
+}
+
+#-----------------------------------------------------------------------------
+# effect_stats   Category counts for Variant_effect terms.
+#-----------------------------------------------------------------------------
+
+sub effect_stats {
+
+    my $files = shift;
+    my ($count, $ti, $tv, $het, $hom);
+
+    print join "\t", ('Term', @{$files});
+    print "\n";
+    my (%files, %terms, %term_total);
+    for my $file (@files) {
+	$files{$file}++;
+	my $IN = fh_in($file);
+	($count, $ti, $tv, $het, $hom) = ();
+	while (my $f = next_feature_hash($IN)) {
+	    my $effects = $f->{attributes}{Variant_effect} || [];
+	    for my $term (@{$effects}) {
+		$term =~ s/(\S+).*/$1/;
+		$terms{$term}{$file}++;
+		$term_total{$term}++;
+	    }
+	}
+    }
+    for my $term (sort {$term_total{$b} <=> $term_total{$a}} keys %terms) {
+	print "$term";
+	for my $file (sort keys %files) {
+	    my $count = $terms{$term}{$file} || 0;
+	    print "\t$count";
+	}
 	print "\n";
     }
 }
