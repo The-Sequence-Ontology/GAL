@@ -106,12 +106,12 @@ sub build_graph {
 	    my $t1 = $features->{$t1_ids[$t1_idx]};
 	    my $t1_end = $t1->{end};
 	    my $t1_max = $t1_end if $t1_end_max < $t1_end;
-	    my $t1_end_idx_pointer = ? $t1_end > $t1
+	    # my $t1_end_idx_pointer = ? $t1_end > $t1;
 	  E1:
 	    for my $exon_1 (@{$t1->{exon}}) {
 		  T2:
 		    for my $t2_idx ($t2_idx_pointer .. scalar @t2_ids) {
-			    my $t2 = $feature->{$t2_id};
+			    my $t2 = $features->{$t2_idx};
 			    my $t2_start = $t2->{start};
 			    if ($t2_start_min > $t2_start) {$t2_start_min = $t2_start};
 			    if ($t2_start_min > $t1_end_max) {
@@ -120,7 +120,7 @@ sub build_graph {
 				    last T2;
 			    }
 			  E2:
-			    for my $exon_2 (@{$features->{$t2_id}{exon}}) {
+			    for my $exon_2 (@{$features->{$t2_idx}{exon}}) {
 
 				    next if ($exon_1->{seq_id} ne $exon_2->{seq_id} ||
 					     $exon_1->{strand} ne $exon_2->{strand}
