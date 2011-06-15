@@ -1,0 +1,332 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+build_genes transcripts.gff
+
+Description:
+
+This script will take a GFF3 file that has transcripts, exons and
+CDSs, but no gene features and build gene features by single-linkage
+clustering of transcripts based on exonic overlap.
+
+";
+
+
+my ($help);
+my $opt_success = GetOptions('help'    => \$help,
+			      );
+
+die $usage if $help || ! $opt_success;
+
+my $file = shift;
+
+my ($features, $seqids) = parse_gff($file);
+
+for my $seqid (@{$seqids}) {
+    for my $strand (qw(+ -)) {
+	my @these_features = grep {($_->{seqid}  eq $seqid &&
+				    $_->{strand} eq $strand)}
+				   @{$features};
+	my $nc_list  = build_nc_list(\@these_features);
+				   
+	for my $feature (@these_features) {
+
+	    my $overlap_features = get_overlapping_features($feature->{start},
+							    $feature->{end},
+							    $nc_list);
+	    print;
+	}
+    }
+}
+
+
+print '';
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub parse_gff {
+
+    my $file = shift;
+
+    open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
+
+    handle_message('FATAL', 'missing_or_unreadable_file', $file) unless $file;
+
+    my @features;
+    my %index;
+
+    my $idx = 0;
+    while (my $line = <$IN>) {
+
+	next if $line =~ /^(\#|\s)/;
+	chomp $line;
+	my (%feature, $att_text);
+	(@feature{qw(seqid source type start end score strand
+		     phase)}, $att_text) = split /\t/, $line;
+
+	$index{seqids}{$feature{seqid}}++;
+
+	my %attributes = split /;|=/, $att_text;
+	$attributes{ID} ||= join ':', @feature{qw(seqid type start end)};
+	map {$_ = [split /,/, $_]} values %attributes;
+	$feature{feature_id} = $attributes{ID}[0];
+	$feature{attributes} = \%attributes;
+
+	$index{ids}{$feature{feature_id}} = $idx;
+
+	if (exists $feature{attributes}{Parent}) {
+	    my @parents = @{$feature{attributes}{Parent}};
+	    my $child = $feature{feature_id};
+	    push @{$index{parents}{$idx}},  @parents;
+	    map {push @{$index{children}{$_}}, $idx} @parents;
+	}
+	$features[$idx] = \%feature;
+	$idx++;
+    }
+
+    map {$index{parents}{$_} = [@{$index{ids}}{@{$index{parents}{$_}}}]} keys %{$index{parents}};
+    my %new_child_index;
+    map {$new_child_index{$index{ids}{$_}} = $index{children}{$_}} keys %{$index{children}};
+    $index{children} = \%new_child_index;
+
+    my %roots;
+    @roots{values %{$index{ids}}} = ();
+    delete @roots{keys %{$index{parents}}};
+    $index{roots} = \%roots;
+
+    my $feature_sets = build_feature_sets(\@features, \%index);
+
+    my @seqids = sort keys %{$index{seqids}};
+
+    return $feature_sets, \@seqids;
+}
+
+#--------------------------------------------------------------------------------
+
+sub build_feature_sets {
+
+    my ($features, $index) = @_;
+
+    my $roots = $index->{roots};
+    my $child_index = $index->{children};
+
+    my @nested_children;
+    for my $idx (keys %{$roots}) {
+	my $feature = $features->[$idx];
+	my $id = $feature->{feature_id};
+	my $children = get_recursive_children($child_index, $features, $idx);
+	for my $child (sort_features(@{$children})) {
+	    my $child_type = $child->{type};
+	    my $child_id   = $child->{feature_id};
+	    push @{$feature->{children}{$child_type}}, $child;
+	}
+	push @nested_children, $feature;
+    }
+    @nested_children = sort_features(@nested_children);
+
+    return \@nested_children;
+}
+
+#-----------------------------------------------------------------------------                
+
+sub get_recursive_children {
+
+    my ($child_index, $features, $parent_idx) = @_;
+
+    my @nested_children;
+    for my $idx (@{$child_index->{$parent_idx}}) {
+	my $feature = $features->[$idx];
+	my $id = $feature->{feature_id};
+	my $children = get_recursive_children($child_index, $features, $idx);
+	for my $child (sort_features(@{$children})) {
+	    my $child_type = $child->{type};
+	    my $child_id   = $child->{feature_id};
+	    push @{$feature->{children}{$child_type}}, $child;
+	}
+	push @nested_children, $feature;
+    }
+    return \@nested_children;
+}
+
+#-----------------------------------------------------------------------------                
+
+sub sort_features {
+  my @features = sort {$a->{start} <=> $b->{start}} @_;
+  return wantarray ? @features : \@features;
+}
+
+#-----------------------------------------------------------------------------                
+
+sub build_nc_list {
+
+  my $features = shift;
+
+  my @nc_list;
+  my $idx = 0;
+  while ($idx <= $#{$features}) {
+    my $feature = $features->[$idx];
+    my $sublist;
+    my @node = (@{$feature}{qw(start end)}, $feature);
+    ($idx, $sublist) = get_sublist($idx, $features);
+    push @node, @{$sublist} if scalar @{$sublist};
+    push @nc_list, \@node;
+    $idx++;
+  }
+  return \@nc_list;
+}
+
+#-----------------------------------------------------------------------------                
+
+sub get_sublist {
+
+  my ($idx, $features) = @_;
+
+  my $feature = $features->[$idx];
+  if ($idx + 1 > $#{$features} ||
+      $features->[$idx + 1]{end} > $feature->{end}) {
+    return $idx, [];
+  }
+
+  my @sublist;
+  while ($idx <= $#{$features} - 1) {
+    my $next_feature = $features->[$idx + 1];
+    if ($next_feature->{end} > $feature->{end}) {
+      last;
+    }
+    else {
+      my @node = (@{$next_feature}{qw(start end)}, $next_feature);
+      $idx++;
+      my $next_sublist;
+      ($idx, $next_sublist) = get_sublist($idx, $features);
+      push @node, @{$next_sublist} if scalar @{$next_sublist};
+      push @sublist, \@node;
+    }
+  }
+  return $idx, \@sublist;
+}
+
+#-----------------------------------------------------------------------------                
+
+sub features_overlap {
+
+  my ($feature1, $feature2) = @_;
+
+    if ($feature1->{start} <= $feature2->{end}   &&
+        $feature1->{end}   >= $feature2->{start} &&
+        $feature1->{seqid} eq $feature2->{seqid}) {
+      return 1;
+    }
+
+  return undef;
+}
+
+#-----------------------------------------------------------------------------                
+
+sub get_overlapping_features {
+
+  my ($range_start, $range_end, $nc_list) = @_;
+
+  my $primary_idx = binary_search($range_start, $nc_list);
+
+  my @features;
+  my $node_end  = $range_start;
+  my $first_idx = $primary_idx;
+  while ($node_end >= $range_start) {
+    my $node = $nc_list->[$first_idx];
+    $node_end = $node->[1];
+    last if $first_idx <= 0;
+    $first_idx--;
+  }
+
+  my $node_start = $range_end;
+  my $last_idx    = $primary_idx;
+  while ($node_start <= $range_end) {
+    my $node = $nc_list->[$last_idx];
+    $node_start = $node->[1];
+    last if $last_idx >= $#{$nc_list};
+    $last_idx++;
+  }
+
+  my $features = [];
+  my $seen = {};
+  for my $idx ($first_idx .. $last_idx) {
+    my $node = $nc_list->[$idx] ? $nc_list->[$idx] : [];
+    my ($node_start, $node_end, @nested_nodes) = @{$node};
+    for my $nested_node (@nested_nodes) {
+      if (ref $nested_node eq 'HASH') {
+        my ($feature_start, $feature_end) = @{$nested_node}{qw(start end)};
+        if ($feature_start <= $range_end && $feature_end >= $range_start) {
+          push @{$features}, $nested_node;
+        }
+      }
+      else {
+        gather_nested_features($range_start, $range_end,
+                               $features, $nested_node);
+      }
+    }
+  }
+  return $features;
+}
+
+#-----------------------------------------------------------------------------                
+
+sub gather_nested_features {
+
+  my ($range_start, $range_end, $features, $base_node) = @_;
+
+  return unless $base_node;
+
+  my ($node_start, $node_end, @nested_nodes) = @{$base_node};
+  for my $nested_node (@nested_nodes) {
+    if (ref $nested_node eq 'HASH') {
+      my ($feature_start, $feature_end) = @{$nested_node}{qw(start end)};
+      if ($feature_start <= $range_end && $feature_end >= $range_start) {
+        push @{$features}, $nested_node;
+      }
+    }
+    else {
+      gather_nested_features($range_start, $range_end, $features, $nested_node);
+    }
+  }
+}
+
+#-----------------------------------------------------------------------------                
+
+sub binary_search {
+
+  my ($start, $nc_list) = @_;
+
+  my $min = 0;
+  my $max = $#{$nc_list};
+  my $idx = int($max/2);
+
+  return $idx unless $nc_list->[$idx];
+
+  # Find the first feature with a start less than the queried start.                          
+  while (1) {
+    if ($start <= $nc_list->[$idx][0]) {
+      $max = $idx;
+      $idx = int($idx - (($idx - $min)/2));
+    }
+    else {
+      $min = $idx;
+      $idx = int($idx + (($max - $idx)/2));
+    }
+    last if $idx == $min;
+  }
+
+  return $idx;
+}
+
+#-----------------------------------------------------------------------------                
