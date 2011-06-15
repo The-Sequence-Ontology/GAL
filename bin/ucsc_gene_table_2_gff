@@ -11,12 +11,12 @@ my $usage = "
 
 Synopsis:
 
-ucsc_gene_table_2_gtf --table knownGene
+ucsc_gene_table_2_gff --table knownGene
 
 Description:
 
-This script will take knownGene or refGene tables from UCSC and build UCSC
-style GTF files from them.
+This script will take knownGene or refGene tables from UCSC and build
+GFF files from them.
 
 Options:
 
@@ -43,6 +43,7 @@ my $file = shift;
 die $usage unless $file;
 open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
 
+my %duplicates;
 while (<$IN>) { 
     chomp;
     my ($alignID, $bin, $cdsEnd, $cdsEndStat, $cdsStart,
@@ -65,9 +66,16 @@ while (<$IN>) {
 	die "FATAL : invalid_format : $table\n";
     }
 
-    carp  "Error : invalid_strand : $name, $strand"   if $strand  !~ /\+|-/;
-    croak "Error : invalid_txStart : $name, $txStart" if $txStart !~ /^\d+$/;
-    croak "Error : invalid_txEnd : $name, $txEnd"     if $txEnd   !~ /^\d+$/;
+    carp  "WARN : invalid_strand : $name, $strand"   if $strand  !~ /\+|-/;
+    croak "FATAL : invalid_txStart : $name, $txStart" if $txStart !~ /^\d+$/;
+    croak "FATAL : invalid_txEnd : $name, $txEnd"     if $txEnd   !~ /^\d+$/;
+
+    my $old_name = $name;
+    if (exists $duplicates{$name}) {
+	$name = $name . '_DUP_' . sprintf('%02s', $duplicates{$name});
+	carp "WARN : duplicate_name : $old_name changed to $name";
+    }
+    $duplicates{$old_name}++;
 
     my $transcript = {feature_id => $name,
 		      seqid      => $chrom,
@@ -80,24 +88,26 @@ while (<$IN>) {
 		      phase      => '.',
 		  };
     
-    my @dbxrefs = grep ($name2, $proteinID);
-    $transcript->{attributes}{Dbxref} = \@dbxrefs if scalar @dbxrefs;
+    $transcript->{attributes}{ID} = [$name];
+
+    my @aliases = grep {defined $_ } ($name2, $proteinID);
+    $transcript->{attributes}{Alias} = \@aliases if scalar @aliases;
 
     my @exon_starts = split ',', $exonStarts;
     my @exon_ends   = split ',', $exonEnds;
     
-    carp "Error : mis_matched_exon_start_ends : $name\n"
+    carp "WARN : mis_matched_exon_start_ends : $name\n"
 	if (scalar @exon_starts != scalar @exon_ends);
 
     my @exon_pairs;
     for my $i (0 .. scalar @exon_starts - 1) {
 	my ($start, $end) = ($exon_starts[$i], $exon_ends[$i]);
-	carp "Error : negative_length_exon : $name, $start, $end\n" if $start > $end;
-	carp "Error : zero_length_exon : $name, $start, $end\n"     if $start == $end;
+	carp "WARN : negative_length_exon : $name, $start, $end\n" if $start > $end;
+	carp "WARN : zero_length_exon : $name, $start, $end\n"     if $start == $end;
 	push @exon_pairs, [$start, $end];
     }
     
-    carp "Error : exons_overlap : $name\n" if any_overlaps(@exon_pairs);
+    carp "WARN : exons_overlap : $name\n" if any_overlaps(@exon_pairs);
 
     # my @intron_starts;
     # my $intron_ends;
@@ -107,8 +117,8 @@ while (<$IN>) {
     #
     # my @intron_pairs;
     # while (my ($start, $end) = (shift @intron_starts, shift @intron_ends)) {
-    #	carp "Error : negative_length_intron : $name, $start, $end\n" if $start > $end;
-    #	carp "Error : zero_length_intron : $name, $start, $end\n"     if $start == $end;
+    #	carp "WARN : negative_length_intron : $name, $start, $end\n" if $start > $end;
+    #	carp "WARN : zero_length_intron : $name, $start, $end\n"     if $start == $end;
     #	push @intron_pairs, [$start, $end];
     # }
     
@@ -123,6 +133,8 @@ while (<$IN>) {
 	push @cds_pairs, [$start, $end];
     }
 
+    $transcript->{type} = 'ncRNA' unless scalar @cds_pairs;
+
     my $exons = build_child_features(parent 	 => $transcript,
 				     type   	 => 'exon',
 				     coordinates => \@exon_pairs
@@ -132,9 +144,7 @@ while (<$IN>) {
 				    coordinates => \@cds_pairs
 				    );
 
-    my $start_codon = build_start_codon($CDSs, $strand);
-
-    write_gff($exons, $CDSs, $start_codon);
+    write_gff($transcript, $exons, $CDSs);
 
 }
 
@@ -152,12 +162,13 @@ sub build_child_features {
     my $parent_id = $parent->{feature_id};
 
     my @features;
-    my $count;
+    my $count = 1;
     for my $pair (@{$coords}) {
 	my ($start, $end) = @{$pair};
 	my %feature = %{$parent};
-	my $attributes = {gene_id       => [$parent_id],
-			  transcript_id => [$parent_id],
+	my $id = join ':', ($parent_id, $type, sprintf('%02s', $count++));
+	my $attributes = {ID            => [$id],
+			  Parent        => [$parent_id],
 			  };
 
 	@feature{qw(type start end attributes)} =
@@ -170,42 +181,14 @@ sub build_child_features {
 
 #-----------------------------------------------------------------------------
 
-sub build_start_codon {
-
-    my ($CDSs, $strand) = @_;
-
-    return [] unless scalar @{$CDSs};
-
-    my @sorted = sort {$a->{start} <=> $b->{start}} @{$CDSs};
-
-    my %feature = %{$sorted[0]};
-    my ($start, $end);
-    if ($strand eq '-') {
-	my $cds =  $sorted[-1];
-	$end = $cds->{end};
-	$start = $end - 2;
-    }
-    else {
-	my $cds = $sorted[0];
-	$start = $cds->{start};
-	$end = $start + 2;
-    }
-
-	@feature{qw(type start end)} =
-	    ('start_codon', $start, $end);
-
-    return [\%feature];
-}
-
-#-----------------------------------------------------------------------------
-
 sub write_gff {
 
-    my ($exons, $CDSs, $start_codon) = @_;
+    my ($transcript, $exons, $CDSs) = @_;
 
-    my @features = (@{$exons}, @{$CDSs}, @{$start_codon});
+    my @features = ($transcript, @{$exons}, @{$CDSs});
 
-    for my $feature (sort {$a->{start} <=> $b->{start}} @features) {
+    for my $feature (sort {$a->{start} <=> $b->{start} ||
+			   $b->{end}   <=> $a->{end}}  @features) {
 	my $attribute_text = get_attribute_text($feature);
 	print join "\t", (@{$feature}{qw(seqid source type start end score
 					 strand phase)},
@@ -222,16 +205,20 @@ sub get_attribute_text {
     my $feature = shift;
     my $attributes = $feature->{attributes};
 
-    my %ORDER = (gene_id       => 1,
-		 transcript_id => 2,
+    my %ORDER = (ID     => 1,
+		 Parent => 2,
+		 Alias  => 3,
 		 );
 
-    my $attribute_text;
+    my @pairs;
     for my $key (sort {$ORDER{$a} <=> $ORDER{$b}} keys %{$attributes}) {
 	my @values = @{$attributes->{$key}};
 	my $value_text = join ',', @values;
-	$attribute_text .= "$key \"$value_text\";";
+	push @pairs, join '=', ($key, $value_text);
     }
+    my $attribute_text = join ';', @pairs;
+    $attribute_text .= ';';
+
     return $attribute_text;
 }
 

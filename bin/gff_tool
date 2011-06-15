@@ -719,293 +719,80 @@ sub hash_ag {
 
 sub validate {
 
-  my ($so_data) = parse_so_file();
+    my ($so_data) = parse_so_file();
   
-  for my $file (@files) {
-    warn "Validating: $file\n";
-    open(my $IN, '<', $file) or
-      die "FATAL : cant_open_file_for_reading : $file\n";
-    
-    my $line_count;
-    my %pragmas;
-    my %errors;
-    my $gff_version;
-    my $gvf_version;
-    my %feature_ids;
-    my %parents;
-    my %valid_so_terms;
-    
-    my @stack;
-    my $line = <$IN>;
-    my ($format_type, $version) = split /\t+/, $line;
-    if ($format_type !~ /g[vf]f-version/) {
-      my $error_code = 'missing_required_gff-version_or_gvf-version_pragma';
-      push @{$errors{$error_code}}, [1, $line];
-      warn "WARNING : $error_code : Assuming this file is \#\#gff-version 3 for validation.\n";
-      push @stack, ("\#\#gff-version 3", $line);
-      $line_count--;
-    }
-    
-  LINE:
-    while ($line = shift @stack || <$IN>) {
-      chomp $line;
-      $line_count++;
-      next LINE if $line =~ /^\s*$/;
-      next LINE if $line =~ /^\#[^\#]/;
-      # Features
-      if ($line !~ /^\#/) {
-	if ($line !~ /\t/) {
-	  my $error_code = 'invalid_feature_line_not_tab_delimited';
-	  push @{$errors{$error_code}}, [$line_count, $line];
-	  warn "WARNING : $error_code : $line\n";
+    for my $file (@files) {
+	warn "Validating: $file\n";
+	open(my $IN, '<', $file) or
+	    die "FATAL : cant_open_file_for_reading : $file\n";
+	
+	my $line_count;
+	my %pragmas;
+	my %errors;
+	my $gff_version;
+	my $gvf_version;
+	my %feature_ids;
+	my %parents;
+	my %valid_so_terms;
+	
+	my @stack;
+	my $line = <$IN>;
+	my ($format_type, $version) = split /\t+/, $line;
+	if ($format_type !~ /g[vf]f-version/) {
+	    my $error_code = 'missing_required_gff-version_or_gvf-version_pragma';
+	    push @{$errors{$error_code}}, [1, $line];
+	    warn "WARNING : $error_code : Assuming this file is \#\#gff-version 3 for validation.\n";
+	    push @stack, ("\#\#gff-version 3", $line);
+	    $line_count--;
 	}
-	my @columns = split /\t/, $line;
-	if (scalar @columns != 9) {
-	  my $error_code = 'invalid_feature_line_must_have_nine_columns';
-	  push @{$errors{$error_code}}, [$line_count, $line];
-	  warn "WARNING : $error_code : $line\n";
-	}
-	my ($seqid, $source, $type, $start, $end, $score, $strand,
-	    $phase, $att_text) = @columns;
-	# Seqid Characters
-	if ($seqid =~ /[^a-zA-Z0-9\.:\^\*\$@!\+_\?\-\|]/) {
-	  my $error_code = 'invalid_characters_in_seqid_column';
-	  push @{$errors{$error_code}}, [$line_count, $line];
-	  warn "WARNING : $error_code : ($1) $line\n";
-	}
-	# Seqid and sequence-region
-	if ($pragmas{'sequence-region'} && ! $pragmas{'sequence-region'}{$seqid}) {
-	  my $error_code = 'invalid_seqid_column_no_associated_sequence_region';
-	  push @{$errors{$error_code}}, [$line_count, $line];
-	  warn "WARNING : $error_code : $line\n";
-	}
-	# Type
-	if ($pragmas{'gvf-version'}) {
-	  if (! $valid_so_terms{sequence_alteration}{$type}) {
-	    my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	else {
-	  if (! $valid_so_terms{sequence_feature}{$type}) {
-	    my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	# Start
-	if ($start !~ /^\d+$/) {
-	  my $error_code = 'invalid_start_column_must_be_positive_integer';
-	  push @{$errors{$error_code}}, [$line_count, $line];
-	  warn "WARNING : $error_code : $line\n";
-	  # Do bounds checking if sequence-region
-	}
-	# End
-	if ($end !~ /^\d+$/) {
-	  my $error_code = 'invalid_end_column_must_be_positive_integer';
-	  push @{$errors{$error_code}}, [$line_count, $line];
-	  warn "WARNING : $error_code : $line\n";
-	  # Do bounds checking if sequence-region
-	}
-	if ($start > $end) {
-	  my $error_code = 'invalid_feature_coordinates_start_is_greater_than_end';
-	  push @{$errors{$error_code}}, [$line_count, $line];
-	  warn "WARNING : $error_code : $line\n";
-	}
-	# Score
-	if ($score ne '.' && $score !~ /^\-?\d+\.?\d*e?\-?\d*$/) {
-	  my $error_code = 'invalid_score_column_must_be_real_number';
-	  push @{$errors{$error_code}}, [$line_count, $line];
-	  warn "WARNING : $error_code : $line\n";
-	}
-	# Strand
-	if ($strand  !~ /^[\.\-+\?]$/) {
-	  my $error_code = 'invalid_strand_column';
-	  push @{$errors{$error_code}}, [$line_count, $line];
-	  warn "WARNING : $error_code : $line\n";
-	}
-	# Phase
-	if ($phase  !~ /^[\.012]$/) {
-	  my $error_code = 'invalid_character_in_phase_column';
-	  push @{$errors{$error_code}}, [$line_count, $line];
-	  warn "WARNING : $error_code : $line\n";
-	}
-	# Phase && CDS
-	if ($type eq 'CDS' && $phase  !~ /^[012]$/) {
-	  my $error_code = 'phase_is_required_for_CDS';
-	  push @{$errors{$error_code}}, [$line_count, $line];
-	  warn "WARNING : $error_code : $line\n";
-	}
-	# Phase ! CDS
-	if ($type ne 'CDS' && $phase  =~ /^[012]$/) {
-	  my $error_code = 'phase_is_given_for_non_CDS_feature_type';
-	  push @{$errors{$error_code}}, [$line_count, $line];
-	  warn "WARNING : $error_code : $line\n";
-	}
-	# Attributes
-	my %attributes;
-	my @pairs = split /;/, $att_text;
-      PAIR:
-	for my $pair (@pairs) {
-	  if ($pair !~ /(=)/) {
-	    my $error_code = 'attribute_key_value_pairs_must_be_separated_by_equal_sign';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : ($pair) $line\n";
-	    next PAIR;
-	  }
-	  my ($key, $value) = split /=/, $pair;
-	  if (! defined $key || ! defined $value) {
-	    my $error_code = 'attribute_key_value_pairs_must_have_key_and_value';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	    next PAIR;
-	  }
-	  my @values = split /,/, $value;
-	  push @{$attributes{$key}}, @values;
-	}
-	for my $key (sort keys %attributes) {
-	  my @values = @{$attributes{$key}};
-	  # ID
-	  if ($key eq 'ID') {
-	    if (scalar @values > 1) {
-	      my $error_code = 'invalid_ID_attribute_multiple_values';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_ids = join ' ', @values;
-	      warn "WARNING : $error_code : ($all_ids) $line\n";
-	    }
-	    my $id = $values[0];
-	    if (++$feature_ids{$id} > 1) {
-	      my $error_code = 'invalid_ID_attribute_not_unique';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      warn "WARNING : $error_code : ($id) $line\n";
-	    }
-	  }
-	  # Name
-	  elsif ($key eq 'Name') {
-	    # No validation on Name values
-	  }
-	  # Alias
-	  elsif ($key eq 'Alias') {
-	    # No validation on Name values
-	  }
-	  # Parent
-	  elsif ($key eq 'Parent') {
-	    for my $value (@values) {
-	      my $id = $attributes{ID}[0];
-	      $parents{$id}{$value}++ if $id;
-	    }
-	  }
-	  # Target
-	  elsif ($key eq 'Target') {
-	    if (scalar @values > 1) {
-	      my $error_code = 'invalid_Target_attribute_multiple_values';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ' ', @values;
-	      warn "WARNING : $error_code : ($all_values) $line\n";
-	    }
-	    my $value = $values[0];
-	    if ($value !~ /\S+\s+\d+\s+\d+\s*[\-+]*/) {
-	      my $error_code = 'invalid_Target_attribute_value';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      warn "WARNING : $error_code : ($value) $line\n";
-	    }
-	  }
-	  # Gap
-	  elsif ($key eq 'Gap') {
-	    if (scalar @values > 1) {
-	      my $error_code = 'invalid_Gap_attribute_multiple_values';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ' ', @values;
-	      warn "WARNING : $error_code : ($all_values) $line\n";
-	    }
-	    my $value = $values[0];
-	    # TODO: Validate the CIGAR format
-	  }
-	  # Derives_from
-	  elsif ($key eq 'Derives_from') {
-	    if (scalar @values > 1) {
-	      my $error_code = 'invalid_Derives_from_attribute_multiple_values';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ' ', @values;
-	      warn "WARNING : $error_code : ($all_values) $line\n";
-	    }
-	    my $value = $values[0];
-	    # TODO: Validate the Derives_from relationships
-	  }
-	  # Note
-	  elsif ($key eq 'Note') {
-	  }
-	  # Dbxref
-	  elsif ($key eq 'Dbxref') {
-	    for my $value (@values) {
-	      my ($db, $ID) = split /:/, $value;
-	      # TODO: Validate the Dbxref DB and ID;
-	    }
-	  }
-	  # Ontology_term
-	  elsif ($key eq 'Ontology_term') {
-	    # TODO: Validate Ontology_term
-	  }
-	  # Is_circular
-	  elsif ($key eq 'Is_circular') {
-	    if (scalar @values > 1) {
-	      my $error_code = 'invalid_Is_circular_attribute_multiple_values';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ' ', @values;
-	      warn "WARNING : $error_code : ($all_values) $line\n";
-	    }
-	    my $value = $values[0];
-	    # TODO: Validate Is_circular
-	  }
-	  # Variant_seq
-	  elsif ($key eq 'Variant_seq') {
-	    for my $value (@values) {
-	      # TODO: Validate the length of the Variant_seq
-	      if ($type eq 'SNV') {
-		if ($value !~ /[ATGC]/i) {
-		  my $error_code = 'invalid_Variant_seq_attribute_value_for_SNV';
-		  push @{$errors{$error_code}}, [$line_count, $line];
-		  warn "WARNING : $error_code : ($value) $line\n";
+	
+      LINE:
+	while ($line = shift @stack || <$IN>) {
+	    chomp $line;
+	    $line_count++;
+	    next LINE if $line =~ /^\s*$/;
+	    next LINE if $line =~ /^\#[^\#]/;
+	    # Features
+	    if ($line !~ /^\#/) {
+		if ($line !~ /\t/) {
+		    my $error_code = 'invalid_feature_line_not_tab_delimited';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
 		}
-	      }
-	      elsif ($type eq 'insertion') {
-		if ($value !~ /[ATGCN]+|~/i) {
-		  my $error_code = 'invalid_Variant_seq_attribute_value_insertion_indel';
-		  push @{$errors{$error_code}}, [$line_count, $line];
-		  warn "WARNING : $error_code : ($value) $line\n";
+		my @columns = split /\t/, $line;
+		if (scalar @columns != 9) {
+		    my $error_code = 'invalid_feature_line_must_have_nine_columns';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
 		}
-		
-	      }
-	      elsif ($type eq 'deletion') {
-		if ($value !~ /[ATGCN]+|-/i) {
-		  my $error_code = 'invalid_Variant_seq_attribute_value_deletion_indel';
-		  push @{$errors{$error_code}}, [$line_count, $line];
-		  warn "WARNING : $error_code : ($value) $line\n";
+		my ($seqid, $source, $type, $start, $end, $score, $strand,
+		    $phase, $att_text) = @columns;
+		# Seqid Characters
+		if ($seqid =~ /[^a-zA-Z0-9\.:\^\*\$@!\+_\?\-\|]/) {
+		    my $error_code = 'invalid_characters_in_seqid_column';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : ($1) $line\n";
 		}
-		
-	      }
-	      elsif ($type eq 'indel') {
-		if ($value !~ /[ATGCN]+|[-~]/i) {
-		  my $error_code = 'invalid_Variant_seq_attribute_value_deletion_indel';
-		  push @{$errors{$error_code}}, [$line_count, $line];
-		  warn "WARNING : $error_code : ($value) $line\n";
+		# Seqid and sequence-region
+		if ($pragmas{'sequence-region'} && ! $pragmas{'sequence-region'}{$seqid}) {
+		    my $error_code = 'invalid_seqid_column_no_associated_sequence_region';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
 		}
-<<<<<<< .mine
 		# Type
 		if ($pragmas{'gvf-version'}) {
-		  if (! $valid_so_terms{sequence_alteration}{$type}) {
-		    my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
-		    push @{$errors{$error_code}}, [$line_count, $line];
-		    warn "WARNING : $error_code : $line\n";
-		  }
+		    if (! $valid_so_terms{sequence_alteration}{$type}) {
+			my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
 		}
 		else {
-		  if (! $valid_so_terms{sequence_feature}{$type}) {
-		    my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
-		    push @{$errors{$error_code}}, [$line_count, $line];
-		    warn "WARNING : $error_code : $line\n";
-		  }
+		    if (! $valid_so_terms{sequence_feature}{$type}) {
+			my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
 		}
 		# Start
 		if ($start !~ /^\d+$/) {
@@ -1082,16 +869,16 @@ sub validate {
 		    # ID
 		    if ($key eq 'ID') {
 			if (scalar @values > 1) {
-				my $error_code = 'invalid_ID_attribute_multiple_values';
-				push @{$errors{$error_code}}, [$line_count, $line];
-				my $all_ids = join ' ', @values;
-				warn "WARNING : $error_code : ($all_ids) $line\n";
+			    my $error_code = 'invalid_ID_attribute_multiple_values';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_ids = join ' ', @values;
+			    warn "WARNING : $error_code : ($all_ids) $line\n";
 			}
 			my $id = $values[0];
 			if (++$feature_ids{$id} > 1) {
-				my $error_code = 'invalid_ID_attribute_not_unique';
-				push @{$errors{$error_code}}, [$line_count, $line];
-				warn "WARNING : $error_code : ($id) $line\n";
+			    my $error_code = 'invalid_ID_attribute_not_unique';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : ($id) $line\n";
 			}
 		    }
 		    # Name
@@ -1106,16 +893,16 @@ sub validate {
 		    elsif ($key eq 'Parent') {
 			for my $value (@values) {
 			    my $id = $attributes{ID}[0];
-			    $parents{$id}{$value}++;
+			    $parents{$id}{$value}++ if $id;
 			}
 		    }
 		    # Target
 		    elsif ($key eq 'Target') {
 			if (scalar @values > 1) {
-				my $error_code = 'invalid_Target_attribute_multiple_values';
-				push @{$errors{$error_code}}, [$line_count, $line];
-				my $all_values = join ' ', @values;
-				warn "WARNING : $error_code : ($all_values) $line\n";
+			    my $error_code = 'invalid_Target_attribute_multiple_values';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ' ', @values;
+			    warn "WARNING : $error_code : ($all_values) $line\n";
 			}
 			my $value = $values[0];
 			if ($value !~ /\S+\s+\d+\s+\d+\s*[\-+]*/) {
@@ -1127,10 +914,10 @@ sub validate {
 		    # Gap
 		    elsif ($key eq 'Gap') {
 			if (scalar @values > 1) {
-				my $error_code = 'invalid_Gap_attribute_multiple_values';
-				push @{$errors{$error_code}}, [$line_count, $line];
-				my $all_values = join ' ', @values;
-				warn "WARNING : $error_code : ($all_values) $line\n";
+			    my $error_code = 'invalid_Gap_attribute_multiple_values';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ' ', @values;
+			    warn "WARNING : $error_code : ($all_values) $line\n";
 			}
 			my $value = $values[0];
 			# TODO: Validate the CIGAR format
@@ -1138,16 +925,17 @@ sub validate {
 		    # Derives_from
 		    elsif ($key eq 'Derives_from') {
 			if (scalar @values > 1) {
-				my $error_code = 'invalid_Derives_from_attribute_multiple_values';
-				push @{$errors{$error_code}}, [$line_count, $line];
-				my $all_values = join ' ', @values;
-				warn "WARNING : $error_code : ($all_values) $line\n";
+			    my $error_code = 'invalid_Derives_from_attribute_multiple_values';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ' ', @values;
+			    warn "WARNING : $error_code : ($all_values) $line\n";
 			}
 			my $value = $values[0];
 			# TODO: Validate the Derives_from relationships
 		    }
 		    # Note
 		    elsif ($key eq 'Note') {
+			# No validation on Note value
 		    }
 		    # Dbxref
 		    elsif ($key eq 'Dbxref') {
@@ -1163,10 +951,10 @@ sub validate {
 		    # Is_circular
 		    elsif ($key eq 'Is_circular') {
 			if (scalar @values > 1) {
-				my $error_code = 'invalid_Is_circular_attribute_multiple_values';
-				push @{$errors{$error_code}}, [$line_count, $line];
-				my $all_values = join ' ', @values;
-				warn "WARNING : $error_code : ($all_values) $line\n";
+			    my $error_code = 'invalid_Is_circular_attribute_multiple_values';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ' ', @values;
+			    warn "WARNING : $error_code : ($all_values) $line\n";
 			}
 			my $value = $values[0];
 			# TODO: Validate Is_circular
@@ -1176,7 +964,7 @@ sub validate {
 			for my $value (@values) {
 			    # TODO: Validate the length of the Variant_seq
 			    if ($type eq 'SNV') {
-				if ($value !~ /[ATGCN\.\!]/i) {
+				if ($value !~ /[ATGC]/i) {
 				    my $error_code = 'invalid_Variant_seq_attribute_value_for_SNV';
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
@@ -1188,7 +976,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-
+				
 			    }
 			    elsif ($type eq 'deletion') {
 				if ($value !~ /[ATGCN]+|-/i) {
@@ -1196,7 +984,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-
+				
 			    }
 			    elsif ($type eq 'indel') {
 				if ($value !~ /[ATGCN]+|[-~]/i) {
@@ -1204,7 +992,6 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-
 			    }
 			}
 		    }
@@ -1224,7 +1011,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-
+				
 			    }
 			    elsif ($type eq 'deletion') {
 				if ($value !~ /[ATGCN]+|~/) {
@@ -1232,7 +1019,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-
+				
 			    }
 			    elsif ($type eq 'indel') {
 				if ($value !~ /[ATGCN]+|[-~]/) {
@@ -1240,7 +1027,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-
+				
 			    }
 			}
 		    }
@@ -1257,10 +1044,10 @@ sub validate {
 		    # Total_reads
 		    elsif ($key eq 'Total_reads') {
 			if (scalar @values > 1) {
-				my $error_code = 'invalid_Total_reads_attribute_multiple_values';
-				push @{$errors{$error_code}}, [$line_count, $line];
-				my $all_values = join ' ', @values;
-				warn "WARNING : $error_code : ($all_values) $line\n";
+			    my $error_code = 'invalid_Total_reads_attribute_multiple_values';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ' ', @values;
+			    warn "WARNING : $error_code : ($all_values) $line\n";
 			}
 			my $value = $values[0];
 			if ($value !~ /^\d+$/) {
@@ -1272,10 +1059,10 @@ sub validate {
 		    # Genotype
 		    elsif ($key eq 'Genotype') {
 			if (scalar @values > 1) {
-				my $error_code = 'invalid_Genotype_attribute_multiple_values';
-				push @{$errors{$error_code}}, [$line_count, $line];
-				my $all_values = join ' ', @values;
-				warn "WARNING : $error_code : ($all_values) $line\n";
+			    my $error_code = 'invalid_Genotype_attribute_multiple_values';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ' ', @values;
+			    warn "WARNING : $error_code : ($all_values) $line\n";
 			}
 			my $value = $values[0];
 			if ($value !~ /^(hetero|homo|hemi)zygous$/) {
@@ -1329,10 +1116,10 @@ sub validate {
 		    # Reference_copy_number
 		    elsif ($key eq 'Reference_copy_number') {
 			if (scalar @values > 1) {
-				my $error_code = 'invalid_Reference_copy_number_attribute_multiple_values';
-				push @{$errors{$error_code}}, [$line_count, $line];
-				my $all_values = join ' ', @values;
-				warn "WARNING : $error_code : ($all_values) $line\n";
+			    my $error_code = 'invalid_Reference_copy_number_attribute_multiple_values';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ' ', @values;
+			    warn "WARNING : $error_code : ($all_values) $line\n";
 			}
 			my $value = $values[0];
 			for my $value (@values) {
@@ -1402,547 +1189,342 @@ sub validate {
 		    # Phased
 		    elsif ($key eq 'Phased') {
 			if (scalar @values > 1) {
-				my $error_code = 'invalid_Phased_attribute_multiple_values';
-				push @{$errors{$error_code}}, [$line_count, $line];
-				my $all_values = join ' ', @values;
-				warn "WARNING : $error_code : ($all_values) $line\n";
+			    my $error_code = 'invalid_Phased_attribute_multiple_values';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    my $all_values = join ' ', @values;
+			    warn "WARNING : $error_code : ($all_values) $line\n";
 			}
 			my $value = $values[0];
 			# TODO: Validate the Phased attribute
 		    }
 		}
 	    }
-	  }
-	  # Reference_seq
-	  elsif ($key eq 'Reference_seq') {
-	    for my $value (@values) {
-	      if ($type eq 'SNV') {
-		if ($value !~ /[ATGCN]/) {
-		  my $error_code = 'invalid_Reference_seq_attribute_value_for_SNV';
-		  push @{$errors{$error_code}}, [$line_count, $line];
-		  warn "WARNING : $error_code : ($value) $line\n";
-		}
-	      }
-	      elsif ($type eq 'insertion') {
-		if ($value !~ /[ATGCN]+|-/) {
-		  my $error_code = 'invalid_Reference_seq_attribute_value_insertion_indel';
-		  push @{$errors{$error_code}}, [$line_count, $line];
-		  warn "WARNING : $error_code : ($value) $line\n";
-		}
-		
-	      }
-	      elsif ($type eq 'deletion') {
-		if ($value !~ /[ATGCN]+|~/) {
-		  my $error_code = 'invalid_Reference_seq_attribute_value_deletion_indel';
-		  push @{$errors{$error_code}}, [$line_count, $line];
-		  warn "WARNING : $error_code : ($value) $line\n";
-		}
-		
-	      }
-	      elsif ($type eq 'indel') {
-		if ($value !~ /[ATGCN]+|[-~]/) {
-		  my $error_code = 'invalid_Reference_seq_attribute_value_deletion_indel';
-		  push @{$errors{$error_code}}, [$line_count, $line];
-		  warn "WARNING : $error_code : ($value) $line\n";
-		}
-		
-	      }
-	    }
-	  }
-	  # Variant_reads
-	  elsif ($key eq 'Variant_reads') {
-	    for my $value (@values) {
-	      if ($value !~ /^\d+$/) {
-		my $error_code = 'invalid_Variant_reads_attribute_value';
-		push @{$errors{$error_code}}, [$line_count, $line];
-		warn "WARNING : $error_code : ($value) $line\n";
-	      }
-	    }
-	  }
-	  # Total_reads
-	  elsif ($key eq 'Total_reads') {
-	    if (scalar @values > 1) {
-	      my $error_code = 'invalid_Total_reads_attribute_multiple_values';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ' ', @values;
-	      warn "WARNING : $error_code : ($all_values) $line\n";
-	    }
-	    my $value = $values[0];
-	    if ($value !~ /^\d+$/) {
-	      my $error_code = 'invalid_Total_reads_attribute_value';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      warn "WARNING : $error_code : ($value) $line\n";
-	    }
-	  }
-	  # Genotype
-	  elsif ($key eq 'Genotype') {
-	    if (scalar @values > 1) {
-	      my $error_code = 'invalid_Genotype_attribute_multiple_values';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ' ', @values;
-	      warn "WARNING : $error_code : ($all_values) $line\n";
-	    }
-	    my $value = $values[0];
-	    if ($value !~ /^(hetero|homo|hemi)zygous$/) {
-	      my $error_code = 'invalid_Genotype_attribute_value';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      warn "WARNING : $error_code : ($value) $line\n";
-	    }
-	  }
-	  # Variant_freq
-	  elsif ($key eq 'Variant_freq') {
-	    for my $value (@values) {
-	      if ($value !~ /^\d+\.?\d*\e?\-?\d*/) {
-		my $error_code = 'invalid_Variant_freq_attribute_value';
-		push @{$errors{$error_code}}, [$line_count, $line];
-		warn "WARNING : $error_code : ($value) $line\n";
-	      }
-	    }
-	  }
-	  # Variant_effect
-	  elsif ($key eq 'Variant_effect') {
-	    my $value = join ' ', @values;
-	    my ($sequence_variant, $index, $sequence_feature, @featureIDs) = split /\s+/, $value;
-	    # TODO: Validate $sequence_variant
-	    if ($index !~ /^\d+$/ || $index > (scalar @{$attributes{Variant_seq}} - 1)) {
-	      my $error_code = 'invalid_Variant_effect_attribute_index_value';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      warn "WARNING : $error_code : ($index) $line\n";
-	    }
-	    if (! $valid_so_terms{sequence_variant}{$sequence_variant}) {
-	      my $error_code = 'invalid_Variant_effect_attribute_sequence_variant_value';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      warn "WARNING : $error_code : ($sequence_variant) $line\n";
-	    }
-	    if (! $valid_so_terms{sequence_feature}{$sequence_feature}) {
-	      my $error_code = 'invalid_Variant_effect_attribute_sequence_feature_value';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      warn "WARNING : $error_code : ($sequence_feature) $line\n";
-	    }
-	    # TODO: Validate featureIDs
-	  }
-	  # Variant_copy_number
-	  elsif ($key eq 'Variant_copy_number') {
-	    for my $value (@values) {
-	      if ($value !~ /^d+$/) {
-		my $error_code = 'invalid_attribute_value';
-		push @{$errors{$error_code}}, [$line_count, $line];
-		warn "WARNING : $error_code : ($value) $line\n";
-	      }
-	    }
-	  }
-	  # Reference_copy_number
-	  elsif ($key eq 'Reference_copy_number') {
-	    if (scalar @values > 1) {
-	      my $error_code = 'invalid_Reference_copy_number_attribute_multiple_values';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ' ', @values;
-	      warn "WARNING : $error_code : ($all_values) $line\n";
-	    }
-	    my $value = $values[0];
-	    for my $value (@values) {
-	      if ($value !~ /^\d+$/) {
-		my $error_code = 'invalid_Reference_copy_number_attribute_value';
-		push @{$errors{$error_code}}, [$line_count, $line];
-		warn "WARNING : $error_code : ($value) $line\n";
-	      }
-	    }
-	  }
-	  # Start_range
-	  elsif ($key eq 'Start_range') {
-	    if (scalar @values != 2) {
-	      my $error_code = 'invalid_Start_range_attribute_must_have_2_values';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ',', @values;
-	      warn "WARNING : $error_code : ($all_values) $line\n";
-	    }
-	    if ($values[0] =~ /^\d+$/ && $values[0] > $start) {
-	      my $error_code = 'invalid_Start_range_attribute_values_must_contain_start';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ',', @values;
-	      warn "WARNING : $error_code : ($all_values, $start) $line\n";
-	    }
-	    if ($values[1] =~ /^\d+$/ && $values[1] < $start) {
-	      my $error_code = 'invalid_Start_range_attribute_values_must_contain_start';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ',', @values;
-	      warn "WARNING : $error_code : ($all_values, $start) $line\n";
-	    }
-	    for my $value (@values) {
-	      if ($value ne '.' && $value !~ /^\d+$/) {
-		my $error_code = 'invalid_Start_range_attribute_value';
-		push @{$errors{$error_code}}, [$line_count, $line];
-		warn "WARNING : $error_code : ($value) $line\n";
-	      }
-	    }
-	  }
-	  # End_range
-	  elsif ($key eq 'End_range') {
-	    if (scalar @values != 2) {
-	      my $error_code = 'invalid_Etart_range_attribute_must_have_2_values';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ',', @values;
-	      warn "WARNING : $error_code : ($all_values) $line\n";
-	    }
-	    if ($values[0] =~ /^\d+$/ && $values[0] > $end) {
-	      my $error_code = 'invalid_End_range_attribute_values_must_contain_end';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ',', @values;
-	      warn "WARNING : $error_code : ($all_values, $end) $line\n";
-	    }
-	    if ($values[1] =~ /^\d+$/ && $values[1] < $end) {
-	      my $error_code = 'invalid_End_range_attribute_values_must_contain_end';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ',', @values;
-	      warn "WARNING : $error_code : ($all_values, $end) $line\n";
-	    }
-	    for my $value (@values) {
-	      if ($value ne '.' && $value !~ /^\d+$/) {
-		my $error_code = 'invalid_End_range_attribute_value';
-		push @{$errors{$error_code}}, [$line_count, $line];
-		warn "WARNING : $error_code : ($value) $line\n";
-	      }
-	    }
-	  }
-	  # Phased
-	  elsif ($key eq 'Phased') {
-	    if (scalar @values > 1) {
-	      my $error_code = 'invalid_Phased_attribute_multiple_values';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      my $all_values = join ' ', @values;
-	      warn "WARNING : $error_code : ($all_values) $line\n";
-	    }
-	    my $value = $values[0];
-	    # TODO: Validate the Phased attribute
-	  }
-	}
-      }
-      # Pragmas
-      else {
-	##gff-version
-	if ($line =~ /^\#\#gff-version/) {
-	  chomp $line;
-	  $line_count++;
-	  my $seen = {};
-	  my $children = {};
-	  my %relationships = (is_a    => 1,
-			       part_of => 1,
-			      );
-	  # Get valid sequence_feature terms
-	  no warnings;
-	  ($seen, $children) = get_so_children($so_data, 'SO:0000110', \%relationships, $seen, $children);
-	  %{$valid_so_terms{sequence_feature}} = ('SO:0000110' => 1);
-	  use warnings;
-	  map {$valid_so_terms{sequence_feature}{$_}++} keys %{$children};
-	  map {$valid_so_terms{sequence_feature}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_feature}}};
-	  if ($line =~ /^\#\#gff-version\s+(\d+\.?\d*)/) {
-	    $pragmas{'gff-version'} = $1;
-	  }
-	  else {
-	    my $error_code = 'invalid_gff-version_pragma_value';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##gvf-version
-	elsif ($line =~ /^\#\#gvf-version/) {
-	  $line_count++;
-	  my $seen = {};
-	  my $children = {};
-	  my %relationships = (is_a    => 1,
-			       part_of => 1,
-			      );
-	  # Get valid sequence_alteration terms
-	  no warnings;
-	  ($seen, $children) = get_so_children($so_data, 'SO:0001059', \%relationships, $seen, $children);
-	  use warnings;
-	  %{$valid_so_terms{sequence_alteration}} = ('SO:0001059' => 1,
-						     'SO:0000730' => 1
-						    );
-	  map {$valid_so_terms{sequence_alteration}{$_}++} keys %{$children};
-	  map {$valid_so_terms{sequence_alteration}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_alteration}}};
-	  
-	  # Get valid sequence_variant terms
-	  $seen = {};
-	  $children = {};
-	  no warnings;
-	  ($seen, $children) = get_so_children($so_data, 'SO:0001060', \%relationships, $seen, $children);
-	  use warnings;
-	  %{$valid_so_terms{sequence_variant}} = ('SO:0001060' => 1);
-	  map {$valid_so_terms{sequence_variant}{$_}++} keys %{$children};
-	  map {$valid_so_terms{sequence_variant}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_variant}}};
-	  
-	  if ($line =~ /^\#\#gvf-version\s+(\d+\.?\d*)/) {
-	    $pragmas{'gvf-version'} = $1;
-	  }
-	  else {
-	    my $error_code = 'invalid_gvf-version_pragma_value';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##feature-ontology
-	elsif ($line =~ /^\#\#feature-ontology/) {
-	  if ($line =~ /^\#\#(feature-ontology)\s+(\S+)/) {
-	    my $pragma_key   = $1;
-	    my $pragma_value = $2;
-	    $pragmas{$pragma_key} = $pragma_value;
-	    # TODO: test_uri($pragma_value);
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##attribute-ontology
-	elsif ($line =~ /^\#\#attribute-ontology/) {
-	  if ($line =~ /^\#\#(attribute-ontology)\s+(\S+)/) {
-	    my $pragma_key   = $1;
-	    my $pragma_value = $2;
-	    $pragmas{$pragma_key} = $pragma_value;
-	    #TODO: test_uri($pragma_value);
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##source-ontology
-	elsif ($line =~ /^\#\#source-ontology/) {
-	  if ($line =~ /^\#\#(source-ontology)\s+(\S+)/) {
-	    my $pragma_key   = $1;
-	    my $pragma_value = $2;
-	    $pragmas{$pragma_key} = $pragma_value;
-	    #TODO: test_uri($pragma_value);
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##species
-	elsif ($line =~ /^\#\#species/) {
-	  if ($line =~ /^\#\#(species)\s+(\S+)/) {
-	    my $pragma_key   = $1;
-	    my $pragma_value = $2;
-	    $pragmas{$pragma_key} = $pragma_value;
-	    # TODO: test_uri($pragma_value);
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##genome-build
-	elsif ($line =~ /^\#\#genome-build/) {
-	  if ($line =~ /^\#\#(genome-build)\s+(\S+)\s+(\S+)/) {
-	    my $pragma_key = $1;
-	    my $source     = $2;
-	    my $build_name = $3;
-	    $pragmas{$pragma_key}{$source} = $build_name;
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	elsif ($line =~ /^\#\#sequence-region/) {
-	  if ($line =~ /^\#\#(sequence-region)\s+(\S+)\s+(\d+)\s+(\d+)/) {
-	    my $pragma_key = $1;
-	    my $seqid      = $2;
-	    my $start      = $3;
-	    my $end        = $4;
-	    if (! $seqid || ! $start || ! $end) {
-	      my $error_code = 'missing_sequence-region_pragma_values';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      warn "WARNING : $error_code : $line\n";
-	    }
-	    elsif ($start !~ /^\d+$/ || $end !~ /^\d+$/) {
-	      my $error_code = 'invalid_sequence-region_pragma_value';
-	      push @{$errors{$error_code}}, [$line_count, $line];
-	      warn "WARNING : $error_code : $line\n";
-	    }
+	    # Pragmas
 	    else {
-	      $pragmas{$pragma_key}{$seqid} = [$start, $end];
+		##gff-version
+		if ($line =~ /^\#\#gff-version/) {
+		    chomp $line;
+		    $line_count++;
+		    my $seen = {};
+		    my $children = {};
+		    my %relationships = (is_a    => 1,
+					 part_of => 1,
+					 );
+		    # Get valid sequence_feature terms
+		    no warnings;
+		    ($seen, $children) = get_so_children($so_data, 'SO:0000110', \%relationships, $seen, $children);
+		    %{$valid_so_terms{sequence_feature}} = ('SO:0000110' => 1);
+		    use warnings;
+		    map {$valid_so_terms{sequence_feature}{$_}++} keys %{$children};
+		    map {$valid_so_terms{sequence_feature}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_feature}}};
+		    if ($line =~ /^\#\#gff-version\s+(\d+\.?\d*)/) {
+			$pragmas{'gff-version'} = $1;
+		    }
+		    else {
+			my $error_code = 'invalid_gff-version_pragma_value';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##gvf-version
+		elsif ($line =~ /^\#\#gvf-version/) {
+		    $line_count++;
+		    my $seen = {};
+		    my $children = {};
+		    my %relationships = (is_a    => 1,
+					 part_of => 1,
+					 );
+		    # Get valid sequence_alteration terms
+		    no warnings;
+		    ($seen, $children) = get_so_children($so_data, 'SO:0001059', \%relationships, $seen, $children);
+		    use warnings;
+		    %{$valid_so_terms{sequence_alteration}} = ('SO:0001059' => 1,
+							       'SO:0000730' => 1
+							       );
+		    map {$valid_so_terms{sequence_alteration}{$_}++} keys %{$children};
+		    map {$valid_so_terms{sequence_alteration}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_alteration}}};
+		    
+		    # Get valid sequence_variant terms
+		    $seen = {};
+		    $children = {};
+		    no warnings;
+		    ($seen, $children) = get_so_children($so_data, 'SO:0001060', \%relationships, $seen, $children);
+		    use warnings;
+		    %{$valid_so_terms{sequence_variant}} = ('SO:0001060' => 1);
+		    map {$valid_so_terms{sequence_variant}{$_}++} keys %{$children};
+		    map {$valid_so_terms{sequence_variant}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_variant}}};
+		    
+		    if ($line =~ /^\#\#gvf-version\s+(\d+\.?\d*)/) {
+			$pragmas{'gvf-version'} = $1;
+		    }
+		    else {
+			my $error_code = 'invalid_gvf-version_pragma_value';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##feature-ontology
+		elsif ($line =~ /^\#\#feature-ontology/) {
+		    if ($line =~ /^\#\#(feature-ontology)\s+(\S+)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+			# TODO: test_uri($pragma_value);
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##attribute-ontology
+		elsif ($line =~ /^\#\#attribute-ontology/) {
+		    if ($line =~ /^\#\#(attribute-ontology)\s+(\S+)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+			#TODO: test_uri($pragma_value);
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##source-ontology
+		elsif ($line =~ /^\#\#source-ontology/) {
+		    if ($line =~ /^\#\#(source-ontology)\s+(\S+)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+			#TODO: test_uri($pragma_value);
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##species
+		elsif ($line =~ /^\#\#species/) {
+		    if ($line =~ /^\#\#(species)\s+(\S+)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+			# TODO: test_uri($pragma_value);
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##genome-build
+		elsif ($line =~ /^\#\#genome-build/) {
+		    if ($line =~ /^\#\#(genome-build)\s+(\S+)\s+(\S+)/) {
+			my $pragma_key = $1;
+			my $source     = $2;
+			my $build_name = $3;
+			$pragmas{$pragma_key}{$source} = $build_name;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		elsif ($line =~ /^\#\#sequence-region/) {
+		    if ($line =~ /^\#\#(sequence-region)\s+(\S+)\s+(\d+)\s+(\d+)/) {
+			my $pragma_key = $1;
+			my $seqid      = $2;
+			my $start      = $3;
+			my $end        = $4;
+			if (! $seqid || ! $start || ! $end) {
+			    my $error_code = 'missing_sequence-region_pragma_values';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : $line\n";
+			}
+			elsif ($start !~ /^\d+$/ || $end !~ /^\d+$/) {
+			    my $error_code = 'invalid_sequence-region_pragma_value';
+			    push @{$errors{$error_code}}, [$line_count, $line];
+			    warn "WARNING : $error_code : $line\n";
+			}
+			else {
+			    $pragmas{$pragma_key}{$seqid} = [$start, $end];
+			}
+		    }
+		}
+		##file-date
+		elsif ($line =~ /^\#\#file-date /) {
+		    if ($line =~ /^\#\#(file-date)\s+(20[1-9][0-9]-\d\d-\d\d)/) {
+			my $pragma_key = $1;
+			my $date       = $2;
+			$pragmas{$pragma_key} = $date;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##file-version
+		elsif ($line =~ /^\#\#file-version /) {
+		    if ($line =~ /^\#\#(file-version)\s+(.*?)/) {
+			my $pragma_key = $1;
+			my $version    = $2;
+			$pragmas{$pragma_key} = $version;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##individual-id
+		elsif ($line =~ /^\#\#individual-id/) {
+		    if ($line =~ /^\#\#(individual-id)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##score-method
+		elsif ($line =~ /^\#\#score-method/) {
+		    if ($line =~ /^\#\#(score-method)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##source-method
+		elsif ($line =~ /^\#\#source-method/) {
+		    if ($line =~ /^\#\#(source-method)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##attribute-method
+		elsif ($line =~ /^\#\#attribute-method/) {
+		    if ($line =~ /^\#\#(attribute-method)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##technology-platform
+		elsif ($line =~ /^\#\#technology-platform/) {
+		    if ($line =~ /^\#\#(technology-platform)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##data-source
+		elsif ($line =~ /^\#\#data-source/) {
+		    if ($line =~ /^\#\#(data-source)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##phenotype-description
+		elsif ($line =~ /^\#\#phenotype-description/) {
+		    if ($line =~ /^\#\#(phenotype-description)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		##phased-genotypes
+		elsif ($line =~ /^\#\#phased-genotypes/) {
+		    if ($line =~ /^\#\#(phased-genotypes)\s+(\S+.*)/) {
+			my $pragma_key   = $1;
+			my $pragma_value = $2;
+			$pragmas{$pragma_key} = $pragma_value;
+		    }
+		    else {
+			my $error_code = 'invalid_pragma_format';
+			push @{$errors{$error_code}}, [$line_count, $line];
+			warn "WARNING : $error_code : $line\n";
+		    }
+		}
+		# All other pragmas
+		else {
+		    $line =~ /^\#\#(\S+)\s*(.*)/;
+		    my $pragma_key   = $1;
+		    my $pragma_value = $2;
+		    my $error_code = 'non_standard_pragma';
+		    push @{$errors{$error_code}}, [$line_count, $line];
+		    warn "WARNING : $error_code : $line\n";
+		    push @{$pragmas{$pragma_key}}, $pragma_value;
+		}
 	    }
-	  }
 	}
-	##file-date
-	elsif ($line =~ /^\#\#file-date /) {
-	  if ($line =~ /^\#\#(file-date)\s+(20[1-9][0-9]-\d\d-\d\d)/) {
-	    my $pragma_key = $1;
-	    my $date       = $2;
-	    $pragmas{$pragma_key} = $date;
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
+	
+	close $IN;
+	print "\n\n";
+	print "Error Summary for $file\n";
+	print '#' x 80;
+	print "\n";
+	if (scalar keys %errors) {
+	    print "Error Code\tCount\n";
+	    for my $error_code (keys %errors) {
+		print "$error_code\t" . scalar @{$errors{$error_code}} . "\n";
+	    }
 	}
-	##file-version
-	elsif ($line =~ /^\#\#file-version /) {
-	  if ($line =~ /^\#\#(file-version)\s+(.*?)/) {
-	    my $pragma_key = $1;
-	    my $version    = $2;
-	    $pragmas{$pragma_key} = $version;
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##individual-id
-	elsif ($line =~ /^\#\#individual-id/) {
-	  if ($line =~ /^\#\#(individual-id)\s+(\S+.*)/) {
-	    my $pragma_key   = $1;
-	    my $pragma_value = $2;
-	    $pragmas{$pragma_key} = $pragma_value;
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##score-method
-	elsif ($line =~ /^\#\#score-method/) {
-	  if ($line =~ /^\#\#(score-method)\s+(\S+.*)/) {
-	    my $pragma_key   = $1;
-	    my $pragma_value = $2;
-	    $pragmas{$pragma_key} = $pragma_value;
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##source-method
-	elsif ($line =~ /^\#\#source-method/) {
-	  if ($line =~ /^\#\#(source-method)\s+(\S+.*)/) {
-	    my $pragma_key   = $1;
-	    my $pragma_value = $2;
-	    $pragmas{$pragma_key} = $pragma_value;
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##attribute-method
-	elsif ($line =~ /^\#\#attribute-method/) {
-	  if ($line =~ /^\#\#(attribute-method)\s+(\S+.*)/) {
-	    my $pragma_key   = $1;
-	    my $pragma_value = $2;
-	    $pragmas{$pragma_key} = $pragma_value;
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##technology-platform
-	elsif ($line =~ /^\#\#technology-platform/) {
-	  if ($line =~ /^\#\#(technology-platform)\s+(\S+.*)/) {
-	    my $pragma_key   = $1;
-	    my $pragma_value = $2;
-	    $pragmas{$pragma_key} = $pragma_value;
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##data-source
-	elsif ($line =~ /^\#\#data-source/) {
-	  if ($line =~ /^\#\#(data-source)\s+(\S+.*)/) {
-	    my $pragma_key   = $1;
-	    my $pragma_value = $2;
-	    $pragmas{$pragma_key} = $pragma_value;
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##phenotype-description
-	elsif ($line =~ /^\#\#phenotype-description/) {
-	  if ($line =~ /^\#\#(phenotype-description)\s+(\S+.*)/) {
-	    my $pragma_key   = $1;
-	    my $pragma_value = $2;
-	    $pragmas{$pragma_key} = $pragma_value;
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	##phased-genotypes
-	elsif ($line =~ /^\#\#phased-genotypes/) {
-	  if ($line =~ /^\#\#(phased-genotypes)\s+(\S+.*)/) {
-	    my $pragma_key   = $1;
-	    my $pragma_value = $2;
-	    $pragmas{$pragma_key} = $pragma_value;
-	  }
-	  else {
-	    my $error_code = 'invalid_pragma_format';
-	    push @{$errors{$error_code}}, [$line_count, $line];
-	    warn "WARNING : $error_code : $line\n";
-	  }
-	}
-	# All other pragmas
 	else {
-	  $line =~ /^\#\#(\S+)\s*(.*)/;
-	  my $pragma_key   = $1;
-	  my $pragma_value = $2;
-	  my $error_code = 'non_standard_pragma';
-	  push @{$errors{$error_code}}, [$line_count, $line];
-	  warn "WARNING : $error_code : $line\n";
-	  push @{$pragmas{$pragma_key}}, $pragma_value;
+	    print "No Errors found in this file\n";
 	}
-      }
+	print '#' x 80;
+	print "\n\n";
     }
-    
-    close $IN;
-    print "\n\n";
-    print "Error Summary for $file\n";
-    print '#' x 80;
-    print "\n";
-    if (scalar keys %errors) {
-      print "Error Code\tCount\n";
-      for my $error_code (keys %errors) {
-	print "$error_code\t" . scalar @{$errors{$error_code}} . "\n";
-      }
-    }
-    else {
-      print "No Errors found in this file\n";
-    }
-    print '#' x 80;
-    print "\n\n";
-  }
 }
-  
+
 #-----------------------------------------------------------------------------
 #  stats|u	  Return simple summary statistics for the given file.
 #		  (Not yet implimented)
 #-----------------------------------------------------------------------------
 
 sub stats {
-
-	die "gff_tool (stats) not yet implimented!\n";
-
+    
+    die "gff_tool (stats) not yet implimented!\n";
+    
 }
 
 #-----------------------------------------------------------------------------
@@ -1952,9 +1534,9 @@ sub stats {
 #-----------------------------------------------------------------------------
 
 sub fasta_feature {
-
-	die "gff_tool (to_fasta) not yet implimented!\n";
-
+    
+    die "gff_tool (to_fasta) not yet implimented!\n";
+    
 }
 
 #-----------------------------------------------------------------------------
@@ -1963,13 +1545,13 @@ sub fasta_feature {
 #-----------------------------------------------------------------------------
 
 sub fasta_add {
-
+    
     my ($files, $fasta_add) = @_;
     send_message ('WARN',
 		  'fasta_add_not_fully_tested',
 		  'fasta_add) function is written, but untested'
 		  );
-
+    
     die "Can't open $fasta_add for reading\n" unless -r $fasta_add;
     for my $file (@{$files}) {
 	my ($fasta_section) = `grep -P '^##FASTA' $file`;
@@ -1985,9 +1567,9 @@ sub fasta_add {
 #-----------------------------------------------------------------------------
 
 sub fasta_only {
-
+    
     die "\n\ngff_tool (strip_fasta) function is written, but untested\n\n";
-
+    
     for my $file (@files) {
 	unlink $file or die "Can't unlink $file\n$!\n";
 	open (my $OUT, '>', $file) or die "Can't open $file for writing :\n$!\n";
@@ -2007,9 +1589,9 @@ sub fasta_only {
 #-----------------------------------------------------------------------------
 
 sub fasta_no {
-
+    
     die "\n\ngff_tool (fasta_no) function is written, but untested\n\n";
-
+    
     for my $file (@files) {
 	unlink $file or die "Can't unlink $file\n$!\n";
 	open (my $OUT, '>', $file) or die "Can't open $file for writing :\n$!\n";
@@ -2027,9 +1609,9 @@ sub fasta_no {
 #-----------------------------------------------------------------------------
 
 sub add_ID {
-
-	die "gff_tool (add_ID) not yet implimented!\n";
-
+    
+    die "gff_tool (add_ID) not yet implimented!\n";
+    
 }
 
 #-----------------------------------------------------------------------------
@@ -2040,9 +1622,9 @@ sub add_ID {
 #-----------------------------------------------------------------------------
 
 sub pragmas {
-
-	die "gff_tool (gff_pragmas) not yet implimented!\n";
-
+    
+    die "gff_tool (gff_pragmas) not yet implimented!\n";
+    
 }
 
 #-----------------------------------------------------------------------------
@@ -2052,7 +1634,7 @@ sub pragmas {
 #-----------------------------------------------------------------------------
 
 sub headers_only {
-
+    
     for my $file (@files) {
 	open (my $IN, '<', $file) or die "Can't open $file for reading :\n$!\n";
 	my $OUT = fh_out($file);
@@ -2071,7 +1653,7 @@ sub headers_only {
 #-----------------------------------------------------------------------------
 
 sub headers_no {
-
+    
     for my $file (@files) {
 	open (my $IN, '<', $file) or die "Can't open $file for reading :\n$!\n";
 	my $OUT = fh_out($file);
@@ -2088,7 +1670,7 @@ sub headers_no {
 #-----------------------------------------------------------------------------
 
 sub meta_add {
-
+    
     for my $file (@files) {
 	open (my $IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
 	open (my $HEAD, '<', $meta_add) or die "Can't open $meta_add for reading:\n$!\n";
@@ -2096,7 +1678,7 @@ sub meta_add {
 	print $OUT (<$HEAD>);
 	print $OUT (<$IN>);
     }
-
+    
 }
 
 #-----------------------------------------------------------------------------
@@ -2105,7 +1687,7 @@ sub meta_add {
 #-----------------------------------------------------------------------------
 
 sub features {
-
+    
     for my $file (@files) {
 	open (my $IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
 	my $OUT = fh_out($file);
@@ -2122,7 +1704,7 @@ sub features {
 #-----------------------------------------------------------------------------
 
 sub union {
-
+    
     my $files = shift;
     my %union;
     for my $file (@{$files}) {
@@ -2150,7 +1732,7 @@ sub union {
 #-----------------------------------------------------------------------------
 
 sub intersection {
-
+    
     my $files = shift;
     my (%inter_count, %inter_stash);
     my $file_count = 1;
@@ -2272,7 +1854,7 @@ sub s_difference {
 #-----------------------------------------------------------------------------
 
 sub gvf_sets {
-
+    
 #     my $files = shift;
 #     my (%diff, %comp, %union);
 #     for my $file1 (@files) {
@@ -2306,10 +1888,10 @@ sub gvf_sets {
 #-----------------------------------------------------------------------------
 
 sub calc_titv {
-
+    
     my $files = shift;
     my ($ti, $tv);
-
+    
     for my $file (@files) {
 	my $IN = fh_in($file);
 	print "$file\t";
