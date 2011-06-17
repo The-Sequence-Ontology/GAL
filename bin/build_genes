@@ -28,31 +28,162 @@ my $opt_success = GetOptions('help'    => \$help,
 die $usage if $help || ! $opt_success;
 
 my $file = shift;
-
 my ($features, $seqids) = parse_gff($file);
+my $transcript_graph = build_transcript_graph($features, $seqids);
+my $genes = build_genes($features, $transcript_graph);
+print_genes($genes);
 
-for my $seqid (@{$seqids}) {
-    for my $strand (qw(+ -)) {
-	my @these_features = grep {($_->{seqid}  eq $seqid &&
-				    $_->{strand} eq $strand)}
-				   @{$features};
-	my $nc_list  = build_nc_list(\@these_features);
-				   
-	for my $feature (@these_features) {
-
-	    my $overlap_features = get_overlapping_features($feature->{start},
-							    $feature->{end},
-							    $nc_list);
-	    print;
-	}
-    }
-}
-
-
-print '';
 
 #-----------------------------------------------------------------------------
 #-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub build_genes {
+
+    my ($features, $overlap_graph) = @_;
+
+    my %id_index;
+    for my $idx (0 .. $#{$features}) {
+	my $feature_id = $features->[$idx]{feature_id};
+	$id_index{$feature_id} = $idx;
+    }
+
+    my @genes;
+    my %seen;
+    my %duplicates;
+    for my $feature (@{$features}) {
+	my $feature_id = $feature->{feature_id};
+	next if exists $seen{$feature_id};
+	my %connected_feature_ids;
+	my %already_recursed;
+	for my $id (keys %{$overlap_graph->{$feature_id}}) {
+	    gather_connected_ids($id, $overlap_graph,
+			      \%connected_feature_ids,
+			      \%already_recursed);
+	}
+	my @connected_feature_idxs = @id_index{keys %connected_feature_ids};
+	my @connected_features = @{$features}[@connected_feature_idxs];
+	@seen{keys %connected_feature_ids} = ();
+	build_consensus_gene($feature, \@connected_features, \@genes,
+			     \%duplicates);
+    }
+    return \@genes;
+}
+
+#-----------------------------------------------------------------------------
+
+sub gather_connected_ids {
+
+    my ($feature_id, $overlap_graph, $connected_feature_ids,
+	$already_recursed) = @_;
+    $connected_feature_ids->{$feature_id}++;
+    return if $already_recursed->{$feature_id};
+    $already_recursed->{$feature_id}++;
+    for my $id (keys %{$overlap_graph->{$feature_id}}) {
+	gather_connected_ids($id, $overlap_graph, $connected_feature_ids,
+			     $already_recursed);
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub build_consensus_gene {
+
+    my ($feature, $connected_features, $genes, $duplicates) = @_;
+
+    my %gene;
+
+    my @feature_ids;
+    for my $this_feature (@{$connected_features}) {
+	my ($feature_id, $seqid, $source, $type, $start, $end,
+	    $score, $strand, $phase, $attributes) =
+		@{$this_feature}{qw(feature_id seqid source type start
+				    end score strand phase attributes)};
+
+	push @feature_ids, $feature_id;
+	map {$gene{$_}{$this_feature->{$_}}++} qw(seqid source type start
+					     end score strand phase);
+	if (exists $this_feature->{attributes}{Alias} &&
+	    ref $this_feature->{attributes}{Alias} eq 'ARRAY') {
+	    map {$gene{feature_id}{$_}++} @{$this_feature->{attributes}{Alias}};
+	}
+    }
+
+    if (scalar keys %{$gene{feature_id}} > 1) {
+	my $message = join ', ', keys %{$gene{feature_id}};
+	$message .= ' | ';
+	$message .= join ',', @feature_ids;
+	handle_message('WARN', 'multiple_aliases_for_clustered_transcripts',
+		       $message);
+    }
+    if (scalar keys %{$gene{seqid}} > 1) {
+	my $message = join ', ', keys %{$gene{seqids}};
+	$message .= ' | ';
+	$message .= join ',', @feature_ids;
+	handle_message('WARN', 'multiple_seqids_for_clustered_transcripts',
+		       $message);
+    }
+    if (scalar keys %{$gene{source}} > 1) {
+	my $message = join ', ', keys %{$gene{source}};
+	$message .= ' | ';
+	$message .= join ',', @feature_ids;
+	handle_message('WARN', 'multiple_sources_for_clustered_transcripts',
+		       $message);
+    }
+    if (scalar keys %{$gene{type}} > 1) {
+	my $message = join ', ', keys %{$gene{type}};
+	$message .= ' | ';
+	$message .= join ',', @feature_ids;
+	handle_message('WARN', 'multiple_types_for_clustered_transcripts',
+		       $message);
+    }
+    if (scalar keys %{$gene{strand}} > 1) {
+	my $message = join ', ', keys %{$gene{strand}};
+	$message .= ' | ';
+	$message .= join ',', @feature_ids;
+	handle_message('WARN', 'multiple_strands_for_clustered_transcripts',
+		       $message);
+    }
+    if (scalar keys %{$gene{phase}} > 1) {
+	my $message = join ', ', keys %{$gene{phase}};
+	$message .= ' | ';
+	$message .= join ',', @feature_ids;
+	handle_message('WARN', 'multiple_phases_for_clustered_transcripts',
+		       $message);
+    }
+
+    @{$gene{attributes}{Alias}} = (sort {($gene{feature_id}{$a}  <=>
+					  $gene{feature_id}{$b})}
+				   keys %{$gene{feature_id}});
+    my $feature_id = shift @{$gene{attributes}{Alias}};
+    my $old_feature_id = $feature_id;
+    $duplicates->{$feature_id}++;
+    if ($duplicates->{$feature_id} > 1) {
+	$feature_id = $feature_id . '_DUP_' .
+	    sprintf('%02s', $duplicates->{$feature_id} - 1);
+	handle_message('WARN', 'duplicate_feature_id',
+		       "$old_feature_id changed to $feature_id");
+    }
+    ($gene{feature_id})  = $feature_id;
+    $gene{attributes}{ID} = [$gene{feature_id}];
+    delete $gene{attributes}{Alias} unless scalar @{$gene{attributes}{Alias}};
+
+    ($gene{seqid})  = sort {$gene{seqid}{$a}  <=> $gene{seqid}{$b}}
+    keys %{$gene{seqid}};
+    ($gene{source}) = sort {$gene{source}{$a} <=> $gene{source}{$b}}
+    keys %{$gene{source}};
+    ($gene{strand}) = sort {$gene{strand}{$a} <=> $gene{strand}{$b}}
+    keys %{$gene{strand}};
+    ($gene{start})  = sort {$a <=> $b} keys %{$gene{start}};
+    ($gene{end})    = sort {$b <=> $a} keys %{$gene{end}};
+    @gene{qw(type score phase)} = qw(gene . .);
+
+    map {push @{$gene{children}{$_->{type}}}, $_} @{$connected_features};
+    map {push @{$_->{attributes}{Parent}}, $gene{feature_id}} @{$connected_features};
+    push @{$genes}, \%gene;
+}
+
+
 #-----------------------------------------------------------------------------
 
 sub parse_gff {
@@ -69,7 +200,11 @@ sub parse_gff {
     my $idx = 0;
     while (my $line = <$IN>) {
 
-	next if $line =~ /^(\#|\s)/;
+	if ($line =~ /^(\#|\s)/) {
+	    print $line;
+	    next;
+	}
+
 	chomp $line;
 	my (%feature, $att_text);
 	(@feature{qw(seqid source type start end score strand
@@ -109,7 +244,7 @@ sub parse_gff {
 
     my @seqids = sort keys %{$index{seqids}};
 
-    return $feature_sets, \@seqids;
+    return ($feature_sets, \@seqids);
 }
 
 #--------------------------------------------------------------------------------
@@ -138,7 +273,7 @@ sub build_feature_sets {
     return \@nested_children;
 }
 
-#-----------------------------------------------------------------------------                
+#-----------------------------------------------------------------------------
 
 sub get_recursive_children {
 
@@ -159,14 +294,53 @@ sub get_recursive_children {
     return \@nested_children;
 }
 
-#-----------------------------------------------------------------------------                
+#-----------------------------------------------------------------------------
+
+sub build_transcript_graph {
+
+    my ($features, $seqids) = @_;
+
+    my %transcript_graph;
+    for my $seqid (@{$seqids}) {
+	for my $strand (qw(+ -)) {
+	    my @these_features = grep {($_->{seqid}  eq $seqid &&
+					$_->{strand} eq $strand)}
+	    @{$features};
+	    my $nc_list  = build_nc_list(\@these_features);
+
+	    for my $feature (@these_features) {
+		my $overlap_features =
+		    get_overlapping_features($feature->{start},
+					     $feature->{end},
+					     $nc_list);
+		for my $overlap_feature (@{$overlap_features}) {
+		    #next if ($feature->{feature_id} eq
+		    #$overlap_feature->{feature_id});
+		    next unless exons_overlap($feature,
+					      $overlap_feature);
+		    my $feature_id = $feature->{feature_id};
+		    my $overlap_id = $overlap_feature->{feature_id};
+		    $transcript_graph{$feature_id}{$overlap_id}++;
+		    $transcript_graph{$overlap_id}{$feature_id}++;
+		    print '';
+		}
+		print '';
+	    }
+	    print '';
+	}
+	print '';
+    }
+    return \%transcript_graph;
+}
+#-----------------------------------------------------------------------------
 
 sub sort_features {
-  my @features = sort {$a->{start} <=> $b->{start}} @_;
+  my @features = sort {($a->{start} <=> $b->{start} ||
+			$b->{end}   <=> $a->{end})} @_;
   return wantarray ? @features : \@features;
 }
 
-#-----------------------------------------------------------------------------                
+#-----------------------------------------------------------------------------
 
 sub build_nc_list {
 
@@ -186,7 +360,7 @@ sub build_nc_list {
   return \@nc_list;
 }
 
-#-----------------------------------------------------------------------------                
+#-----------------------------------------------------------------------------
 
 sub get_sublist {
 
@@ -216,22 +390,39 @@ sub get_sublist {
   return $idx, \@sublist;
 }
 
-#-----------------------------------------------------------------------------                
+#-----------------------------------------------------------------------------
 
 sub features_overlap {
 
   my ($feature1, $feature2) = @_;
 
     if ($feature1->{start} <= $feature2->{end}   &&
-        $feature1->{end}   >= $feature2->{start} &&
-        $feature1->{seqid} eq $feature2->{seqid}) {
+	$feature1->{end}   >= $feature2->{start} &&
+	$feature1->{seqid} eq $feature2->{seqid}) {
       return 1;
     }
 
   return undef;
 }
 
-#-----------------------------------------------------------------------------                
+#-----------------------------------------------------------------------------
+
+sub exons_overlap {
+
+    my ($feature1, $feature2) = @_;
+
+    my $exons1 = $feature1->{children}{exon};
+    my $exons2 = $feature2->{children}{exon};
+
+    for my $exon1 (@{$exons1}) {
+	for my $exon2 (@{$exons2}) {
+	    return 1 if features_overlap($exon1, $exon2);
+	}
+    }
+    return undef;
+}
+
+#-----------------------------------------------------------------------------
 
 sub get_overlapping_features {
 
@@ -265,21 +456,21 @@ sub get_overlapping_features {
     my ($node_start, $node_end, @nested_nodes) = @{$node};
     for my $nested_node (@nested_nodes) {
       if (ref $nested_node eq 'HASH') {
-        my ($feature_start, $feature_end) = @{$nested_node}{qw(start end)};
-        if ($feature_start <= $range_end && $feature_end >= $range_start) {
-          push @{$features}, $nested_node;
-        }
+	my ($feature_start, $feature_end) = @{$nested_node}{qw(start end)};
+	if ($feature_start <= $range_end && $feature_end >= $range_start) {
+	  push @{$features}, $nested_node;
+	}
       }
       else {
-        gather_nested_features($range_start, $range_end,
-                               $features, $nested_node);
+	gather_nested_features($range_start, $range_end,
+			       $features, $nested_node);
       }
     }
   }
   return $features;
 }
 
-#-----------------------------------------------------------------------------                
+#-----------------------------------------------------------------------------
 
 sub gather_nested_features {
 
@@ -292,7 +483,7 @@ sub gather_nested_features {
     if (ref $nested_node eq 'HASH') {
       my ($feature_start, $feature_end) = @{$nested_node}{qw(start end)};
       if ($feature_start <= $range_end && $feature_end >= $range_start) {
-        push @{$features}, $nested_node;
+	push @{$features}, $nested_node;
       }
     }
     else {
@@ -301,7 +492,7 @@ sub gather_nested_features {
   }
 }
 
-#-----------------------------------------------------------------------------                
+#-----------------------------------------------------------------------------
 
 sub binary_search {
 
@@ -313,7 +504,7 @@ sub binary_search {
 
   return $idx unless $nc_list->[$idx];
 
-  # Find the first feature with a start less than the queried start.                          
+  # Find the first feature with a start less than the queried start.
   while (1) {
     if ($start <= $nc_list->[$idx][0]) {
       $max = $idx;
@@ -329,4 +520,84 @@ sub binary_search {
   return $idx;
 }
 
-#-----------------------------------------------------------------------------                
+#-----------------------------------------------------------------------------
+
+sub print_genes {
+
+    my $genes = shift;
+
+    for my $gene (sort {$a->{start} <=> $b->{start} ||
+		        $b->{end}   <=> $a->{end}}  @{$genes}) {
+	print_nested_features($gene);
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_nested_features {
+
+    my ($feature) = @_;
+
+    print_gff3($feature);
+    my @types = keys %{$feature->{children}};
+    for my $type (@types) {
+	my $children = $feature->{children}{$type};
+	for my $child (sort_features(@{$children})) {
+	    print_nested_features($child);
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_gff3 {
+
+    my $feature = shift;
+
+    my $attribute_text = get_attribute_text($feature);
+    print join "\t", @{$feature}{qw(seqid source type start end score
+				    strand phase)}, $attribute_text;
+    print "\n";
+}
+
+#-----------------------------------------------------------------------------
+
+sub get_attribute_text {
+
+    my $feature = shift;
+
+    my %order = (ID     => 1,
+		 Parent => 2,
+		 Alias  => 3,
+		 );
+
+    my $attributes = $feature->{attributes};
+    my @pairs;
+    for my $key (sort {$order{$a} <=> $order{$b}} keys %{$attributes}) {
+	my $values = $attributes->{$key};
+	my $value_text = join ',', @{$values};
+	my $pair = join '=', ($key, $value_text);
+	push @pairs, $pair;
+    }
+    my $attribute_text = join ';', @pairs;
+    return $attribute_text;
+}
+
+#-----------------------------------------------------------------------------
+
+sub handle_message {
+
+    my ($level, $code, $message) = @_;
+
+    $message = join ' : ', ($level, $code, $message);
+
+    if ($level eq 'FATAL') {
+	die $message;
+    }
+    else {
+	warn $message;
+    }
+}
+
+#-----------------------------------------------------------------------------
+
