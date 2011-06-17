@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use Getopt::Long;
+use Bio::DB::Fasta;
 use Carp;
 
 #-----------------------------------------------------------------------------
@@ -20,22 +21,37 @@ GFF files from them.
 
 Options:
 
-  --table   Which UCSC table are you using
+  --table, t  TABLE
 
-            knownGene => knownGene.txt
-            refGene   => refGene.txt
+    Which UCSC table are you using
+
+	    knownGene => knownGene.txt
+	    refGene   => refGene.txt
 	    ccdsGene  => ccdsGene.txt
 	    Gencode   => wgEncodeGencodeManualV4.txt
 	    vegaGene  => vegaGene
 	    ensGene   => ensGene
 
+  --pragma, p  FILE
+
+    A file to pass that contains pragmas that will be added to the
+    front of the file
+
+  --fasta, f FILE
+
+    A fasta file for the assembly (chromosomes/contigs).
+
 ";
 
 
-my ($help, $table);
-my $opt_success = GetOptions('help'    => \$help,
-			     'table=s' => \$table,
-			      );
+my $command_line = join ' ', ($0, @ARGV);
+
+my ($help, $table, $pragma_file, $fasta_file);
+my $opt_success = GetOptions('help'     => \$help,
+			     'table=s'  => \$table,
+			     'pragma=s' => \$pragma_file,
+			     'fasta=s'  => \$fasta_file,
+			     );
 
 die $usage if $help || ! $opt_success;
 
@@ -43,14 +59,25 @@ my $file = shift;
 die $usage unless $file;
 open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
 
+my $fasta = Bio::DB::Fasta->new($fasta_file);
+
+if ($pragma_file) {
+    open(my $PG, '<', $pragma_file) or
+	die "FATAL : cant_open_file_for_reading : $pragma_file\n";
+    print (<$PG>);
+    close $PG;
+}
+
+print "# $command_line\n";
+print "# " . `date` . "\n";
+
 my %duplicates;
-while (<$IN>) { 
+while (<$IN>) {
     chomp;
     my ($alignID, $bin, $cdsEnd, $cdsEndStat, $cdsStart,
 	$cdsStartStat, $chrom, $exonCount, $exonEnds, $exonFrames,
 	$exonStarts, $name, $name2, $proteinID, $score, $strand,
 	$txEnd, $txStart);
-
 
     if ($table eq 'knownGene') {
 	($name, $chrom, $strand, $txStart, $txEnd, $cdsStart, $cdsEnd,
@@ -66,7 +93,10 @@ while (<$IN>) {
 	die "FATAL : invalid_format : $table\n";
     }
 
-    carp  "WARN : invalid_strand : $name, $strand"   if $strand  !~ /\+|-/;
+    $txStart++;
+    $cdsStart++;
+
+    carp  "WARN : invalid_strand : $name, $strand"    if $strand  !~ /\+|-/;
     croak "FATAL : invalid_txStart : $name, $txStart" if $txStart !~ /^\d+$/;
     croak "FATAL : invalid_txEnd : $name, $txEnd"     if $txEnd   !~ /^\d+$/;
 
@@ -87,15 +117,16 @@ while (<$IN>) {
 		      strand     => $strand,
 		      phase      => '.',
 		  };
-    
+
     $transcript->{attributes}{ID} = [$name];
 
     my @aliases = grep {defined $_ } ($name2, $proteinID);
     $transcript->{attributes}{Alias} = \@aliases if scalar @aliases;
 
     my @exon_starts = split ',', $exonStarts;
+    map {$_++} @exon_starts;
     my @exon_ends   = split ',', $exonEnds;
-    
+
     carp "WARN : mis_matched_exon_start_ends : $name\n"
 	if (scalar @exon_starts != scalar @exon_ends);
 
@@ -106,22 +137,9 @@ while (<$IN>) {
 	carp "WARN : zero_length_exon : $name, $start, $end\n"     if $start == $end;
 	push @exon_pairs, [$start, $end];
     }
-    
+
     carp "WARN : exons_overlap : $name\n" if any_overlaps(@exon_pairs);
 
-    # my @intron_starts;
-    # my $intron_ends;
-    # map {push @intron_ends, shift @{$_};push @intron_starts, shift @{$_}} @exon_pairs;
-    # shift @intron_ends;
-    # pop   @intron_starts;
-    #
-    # my @intron_pairs;
-    # while (my ($start, $end) = (shift @intron_starts, shift @intron_ends)) {
-    #	carp "WARN : negative_length_intron : $name, $start, $end\n" if $start > $end;
-    #	carp "WARN : zero_length_intron : $name, $start, $end\n"     if $start == $end;
-    #	push @intron_pairs, [$start, $end];
-    # }
-    
     my @cds_pairs;
     for my $pair (@exon_pairs) {
 	last if $cdsEnd - $cdsStart < 3; #Dont allow a CDS < 3nt long.
@@ -135,14 +153,17 @@ while (<$IN>) {
 
     $transcript->{type} = 'ncRNA' unless scalar @cds_pairs;
 
-    my $exons = build_child_features(parent 	 => $transcript,
-				     type   	 => 'exon',
-				     coordinates => \@exon_pairs
+    my $exons = build_child_features(parent	 => $transcript,
+				     type	 => 'exon',
+				     coordinates => \@exon_pairs,
+				     fasta       => $fasta,
 				     );
-    my $CDSs = build_child_features(parent 	 => $transcript,
-				    type   	 => 'CDS',
-				    coordinates => \@cds_pairs
-				    );
+    my $CDSs = build_child_features(parent	 => $transcript,
+				    type	 => 'CDS',
+				    coordinates => \@cds_pairs,
+				    fasta       => $fasta,
+				    ) if scalar @cds_pairs;
+    $CDSs ||= [];
 
     write_gff($transcript, $exons, $CDSs);
 
@@ -159,6 +180,8 @@ sub build_child_features {
     my $parent = $args{parent};
     my $type   = $args{type};
     my $coords = $args{coordinates};
+    my $fasta     = $args{fasta};
+
     my $parent_id = $parent->{feature_id};
 
     my @features;
@@ -173,11 +196,66 @@ sub build_child_features {
 
 	@feature{qw(type start end attributes)} =
 	    ($type, $start, $end, $attributes);
-	
+
 	push @features, \%feature;
     }
+    finish_CDS($parent, $fasta, \@features) if $type eq 'CDS';
     return \@features;
 }
+
+#-----------------------------------------------------------------------------
+
+sub finish_CDS {
+
+    my ($parent, $fasta, $features) = @_;
+
+    my @features = sort {$a->{start} <=> $b->{start}} @{$features};
+    my $strand = $parent->{strand};
+
+    my $phase = 0;
+    my $sequence;
+    for my $feature (@features) {
+	$feature->{phase} = $phase;
+	my ($seqid, $start, $end) = @{$feature}{qw(seqid start end)};
+	my $length = $end - $start + 1;
+	my $CDS_sequence = $fasta->seq($seqid, $start, $end);
+	$sequence .= $CDS_sequence if $CDS_sequence;
+	my $adj_length = $length - $phase;
+	my $mod = $length % 3;
+	$phase = ($mod == 0 ? 0 :
+		  $mod == 1 ? 2 :
+		  $mod == 2 ? 1 :
+		  -1);
+	die ("FATAL : invalid_phase : $phase in " .
+	     $feature->{feature_id}) if $phase < 0;
+    }
+    return if ! $sequence;
+    if ($strand eq '-') {
+	$sequence = revcomp($sequence);
+    }
+    my $protein = translate($sequence);
+    $protein =~ s/\*$//;
+    my $stop_count = $protein =~ tr/\*/\*/;
+    if ($stop_count) {
+	my $parent_id = $parent->{feature_id};
+	$parent->{attributes}{Note} = ["$parent_id has $stop_count internal stop codons"];
+	warn "WARN : stop_interupted_CDS : $parent_id has $stop_count internal stop codons\n";
+	print '';
+    }
+    print '';
+}
+
+#-----------------------------------------------------------------------------
+
+sub revcomp {
+
+    my ($sequence) = @_;
+
+    my $revcomp_seq = reverse $sequence;
+  $revcomp_seq =~ tr/acgtrymkswhbvdnxACGTRYMKSWHBVDNX/tgcayrkmswdvbhnxTGCAYRKMSWDVBHNX/;
+    return $revcomp_seq;
+}
+
 
 #-----------------------------------------------------------------------------
 
@@ -208,6 +286,7 @@ sub get_attribute_text {
     my %ORDER = (ID     => 1,
 		 Parent => 2,
 		 Alias  => 3,
+		 Note   => 4,
 		 );
 
     my @pairs;
@@ -234,10 +313,106 @@ sub any_overlaps {
 	    next if $i == $j;
 	    my $pair_j = $pairs[$j];
 	    # Return 1 unless these two don't overlap
-	    return 1 unless ($pair_i->[1] < $pair_j->[0] or 
-			     $pair_i->[0] > $pair_j->[1]); 
+	    return 1 unless ($pair_i->[1] < $pair_j->[0] or
+			     $pair_i->[0] > $pair_j->[1]);
 	}
     }
     # We never overlaped so return false
     return 0;
 }
+
+#-----------------------------------------------------------------------------
+
+sub translate {
+    my ($sequence, $offset, $length) = @_;
+
+    my $genetic_code = genetic_code();
+
+    $offset ||= 0;
+    $length ||= length($sequence);
+
+    my $polypeptide;
+    for (my $i = (0 + $offset); $i < $length; $i += 3) {
+	my $codon = uc substr($sequence, $i, 3);
+	if (! exists $genetic_code->{$codon}) {
+	    warn "WARN : invalid_codon : $codon\n";
+	    next;
+	}
+	my $aa = $genetic_code->{$codon};
+	$polypeptide .= $aa;
+    }
+    return $polypeptide;
+}
+
+#-----------------------------------------------------------------------------    
+sub genetic_code {
+    my $self = shift;
+
+    return {AAA => 'K',
+          AAC => 'N',
+          AAG => 'K',
+          AAT => 'N',
+          ACA => 'T',
+          ACC => 'T',
+          ACG => 'T',
+          ACT => 'T',
+          AGA => 'R',
+          AGC => 'S',
+          AGG => 'R',
+          AGT => 'S',
+          ATA => 'I',
+          ATC => 'I',
+          ATG => 'M',
+          ATT => 'I',
+          CAA => 'Q',
+          CAC => 'H',
+          CAG => 'Q',
+          CAT => 'H',
+          CCA => 'P',
+          CCC => 'P',
+          CCG => 'P',
+          CCT => 'P',
+          CGA => 'R',
+          CGC => 'R',
+          CGG => 'R',
+          CGT => 'R',
+          CTA => 'L',
+          CTC => 'L',
+          CTG => 'L',
+          CTT => 'L',
+          GAA => 'E',
+          GAC => 'D',
+          GAG => 'E',
+          GAT => 'D',
+          GCA => 'A',
+          GCC => 'A',
+          GCG => 'A',
+          GCT => 'A',
+          GGA => 'G',
+          GGC => 'G',
+          GGG => 'G',
+          GGT => 'G',
+          GTA => 'V',
+          GTC => 'V',
+          GTG => 'V',
+          GTT => 'V',
+          TAA => '*',
+          TAC => 'Y',
+          TAG => '*',
+          TAT => 'Y',
+          TCA => 'S',
+          TCC => 'S',
+          TCG => 'S',
+          TCT => 'S',
+          TGA => '*',
+          TGC => 'C',
+          TGG => 'W',
+          TGT => 'C',
+          TTA => 'L',
+          TTC => 'F',
+          TTG => 'L',
+          TTT => 'F',
+	};
+}
+
+#-----------------------------------------------------------------------------    

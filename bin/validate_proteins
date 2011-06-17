@@ -15,7 +15,7 @@ my $usage = "
 Synopsis:
 
 validate_proteins  --driver SQLite --fasta path/to/fasta               \
-                   --features feature.sqlite --variants variant.sqlite \
+                   --features feature.sqlite
 
 
 Description:
