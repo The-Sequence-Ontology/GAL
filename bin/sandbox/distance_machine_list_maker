@@ -81,7 +81,7 @@ sub print_it {
 	my $file = $opt_o.'/'.$opt_l.'.'.'run_file'.'.'.$i;
 
 	my $fh = new FileHandle();
-	   $fh->open(">$file");
+	   $fh->open(">$file") || die "can't open $file\n";
 
 	foreach my $p (@{$set}){
 		$TOTAL_PRINTED++;
