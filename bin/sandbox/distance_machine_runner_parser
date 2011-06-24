@@ -57,6 +57,7 @@ for (my $i = 0; $i < @{$files} - 1 ; $i++){
                         	process_pair($c, $i_name, $j_name);
                 	}
         	}
+
         	elsif ($opt_c =~ /\d+/){ 
 	               	process_pair($opt_c, $i_name, $j_name);
         	}
