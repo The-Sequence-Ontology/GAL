@@ -1,6 +1,0 @@
-Hello World
-
-[% features.search({type => 'mRNA'}).first.start %]
-
-Goodbye
-

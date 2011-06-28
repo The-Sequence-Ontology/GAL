@@ -1,1 +1,0 @@
-../feature_overlaps data/interval_*.gff
