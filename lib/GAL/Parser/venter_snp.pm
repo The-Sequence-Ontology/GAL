@@ -175,7 +175,7 @@ sub parse_record {
 	my $phase      = '.';
 
 
-	my ($their_genotype, $variant_type) =
+	my ($their_zygosity, $variant_type) =
 	  $record->{variant_type} =~ /(.*?)_(.*)/;
 
 	return undef unless $variant_type eq 'SNP';
@@ -194,7 +194,7 @@ sub parse_record {
 
 	my ($seq_text) = split /;/, $record->{seqs};
 	my @variant_seqs = split m|/|, $seq_text;
-	shift @variant_seqs if $their_genotype eq 'homozygous';
+	shift @variant_seqs if $their_zygosity eq 'homozygous';
 
 	# if ($reference_seq ne $real_ref) {
 	#     $self->warn(code    => 'reference_seq_mismatch',
@@ -208,7 +208,7 @@ sub parse_record {
 	#unshift @variant_seqs, $reference_seq
 	#  if $record->{variant_type} =~ /^heterozygous/;
 
-        my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+        my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 	# sort | uniq -c | sort -nr
 	# 1624998 heterozygous_SNP
@@ -221,7 +221,7 @@ sub parse_record {
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			  ID            => [$id],
 			 };
 

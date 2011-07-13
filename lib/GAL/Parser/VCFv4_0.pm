@@ -208,7 +208,7 @@ sub parse_record {
 	# the reference sequence.
 	next unless grep {$_ ne $this_ref} @variant_seqs;
 
-	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+	my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 	# Format Column Keys
 	# GT : genotype, encoded as alleles values separated by either of
@@ -246,7 +246,7 @@ sub parse_record {
 
 	my $attributes = {Reference_seq => [$this_ref],
 			  Variant_seq   => \@variant_seqs,
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			  ID            => [$feature_id],
 		      };
 

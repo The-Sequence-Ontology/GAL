@@ -155,13 +155,13 @@ sub parse_record {
 
 	my @variant_reads = map {$read_counts{$_} || $total_reads - $record->{var_reads}} @variant_seqs;
 
-	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+	my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
 			  Variant_reads => \@variant_reads,
 			  Total_reads   => [$total_reads],
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			  ID            => [$id],
 			 };
 

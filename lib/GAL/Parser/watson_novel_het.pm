@@ -107,7 +107,7 @@ sub parse_record {
 
 	# id chromosome coordinate reference_seq variant_seq
 	# match_status rsid alternate_seq variant_count
-	# alternate_seq_count total_coverage genotype
+	# alternate_seq_count total_coverage zygosity
 
 	my $seqid      = $record->{chr};
 	my $source     = 'JDW';
@@ -126,12 +126,12 @@ sub parse_record {
 
 	my @variant_reads;
 
-	my $genotype = 'heterozygous';
+	my $zygosity = 'heterozygous';
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
 			  ID            => [$id],
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			 };
 
 	my $feature_data = {feature_id => $id,

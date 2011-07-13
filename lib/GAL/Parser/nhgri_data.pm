@@ -136,13 +136,13 @@ sub parse_record {
 
 	return undef if (scalar @variant_seqs == 1 && $variant_seqs[0] eq $reference_seq);
 
-	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+	my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 	my $alias = $record->{RS} if $record->{RS};
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			  ID            => [$feature_id],
 			 };
 

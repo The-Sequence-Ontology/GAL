@@ -121,11 +121,11 @@ sub parse_record {
 
 	my $total_reads = $record->{coverage};
 
-        my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+        my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			  ID            => [$id],
 			  Total_reads   => [$total_reads],
 			 };

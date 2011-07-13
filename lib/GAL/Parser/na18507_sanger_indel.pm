@@ -122,9 +122,9 @@ sub parse_record {
 	# Ignore records that are compound heterozygous.
 	return undef if (scalar @variant_seqs == 2 && $variant_seqs[0] ne $variant_seqs[1]);
 
-	my ($genotype, $reference_seq, $type, $start, $end);
+	my ($zygosity, $reference_seq, $type, $start, $end);
 
-	$genotype = scalar @variant_seqs == 1 ? 'heterozygous' : 'homozygous';
+	$zygosity = scalar @variant_seqs == 1 ? 'heterozygous' : 'homozygous';
 
 	for my $variant_seq (@variant_seqs) {
 		if ($variant_seq =~ /^-/) {
@@ -152,7 +152,7 @@ sub parse_record {
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			  ID            => [$id],
 			 };
 

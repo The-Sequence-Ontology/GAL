@@ -139,7 +139,7 @@ sub parse_record {
 
 	my $reference_seq = $seq_size < 0 ? $seq : '-';
 	my @variant_seqs;
-	if ($record->{genotype} eq 'HET') {
+	if ($record->{zygosity} eq 'HET') {
 		push @variant_seqs, ($seq_size < 0 ? $seq : '-')
 	}
 	else {
@@ -148,7 +148,7 @@ sub parse_record {
 
 	my $total_reads = $record->{total_reads};
 
-	my $genotype = $record->{genotype} eq 'HET' ? 'heterozygous' : 'homozygous';
+	my $zygosity = $record->{zygosity} eq 'HET' ? 'heterozygous' : 'homozygous';
 
 	my $intersected_gene;
 	$intersected_gene = $record->{gene_name} ne 'Non_genic' ? 'gene:HGNC:' . $record->gene_name : undef;
@@ -177,7 +177,7 @@ sub parse_record {
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
 			  Total_reads   => [$total_reads],
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			  ID            => [$id],
 			 };
 
@@ -217,7 +217,7 @@ sub reader {
 
   if (! $self->{reader}) {
     my @field_names = qw(transcript_id chromosome location total_reads seq context1
-			  context2 genotype gene_name gene_part);
+			  context2 zygosity gene_name gene_part);
     my $reader = GAL::Reader::DelimitedLine->new(field_names     => \@field_names);
     $self->{reader} = $reader;
   }

@@ -107,7 +107,7 @@ sub parse_record {
 
 	# id chromosome coordinate reference_seq variant_seq
 	# match_status rsid alternate_seq variant_count
-	# alternate_seq_count total_coverage genotype
+	# alternate_seq_count total_coverage zygosity
 
 	my $id         = $record->{id};
 	my $seqid      = $record->{chromosome};
@@ -142,8 +142,8 @@ sub parse_record {
 
 	my $total_reads = $record->{total_coverage};
 
-	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
-	my $their_genotype = $record->{genotype} eq 'het' ? 'heterozygous' : undef;
+	my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+	my $their_zygosity = $record->{zygosity} eq 'het' ? 'heterozygous' : undef;
 
 	my $intersected_snp = $record->{rs} =~ /rs\d+/ ? 'dbSNP:' . $record->{rs} : undef;
 
@@ -152,7 +152,7 @@ sub parse_record {
 			  ID            => [$id],
 			  Variant_reads => \@variant_reads,
 			  Total_reads   => [$total_reads],
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			 };
 
 	push @{$attributes->{Intersected_feature}}, $intersected_snp
@@ -235,7 +235,7 @@ sub reader {
     my @field_names = qw(id chromosome coordinate reference_seq
 			 variant_seq match_status rsid alternate_seq
 			 variant_count alternate_seq_count
-			 total_coverage genotype);
+			 total_coverage zygosity);
     my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
     $self->{reader} = $reader;
   }
