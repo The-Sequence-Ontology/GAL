@@ -4,6 +4,7 @@ use warnings;
 use Getopt::Long;
 use Bio::DB::Fasta;
 use Carp;
+use Data::Dumper;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -41,16 +42,21 @@ Options:
 
     A fasta file for the assembly (chromosomes/contigs).
 
+  --clean, c
+
+    Remove CDS features that have more than one internal stop.
+
 ";
 
 
 my $command_line = join ' ', ($0, @ARGV);
 
-my ($help, $table, $pragma_file, $fasta_file);
+my ($help, $table, $pragma_file, $fasta_file, $clean);
 my $opt_success = GetOptions('help'     => \$help,
 			     'table=s'  => \$table,
 			     'pragma=s' => \$pragma_file,
 			     'fasta=s'  => \$fasta_file,
+			     'clean'    => \$clean,
 			     );
 
 die $usage if $help || ! $opt_success;
@@ -103,7 +109,7 @@ while (<$IN>) {
     my $old_name = $name;
     if (exists $duplicates{$name}) {
 	$name = $name . '_DUP_' . sprintf('%02s', $duplicates{$name});
-	carp "WARN : duplicate_name : $old_name changed to $name";
+	carp "WARN : duplicate_transcript_id : $old_name changed to $name";
     }
     $duplicates{$old_name}++;
 
@@ -199,7 +205,14 @@ sub build_child_features {
 
 	push @features, \%feature;
     }
-    finish_CDS($parent, $fasta, \@features) if $type eq 'CDS';
+    if ($type eq 'CDS') {
+	my $stop_count = finish_CDS($parent, $fasta, \@features) if $type eq 'CDS';
+	if ($clean && $stop_count && $stop_count > 1) {
+	    push @{$parent->{attributes}{Note}},
+	    "CDS was removed due to internal stop codons";
+	    @features = ();
+	}
+    }
     return \@features;
 }
 
@@ -220,6 +233,7 @@ sub finish_CDS {
 	my $length = $end - $start + 1;
 	my $CDS_sequence = $fasta->seq($seqid, $start, $end);
 	$sequence .= $CDS_sequence if $CDS_sequence;
+	$feature->{seq} = $CDS_sequence;
 	my $adj_length = $length - $phase;
 	my $mod = $length % 3;
 	$phase = ($mod == 0 ? 0 :
@@ -240,9 +254,12 @@ sub finish_CDS {
 	my $parent_id = $parent->{feature_id};
 	$parent->{attributes}{Note} = ["$parent_id has $stop_count internal stop codons"];
 	warn "WARN : stop_interupted_CDS : $parent_id has $stop_count internal stop codons\n";
-	print '';
+	$protein =~ s/(.)/  $1/g;
+	# print STDERR ">$sequence\n>$protein\n";
+	# print STDERR Dumper($parent, @features);
+	return $stop_count;
     }
-    print '';
+    return undef;
 }
 
 #-----------------------------------------------------------------------------

@@ -161,7 +161,7 @@ sub build_consensus_gene {
     if ($duplicates->{$feature_id} > 1) {
 	$feature_id = $feature_id . '_DUP_' .
 	    sprintf('%02s', $duplicates->{$feature_id} - 1);
-	handle_message('WARN', 'duplicate_feature_id',
+	handle_message('WARN', 'duplicate_gene_id',
 		       "$old_feature_id changed to $feature_id");
     }
     ($gene{feature_id})  = $feature_id;
@@ -316,6 +316,7 @@ sub build_transcript_graph {
 		for my $overlap_feature (@{$overlap_features}) {
 		    #next if ($feature->{feature_id} eq
 		    #$overlap_feature->{feature_id});
+		    next unless $feature->{type} eq $overlap_feature->{type};
 		    next unless exons_overlap($feature,
 					      $overlap_feature);
 		    my $feature_id = $feature->{feature_id};
