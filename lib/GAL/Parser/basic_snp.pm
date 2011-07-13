@@ -119,12 +119,12 @@ sub parse_record {
 
 	my $reference_seq = $record->{reference_seq};
 	my @variant_seqs  = $self->expand_iupac_nt_codes($record->{variant_seq});
-	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+	my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 	my $attributes = {Variant_seq   => \@variant_seqs,
 			  Reference_seq => [$reference_seq],
 			  ID            => [$id],
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			 };
 
 	my $feature_data = {feature_id => $id,
@@ -158,7 +158,7 @@ sub reader {
     my $self = shift;
 
     if (! $self->{reader}) {
-	my @field_names = qw(chromosome start variant_seq reference_seq);
+	my @field_names = qw(chromosome start reference_seq variant_seq);
 	my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
 	$self->{reader} = $reader;
     }

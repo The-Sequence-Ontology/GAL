@@ -157,14 +157,14 @@ sub parse_record {
 
 	my $total_reads = $support1 + $support2;
 
-	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+	my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 	my $attributes = {ID            => [$id],
 			  Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
 			  Variant_reads => \@variant_reads,
 			  Total_reads   => [$total_reads],
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			 };
 
 	if ($alias_xref =~ /^rs\d+$/) {

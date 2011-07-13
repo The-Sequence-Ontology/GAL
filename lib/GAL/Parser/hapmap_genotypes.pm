@@ -151,11 +151,11 @@ sub parse_record {
         # the reference sequence.
 	next unless grep {$_ ne $reference_seq} @variant_seqs;
 	
-	my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+	my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 	
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			  ID            => [$this_feature_id],
 			  individual    => [$individual],
 		      };

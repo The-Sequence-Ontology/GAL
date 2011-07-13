@@ -150,23 +150,23 @@ sub parse_record {
 	    $source = $individual_id;
 
 	    my $individual = $individuals{$individual_id};
-	    my ($this_genotype, $this_score, $coverage) = @{$individual};
+	    my ($this_zygosity, $this_score, $coverage) = @{$individual};
 	    $score = $this_score ? $this_score : $score;
 
 	    # Ignore no-calls for now.
-	    next if $this_genotype eq 'NA';
+	    next if $this_zygosity eq 'NA';
 
-	    my @variant_seqs = split '', $this_genotype;
+	    my @variant_seqs = split '', $this_zygosity;
 	    shift @variant_seqs if $variant_seqs[0] eq $variant_seqs[1];
 
 	    next if (scalar @variant_seqs == 1 && $variant_seqs[0] eq $reference_seq);
 
-	    my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+	    my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 
 	    my $attributes = {Reference_seq => [$reference_seq],
 			      Variant_seq   => \@variant_seqs,
-			      Genotype      => [$genotype],
+			      Zygosity      => [$zygosity],
 			      ID            => [$feature_id],
 			      Total_reads   => [$coverage],
 			  };

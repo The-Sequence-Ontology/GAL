@@ -118,11 +118,11 @@ sub parse_record {
 	my $reference_seq = $record->{ref_seq};
 	my $variant_seq = $record->{var_seq};
 
-	my $genotype = 'homozygous';
+	my $zygosity = 'homozygous';
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => [$variant_seq],
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			  ID            => [$feature_id],
 			 };
 

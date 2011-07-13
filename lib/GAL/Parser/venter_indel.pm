@@ -119,10 +119,10 @@ sub parse_record {
 
 
 	# $self->fields([qw(chromosome variant_id variant_type start end score
-	# strand phase null seq genotype)]);
+	# strand phase null seq zygosity)]);
 
 	my $type = $record->{variant_type};
-	my ($genotype, $indel_type) = split /_/, $record->{genotype};
+	my ($zygosity, $indel_type) = split /_/, $record->{zygosity};
 
 	# Fill in the first 8 columns for GFF3
 	my $id         = $record->{variant_id};
@@ -179,8 +179,8 @@ sub parse_record {
 	    $self->throw(message => $message, $code => $code);
 	}
 
-	$genotype = lc $genotype;
-	$genotype ||= 'homozygous';
+	$zygosity = lc $zygosity;
+	$zygosity ||= 'homozygous';
 
 	$type = $type eq 'homozygous_indel' ? $indel_type : $type;
 	my %type_map = ('Deletion'  			=> 'deletion',
@@ -192,7 +192,7 @@ sub parse_record {
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => [$variant_seq],
 			  ID            => [$id],
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			 };
 
 
@@ -228,7 +228,7 @@ sub reader {
 
   if (! $self->{reader}) {
     my @field_names = qw(chromosome variant_id variant_type start end score
-			  strand phase null seq genotype);
+			  strand phase null seq zygosity);
     my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
     $self->{reader} = $reader;
   }

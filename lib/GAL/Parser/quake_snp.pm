@@ -129,11 +129,11 @@ sub parse_record {
 	my %variant_hash = map {$_, 1} split //, $record->{variant};
 	my @variant_seqs = keys %variant_hash;
 
-        my $genotype = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+        my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			  ID            => [$id],
 			 };
 

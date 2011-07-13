@@ -220,7 +220,7 @@ sub parse_record {
 
 	my $total_reads = $record->{variant_reads};
 
-	my $genotype = scalar @variant_seqs == 1 ? 'homozygous' : 'heterozygous';
+	my $zygosity = scalar @variant_seqs == 1 ? 'homozygous' : 'heterozygous';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -236,12 +236,12 @@ sub parse_record {
 
 	# For sequence_alteration features the suggested keys include:
 	# ID, Reference_seq, Variant_seq, Variant_reads Total_reads,
-	# Genotype, Intersected_feature, Variant_effect, Copy_number
+	# Zygosity, Variant_effect, Copy_number
 
 	my $attributes = {Reference_seq => [$reference_seq],
 			  Variant_seq   => \@variant_seqs,
 			  Total_reads   => [$total_reads],
-			  Genotype      => [$genotype],
+			  Zygosity      => [$zygosity],
 			  ID            => [$id],
 			 };
 
