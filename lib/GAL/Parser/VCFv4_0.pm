@@ -160,7 +160,7 @@ sub parse_record {
     my @header_data = split /\s/, $header;
     splice(@header_data, 0, 9);
     @individual_data{@header_data} = @{$data};
-
+`
     my @features;
     for my $individual_id (sort keys %individual_data) {
 

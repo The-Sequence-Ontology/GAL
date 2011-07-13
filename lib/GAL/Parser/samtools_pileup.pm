@@ -209,7 +209,7 @@ sub parse_record {
 		my $length = 0;
 		map {$length = length($_) > $length ? length($_) : $length} @variant_seqs;
 		$end = $start + $length - 1;
-		$reference_seq = uc $self->fasta->seq($seqid, $start, $end);	    
+		$reference_seq = uc $self->fasta->seq($seqid, $start, $end);
 		map {$_ = $_ eq '*' ? $reference_seq : '-'} @variant_seqs;
 	    }
 	}
