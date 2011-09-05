@@ -37,14 +37,14 @@ parsed and operated on.
 		  the same file name with the given argument as an
 		  additional extenstion.
 
-  fasta|j         Provide the path to a directory containing the fasta
-		  file(s) associated with a given feature file.  This
-		  argument is required by some (but not all) of the
-		  other commands.  Bio::DB::Fasta is used to index the
-		  fasta file.  The sequence of each feature is made
-		  available to any code reference given via the code
-		  argument.  See below for details of code references.
-		  Not yet implimented.
+  fasta|j         Provide the path to a fasta file or a directory
+		  containing the fasta file(s) associated with a given
+		  feature file.  This argument is required by some
+		  (but not all) of the other commands.  Bio::DB::Fasta
+		  is used to index the fasta file.  The sequence of
+		  each feature is made available to any code reference
+		  given via the code argument.  See below for details
+		  of code references.  Not yet implimented.
 
   so_file         The location of a Sequence Ontology OBO format file.
 		  The location of the file may also be given with the
@@ -78,7 +78,7 @@ to the altered copy of the feature.  All filters given are applied.
 
 		      $i - A hash reference of the values loaded from the
 			   file given by the ids argument.
-		      $xf - A hash reference for the current feature (see
+		      $f - A hash reference for the current feature (see
 			   below for more details on the structure of the
 			   hash reference).
 		      $t - A hash reference for the attributes associated
@@ -98,10 +98,10 @@ to the altered copy of the feature.  All filters given are applied.
 		  given code ref.
 
   overlaps        Print only those features whose start and end coordinates
-                  overlap those given as an argument to this command.
-                  Coordinates are give as seqid:start-end where start
-                  defaults to 1 and end defaults start or 100,000,000,000
-                  if start is also not defined.
+		  overlap those given as an argument to this command.
+		  Coordinates are give as seqid:start-end where start
+		  defaults to 1 and end defaults start or 100,000,000,000
+		  if start is also not defined.
 
 --Modify Options--
 
@@ -265,12 +265,12 @@ to the altered copy of the feature.  All filters given are applied.
   gvf_stats      Simple SNV stats on a GVF file.
   effect_stats   Category counts for Variant_effect terms.
   gvf_sets       Calculate counts the pairwise intersection and compliment
-                 for all files and the symetric difference for each
-                 file. (Not yet implimented)
+		 for all files and the symetric difference for each
+		 file. (Not yet implimented)
   fix_gvf        Fix up some common errors in GVF files.  Currently it
-                 changes Genotype=(hetero|homo)zygous attributes to
-                 Zygosity=(hetero|homo)zygous and uniques the
-                 Variant_seq values.
+		 changes Genotype=(hetero|homo)zygous attributes to
+		 Zygosity=(hetero|homo)zygous and uniques the
+		 Variant_seq values.
 
 
 Code References:
@@ -331,7 +331,7 @@ my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'exclude|e'       => \$exclude,
 			     'code|c=s'	       => \$code,
 			     'filter|t'        => \$filter,
-                             'overlaps=s'      => \$overlaps,
+			     'overlaps=s'      => \$overlaps,
 			     'merge|m'	       => \$merge,
 			     'blend|b'	       => \$blend,
 			     'sort|s'	       => \$sort,
@@ -355,10 +355,10 @@ my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'l_compliment'    => \$l_compliment,
 			     's_difference'    => \$s_difference,
 			     'titv'            => \$titv,
-                             'gvf_stats'       => \$gvf_stats,
-                             'effect_stats'    => \$effect_stats,
-                             'gvf_sets'        => \$gvf_sets,
-                             'fix_gvf'         => \$fix_gvf,
+			     'gvf_stats'       => \$gvf_stats,
+			     'effect_stats'    => \$effect_stats,
+			     'gvf_sets'        => \$gvf_sets,
+			     'fix_gvf'         => \$fix_gvf,
 			    );
 
 die $usage if $help || ! $opt_success;
@@ -373,8 +373,8 @@ for my $file (@files) {
  die "FATAL : unable_to_open_file : $file\n" if ! -r $file;
 }
 
-#my $d = parse_fasta($FASTA_FILE) if $FASTA_FILE;
-my $i = parse_ids($IDS_FILE) if $IDS_FILE;
+my $FASTA_DB = parse_fasta($FASTA_FILE) if $FASTA_FILE;
+my $IDS = parse_ids($IDS_FILE) if $IDS_FILE;
 
 # Move the filter code to the passes_filters sub
 filter(\@files, $code)            if $filter;
@@ -431,6 +431,8 @@ sub filter {
 
 	    my $f = $f_original;
 	    my $t = $f->{attributes};
+	    my $i = $IDS;
+	    my $d = $FASTA_DB;
 
 	    my $return_value = eval $code;
 	    die "Fatal Error in code ref: $code\n$@\n" if $@;
@@ -607,6 +609,8 @@ sub sort_gff {
     while (my $f = next_feature_hash($IN)) {
 
 	my $t = $f->{attributes};
+	my $i = $IDS;
+	my $d = $FASTA_DB;
 
 	print $OUT to_gff3($f);
     }
@@ -631,6 +635,8 @@ sub alter_gff {
 	while (my $f = next_feature_hash($IN)) {
 
 	    my $t = $f->{attributes};
+	    my $i = $IDS;
+	    my $d = $FASTA_DB;
 
 	    my $return_value = eval $code;
 	    die "Fatal Error in code ref: $code\n$@\n" if $@;
@@ -674,7 +680,9 @@ sub hash_ag {
 	my $IN = fh_in($file);
 	while (my $f = next_feature_hash($IN)) {
 
-	    my $a = $f->{attributes};
+	    my $t = $f->{attributes};
+	    my $i = $IDS;
+	    my $d = $FASTA_DB;
 
 	    my $return_value = eval $hash_ag;
 	    die "Fatal Error in code ref: $hash_ag\n$@\n" if $@;
@@ -720,12 +728,12 @@ sub hash_ag {
 sub validate {
 
     my ($so_data) = parse_so_file();
-  
+
     for my $file (@files) {
 	warn "Validating: $file\n";
 	open(my $IN, '<', $file) or
 	    die "FATAL : cant_open_file_for_reading : $file\n";
-	
+
 	my $line_count;
 	my %pragmas;
 	my %errors;
@@ -734,7 +742,7 @@ sub validate {
 	my %feature_ids;
 	my %parents;
 	my %valid_so_terms;
-	
+
 	my @stack;
 	my $line = <$IN>;
 	my ($format_type, $version) = split /\t+/, $line;
@@ -745,7 +753,7 @@ sub validate {
 	    push @stack, ("\#\#gff-version 3", $line);
 	    $line_count--;
 	}
-	
+
       LINE:
 	while ($line = shift @stack || <$IN>) {
 	    chomp $line;
@@ -976,7 +984,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-				
+
 			    }
 			    elsif ($type eq 'deletion') {
 				if ($value !~ /[ATGCN]+|-/i) {
@@ -984,7 +992,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-				
+
 			    }
 			    elsif ($type eq 'indel') {
 				if ($value !~ /[ATGCN]+|[-~]/i) {
@@ -1011,7 +1019,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-				
+
 			    }
 			    elsif ($type eq 'deletion') {
 				if ($value !~ /[ATGCN]+|~/) {
@@ -1019,7 +1027,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-				
+
 			    }
 			    elsif ($type eq 'indel') {
 				if ($value !~ /[ATGCN]+|[-~]/) {
@@ -1027,7 +1035,7 @@ sub validate {
 				    push @{$errors{$error_code}}, [$line_count, $line];
 				    warn "WARNING : $error_code : ($value) $line\n";
 				}
-				
+
 			    }
 			}
 		    }
@@ -1243,7 +1251,7 @@ sub validate {
 							       );
 		    map {$valid_so_terms{sequence_alteration}{$_}++} keys %{$children};
 		    map {$valid_so_terms{sequence_alteration}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_alteration}}};
-		    
+
 		    # Get valid sequence_variant terms
 		    $seen = {};
 		    $children = {};
@@ -1253,7 +1261,7 @@ sub validate {
 		    %{$valid_so_terms{sequence_variant}} = ('SO:0001060' => 1);
 		    map {$valid_so_terms{sequence_variant}{$_}++} keys %{$children};
 		    map {$valid_so_terms{sequence_variant}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_variant}}};
-		    
+
 		    if ($line =~ /^\#\#gvf-version\s+(\d+\.?\d*)/) {
 			$pragmas{'gvf-version'} = $1;
 		    }
@@ -1496,7 +1504,7 @@ sub validate {
 		}
 	    }
 	}
-	
+
 	close $IN;
 	print "\n\n";
 	print "Error Summary for $file\n";
@@ -1522,21 +1530,36 @@ sub validate {
 #-----------------------------------------------------------------------------
 
 sub stats {
-    
+
     die "gff_tool (stats) not yet implimented!\n";
-    
+
 }
 
+
 #-----------------------------------------------------------------------------
-#  fasta_feature|p Print a fasta sequence for each feature instead of
-#		  the feature. Requires the fasta argument (Not yet
-#		  implimented)
+#  sequence|p     Print a fasta sequence for each feature instead of
+#		  the feature. Requires the fasta argument.
 #-----------------------------------------------------------------------------
 
-sub fasta_feature {
-    
-    die "gff_tool (to_fasta) not yet implimented!\n";
-    
+sub sequence {
+
+  my $files = shift;
+
+  for my $file (@{$files}) {
+    my $IN  = fh_in($file);
+    my $OUT = fh_out($file);
+    while (my $f = next_feature_hash($IN)) {
+
+      my ($seqid, $start, $end) = @{$f}{qw(seqid start end)};
+
+      my $header = $f->{attributes}{ID}[0];
+      my $seq = $FASTA_DB->seq($seqid, $start, $end);
+
+      $seq =~ s/(.{50})/$1\n/g;
+
+      print ">$header\n$seq\n";
+    }
+  }
 }
 
 #-----------------------------------------------------------------------------
@@ -1545,13 +1568,13 @@ sub fasta_feature {
 #-----------------------------------------------------------------------------
 
 sub fasta_add {
-    
+
     my ($files, $fasta_add) = @_;
     send_message ('WARN',
 		  'fasta_add_not_fully_tested',
 		  'fasta_add) function is written, but untested'
 		  );
-    
+
     die "Can't open $fasta_add for reading\n" unless -r $fasta_add;
     for my $file (@{$files}) {
 	my ($fasta_section) = `grep -P '^##FASTA' $file`;
@@ -1567,9 +1590,9 @@ sub fasta_add {
 #-----------------------------------------------------------------------------
 
 sub fasta_only {
-    
+
     die "\n\ngff_tool (strip_fasta) function is written, but untested\n\n";
-    
+
     for my $file (@files) {
 	unlink $file or die "Can't unlink $file\n$!\n";
 	open (my $OUT, '>', $file) or die "Can't open $file for writing :\n$!\n";
@@ -1589,9 +1612,9 @@ sub fasta_only {
 #-----------------------------------------------------------------------------
 
 sub fasta_no {
-    
+
     die "\n\ngff_tool (fasta_no) function is written, but untested\n\n";
-    
+
     for my $file (@files) {
 	unlink $file or die "Can't unlink $file\n$!\n";
 	open (my $OUT, '>', $file) or die "Can't open $file for writing :\n$!\n";
@@ -1609,9 +1632,9 @@ sub fasta_no {
 #-----------------------------------------------------------------------------
 
 sub add_ID {
-    
+
     die "gff_tool (add_ID) not yet implimented!\n";
-    
+
 }
 
 #-----------------------------------------------------------------------------
@@ -1622,9 +1645,9 @@ sub add_ID {
 #-----------------------------------------------------------------------------
 
 sub pragmas {
-    
+
     die "gff_tool (gff_pragmas) not yet implimented!\n";
-    
+
 }
 
 #-----------------------------------------------------------------------------
@@ -1634,7 +1657,7 @@ sub pragmas {
 #-----------------------------------------------------------------------------
 
 sub headers_only {
-    
+
     for my $file (@files) {
 	open (my $IN, '<', $file) or die "Can't open $file for reading :\n$!\n";
 	my $OUT = fh_out($file);
@@ -1653,7 +1676,7 @@ sub headers_only {
 #-----------------------------------------------------------------------------
 
 sub headers_no {
-    
+
     for my $file (@files) {
 	open (my $IN, '<', $file) or die "Can't open $file for reading :\n$!\n";
 	my $OUT = fh_out($file);
@@ -1670,7 +1693,7 @@ sub headers_no {
 #-----------------------------------------------------------------------------
 
 sub meta_add {
-    
+
     for my $file (@files) {
 	open (my $IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
 	open (my $HEAD, '<', $meta_add) or die "Can't open $meta_add for reading:\n$!\n";
@@ -1678,7 +1701,7 @@ sub meta_add {
 	print $OUT (<$HEAD>);
 	print $OUT (<$IN>);
     }
-    
+
 }
 
 #-----------------------------------------------------------------------------
@@ -1687,7 +1710,7 @@ sub meta_add {
 #-----------------------------------------------------------------------------
 
 sub features {
-    
+
     for my $file (@files) {
 	open (my $IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
 	my $OUT = fh_out($file);
@@ -1704,7 +1727,7 @@ sub features {
 #-----------------------------------------------------------------------------
 
 sub union {
-    
+
     my $files = shift;
     my %union;
     for my $file (@{$files}) {
@@ -1732,7 +1755,7 @@ sub union {
 #-----------------------------------------------------------------------------
 
 sub intersection {
-    
+
     my $files = shift;
     my (%inter_count, %inter_stash);
     my $file_count = 1;
@@ -1850,36 +1873,36 @@ sub s_difference {
 #-----------------------------------------------------------------------------
 #  gvf_sets       Calculate the pairwise intersection and compliment
 #                 for all files and the symetric difference for each
-#                 file. 
+#                 file.
 #-----------------------------------------------------------------------------
 
 sub gvf_sets {
-    
+
 #     my $files = shift;
 #     my (%diff, %comp, %union);
 #     for my $file1 (@files) {
-# 	my $IN = fh_in($file1);
-# 	while (my $f = next_feature_hash($IN)) {
-# 	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
-# 	    # if ($set_seq) {
-# 	    #	my $a = $f->{attributes};
-# 	    #	my $ref_seq = $a->{Reference_seq}[0];
-# 	    #	my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
-# 	    #	$loc_id = join ':', ($loc_id, $ref_seq, $var_seq);
-# 	    # }
-# 	    $diff_stash{$loc_id} ||= $f;
-# 	    $diff_count{$loc_id}++;
-# 	}
-# 	for my $file2 (@files) {
-# 	    my $IN = fh_in($file2);
-# 	    while (my $f = next_feature_hash($IN)) {
+#	my $IN = fh_in($file1);
+#	while (my $f = next_feature_hash($IN)) {
+#	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
+#	    # if ($set_seq) {
+#	    #	my $a = $f->{attributes};
+#	    #	my $ref_seq = $a->{Reference_seq}[0];
+#	    #	my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
+#	    #	$loc_id = join ':', ($loc_id, $ref_seq, $var_seq);
+#	    # }
+#	    $diff_stash{$loc_id} ||= $f;
+#	    $diff_count{$loc_id}++;
+#	}
+#	for my $file2 (@files) {
+#	    my $IN = fh_in($file2);
+#	    while (my $f = next_feature_hash($IN)) {
 #     }
 #     my $OUT = fh_out();
 #     for my $loc_id (sort keys %diff_stash) {
-# 	if ($diff_count{$loc_id} == 1) {
-# 	    my $f = $diff_stash{$loc_id};
-# 	    print $OUT to_gff3($f);
-# 	}
+#	if ($diff_count{$loc_id} == 1) {
+#	    my $f = $diff_stash{$loc_id};
+#	    print $OUT to_gff3($f);
+#	}
 #     }
 }
 
@@ -1888,10 +1911,10 @@ sub gvf_sets {
 #-----------------------------------------------------------------------------
 
 sub calc_titv {
-    
+
     my $files = shift;
     my ($ti, $tv);
-    
+
     for my $file (@files) {
 	my $IN = fh_in($file);
 	print "$file\t";
@@ -2125,6 +2148,33 @@ sub parse_ids {
 
 #-----------------------------------------------------------------------------
 
+sub parse_fasta {
+
+  my $path = shift;
+
+  require Bio::DB::Fasta;
+
+  my $db = Bio::DB::Fasta->new($path);
+
+  return $db;
+
+}
+
+#-----------------------------------------------------------------------------
+
+sub get_sequence_code_ref {
+
+  my ($feature, $db) = @_;
+
+  return
+    sub {
+      my ($seqid, $start, $end) = @{$feature}{qw(seqid start end)};
+      return $db->seq($seqid, $start, $end);
+    }
+  }
+
+#-----------------------------------------------------------------------------
+
 sub fails_filters {
 
 	my $feature = shift;
@@ -2133,9 +2183,9 @@ sub fails_filters {
 
 	#Move the filter sub code here
 
-	if ($i) {
-		$fail++ if ($include && ! $i->{$feature->{feature_id}});
-		$fail++ if ($exclude &&   $i->{$feature->{feature_id}});
+	if ($IDS) {
+		$fail++ if ($include && ! $IDS->{$feature->{feature_id}});
+		$fail++ if ($exclude &&   $IDS->{$feature->{feature_id}});
 	}
 
 	return $fail;
