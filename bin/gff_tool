@@ -377,6 +377,7 @@ die "FATAL : unable_to_open_file : $SO_FILE\n"    if ($SO_FILE    && ! -r $SO_FI
 my @files = @ARGV;
 die "$usage\n\nMust give one or more feature files\n\n" unless (scalar @files || ! -t STDIN);
 for my $file (@files) {
+ next if $file eq '-';
  die "FATAL : unable_to_open_file : $file\n" if ! -r $file;
 }
 
@@ -394,6 +395,7 @@ validate(\@files)		  if $validate;
 hash_ag(\@files, $hash_ag, $code) if $hash_ag;
 stats(\@files)		          if $stats;
 sequence(\@files)		  if $sequence;
+splice_sequence(\@files)	  if $splice_sequence;
 features(\@files)                 if $features;
 fasta_only(\@files)		  if $fasta_only;
 fasta_no(\@files)		  if $fasta_no;
@@ -1613,13 +1615,14 @@ sub splice_sequence {
 	
 	my $spliced_seq;
 	for my $pair (@coords) {
-	  @coords = reverse @coords if $strand eq '-';
-	  my $seq = $FASTA_DB->seq($seqid, $coords[0], $coords[1]);
+	  @{$pair} = reverse @{$pair} if $strand eq '-';
+	  my $seq = $FASTA_DB->seq($seqid, $pair->[0], $pair->[1]);
 	  $spliced_seq .= $seq;
 	}
-	my $seq =~ s/(.{50})/$1\n/g;
-	my $header = ">$id";
+	$spliced_seq =~ s/(.{50})/$1\n/g;
+	my $header = "$id";
 	print ">$header\n$spliced_seq\n";
+	print '';
       }
     }
   }
