@@ -248,6 +248,7 @@ sub parse_record {
 			  Variant_seq   => \@variant_seqs,
 			  Zygosity      => [$zygosity],
 			  ID            => [$feature_id],
+                          Total_reads   => [$read_count],
 		      };
 
 	my $feature = {feature_id => $feature_id,
