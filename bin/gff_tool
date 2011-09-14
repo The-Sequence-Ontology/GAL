@@ -310,9 +310,12 @@ $t = {tag1 => [value1],
 
 Examples:
 
-gff_tool --hash_ag "push @{$hash_ag{$f->{type}}}, $f"       \
-	   --code "my @x = sort {($a->{end} - $a->{start})  \
-	   <=> ($b->{end} - $b->{start})} @$value;shift @x" \
+# The --hash_ag code pushes each feature onto a hash keyed by type
+# The --code code sorts the stashed feautres by length and shifts off
+# longest one which is returned and printed.
+gff_tool --hash_ag "push @{$h{$f->{type}}}, $f"          \
+	 --code "my @x = sort {($a->{end} - $a->{start}) \
+	   <=> ($b->{end} - $b->{start})} @$v;shift @x"  \
 	   features.gff3
 
 ';
@@ -677,9 +680,9 @@ sub alter_gff {
 
 sub hash_ag {
 
-    my ($files, $ag_code) = @_;
+    my ($files, $ag_code, $code) = @_;
 
-    my %hash_ag;
+    my %h;
     for my $file (@{$files}) {
 	my $IN = fh_in($file);
 	while (my $f = next_feature_hash($IN)) {
@@ -688,17 +691,17 @@ sub hash_ag {
 	    my $i = $IDS;
 	    my $d = $FASTA_DB;
 
-	    my $return_value = eval $hash_ag;
-	    die "Fatal Error in code ref: $hash_ag\n$@\n" if $@;
+	    my $return_value = eval $ag_code;
+	    die "Fatal Error in code ref: $ag_code\n$@\n" if $@;
 	}
     }
 
     my $OUT = fh_out();
-    for my $key (keys %hash_ag) {
+    for my $k (keys %h) {
 
-	my $value = $hash_ag{$key};
+	my $v = $h{$k};
 
-	my (@f) = eval $code;
+	my @f = eval $code;
 	die "Fatal Error in code ref: $code\n$@\n" if $@;
 	next unless @f;
 
