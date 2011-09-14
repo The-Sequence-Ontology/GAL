@@ -202,6 +202,9 @@ to the altered copy of the feature.  All filters given are applied.
 		  the feature. Requires the fasta argument (Not yet
 		  implimented)
 
+  splice_sequence Print the mature fasta sequence for spliced
+                  features (exons, CDS)
+
   features|x      Print only feature lines, removing all meta-data,
 		  comments, empty lines and fasta from a GFF file.
 
@@ -317,10 +320,10 @@ gff_tool --hash_ag "push @{$hash_ag{$f->{type}}}, $f"       \
 my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
     $include, $exclude, $code, $filter, $overlaps, $merge, $blend,
     $sort, $alter, $hash_ag, $validate, $stats, $print_gff, $sequence,
-    $fasta_only, $fasta_no, $fasta_add, $meta_only, $meta_no,
-    $meta_add, $add_ID, $pragmas, $features, $union, $intersection,
-    $l_compliment, $s_difference, $titv, $gvf_stats, $effect_stats,
-    $gvf_sets, $fix_gvf);
+    $splice_sequence, $fasta_only, $fasta_no, $fasta_add, $meta_only,
+    $meta_no, $meta_add, $add_ID, $pragmas, $features, $union,
+    $intersection, $l_compliment, $s_difference, $titv, $gvf_stats,
+    $effect_stats, $gvf_sets, $fix_gvf);
 
 my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'out_ext|o=s'     => \$out_ext,
@@ -340,6 +343,7 @@ my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'validate|v'      => \$validate,
 			     'stats|u'	       => \$stats,
 			     'sequence|p'      => \$sequence,
+			     'splice_sequence' => \$splice_sequence,
 			     'print'           => \$print_gff,
 			     'features|x'      => \$features,
 			     'fasta_only|r'    => \$fasta_only,
@@ -1558,6 +1562,62 @@ sub sequence {
       $seq =~ s/(.{50})/$1\n/g;
 
       print ">$header\n$seq\n";
+    }
+  }
+}
+
+#-----------------------------------------------------------------------------
+#  splice_sequence Print the mature fasta sequence for spliced
+#  features (exons, CDS)
+#-----------------------------------------------------------------------------
+
+sub splice_sequence {
+  
+  my $files = shift;
+  
+  for my $file (@{$files}) {
+    my $IN  = fh_in($file);
+    my $OUT = fh_out($file);
+    
+    my %spliced_seq;
+    while (my $f = next_feature_hash($IN)) {
+      
+      my $a = $f->{attributes};
+      
+      if (exists $a->{Parent}) {
+	my @parents = @{$a->{Parent}};
+	
+	my ($seqid, $start, $end, $strand) = @{$f}{qw(seqid start end strand)};
+	
+	
+	for my $parent (@parents) {
+	  push @{$spliced_seq{$parent}{coords}{$seqid}}, [$start, $end];
+	  $spliced_seq{$parent}{strand} = $strand;
+	}
+      }
+    }
+    
+    for my $id (keys %spliced_seq) {
+      my $strand = $spliced_seq{$id}{strand};
+      for my $seqid (keys %{$spliced_seq{$id}{coords}}) {
+	my @coords;
+	if ($strand eq '-') {
+	  @coords = sort {$b->[0] <=> $a->[0]} @{$spliced_seq{$id}{coords}{$seqid}};
+	}
+	else {
+	  @coords = sort {$a->[1] <=> $b->[1]} @{$spliced_seq{$id}{coords}{$seqid}};
+	}
+	
+	my $spliced_seq;
+	for my $pair (@coords) {
+	  @coords = reverse @coords if $strand eq '-';
+	  my $seq = $FASTA_DB->seq($seqid, $coords[0], $coords[1]);
+	  $spliced_seq .= $seq;
+	}
+	my $seq =~ s/(.{50})/$1\n/g;
+	my $header = ">$id";
+	print ">$header\n$spliced_seq\n";
+      }
     }
   }
 }
