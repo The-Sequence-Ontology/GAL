@@ -157,10 +157,10 @@ sub parse_record {
 
     my %individual_data;
     my ($header) = $self->reader->headers;
-    my @header_data = split /\s/, $header;
+    my @header_data = split /\s+/, $header;
     splice(@header_data, 0, 9);
     @individual_data{@header_data} = @{$data};
-`
+
     my @features;
     for my $individual_id (sort keys %individual_data) {
 
@@ -202,7 +202,7 @@ sub parse_record {
 	  }
 	}
 
-	my $read_count = $individual_hash{DP};
+	my $read_count = $individual_hash{DP} || $info{DP} || undef;
 
 	# Make sure that at least one variant sequence differs from
 	# the reference sequence.
