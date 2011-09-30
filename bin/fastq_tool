@@ -24,6 +24,7 @@ Options:
 
   --count	  Return the count of reads in the file.
   --lengths	  Print a summary of the read lengths.
+  --extract_ids   Extract the records who's IDs are in the given file.
   --quals	  Print a summary of quality values.
   --summary       Print a summary of read counts, lengths and base qualities
   --total         Print total read length (combined).
@@ -41,23 +42,24 @@ Options:
 ";
 
 
-my ($help, $count, $lengths, $quals, $summary, $total, $ill2sanger,
+my ($help, $count, $lengths, $id_file, $quals, $summary, $total, $ill2sanger,
     $sol2sanger, $fastq2fasta, $trim_qual, $guess_format, $grep_seq,
     $verbose);
 
-my $opt_success = GetOptions('help'         => \$help,
-			     'count'	    => \$count,
-			     'lengths'	    => \$lengths,
-			     'quals'	    => \$quals,
-			     'summary'      => \$summary,
-			     'total'	    => \$total,
-			     'ill2sanger'   => \$ill2sanger,
-			     'sol2sanger'   => \$sol2sanger,
-			     'fastq2fasta'  => \$fastq2fasta,
-			     'trim_qual'    => \$trim_qual,
-			     'guess_format' => \$guess_format,
-			     'grep_seq=s'   => \$grep_seq,
-			     'verbose'      => \$verbose,
+my $opt_success = GetOptions('help'          => \$help,
+			     'count'	     => \$count,
+			     'lengths'	     => \$lengths,
+			     'extract_ids=s' => \$id_file,
+			     'quals'	     => \$quals,
+			     'summary'       => \$summary,
+			     'total'	     => \$total,
+			     'ill2sanger'    => \$ill2sanger,
+			     'sol2sanger'    => \$sol2sanger,
+			     'fastq2fasta'   => \$fastq2fasta,
+			     'trim_qual'     => \$trim_qual,
+			     'guess_format'  => \$guess_format,
+			     'grep_seq=s'    => \$grep_seq,
+			     'verbose'       => \$verbose,
 			      );
 
 die $usage if $help || ! $opt_success;
@@ -71,6 +73,9 @@ if ($count) {
 }
 elsif ($lengths) {
     length_summary($file);
+}
+elsif ($id_file) {
+    extract_ids($id_file, $file);
 }
 elsif ($quals) {
     quality_summary($file)
@@ -144,6 +149,27 @@ sub length_summary {
     print get_stat_summary($stat);
     print "\n";
     # print get_stat_histogram($stat);
+}
+
+#-----------------------------------------------------------------------------
+
+sub extract_ids {
+    my ($id_file, $fastq_file) = @_;
+    
+    my $iterator = make_read_iterator($fastq_file);
+    
+    open (my $IDS, '<', $id_file) or
+    	die "FATAL : cant_open_file_for_reading : $id_file $!\n";
+    my %ids = map {next unless $_;my ($id) = split /\s+/, $_;$id => 1} (<$IDS>);
+    close $IDS;
+    
+    while (my $read = &$iterator) {
+	my $this_id;
+	($this_id = $read->[0]) =~ s/^\@//;
+	next unless exists $ids{$this_id}; 
+        print join "\n", @{$read};
+        print "\n";
+    }
 }
 
 #-----------------------------------------------------------------------------
