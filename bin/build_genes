@@ -28,6 +28,9 @@ my $opt_success = GetOptions('help'    => \$help,
 die $usage if $help || ! $opt_success;
 
 my $file = shift;
+
+die $usage unless $file && -r $file;
+
 my ($features, $seqids) = parse_gff($file);
 my $transcript_graph = build_transcript_graph($features, $seqids);
 my $genes = build_genes($features, $transcript_graph);
