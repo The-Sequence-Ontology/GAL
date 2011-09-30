@@ -65,6 +65,12 @@ to the altered copy of the feature.  All filters given are applied.
 		  also be made available as a hash reference ($i) to
 		  the any code reference given.
 
+  seqids          Provide a file that contains a list of seqids.  The
+		  values loaded be used by the include/exclude
+		  commands described below and will also be made
+		  available as a hash reference ($si) to the any code
+		  reference given.
+
   include|n       Include only those features whos IDs match the
 		  values provided by the ids argument above.
 
@@ -76,21 +82,23 @@ to the altered copy of the feature.  All filters given are applied.
 		  feature as described.  All code references will have
 		  available to the the following variables:
 
-		      $i - A hash reference of the values loaded from the
-			   file given by the ids argument.
-		      $f - A hash reference for the current feature (see
-			   below for more details on the structure of the
-			   hash reference).
-		      $t - A hash reference for the attributes associated
-			   with the current feature (see below for more
-			   details on the structure of the hash reference).
-		      $s - The sequence of the current feature.  Actually
-			   $s is a a code reference that will return the
-			   sequence for the current feature.  This prevents
-			   the code from loading the sequence for each
-			   feature unless necessary.
-		      $d - A Bio::DB::Fasta object for the fasta sequences
-			   given by the fasta argument described above.
+		      $i  - A hash reference of the values loaded from the
+			    file given by the ids argument.
+		      $si - A hash reference of the values loaded from the
+			    file given by the seqids argument.
+		      $f -  A hash reference for the current feature (see
+			    below for more details on the structure of the
+			    hash reference).
+		      $t -  A hash reference for the attributes associated
+			    with the current feature (see below for more
+			    details on the structure of the hash reference).
+		      $s -  The sequence of the current feature.  Actually
+			    $s is a a code reference that will return the
+			    sequence for the current feature.  This prevents
+			    the code from loading the sequence for each
+			    feature unless necessary.
+		      $d -  A Bio::DB::Fasta object for the fasta sequences
+			    given by the fasta argument described above.
 
   filter|t        Use the code reference provided with the code
 		  argument described above to filter the features.
@@ -222,8 +230,8 @@ to the altered copy of the feature.  All filters given are applied.
   meta_no|Y       Print only the meta-data lines (pragmas, comments and
 		  empty lines) from a GFF file.
 
-  meta_add|z      Add a file containing meta-data to the begining of
-		  a GFF file.
+  meta_add|z      Add the meta-data contained in the given file to the
+                  begining of a GFF file.
 
   pragmas|w       Interactively add GFF3/GVF pragmas to the top of the
 		  file.  Use GFF3 or GVF (case insensitive) as an
@@ -281,14 +289,15 @@ Code References:
 All code refs have available to them the current feature as a hash
 reference ($f), the attributes of the current feature as a separate
 hash reference ($t), any list of values loaded with the ids argument
-($i), the sequence of the current feature ($s) and the current
-Bio::DB::Fasta object ($d) if the fasta argument was given.  Changes
-made by code references can change any of the values in the variables
-mentioned above, but those changes will be discarded before the
-feature is printed except when the alter argument is given.  The
-attributes located in $t are the same as the ones located in
-$f->{attributes} but when the alter command is in effect the values in
-$t will clobber the $f->{attributes} before the feature is printed.
+($i), any values loded with the seqids argument ($si), the sequence of
+the current feature ($s) and the current Bio::DB::Fasta object ($d) if
+the fasta argument was given.  Changes made by code references can
+change any of the values in the variables mentioned above, but those
+changes will be discarded before the feature is printed except when
+the alter argument is given.  The attributes located in $t are the
+same as the ones located in $f->{attributes} but when the alter
+command is in effect the values in $t will clobber the
+$f->{attributes} before the feature is printed.
 
 The structure of hash references discussed above are:
 
@@ -321,18 +330,19 @@ gff_tool --hash_ag "push @{$h{$f->{type}}}, $f"          \
 ';
 
 my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
-    $include, $exclude, $code, $filter, $overlaps, $merge, $blend,
-    $sort, $alter, $hash_ag, $validate, $stats, $print_gff, $sequence,
-    $splice_sequence, $fasta_only, $fasta_no, $fasta_add, $meta_only,
-    $meta_no, $meta_add, $add_ID, $pragmas, $features, $union,
-    $intersection, $l_compliment, $s_difference, $titv, $gvf_stats,
-    $effect_stats, $gvf_sets, $fix_gvf);
+    $SEQIDS_FILE, $include, $exclude, $code, $filter, $overlaps,
+    $merge, $blend, $sort, $alter, $hash_ag, $validate, $stats,
+    $print_gff, $sequence, $splice_sequence, $fasta_only, $fasta_no,
+    $fasta_add, $meta_only, $meta_no, $meta_add, $add_ID, $pragmas,
+    $features, $union, $intersection, $l_compliment, $s_difference,
+    $titv, $gvf_stats, $effect_stats, $gvf_sets, $fix_gvf);
 
 my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'out_ext|o=s'     => \$out_ext,
 			     'fasta|j=s'       => \$FASTA_FILE,
 			     'so_file=s'       => \$SO_FILE,
 			     'ids|d=s'	       => \$IDS_FILE,
+		             'seqids|d=s'      => \$SEQIDS_FILE,
 			     'include|n'       => \$include,
 			     'exclude|e'       => \$exclude,
 			     'code|c=s'	       => \$code,
@@ -370,7 +380,6 @@ my $opt_success = GetOptions('in_place|i'      => \$in_place,
 
 die $usage if $help || ! $opt_success;
 
-die "FATAL : unable_to_open_file : $IDS_FILE\n"   if ($IDS_FILE   && ! -r $IDS_FILE);
 die "FATAL : unable_to_open_file : $FASTA_FILE\n" if ($FASTA_FILE && ! -r $FASTA_FILE);
 die "FATAL : unable_to_open_file : $SO_FILE\n"    if ($SO_FILE    && ! -r $SO_FILE);
 
@@ -382,7 +391,8 @@ for my $file (@files) {
 }
 
 my $FASTA_DB = parse_fasta($FASTA_FILE) if $FASTA_FILE;
-my $IDS = parse_ids($IDS_FILE) if $IDS_FILE;
+my $IDS      = parse_ids($IDS_FILE)     if $IDS_FILE;
+my $SEQIDS   = parse_ids($SEQIDS_FILE)  if $SEQIDS_FILE;
 
 # Move the filter code to the passes_filters sub
 filter(\@files, $code)            if $filter;
@@ -438,10 +448,11 @@ sub filter {
 	my $OUT = fh_out($file);
 	while (my $f_original = next_feature_hash($IN)) {
 
-	    my $f = $f_original;
-	    my $t = $f->{attributes};
-	    my $i = $IDS;
-	    my $d = $FASTA_DB;
+	    my $f  = $f_original;
+	    my $t  = $f->{attributes};
+	    my $i  = $IDS;
+	    my $si = $SEQIDS;
+	    my $d  = $FASTA_DB;
 
 	    my $return_value = eval $code;
 	    die "Fatal Error in code ref: $code\n$@\n" if $@;
@@ -619,6 +630,7 @@ sub sort_gff {
 
 	my $t = $f->{attributes};
 	my $i = $IDS;
+	my $si = $SEQIDS;
 	my $d = $FASTA_DB;
 
 	print $OUT to_gff3($f);
@@ -645,6 +657,7 @@ sub alter_gff {
 
 	    my $t = $f->{attributes};
 	    my $i = $IDS;
+	    my $si = $SEQIDS;
 	    my $d = $FASTA_DB;
 
 	    my $return_value = eval $code;
@@ -691,6 +704,7 @@ sub hash_ag {
 
 	    my $t = $f->{attributes};
 	    my $i = $IDS;
+	    my $si = $SEQIDS;
 	    my $d = $FASTA_DB;
 
 	    my $return_value = eval $ag_code;
@@ -2204,9 +2218,17 @@ sub parse_ids {
 
 	my $file = shift;
 
-	open (my $IN, "<", $file)   or die "Can't open $file for reading: $!\n";
+	my %ids;
+	if ($file && ! -r $file) {
+	    warn "WARN : assuming_id_name : Assuming $file is an ID";
+	    $ids{$file}++;
+	    return \%ids;
+	}
 
-	my %ids = map {chomp;$_ => 1} (<$IN>);
+	open (my $IN, "<", $file) or
+	    die "Can't open $file for reading: $!\n";
+
+	%ids = map {chomp;$_ => 1} (<$IN>);
 
 	return \%ids;
 }
@@ -2249,11 +2271,15 @@ sub fails_filters {
 
 	#Move the filter sub code here
 
-	if ($IDS) {
-		$fail++ if ($include && ! $IDS->{$feature->{feature_id}});
-		$fail++ if ($exclude &&   $IDS->{$feature->{feature_id}});
-	}
 
+	if ($IDS && %{$IDS}) {
+	    $fail++ if ($include && ! $IDS->{$feature->{feature_id}});
+	    $fail++ if ($exclude &&   $IDS->{$feature->{feature_id}});
+	}
+	if ($SEQIDS && %{$SEQIDS}) {
+	    $fail++ if ($include && ! $SEQIDS->{$feature->{seqid}});
+	    $fail++ if ($exclude &&   $SEQIDS->{$feature->{seqid}});
+	}
 	return $fail;
 }
 
@@ -2321,9 +2347,13 @@ sub next_feature_hash {
     my $fh = shift;
 
     my $line = <$fh>;
-    return unless defined $line;
-    return if $line =~ /^\#\#FASTA/;
+    return undef unless defined $line;
+    if ($line =~ /^\#\#FASTA/) {
+	handle_fasta($fh);
+	return undef;
+    }
     until ($line !~ /^(\#.*|\s+)$/) {
+	handle_header_line($line);
 	$line = <$fh>;
     }
     chomp $line;
@@ -2356,6 +2386,58 @@ sub next_feature_hash {
 }
 
 #-----------------------------------------------------------------------------
+
+sub handle_header_line {
+
+    my $line = shift;
+    return if $meta_no;
+    return if $line =~ /^\#\#\#\s*$/;
+
+    if ($line =~ /^\#\#sequence-region\s(\S+)/) {
+	if ($include && %{$SEQIDS} ) {
+	    return unless $SEQIDS->{$1};
+	}
+	elsif ($exclude && %{$SEQIDS}) {
+	    return if $SEQIDS->{$1};
+	}
+    }
+    print $line;
+}
+
+#-----------------------------------------------------------------------------
+
+sub handle_fasta {
+
+    my $fh = shift;
+    
+    if ($fasta_no) {
+	close $fh;
+	return;
+    }
+    
+    require Bio::SeqIO;
+    
+    my $seq_io  = Bio::SeqIO->new(-fh => $fh,
+				  -format => 'Fasta');
+    
+    print "##FASTA\n";
+    while (my $seq_obj = $seq_io->next_seq) {
+	my $id = $seq_obj->display_id;
+	if ($include && scalar keys %{$SEQIDS} ) {
+	    next unless $SEQIDS->{$id};
+	}
+	elsif ($exclude && scalar keys %{$SEQIDS}) {
+	    next if $SEQIDS->{$id};
+	}
+	my $header = $id . " " . $seq_obj->description;
+	my $seq = $seq_obj->seq;
+	$seq =~ s/(.{60})/$1\n/g;
+        print ">$header\n$seq\n";
+    }
+    close $fh;
+}
+
+#-----------------------------------------------------------------------------    
 
 sub to_gff3 {
 

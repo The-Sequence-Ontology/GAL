@@ -38,6 +38,9 @@ Options:
 
   --bam        Output is in BAM format
 
+  --fastq      Extract fastq from the SAM/BAM file. Single-end libraries
+               only.
+
   --headers    Print headers with output
 
   --intervals  Print a list of intervals where there is any coverage
@@ -45,7 +48,7 @@ Options:
 ";
 
 
-my ($help, $summary, $filter, $clean, $region, $bam, $headers,
+my ($help, $summary, $filter, $clean, $region, $bam, $fastq, $headers,
     $intervals);
 
 my $opt_success = GetOptions('help'       => \$help,
@@ -54,6 +57,7 @@ my $opt_success = GetOptions('help'       => \$help,
 			     'clean'      => \$clean,
 			     'region=s'   => \$region,
 			     'bam'        => \$bam,
+			     'fastq'      => \$fastq,
 			     'headers'    => \$headers,
 			     'intervals'  => \$intervals,
 			     );
@@ -88,6 +92,9 @@ elsif ($clean) {
 }
 elsif ($intervals) {
     calc_intervals(\@files);
+}
+elsif ($fastq) {
+    print_fastq(\@files);
 }
 else {
     print_file(\@files);
@@ -326,6 +333,23 @@ sub print_file {
 	my $iterator = make_iterator($file, $region);
 	while (my $a = &{$iterator}) {
 	    print_alignment($a);
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_fastq {
+
+    my $files = shift;
+
+    for my $file (@{$files}) {
+	my $iterator = make_iterator($file, $region);
+	while (my $a = &{$iterator}) {
+	    #qname flag rname pos map cigar mrnm mpos isize seq qual
+	    my ($id, $seq, $qual) = @{$a}{qw(qname seq qual)};
+	    print join "\n", ('@' . $id, $seq, '+', $qual);
+	    print "\n";
 	}
     }
 }
