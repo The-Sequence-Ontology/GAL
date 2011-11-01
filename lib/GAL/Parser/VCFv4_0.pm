@@ -161,12 +161,6 @@ sub parse_record {
     splice(@header_data, 0, 9);
     @individual_data{@header_data} = @{$data};
 
-    my %variant_seq_hash = map {$_ => 1} @all_seqs[$var1, $var2];
-    my @variant_seqs = keys %variant_seq_hash;
-
-    my @these_all_seqs = ($this_ref, @variant_seqs);
-    my @lengths = map {length($_)} @these_all_seqs;
-
     my @features;
     for my $individual_id (sort keys %individual_data) {
 
@@ -177,6 +171,12 @@ sub parse_record {
 	my ($var1, $phased, $var2) =
 	    split //, $individual_hash{GT};
 	my $this_ref = $reference_seq;
+
+	my %variant_seq_hash = map {$_ => 1} @all_seqs[$var1, $var2];
+	my @variant_seqs = keys %variant_seq_hash;
+
+	my @these_all_seqs = ($this_ref, @variant_seqs);
+	my @lengths = map {length($_)} @these_all_seqs;
 
 	my $this_start = $start;
 	my $this_end   = $end;
