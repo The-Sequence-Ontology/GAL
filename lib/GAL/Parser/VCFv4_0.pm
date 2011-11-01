@@ -161,6 +161,12 @@ sub parse_record {
     splice(@header_data, 0, 9);
     @individual_data{@header_data} = @{$data};
 
+    my %variant_seq_hash = map {$_ => 1} @all_seqs[$var1, $var2];
+    my @variant_seqs = keys %variant_seq_hash;
+
+    my @these_all_seqs = ($this_ref, @variant_seqs);
+    my @lengths = map {length($_)} @these_all_seqs;
+
     my @features;
     for my $individual_id (sort keys %individual_data) {
 
@@ -172,21 +178,17 @@ sub parse_record {
 	    split //, $individual_hash{GT};
 	my $this_ref = $reference_seq;
 
-	my %variant_seq_hash = map {$_ => 1} @all_seqs[$var1, $var2];
-	my @variant_seqs = keys %variant_seq_hash;
-
-	my @these_all_seqs = ($this_ref, @variant_seqs);
-	my @lengths = map {length($_)} @these_all_seqs;
-
+	my $this_start = $start;
+	my $this_end   = $end;
 	#INDEL
 	if (grep {$_ != 1} @lengths) {
 	  my ($min_length) = sort {$a <=> $b} @lengths;
 	  map {substr($_, 0, $min_length, '')} @these_all_seqs;
 	  map {$_ ||= '-'} @these_all_seqs;
 	  my $start_adjust = length($reference_seq) - length($these_all_seqs[0]);
-	  $start += $start_adjust;
+	  $this_start += $start_adjust;
 	  my $end_adjust = length($these_all_seqs[0]) - 1;
-	  $end = $start + $end_adjust;
+	  $this_end = $start + $end_adjust;
 
 	  $this_ref = shift @these_all_seqs;
 	  @variant_seqs = @these_all_seqs;
@@ -255,8 +257,8 @@ sub parse_record {
 		       seqid      => $seqid,
 		       source     => $individual_id,
 		       type       => $type,
-		       start      => $start,
-		       end        => $end,
+		       start      => $this_start,
+		       end        => $this_end,
 		       score      => $score,
 		       strand     => $strand,
 		       phase      => $phase,
