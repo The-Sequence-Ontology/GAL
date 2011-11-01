@@ -2420,7 +2420,7 @@ sub handle_fasta {
     my $seq_io  = Bio::SeqIO->new(-fh => $fh,
 				  -format => 'Fasta');
     
-    print "##FASTA\n";
+    print "\n##FASTA\n";
     while (my $seq_obj = $seq_io->next_seq) {
 	my $id = $seq_obj->display_id;
 	if ($include && scalar keys %{$SEQIDS} ) {
