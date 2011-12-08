@@ -123,9 +123,11 @@ sub parse_record {
     my $strand     = '+',
     my $phase      = '.';
 
+    #Validate var
     my $reference_seq = uc $record{ref};
 
     my @variant_seqs = split /,/, $record{alt};
+
     map {$_ = uc $_} @variant_seqs;
 
     my @all_seqs = ($reference_seq, @variant_seqs);
@@ -188,7 +190,7 @@ sub parse_record {
 	  my $start_adjust = length($reference_seq) - length($these_all_seqs[0]);
 	  $this_start += $start_adjust;
 	  my $end_adjust = length($these_all_seqs[0]) - 1;
-	  $this_end = $start + $end_adjust;
+	  $this_end = $this_start + $end_adjust;
 
 	  $this_ref = shift @these_all_seqs;
 	  @variant_seqs = @these_all_seqs;
