@@ -3,7 +3,8 @@ package GAL::Base;
 use strict;
 use vars qw($VERSION);
 use Carp qw(croak cluck);
-use Bio::DB::Fasta
+use Bio::DB::Fasta;
+use Scalar::Util qw(blessed);
 
 $VERSION = '0.01';
 
