@@ -14,10 +14,8 @@ my $usage = "
 
 Synopsis:
 
-variant_classifier --create --parser gff3 --driver SQLite              \
-		   --fasta path/to/fasta                               \
-		   --features feature.sqlite --variants variant.sqlite \
-		   genome_annotation.gff3 variants.gvf
+variant_classifier --fasta path/to/fasta --features feature.sqlite \
+		   --variants variant.sqlite \
 
 Description:
 
@@ -26,14 +24,15 @@ the functional effects of the variants against mRNA annotations.
 
 Options:
 
-  create       Only create and load the databases then die.
-	       to add to  the existing database if it exists.
-  parser       The format of the input file (a subclass of GAL::Parser).
-  driver       The type of storage to use (a sublcass of GAL::Storage).
+  # Required
   fasta        A path to the fasta files associated with the give features.
   features     The database name for the features.
   variants     The database name for the variants.
+
+  # Optional
   chr          Limit the analysis to a chromosome.
+  parser       The format of the input file (a subclass of GAL::Parser) [gff3].
+  driver       The type of storage to use MySQL or [SQLite]
   user         The database user.  Defaults first to \$ENV{\${driver}_user}
 	       where \$driver is the driver parsed from the dsn. ['']
   password     The database password.   Defaults first to
@@ -43,12 +42,10 @@ Options:
 
 ";
 
-my ($help, $create, $parser, $driver, $fasta, $feature_db,
-    $variant_db, $limit_chr, $user, $password, $prompt);
+my ($help, $driver, $fasta, $feature_db, $variant_db, $limit_chr,
+    $user, $password, $prompt);
 
 my $opt_success = GetOptions('help'          => \$help,
-			     'create'        => \$create,
-			     'parser=s'      => \$parser,
 			     'driver=s'      => \$driver,
 			     'fasta=s'       => \$fasta,
 			     'features=s'    => \$feature_db,
@@ -64,12 +61,8 @@ die $usage if $help || ! $opt_success;
 die $usage unless ($feature_db && $variant_db) || $create;
 
 $driver ||= 'SQLite';
-$parser ||= 'gff3';
 
-my ($feature_file, $variant_file) = @ARGV;
-
-
-
+# Making a hash of the arguments for the features and variants
 my $feat_store_args = {class    => $driver,
 		       database => $feature_db,
 		       user     => $user,
@@ -82,6 +75,7 @@ my $var_store_args = {class    => $driver,
 		      password => $password,
 		     };
 
+# Connect to the database for the features and variants
 my $feat_store = GAL::Annotation->new(storage => $feat_store_args,
 				      fasta   => $fasta,
 				     );
@@ -89,47 +83,43 @@ my $feat_store = GAL::Annotation->new(storage => $feat_store_args,
 my $var_store = GAL::Annotation->new(storage => $var_store_args,
 				     fasta   => $fasta,
 				    );
-
-if ($parser) {
-    $feat_store->parser(class => $parser);
-    $var_store->parser(class => $parser);
-}
-
-if ($create) {
-  $feat_store->load_files(files => $feature_file,
-			  mode  => 'overwrite',
-			 );
-  $var_store->load_files(files => $variant_file,
-			 mode  => 'overwrite',
-			);
-  exit 0;
-}
-
+# Get a list of all the features and variants
 my $features = $feat_store->schema->resultset('Feature');
 my $variants = $var_store->schema->resultset('Feature');
-# my $atts =     $var_store->schema->resultset('Attribute');
 
+# Set up the search
 my %feature_where = (type => 'mRNA');
-if ($limit_chr) {
-    $feature_where{seqid} = $limit_chr;
-}
+$feature_where{seqid} = $limit_chr if ($limit_chr);
 
+# Get an interator for all matching features
 my $mrnas = $features->search(\%feature_where);
 
+# Iterate over the features
 while (my $mrna = $mrnas->next) {
+    # Get the feature ID
     my $mrna_id = $mrna->feature_id;
+    # Get all the CDSs for this mRNA
     my $CDSs = $mrna->CDSs;
+    # Iterate over each CDS
     while (my $CDS = $CDSs->next) {
+        # Calculate which genomic bins this feature overlaps
 	my $bins = $CDS->get_feature_bins;
+        # Get my start and end
 	my $cds_start = $CDS->start;
 	my $cds_end   = $CDS->end;
+	# Set up a new set of search criteria for overlapping variants
+	# The addition of a bin column in the table makes range queries
+	# much faster
 	my %where = (bin   => {'-in' => $bins},
 		     start => {'>='  => $cds_start},
 		     end   => {'<='  => $cds_end},
 		     );
-	my $these_variants = $variants->search(\%where); # ->cursor
+	# Search for the overlapping variants
+	my $these_variants = $variants->search(\%where);
 
+	# Iterate over each variant
 	while (my $variant = $these_variants->next) {
+	    # Get data about the variant.
 	    my $variant_id = $variant->feature_id;
 	    my $seqid = $variant->seqid;
 	    my $type  = $variant->type;
@@ -139,13 +129,17 @@ while (my $mrna = $mrnas->next) {
 
 	    for my $variant_seq (@variant_seqs) {
 		my $mrna_variant_seq = $variant_seq;
+		# Some utility methods have to call the annotation object first.
 		$mrna_variant_seq = $mrna->annotation->revcomp($variant_seq)
 		    if $mrna->strand eq '-';
+		# The various features have various useful methods according
+		# to their type.
 		my ($ref_codon, $offset) = $mrna->codon_at_location($var_start);
 		unless ($ref_codon) {
 		    warn "WARN : invalid_codon_lookup : $variant_id\n";
 		    next;
 		}
+		# Another utility method that is supplied by the annotation object.
 		my $ref_aa = $mrna->annotation->translate($ref_codon);
 		my $var_codon = $ref_codon;
 		substr($var_codon, $offset, 1, $mrna_variant_seq);
