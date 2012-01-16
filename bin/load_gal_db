@@ -46,7 +46,7 @@ die $usage if grep {! -r $_} @files;
 $driver ||= 'SQLite';
 $parser ||= 'gff3';
 if (! $db_name) {
-    ($db_name = $files[0]) =~ s/\.(gvf|gff)3?/.sqlite/;
+    ($db_name = $files[0]) =~ s/\.(gvf|gff)3?$/.sqlite/;
 }
 
 my $store_args = {class    => $driver,
