@@ -46,20 +46,38 @@ Options:
 
     Remove CDS features that have more than one internal stop.
 
+  --alias, a FILE
+
+    An external alias file that can be used to map transcript IDs
+    to gene symbols (e.g. merge_data --col1 1 --col2 0 ccdsKgMap.txt kgXref.txt | perl -lane 'print join \"\t\", \@F[0,10]' > ccds2GeneSymbol.txt)
+
 ";
 
 
 my $command_line = join ' ', ($0, @ARGV);
 
-my ($help, $table, $pragma_file, $fasta_file, $clean);
-my $opt_success = GetOptions('help'     => \$help,
-			     'table=s'  => \$table,
-			     'pragma=s' => \$pragma_file,
-			     'fasta=s'  => \$fasta_file,
-			     'clean'    => \$clean,
+my ($help, $table, $pragma_file, $fasta_file, $clean, $alias_file);
+my $opt_success = GetOptions('help'      => \$help,
+			     'table=s'   => \$table,
+			     'pragma=s'  => \$pragma_file,
+			     'fasta=s'   => \$fasta_file,
+			     'clean'     => \$clean,
+			     'alias|a=s' => \$alias_file,
 			     );
 
 die $usage if $help || ! $opt_success;
+
+my %ALIASES;
+if (-r $alias_file) {
+    open (my $IN, '<', $alias_file) or
+	die "Can't open $alias_file for reading\n$!\n";
+    while (<$IN>) {
+	chomp;
+	next if ($_ =~ /^\#/ || ! $_);	
+	my ($id, $alias) = split /\t/, $_;
+	$ALIASES{$id}{$alias}++;
+    }
+}
 
 my $file = shift;
 die $usage unless $file;
@@ -126,7 +144,10 @@ while (<$IN>) {
 
     $transcript->{attributes}{ID} = [$name];
 
-    my @aliases = grep {defined $_ } ($name2, $proteinID);
+    my @external_aliases;
+    @external_aliases = keys %{$ALIASES{$name}} if ref $ALIASES{$name} eq 'HASH';
+
+    my @aliases = grep {$_ } ($name2, $proteinID, @external_aliases);
     $transcript->{attributes}{Alias} = \@aliases if scalar @aliases;
 
     my @exon_starts = split ',', $exonStarts;

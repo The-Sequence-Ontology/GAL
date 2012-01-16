@@ -61,7 +61,7 @@ my $opt_success = GetOptions('help'          => \$help,
 
 die $usage if $help || ! $opt_success;
 
-die $usage unless $feature_db && $variant_db;
+die $usage unless ($feature_db && $variant_db) || $create;
 
 $driver ||= 'SQLite';
 $parser ||= 'gff3';

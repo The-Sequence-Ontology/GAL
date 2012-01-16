@@ -27,6 +27,8 @@ my $opt_success = GetOptions('help'    => \$help,
 
 die $usage if $help || ! $opt_success;
 
+my $GENE_COUNTER = 1;
+
 my $file = shift;
 
 die $usage unless $file && -r $file;
@@ -158,7 +160,7 @@ sub build_consensus_gene {
     @{$gene{attributes}{Alias}} = (sort {($gene{feature_id}{$a}  <=>
 					  $gene{feature_id}{$b})}
 				   keys %{$gene{feature_id}});
-    my $feature_id = shift @{$gene{attributes}{Alias}};
+    my $feature_id = shift @{$gene{attributes}{Alias}} || sprintf("%05d", $GENE_COUNTER++);;
     my $old_feature_id = $feature_id;
     $duplicates->{$feature_id}++;
     if ($duplicates->{$feature_id} > 1) {
