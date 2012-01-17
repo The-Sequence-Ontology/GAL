@@ -13,33 +13,24 @@ my $usage = "
 
 Synopsis:
 
-splice_complexity --fasta path/to/fasta --features feature.gff3
+splice_complexity feature.gff3
 
 Description:
 
 Print a list of genes and their splice complexity.
 
-Options:
-
-  --fasta, -a genome.fa
-
-      A path to the fasta files associated with the give features
-      (Required).
-
-  --features, -f genes.gff3
-
-      The GFF3 file (or database) of sequence features (Required).
-
 ";
 
-my ($help, $fasta, $feature_db);
+my ($help);
 
 my $opt_success = GetOptions('help|h'            => \$help,
-			     'fasta|a=s'       => \$fasta,
-			     'features|f=s'    => \$feature_db,
 			      );
 
 die $usage if $help || ! $opt_success;
+
+my $feature_db = shift;
+
+die $usage unless $feature_db;
 
 my $text_file;
 if (-T $feature_db) {
@@ -59,7 +50,6 @@ my %feat_store_args = (class    => 'SQLite',
 
 # Lazy connect to the database for the features
 my $feat_store = GAL::Annotation->new(storage => \%feat_store_args,
-				      fasta   => $fasta,
 				     );
 
 # Load files to DB if given as a text file.
@@ -81,6 +71,6 @@ my $genes = $features->search(\%feature_where);
 while (my $gene = $genes->next) {
   # Get the feature ID
   my $gene_id = $gene->feature_id;
-  my $spl_cplx = $gene->splice_complexity;
-  print "$gene_id\t$spl_cplx\n";
+  my $splc_cmplx = $gene->splice_complexity;
+  print "$gene_id\t$splc_cmplx\n" if $splice_complexity;
 }
