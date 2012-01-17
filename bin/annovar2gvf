@@ -12,7 +12,7 @@ my $usage = "
 Synopsis:
 
 annovar2gvf --pragmas gvf_pragma_template.txt \
-            genome.annovar.txt.exonic_variant_function > genome.gvf
+	    genome.annovar.txt.exonic_variant_function > genome.gvf
 
 Description:
 
@@ -74,8 +74,8 @@ Format Description:
 my ($help, $db, $vaast, $pragmas);
 my $opt_success = GetOptions('help'      => \$help,
 			     'db=s'      => \$db,
-                             'vaast'     => \$vaast,
-                             'pragmas=s' => \$pragmas,
+			     'vaast'     => \$vaast,
+			     'pragmas=s' => \$pragmas,
 			      );
 
 die $usage if $help || ! $opt_success;
@@ -111,7 +111,7 @@ my %ATTRB_ORDER = (ID             => 1,
 		   Variant_effect => 4,
 		   Genotype       => 5,
 		   Total_reads    => 6,
-                   Variant_reads  => 7,
+		   Variant_reads  => 7,
 		  );
 
 if ($pragmas) {
@@ -125,7 +125,7 @@ for my $id (sort {my ($seqid_a, $seqid_b) = ($annovar_data->{$a}{seqid},
 					     $annovar_data->{$b}{seqid});
 		  my ($start_a, $start_b) = ($annovar_data->{$a}{start},
 					     $annovar_data->{$b}{start});
-                  map {s/^chr//;s/X/23/;s/Y/24/;s/M/25/;s/\D//g} ($seqid_a, $seqid_b);
+		  map {s/^chr//;s/X/23/;s/Y/24/;s/M/25/;s/\D//g} ($seqid_a, $seqid_b);
 		  return ($seqid_a <=> $seqid_b || $start_a <=> $start_b);
 		}
 	    keys %{$annovar_data}) {
@@ -213,7 +213,7 @@ sub parse_annovar_data {
 	    push @variant_effects, $prot_variant_effect if $prot_variant_effect;
 	}
     }
-    
+
     if (exists $annovar_data{$feature_id}) {
       push @{$annovar_data{$feature_id}{attributes}{Variant_effect}}, @variant_effects;
 
@@ -294,9 +294,9 @@ sub get_vaast_attribute_text {
 	  push @{$uniq_protein_effects{$index}{$amino_acids}},
 	  $trimmed_protein_effect;
       }
-      
+
       for my $index (keys %uniq_protein_effects) {
-	  my ($keep_aa) = sort {@{$uniq_protein_effects{$index}{$b}} <=> 
+	  my ($keep_aa) = sort {@{$uniq_protein_effects{$index}{$b}} <=>
 				    @{$uniq_protein_effects{$index}{$a}}}
 	  keys %{$uniq_protein_effects{$index}};
 	  push @{$feature->{attributes}{Amino_acid_substitution}},
@@ -330,4 +330,3 @@ sub get_database {
     }
     return $db;
 }
-

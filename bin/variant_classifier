@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Getopt::Long;
 use GAL::Annotation;
-use IO::Prompt;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -14,8 +13,8 @@ my $usage = "
 
 Synopsis:
 
-variant_classifier --fasta path/to/fasta --features feature.sqlite \
-		   --variants variant.sqlite \
+variant_classifier --fasta path/to/fasta --features feature.gff3 \
+		   --variants variant.gff3
 
 Description:
 
@@ -24,74 +23,87 @@ the functional effects of the variants against mRNA annotations.
 
 Options:
 
-  # Required
-  fasta        A path to the fasta files associated with the give features.
-  features     The database name for the features.
-  variants     The database name for the variants.
+  --fasta, -a genome.fa
 
-  # Optional
-  chr          Limit the analysis to a chromosome.
-  parser       The format of the input file (a subclass of GAL::Parser) [gff3].
-  driver       The type of storage to use MySQL or [SQLite]
-  user         The database user.  Defaults first to \$ENV{\${driver}_user}
-	       where \$driver is the driver parsed from the dsn. ['']
-  password     The database password.   Defaults first to
-	       \$ENV{\${driver}_password} where \$driver is the driver
-	       parsed from the dsn.
-  prompt       Prompt for the password on the command line.
+      A path to the fasta files associated with the give features
+      (Required).
+
+  --features, -f genes.gff3
+
+      The GFF3 file (or database) for the gene models (Required).
+
+  --variants, -v variants.gvf
+
+      The database name for the variants (Required).
+
+  --chr, -c chr1
+
+      Limit the analysis to a chromosome.
 
 ";
 
-my ($help, $driver, $fasta, $feature_db, $variant_db, $limit_chr,
-    $user, $password, $prompt);
+my ($help, $fasta, $feature_db, $variant_db, $limit_chr);
 
 my $opt_success = GetOptions('help'          => \$help,
-			     'driver=s'      => \$driver,
 			     'fasta=s'       => \$fasta,
 			     'features=s'    => \$feature_db,
 			     'variants=s'    => \$variant_db,
 			     'chr=s'         => \$limit_chr,
-			     'user=s'        => \$user,
-			     'password=s'    => \$password,
-			     'prompt'        => sub {$password = prompt("Password: ", -tty,  -echo => '*')->{value}},
 			      );
 
 die $usage if $help || ! $opt_success;
 
-die $usage unless ($feature_db && $variant_db);
+my $driver = 'SQLite';
+my $parser = 'gff3';
 
-$driver ||= 'SQLite';
+# Create db_names if we were passed GFF3 or GVF
+my ($feature_file, $variant_file);
+if (-T $feature_db) {
+  $feature_file = $feature_db;
+  $feature_db =~ s/\.gff3?$/.sqlite/;
+}
+if (-T $variant_db) {
+  $variant_file = $variant_db;
+  $variant_db =~ s/\.gvf$/.sqlite/;
+}
 
 # Making a hash of the arguments for the features and variants
-my $feat_store_args = {class    => $driver,
-		       database => $feature_db,
-		       user     => $user,
-		       password => $password,
-		   };
+my %feat_store_args = (class    => $driver,
+		       database => $feature_db
+		      );
 
-my $var_store_args = {class    => $driver,
+my %var_store_args = (class    => $driver,
 		      database => $variant_db,
-		      user     => $user,
-		      password => $password,
-		     };
+		     );
 
-# Connect to the database for the features and variants
-my $feat_store = GAL::Annotation->new(storage => $feat_store_args,
+# Lazy connect to the database for the features and variants
+my $feat_store = GAL::Annotation->new(storage => \%feat_store_args,
 				      fasta   => $fasta,
 				     );
 
-my $var_store = GAL::Annotation->new(storage => $var_store_args,
+my $var_store = GAL::Annotation->new(storage => \%var_store_args,
 				     fasta   => $fasta,
 				    );
-# Get a list of all the features and variants
+
+# Load files to DB if given as a text file.
+if ($feature_file) {
+  $feat_store->parser(class => $parser);
+  $feat_store->load_files(files => $feature_file);
+}
+if ($variant_file) {
+  $var_store->parser(class => $parser);
+  $var_store->load_files(files => $variant_file);
+}
+
+# Load a resultset.
 my $features = $feat_store->schema->resultset('Feature');
 my $variants = $var_store->schema->resultset('Feature');
 
-# Set up the search
+# Define the search
 my %feature_where = (type => 'mRNA');
 $feature_where{seqid} = $limit_chr if ($limit_chr);
 
-# Get an interator for all matching features
+# Do the search and get an interator for all matching features
 my $mrnas = $features->search(\%feature_where);
 
 # Iterate over the features
