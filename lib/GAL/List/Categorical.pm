@@ -122,7 +122,7 @@ sub _initialize_args {
 
 sub method {
     my $self = shift;
-    $self->throw(message => 'Method not implimented yet.');
+    $self->throw('developer_error', 'Method not implimented yet');
 }
 
 #-----------------------------------------------------------------------------

@@ -182,13 +182,13 @@ sub dbh {
 =cut
 
 sub database {
-      my ($self, $database) = @_;
+  my ($self, $database) = @_;
 
-      if (! $database && ! $self->{database}) {
-	$database = $self->random_string . '.sqlite';
-      }
-      $self->{database} = $database if $database;
-      return $self->{database};
+  if (! $database && ! $self->{database}) {
+    $database = $self->random_string . '.sqlite';
+  }
+  $self->{database} = $database if $database;
+  return $self->{database};
 }
 
 #-----------------------------------------------------------------------------
@@ -251,6 +251,7 @@ sub drop_database {
 
   my $database = $self->database;
   if (-e $database) {
+    $self->warn('dropping_database', $database);
     `rm $database`;
   }
 }
@@ -269,6 +270,7 @@ sub _open_or_create_database {
   my $dbh;
   my $dsn = $self->dsn;
   my $database = $self->database;
+
   if (! -e $database) {
     $dbh = DBI->connect($self->dsn);
     # This one is supposed to speed up write significantly, but doesn't
@@ -279,10 +281,9 @@ sub _open_or_create_database {
     # $dbh->{AutoCommit} = 0;
   }
   else {
-    $self->warn(message => ("A database by the name $database already "      .
-			    "existed, so I'll use it as is."
-			    ),
-		code    => "using_existing_database : $database"
+    $self->warn('using_existing_database',
+		("A database by the name $database already " .
+		 "existed, so I'll use it as is."),
 	       );
     $dbh = DBI->connect($self->dsn);
     # $dbh = DBI->connect("dbi:SQLite:dbname=:memory");
@@ -308,18 +309,24 @@ sub index_database {
   my $self = shift;
   my $dbh  = $self->dbh;
 
+  $self->info('indexing_database', $self->database);
+  $self->info('indexing_features', $self->database);
   # Create feature indeces
   $dbh->do("CREATE INDEX feat_feature_id_index ON feature (feature_id)");
   # $dbh->do("CREATE INDEX feat_seqid_start_end_index ON feature (seqid, start, end)");
+  $self->info('indexing_feature_bins', $self->database);
   $dbh->do("CREATE INDEX feat_bin_index ON feature (bin)");
   # $dbh->do("CREATE INDEX feat_type_index ON feature (type)");
 
   # Create attribute indeces
+  $self->info('indexing_feature_attributes', $self->database);
   $dbh->do("CREATE INDEX att_feature_id_index ON attribute (feature_id)");
   # $dbh->do("CREATE INDEX att_key_value_index ON attribute (att_key, att_value)");
 
   # Create relationship indeces
+  $self->info('indexing_parent_relationships', $self->database);
   $dbh->do("CREATE INDEX rel_parent_index ON relationship (parent)");
+  $self->info('indexing_child_relationships', $self->database);
   $dbh->do("CREATE INDEX rel_child_index ON relationship (child)");
 
 }
@@ -333,7 +340,7 @@ sub index_database {
  Function: Load a file(s) into the database
  Returns : Nothing
  Args    : An scalar string or array reference containing the name(s) of
-           files to load.
+	   files to load.
 
 =cut
 
@@ -347,6 +354,7 @@ sub load_files {
 
   for my $file (@{$files}) {
     $parser->file($file);
+    $self->info('loading_database', $file);
     while (my $feature = $parser->next_feature_hash) {
       $self->add_features_to_buffer($feature);
     }
@@ -399,8 +407,8 @@ sub add_features {
       my $data = join ', ', @{$feat_row};
       $warn_message .= $data;
       $warn_code    .= $data;
-      $self->warn(message => $warn_message,
-		  code     => $warn_code);
+      $self->warn($warn_code,
+		  $warn_message);
     }
   }
 
@@ -422,8 +430,8 @@ sub add_features {
       my $data = join ', ', @{$att_row};
       $warn_message .= $data;
       $warn_code    .= $data;
-      $self->warn(message => $warn_message,
-		  code     => $warn_code);
+      $self->warn($warn_code,
+		  $warn_message);
     }
   }
 
@@ -444,8 +452,8 @@ sub add_features {
       my $data = join ', ', @{$rel_row};
       $warn_message .= $data;
       $warn_code    .= $data;
-      $self->warn(message => $warn_message,
-		  code     => $warn_code);
+      $self->warn($warn_code,
+		  $warn_message);
     }
   }
   $dbh->commit;

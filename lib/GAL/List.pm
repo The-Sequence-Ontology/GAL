@@ -120,10 +120,7 @@ sub list {
 		   'first argument, but you gave a  ' . ref $list
 		  );
     my $err_code = 'list_or_reference_required : ' . ref $list;
-    $self->warn(message => (message => $err_msg,
-			    code    => $err_code,
-			   )
-	       ) unless ref $list eq 'ARRAY';
+    $self->warn($err_code, $err_msg) unless ref $list eq 'ARRAY';
     $self->{list} = $list;
   }
   $self->{list} ||= [];

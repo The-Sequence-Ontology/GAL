@@ -133,13 +133,7 @@ sub parse_record {
 	my @error_codes;
 	for my $error (@{$errors}) {
 		push @error_codes, $error->[0];
-		my $error_message = join "\t", ('ERROR',
-						$id,
-						$error->[0],
-						$error->[1],
-						);
-
-		$self->warn(message => $error_message);
+		$self->warn(@{$error}[0,1]);
 	}
 
 	my @ctgs = @{$record->{ctgs}};

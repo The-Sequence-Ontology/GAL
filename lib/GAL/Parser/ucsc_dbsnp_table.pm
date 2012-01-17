@@ -135,7 +135,7 @@ sub parse_record {
 	my $reference_seq = $record->{refUCSC};
 	my $ncbi_ref = $record->{refNCBI};
 	if ($reference_seq ne $ncbi_ref) {
-	    $self->warn(code => "WARN : ncbi_ref_differs_from_ucsc_ref : NCBI $ncbi_ref UCSC $reference_seq");
+	    $self->warn('ncbi_ref_differs_from_ucsc_ref', "NCBI $ncbi_ref UCSC $reference_seq");
 	}
 
 	my @variant_seqs = split /\//, $record->{observed};

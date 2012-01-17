@@ -317,10 +317,10 @@ sub _open_or_create_database {
     $self->_load_schema($dbh);
   }
   else {
-    $self->warn(message => ("A database by the name $database already "      .
-			    "existed, so I'll use it as is."
-			   ),
-		code    => "using_existing_database : $database");
+    $self->warn('using_existing_database',
+		("A database by the name $database already " .
+		 "existed, so I'll use it as is.")
+		);
     $dbh = DBI->connect($self->dsn, $self->user,
 			$self->password);
     $self->_load_schema($dbh);

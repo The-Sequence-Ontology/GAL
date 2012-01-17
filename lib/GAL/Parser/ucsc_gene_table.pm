@@ -147,8 +147,8 @@ sub parse_record {
 	my @exon_ends   = split ',', $record->{exonEnds};
 
 	if (@exon_starts != scalar @exon_ends) {
-	    $self->warn(code    => 'mis_matched_exon_start_ends',
-			message => "Mismatched exon starts and ends $name",
+	    $self->warn('mis_matched_exon_start_ends',
+			"Mismatched exon starts and ends $name",
 			);
 	}
 
@@ -156,27 +156,27 @@ sub parse_record {
 	for my $i (0 .. scalar @exon_starts - 1) {
 	    my ($start, $end) = ($exon_starts[$i], $exon_ends[$i]);
 	    if ($start > $end) {
-		$self->warn(code    => 'negative_length_exon',
-			    message => "Negative length exon : $name, $start, $end"
+		$self->warn('negative_length_exon',
+			    "Negative length exon ($name, $start, $end)"
 			    );
 	    }
 	    if ($start == $end) {
-		$self->warn(code    => 'zero_length_exon',
-			    message => "Zero length exon : $name, $start, $end"
+		$self->warn('zero_length_exon',
+			    "Zero length exon : $name, $start, $end"
 			    );
 	    }
 	    push @exon_pairs, [$start, $end];
 	}
 
 	if ($self->any_overlaps(@exon_pairs)) {
-	    $self->warn(code    => 'exons_overlap',
-			message => "Exons overlap : $name",
+	    $self->warn('exons_overlap',
+			"Exons overlap $name",
 			);
 	}
 
 	my @cds_pairs;
 	for my $pair (@exon_pairs) {
-	    last if $cdsEnd - $cdsStart < 3; #Dont allow a CDS < 3nt long.                                                                                       
+	    last if $cdsEnd - $cdsStart < 3; #Dont allow a CDS < 3nt long.
 	    my ($start, $end) = @{$pair};
 	    next if $end   < $cdsStart;
 	    last if $start > $cdsEnd;
@@ -257,16 +257,16 @@ sub build_child_features {
     my @features;
     my $count;
     for my $pair (@{$coords}) {
-        my ($start, $end) = @{$pair};
-        my %feature = %{$parent};
-        my $attributes = {gene_id       => [$parent_id],
-                          transcript_id => [$parent_id],
+	my ($start, $end) = @{$pair};
+	my %feature = %{$parent};
+	my $attributes = {gene_id       => [$parent_id],
+			  transcript_id => [$parent_id],
 		      };
 
-        @feature{qw(type start end attributes)} =
-            ($type, $start, $end, $attributes);
+	@feature{qw(type start end attributes)} =
+	    ($type, $start, $end, $attributes);
 
-        push @features, \%feature;
+	push @features, \%feature;
     }
 }
 return \@features;

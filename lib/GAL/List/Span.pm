@@ -88,19 +88,19 @@ sub _initialize_args {
 sub list {
     my ($self, $list) = @_;
     if (ref $list ne 'ARRAY') {
-	$self->throw(message => ('GAL::List::Span requires a reference to an '   .
-				 'array as the first argument, but you gave a  ' .
-				 ref $list)
-		     );
+      my $err_msg = ('GAL::List::Span requires a reference to an '   .
+		     'array as the first argument, but you gave a  ' .
+		     ref $list);
+      $self->throw('invalid_arguments', $erro_msg);
     }
     elsif (ref $list->[0] ne 'ARRAY' || scalar @{$list->[0]} == 2) {
-	$self->throw(message => ('GAL::List::Span requires a reference to an ' .
-				 'array as the first argument and that array ' .
-				 'must contain references to two element '     .
-				 'arrays, but you gave a  ' . ref $list->[0]   .
-				 ' which has ' . scalar @{$list->[0]}          .
-				 ' elements')
-		     );
+      my $err_msg = ('GAL::List::Span requires a reference to an ' .
+		     'array as the first argument and that array ' .
+		     'must contain references to two element '     .
+		     'arrays, but you gave a  ' . ref $list->[0]   .
+		     ' which has ' . scalar @{$list->[0]}          .
+		     ' elements');
+      $self->throw('invalid_arguments', $err_msg);
     }
     $self->{list} = $list if $list;
     $self->{list} ||= [];

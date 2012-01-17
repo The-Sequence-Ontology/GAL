@@ -358,7 +358,7 @@ applicable throughout the library.
 =head2 throw
 
  Title   : throw
- Usage   : $base->throw(message => $err_msg, code => $err_code);
+ Usage   : $base->throw($err_code, $err_msg);
  Function: Throw an error - print an error message and die.
  Returns : None
  Args    : message => $err_msg  # Free text description of error
@@ -368,7 +368,7 @@ applicable throughout the library.
 =head2 warn
 
  Title   : warn
- Usage   : $base->warn(message => $warning_message);
+ Usage   : $base->warn($code, $message);
  Function: Send a warning.
  Returns : None
  Args    : message => $warning_message

@@ -19,10 +19,10 @@ my $base = GAL::Base->new();
 isa_ok($base, 'GAL::Base');
 
 # TEST
-# ok($base->throw(message => 'Test throw'), '$base->throw');
+# ok($base->throw('error_code', 'Test throw'), '$base->throw');
 
 # TEST 3
-ok($base->warn(message => 'Test warn'), '$base->warn');
+ok($base->warn('warn_code', 'Test warn'), '$base->warn');
 
 # TEST 4
 my $wrap_text = 'x' x 100;

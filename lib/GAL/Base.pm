@@ -179,6 +179,35 @@ list (or referenece) of key value pairs.
 
 =head1 METHODS
 
+=head2 handle_message
+
+ Title   : handle_message
+ Usage   : $base->handle_message($level, $code, $message);
+ Function: Handle a message.
+ Returns : None
+ Args    : level (INFO, WARM, FATAL)
+           code (a_single_string_description)
+           message (Free text explination)
+
+=cut
+
+sub handle_message {
+	my ($self, $level, $code, $message) = @_;
+
+	my $caller = ref($self);
+
+	$level   ||= 'FATAL';
+	$code    ||= 'unspecified_code';
+	$message ||= $caller;
+
+	print STDERR join ' : ', ($level, $code, $message);
+	print STDERR "\n";
+
+	die $caller if $level eq 'FATAL';
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 throw
 
  Title   : throw
@@ -191,31 +220,7 @@ list (or referenece) of key value pairs.
 =cut
 
 sub throw {
-	my ($self, @args) = @_;
-	my $args = $self->prepare_args(@args);
-
-	my $caller = ref($self);
-
-	my $code = $args->{code} || ('unspecified_error_code : Complain to the ' .
-				     'author');
-
-	$args->{message} ||= join '',
-	  ("GAL::Base is throwing an exception for $caller ",
-	   "But someone called throw without an appropriate ",
-	   "error message in $caller ");
-
-	chomp $args->{message};
-	$args->{message} = $self->wrap_text($args->{message}, 50);
-	$args->{message} .= "\n";
-
-	my $message = "\n\n$code\n";
-	$message .= '#' x 60;
-	$message .= "\n";
-	$message .= $args->{message};
-	$message .= '#' x 60;
-	$message .= "\n\n\n";
-
-	croak $message;
+	shift->handle_message('FATAL', @_);
 }
 
 #-----------------------------------------------------------------------------
@@ -223,7 +228,7 @@ sub throw {
 =head2 warn
 
  Title   : warn
- Usage   : $base->warn(message => $warning_message);
+ Usage   : $base->warn($code, $warning_message);
  Function: Send a warning.
  Returns : None
  Args    : message => $warning_message
@@ -231,29 +236,24 @@ sub throw {
 =cut
 
 sub warn {
-	my $self = shift;
-	my $args = $self->prepare_args(@_);
-
-	my $caller = ref($self);
-
-	$args->{message} ||= join '',
-	  ("GAL::Base is sending a warning for $caller ",
-	   "But someone called warn without an appropriate ",
-	   "message in $caller ");
-
-	chomp $args->{message};
-	$args->{message} = $self->wrap_text($args->{message}, 50);
-	$args->{message} .= "\n";
-
-	my $message = "\n\n";
-	$message .= '#' x 60;
-	$message .= "\n";
-	$message .= $args->{message};
-	$message .= '#' x 60;
-	$message .= "\n\n\n";
-
-	cluck $message;
+	shift->handle_message('WARN', @_);
 }
+
+#-----------------------------------------------------------------------------
+
+=head2 info
+
+ Title   : info
+ Usage   : $base->info(message => $info_message);
+ Function: Send a INFO message.
+ Returns : None
+ Args    : message => $info_message
+
+=cut
+
+sub info {
+	shift->handle_message('INFO', @_);
+      }
 
 #-----------------------------------------------------------------------------
 
@@ -329,8 +329,7 @@ sub prepare_args {
 				"of key value pairs or a reference to "     .
 				"such a list was expected, But we got:\n"   .
 				join ' ', @args);
-		$self->throw(message => $err_msg,
-			     code    => $err_code);
+		$self->throw($err_code, $err_msg);
 	}
 
 	return wantarray ? %args_hash : \%args_hash;
@@ -372,7 +371,7 @@ sub set_attributes {
 			  ("$package is about to reset the value of $attribute " .
 			   "on behalf of a $caller object.  This is probably "   .
 			   "a bad idea.");
-			$self->warn(message => $warning_message);
+			$self->warn('resetting_attribute_values', $warning_message);
 		}
 		$self->$attribute($args->{$attribute});
 		delete $args->{$attribute};
@@ -417,9 +416,7 @@ sub expand_iupac_nt_codes {
 	my @nts;
 	for my $code (@codes) {
 	  my $nts = $iupac_code_map{$code};
-	  $self->throw(message => "Invalid IPUAC nucleotide code: $code",
-		       code     => "invalid_ipuac_nucleotide_code",
-		      )
+	  $self->throw('invalid_ipuac_nucleotide_code', $code)
 	    unless $nts;
 	  push @nts, @{$nts};
 	}
@@ -448,8 +445,7 @@ sub load_module {
 	  my $self_class = ref $self;
 	  my $err_code = "failed_to_load_module : $module_name";
 	  my $err_msg  = "Failed to load $module_name in $self_class:\n$@";
-	  $self->throw(message => $err_msg,
-		       code    => $err_code);
+	  $self->throw($err_code, $err_msg);
 	}
 	return 1;
 }
@@ -459,7 +455,7 @@ sub load_module {
 =head2 revcomp
 
  Title   : revcomp
- Usage   : $base->revcomp($feature);
+ Usage   : $base->revcomp($sequence);
  Function: Get the reverse compliment of a nucleotide sequence
  Returns : The reverse complimented sequence
  Args    : A nucleotide sequence
@@ -504,14 +500,7 @@ sub get_feature_bins {
     }
     else {
       my $data = ref $feature || $feature;
-      $self->throw(code    => 'invalid_arguments_to_get_feature_bins : $data',
-		   message => ('GAL::Base::get_feature_bins was called with ' .
-			       'invalid arguments.  It must have either a '   .
-			       'hash with the keys qw(seqid start end) or '   .
-			       'an object with those same keys as methods.  ' .
-			       "You provided $data"
-			       )
-		  );
+      $self->throw('invalid_arguments_to_get_feature_bins', $data);
     }
     my @feature_bins;
     my $count;

@@ -113,7 +113,7 @@ sub attribute {
 
 sub method {
     my $self = shift;
-    $self->throw(message => 'This method is not yet implimented');
+    $self->throw('developer_error', 'This method is not yet implimented');
 }
 
 #-----------------------------------------------------------------------------

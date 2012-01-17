@@ -160,7 +160,7 @@ sub stats {
 
 sub histogram {
     my $self = shift;
-    $self->throw(message => 'Metohd histogram not implimented yet');
+    $self->throw('developer_error', 'Metohd histogram not implimented yet');
 }
 
 #-----------------------------------------------------------------------------
@@ -372,7 +372,7 @@ sub relative_cfd {
 
 sub method {
     my $self = shift;
-    $self->throw('Metohd ? not implimented yet');
+    $self->throw('developer_error', 'Metohd not implimented yet');
 }
 
 #-----------------------------------------------------------------------------

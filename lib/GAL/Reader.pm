@@ -147,9 +147,9 @@ sub fh {
     my $file = $self->file;
     if ($file) {
       # TODO $self->open_file($file, 'read');
-      $self->throw(code => "file_doesnt_exist : $file") if ! -e $file;
-      $self->throw(code => "cant_read_file : $file")    if ! -r $file;
-      open($fh, '<', $file) or $self->throw(code => "failed_to_open_file : $file");
+      $self->throw('file_doesnt_exist', $file) if ! -e $file;
+      $self->throw('unreadable_file', $file)   if ! -r $file;
+      open($fh, '<', $file) or $self->throw('failed_to_open_file', $file);
       $self->{fh} = $fh;
     }
   }
@@ -201,7 +201,7 @@ sub next_record {
 	my $err_msg  = ("The method GAL::Reader::next_record must be "       .
 			"overridden by subclasses of GAL::Reader.  Send an " .
 			"angry e-mail to the author of $caller!");
-	$self->throw(code => $err_code, message => $err_msg);
+	$self->throw($err_code, $err_msg);
 }
 
 #-----------------------------------------------------------------------------
