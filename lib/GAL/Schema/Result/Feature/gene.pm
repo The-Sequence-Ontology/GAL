@@ -87,34 +87,25 @@ sub splice_complexity {
   my $self = shift;
 
   my @transcripts = $self->transcripts;
-  return 0 unless scalar @transcripts > 1;
+  return undef unless scalar @transcripts > 1;
 
-  my $setU = Set::IntSpan::Fast->new;
-  my @ints;
+  my @AEDs;
   my %seen_pairs;
   for my $transcriptA (@transcripts) {
     my $idA = $transcriptA->feature_id;
-    my @exonsA = $transcriptA->exons;
-    my $setA = Set::IntSpan::Fast->new;
-    map {$setA->add_range($_->start, $_->end)} @exonsA;
-    $setU = $setU->union($setA);
     for my $transcriptB (@transcripts) {
       my $idB = $transcriptB->feature_id;
-      next if $idA eq $idB;
       my $pair = join '-', sort($idA, $idB);
-      next if exists $seen_pairs{$pair};
+      next if ($idA eq $idB || exists $seen_pairs{$pair});
       $seen_pairs{$pair}++;
-      my @exonsB = $transcriptB->exons;
-      my $setB = Set::IntSpan::Fast->new;
-      map {$setB->add_range($_->start, $_->end)} @exonsB;
-      my $int = scalar $setA->intersection($setB)->as_array;
-      push @ints, $int;
+      my $AED = $transcriptA->AED($transcriptB);
+      push @AEDs, $AED;
     }
   }
-  my $union = scalar $setU->as_array;
-  my $total_cmplx;
-  map {$total_cmplx += ($_ / $union)} @ints;
-  return $total_cmplx / scalar @ints;
+
+  my $total_AED;
+  map {$total_AED += $_} @AEDs;
+  return $total_AED / scalar @AEDs;
 }
 
 #-----------------------------------------------------------------------------

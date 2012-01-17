@@ -452,6 +452,43 @@ sub me2genome {
 
 #-----------------------------------------------------------------------------
 
+=head2 AED
+
+ Title   : AED
+ Usage   : $aed = $self->AED($transcript);
+ Function: Calculate the annotation edit distance (AED) between two
+           transcripts. (PMID:19236712)
+ Returns : An array or reference of genomic coordinates.
+ Args    : A GAL::Schema::Result::Feature::transcript (or is_a) object
+
+=cut
+
+sub AED {
+
+  my ($transcriptA, $transcriptB) = @_;
+
+  my @exonsA = $transcriptA->exons;
+  my $setA = Set::IntSpan::Fast->new;
+  map {$setA->add_range($_->start, $_->end)} @exonsA;
+  my $i = scalar $setA->as_array;
+
+  my @exonsB = $transcriptB->exons;
+  my $setB = Set::IntSpan::Fast->new;
+  map {$setB->add_range($_->start, $_->end)} @exonsB;
+  my $j = scalar $setB->as_array;
+
+  my $int = scalar $setA->intersection($setB)->as_array;
+
+  my $sn  = $int/$j;
+  my $sp  = $int/$i;
+  my $ac  = ($sn + $sp)/2;
+  my $aed = 1 - $ac;
+
+  return $aed;
+}
+
+#-----------------------------------------------------------------------------
+
 =head1 DIAGNOSTICS
 
 <GAL::Schema::Result::Feature::transcript> does not throw any warnings
