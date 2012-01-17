@@ -1,0 +1,21 @@
+
+sudo cpan DBI
+sudo cpan DBIx::Class
+sudo cpan Bio::DB::Fasta
+
+
+sudo cpan IO::Prompt
+sudo cpan List::MoreUtils
+sudo cpan List::Util
+sudo cpan Number::Format
+sudo cpan Scalar::Util
+sudo cpan Set::IntSpan::Fast
+sudo cpan Statistics::Descriptive::Discrete
+sudo cpan Statistics::Descriptive
+sudo cpan TAP::Harness
+sudo cpan Test::More
+sudo cpan Text::Graph
+sudo cpan Text::RecordParser
+sudo cpan Time::HiRes
+sudo cpan URI::Escape
+XML::LibXML::Reader

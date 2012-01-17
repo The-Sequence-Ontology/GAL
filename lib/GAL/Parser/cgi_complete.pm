@@ -110,9 +110,7 @@ sub _initialize_args {
 sub parse_record {
     my ($self, $record) = @_;
 
-    $self->throw(message => ("GAL::Parser::cgi_complete is not " .
-			     "finished.  Don't use it!")
-		);
+    $self->throw('developer_error' . "GAL::Parser::cgi_complete is not finished. Don't use it!");
 
     return undef unless $record->{locus} =~ /^\d+$/;
 

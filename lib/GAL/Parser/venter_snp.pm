@@ -197,11 +197,11 @@ sub parse_record {
 	shift @variant_seqs if $their_zygosity eq 'homozygous';
 
 	# if ($reference_seq ne $real_ref) {
-	#     $self->warn(code    => 'reference_seq_mismatch',
-	# 		message => ('The reference sequence given for this record ' .
-	# 			    'does not match the reference sequence in the ' .
-	# 			    'given fasta files.'
-	# 			    )
+	#     $self->warn('reference_seq_mismatch',
+	# 		('The reference sequence given for this record ' .
+	# 		'does not match the reference sequence in the ' .
+	# 		'given fasta files.'
+	# 		)
 	# 		);
 	# }
 	

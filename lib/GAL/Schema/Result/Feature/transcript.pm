@@ -81,9 +81,85 @@ sub exons {
 
 sub introns {
   my $self = shift;
-  my $introns = $self->children->search({type => 'intron'},
-					{order_by => { -asc => 'start' }});
+
+  my @search_args = ({type => 'intron'},
+		     {order_by => { -asc => 'start' }});
+
+  my $introns = $self->children->search(@search_args);
+
+  if (! $introns->count) {
+     $self->infer_introns($introns) unless $introns->count;
+  }
+
   return wantarray ? $introns->all : $introns;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 infer_introns
+
+ Title   : infer_introns
+ Usage   : $introns = $self->infer_introns
+ Function: Infer introns for the features
+ Returns : A DBIx::Class::Result object loaded up with introns
+ Args    : None
+
+=cut
+
+sub infer_introns {
+  my ($self, $introns) = @_;
+
+  $introns ||= $self->children->search({type => 'intron'},
+				       {order_by => { -asc => 'start' }});
+
+  my $exons = $self->children->search({type => 'exon'},
+				      {order_by => { -asc => 'start' }});
+
+  my @coordinates;
+  while(my $exon = $exons->next) {
+    push @coordinates, ($exon->start, $exon->end);
+  }
+
+  shift @coordinates;
+  pop   @coordinates;
+
+  my %template = (seqid  => $self->seqid,
+		  source => $self->source,
+		  type   => 'intron',
+		  score  => '.',
+		  strand => $self->strand,
+		  phase  => '.',
+		 );
+
+  my $parent_id = $self->feature_id;
+
+  my $count = 1;
+  my @introns;
+  while (@coordinates) {
+    my ($start, $end) = (shift @coordinates,
+			 shift @coordinates);
+    my $feature_id = $parent_id . ':intron:';
+    $feature_id .= sprintf("%03d", $count++);
+    my @attrbs = ({feature_id => $feature_id,
+		   att_key    => 'ID',
+		   att_value  => $feature_id},
+		  {feature_id => $feature_id,
+		   att_key    => 'Parent',
+		   att_value  => $feature_id},
+		 );
+    my %rel = (parent => $parent_id,
+	       child  => $feature_id);
+
+    my %intron = %template;
+    @intron{qw(feature_id start end)} =
+      ($feature_id, $start, $end, \@attrbs);
+    my $intron = $introns->create(\%intron);
+    bless $intron, 'GAL::Schema::Result::Feature::intron';
+    push @introns, $intron;
+    print '';
+  }
+  $introns->set_cache(\@introns);
+  print '';
 }
 
 #-----------------------------------------------------------------------------
@@ -276,11 +352,11 @@ sub length {
   # $length++;
   ##############################
   ##############################
-  # $self->warn(message => ("Make sure that this length is correct!!!!" .
-  # 			  "Length: $length\nSeq Length: "             .
-  # 			  length ($self->mature_seq)
-  # 			 )
-  # 	     );
+  # $self->warn('developer_error', ("Make sure that this length is correct!!!!" .
+  #			  "Length: $length\nSeq Length: "             .
+  #			  length ($self->mature_seq)
+  #			 )
+  #	     );
 
   return $length;
 }

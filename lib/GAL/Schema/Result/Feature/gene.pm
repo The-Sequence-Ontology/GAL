@@ -66,8 +66,55 @@ sub transcripts {
 
   my @transcript_types = qw(mRNA ncRNA rRNA snRNA snoRNA tRNA transcript);
   my $transcripts = $self->children->search({type => \@transcript_types});
-  return $transcripts;
+  return wantarray ? $transcripts->all : $transcripts;
 
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 splice_complexity
+
+ Title   : splice_complexity
+ Usage   : $splice_complexity = $self->splice_complexity
+ Function: Get the transcript splice_complexity (PMID: 19236712)
+ Returns : A numerical value
+ Args    : None
+
+=cut
+
+sub splice_complexity {
+
+  my $self = shift;
+
+  my @transcripts = $self->transcripts;
+  return 0 unless scalar @transcripts > 1;
+
+  my $setU = Set::IntSpan::Fast->new;
+  my @ints;
+  my %seen_pairs;
+  for my $transcriptA (@transcripts) {
+    my $idA = $transcriptA->feature_id;
+    my @exonsA = $transcriptA->exons;
+    my $setA = Set::IntSpan::Fast->new;
+    map {$setA->add_range($_->start, $_->end)} @exonsA;
+    $setU = $setU->union($setA);
+    for my $transcriptB (@transcripts) {
+      my $idB = $transcriptB->feature_id;
+      next if $idA eq $idB;
+      my $pair = join '-', sort($idA, $idB);
+      next if exists $seen_pairs{$pair};
+      $seen_pairs{$pair}++;
+      my @exonsB = $transcriptB->exons;
+      my $setB = Set::IntSpan::Fast->new;
+      map {$setB->add_range($_->start, $_->end)} @exonsB;
+      my $int = scalar $setA->intersection($setB)->as_array;
+      push @ints, $int;
+    }
+  }
+  my $union = scalar $setU->as_array;
+  my $total_cmplx;
+  map {$total_cmplx += ($_ / $union)} @ints;
+  return $total_cmplx / scalar @ints;
 }
 
 #-----------------------------------------------------------------------------
@@ -90,7 +137,7 @@ sub mRNAs {
   #TODO: should use SO directly.
 
   my $mRNAs = $self->children->search({type => 'mRNA'});
-  return $mRNAs;
+  return wantarray ? $mRNAs->all : $mRNAs;
 
 }
 

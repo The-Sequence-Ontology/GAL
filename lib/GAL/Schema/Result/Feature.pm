@@ -3,6 +3,7 @@ package GAL::Schema::Result::Feature;
 use strict;
 use warnings;
 use base qw/DBIx::Class/;
+use Set::Intspan::Fast;
 
 =head1 NAME
 
@@ -61,6 +62,11 @@ my %FEATURE_MAP = (gene            => 'gene',
 		   intron          => 'intron',
 		   three_prime_UTR => 'three_prime_utr',
 		   five_prime_UTR  => 'five_prime_utr',
+		   ncRNA           => 'transcript',
+		   rRNA            => 'transcript',
+		   snRNA           => 'transcript',
+		   snoRNA          => 'transcript',
+		   tRNA            => 'transcript',
 		  );
 
 # Eventually get this from SO at runtime.
@@ -273,6 +279,29 @@ sub feature_seq {
 
 #-----------------------------------------------------------------------------
 
+=head2 gc_content
+
+ Title   : gc_content
+ Usage   : $self->gc_content
+ Function: Returns the ratio of the count of G or C nts over the sequence
+           length.
+ Returns : A fractional value from 0 to 1
+ Args    : None
+
+=cut
+
+sub gc_content {
+  my $self = shift;
+
+  my $seq = $self->seq;
+  my $length = length $seq;
+  my $gc = $seq =~ tr/GC/GC/;
+  my $gc_ratio = $gc / $length;
+  return $gc_ratio;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 genomic_seq
 
  Title   : genomic_seq
@@ -365,7 +394,7 @@ sub annotation {
            You could get the same behaviour by doing 
            C<$self->annotation->throw(message => 'throwing'>.
  Returns : Nothing
- Args    : The following list: (message => 'message', code => 'code')
+ Args    : The following list: ($code, $message)
 
 =cut
 
@@ -384,7 +413,7 @@ sub throw {
            You could get the same behaviour by doing 
            C<$self->annotation->warn(message => 'warning'>.
  Returns : Nothing
- Args    : The following list: (message => 'message', code => 'code')
+ Args    : The following list: ($code, $message)
 
 =cut
 
@@ -419,7 +448,7 @@ sub get_feature_bins {
   return $self->annotation->get_feature_bins($self);
   #my $self = shift;
   #
-  #$self->warn(message => ('GAL::Schema::Result::Feature::feature_bins is ' .
+  #$self->warn('depracated_method', ('GAL::Schema::Result::Feature::feature_bins is ' .
   #			    'deprecated.  We should be using the method in ' .
   #			    'GAL::Base instead.  Please update your code '   .
   #			    'and stop using it.')

@@ -42,6 +42,8 @@ my $opt_success = GetOptions('help|h'            => \$help,
 
 die $usage if $help || ! $opt_success;
 
+# This will ultimately be moved inside the storage
+# code so it's all hidden
 my $text_file;
 if (-T $feature_db) {
   $text_file = $feature_db;
@@ -84,11 +86,25 @@ while (my $mrna = $mrnas->next) {
   my $mrna_id = $mrna->feature_id;
   # Get all the exons for this mRNA
   my $exons = $mrna->exons;
+  my $e_count = $exons->count;
+  my ($e_length, $e_gc);
   # Iterate over each exon
   while (my $exon = $exons->next) {
-    print join "\t", ($exon->length,
-		      $exon->gc_content);
-    print "\n";
-    print '';
+    $e_length += $exon->length;
+    $e_gc     += $exon->gc_content;
   }
+  print join "\t", int($e_length/$e_count), $e_gc/$e_count;
+  print "\n";
+  # Introns don't exist in the dataset, so GAL
+  # will infer them on the fly.
+  my $introns = $mrna->introns;
+  my $i_count = $introns->count;
+  my ($i_length, $i_gc);
+  while (my $intron = $introns->next) {
+    $i_length += $intron->length;
+    $i_gc     += $intron->gc_content;
+  }
+  print $i_length ? join("\t", int($i_length/$i_count), '', $i_gc/$i_count) : "\t\t";
+  print "\n";
+  print '';
 }

@@ -156,7 +156,7 @@ sub parse_record {
 					'fasta sequence'
 					);
 		my $code = "FATAL : reference_sequence_mismatch : $reference_seq";
-		$self->throw(message => $message, code => $code);
+		$self->throw($code, $message);
 	    }
 	    $reference_seq = length($reference_seq) >= 50 ? '~' : $reference_seq;
 	}
@@ -176,7 +176,7 @@ sub parse_record {
 	else {
 	    my $message = "Unable to determine variant type";
 	    my $code = "FATAL : unable_to_determine_variant_type : $type";
-	    $self->throw(message => $message, $code => $code);
+	    $self->throw($code, $message);
 	}
 
 	$zygosity = lc $zygosity;

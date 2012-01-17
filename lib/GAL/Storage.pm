@@ -199,9 +199,8 @@ sub dsn {
 	  = DBI->parse_dsn($dsn);
 	$scheme = $self->scheme;
 	my $self_driver = $self->driver;
-	$self->warn(message => ("Warn : conflicting_db_drivers " .
-				": You gave: $driver, using $self_driver instead\n"
-			       )
+	$self->warn('conflicting_db_drivers',
+		    "You gave: $driver, using $self_driver instead\n"
 		   )
 	  if $driver && $self_driver ne $driver;
 	$driver = $self->driver($driver);
@@ -324,9 +323,9 @@ sub _load_schema {
   my ($self, $dbh) = @_;
 
   my $self = shift;
-  $self->throw(message => ('Method _load_schema must be implimented by ' .
-			   'subclass'),
-	       'code'  => 'subclass_must_override_this_method : _load_schema',
+  $self->throw('subclass_must_override_this_method',
+	       ('Method _load_schema must be implimented by ' .
+		'subclass'),
 	      );
 }
 
@@ -334,8 +333,8 @@ sub _load_schema {
 
 sub load_files {
   my $self = shift;
-  $self->throw(message => 'Method load files must be implimented by sublcass',
-	       code    => 'subclass_must_override_this_method : load_files'
+  $self->throw('subclass_must_override_this_method',
+	       'Method load files must be implimented by sublcass',
 	      );
 }
 
@@ -455,9 +454,9 @@ sub prepare_features {
 
 sub add_features {
   my $self = shift;
-  $self->throw(message => ('Method must be implimented by subclass : ' .
-			   'add_features'),
-	       code    => 'subclass_must_override_this_method : add_features',
+  $self->throw('subclass_must_override_this_method : add_features',
+	       ('Method must be implimented by subclass : ' .
+	        'add_features'),
 	      );
 }
 
@@ -465,10 +464,8 @@ sub add_features {
 
 sub create_database {
   my $self = shift;
-  $self->throw(message => ('Method must be implimented by subclass : ' .
-			   'add_features'),
-	       code    => ('subclass_must_override_this_method : ' .
-			   'create_database'),
+  $self->throw('subclass_must_override_this_method',
+	       'Method must be implimented by subclass',
 	      );
 }
 
@@ -494,8 +491,8 @@ sub create_database {
 #
 #sub get_children {
 #	my $self = shift;
-#	$self->throw(message => ('Method must be implimented by subclass : ' .
-#				 'add_features')
+#	$self->throw('error_code',
+#                    'Method must be implimented by subclass'
 #		    );
 #}
 #
@@ -513,8 +510,8 @@ sub create_database {
 #
 #sub get_children_recursively {
 #  my $self = shift;
-#  $self->throw(message => ('Method must be implimented by subclass : ' .
-#			   'add_features')
+#  $self->throw('error_code',
+#                'Method must be implimented by subclass'
 #	      );
 #}
 #
@@ -532,8 +529,8 @@ sub create_database {
 #
 #sub get_parents {
 #  my $self = shift;
-#  $self->throw(message => ('Method must be implimented by subclass : ' .
-#			   'add_features')
+#  $self->throw('error_code',
+#                'Method must be implimented by subclass'
 #	      );
 #}
 #
@@ -551,8 +548,8 @@ sub create_database {
 #
 #sub get_parents_recursively {
 #  my $self = shift;
-#  $self->throw(message => ('Method must be implimented by subclass : ' .
-#			   'add_features')
+#  $self->throw('error_code',
+#                'Method must be implimented by subclass'
 #	      );
 #}
 #
@@ -570,8 +567,8 @@ sub create_database {
 #
 #sub get_all_features {
 #  my $self = shift;
-#  $self->throw(message => ('Method must be implimented by subclass : ' .
-#			   'add_features')
+#  $self->throw('error_code',
+#                'Method must be implimented by subclass'
 #	      );
 #}
 #
@@ -589,8 +586,8 @@ sub create_database {
 #
 #sub get_features_by_type {
 #  my $self = shift;
-#  $self->throw(message => ('Method must be implimented by subclass : ' .
-#			   'add_features')
+#  $self->throw('error_code',
+#                'Method must be implimented by subclass'
 #	      );
 #}
 #
@@ -608,8 +605,8 @@ sub create_database {
 #
 #sub get_recursive_features_by_type {
 #  my $self = shift;
-#  $self->throw(message => ('Method must be implimented by subclass : ' .
-#			   'add_features')
+#  $self->throw('error_code',
+#                'Method must be implimented by subclass'
 #	      );
 #}
 #
@@ -627,8 +624,8 @@ sub create_database {
 #
 #sub get_feature_by_id {
 #  my $self = shift;
-#  $self->throw(message => ('Method must be implimented by subclass : ' .
-#			   'add_features')
+#  $self->throw('error_code',
+#                'Method must be implimented by subclass'
 #	      );
 #}
 #
@@ -646,8 +643,8 @@ sub create_database {
 #
 #sub filter_features {
 #  my $self = shift;
-#    $self->throw(message => ('Method must be implimented by subclass : ' .
-#			   'add_features')
+#  $self->throw('error_code',
+#                'Method must be implimented by subclass'
 #		);
 #}
 #

@@ -134,15 +134,13 @@ sub parse_record {
 	my $phase      = '.',
 
 	my $feature_id = join ':', ($seqid, $start);
-	
 	my $variant_seq   = $record->{var};
 	my $reference_seq = $record->{ref};
 	my $fasta_ref ||= uc $self->fasta->seq($seqid, $start, $end);
 
-	$self->warn(message => ("Warning : reference_seq_not_equal_to_fasta : " . 
-				join ', ', values %{$record})
-		    )
-	    unless $reference_seq eq $fasta_ref;
+	$self->warn('reference_seq_not_equal_to_fasta',
+		    join ', ', values %{$record})
+	  unless $reference_seq eq $fasta_ref;
 
 	my $total_reads = $record->{total_reads};
 	my $var_pct = $record->{var_pct};

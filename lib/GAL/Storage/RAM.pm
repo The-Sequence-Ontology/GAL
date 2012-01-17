@@ -319,7 +319,7 @@ sub search {
 	    $these_ids{$id}++ if $feature->{$column} >= $value;
 	  }
 	  else {
-	    $self->throw(message => "FATAL : invalid_operator_in_search : $operator\n");
+	    $self->throw('invalid_operator_in_search', $operator);
 	  }
 	}
       }
@@ -352,7 +352,7 @@ sub search {
       }
     }
     else {
-      $self->throw(message => "FATAL : invalid_order_direction : $direction");
+      $self->throw('invalid_order_direction', $direction);
     }
   }
   return wantarray ? @features : \@features;

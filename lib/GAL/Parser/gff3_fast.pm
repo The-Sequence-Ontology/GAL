@@ -121,7 +121,7 @@ sub file {
   my ($self, $file) = @_;
 
   if ($file) {
-    $self->throw(message => "FATAL : cant_read_file : $file") unless -r $file;
+    $self->throw('unreadable_file', $file) unless -r $file;
     $self->{file} = $file if $file;
     $self->{fh} = undef;
   }
@@ -136,7 +136,7 @@ sub fh {
 
   $self->{fh} = $fh if $fh;
   if (! $self->{fh} && $self->{file}) {
-    open(my $FH, '<', $self->{file}) or $self->throw(message => "FATAL : cant_open_file_for_reading : $self->{file}\n");
+    open(my $FH, '<', $self->{file}) or $self->throw('cant_open_file_for_reading', $self->{file});
     $self->{fh} = $FH;
   }
   return $self->{fh};

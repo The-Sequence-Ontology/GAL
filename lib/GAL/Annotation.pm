@@ -314,14 +314,11 @@ sub load_files {
   my $args = $self->prepare_args(\@args);
   # TODO: This functionality should be in GAL::Storage.pm
   my ($mode, $files) = @{$args}{qw/mode files/};
-  $mode ||= 'append';
+  $mode ||= 'overwrite';
   if ($mode eq 'overwrite') {
     $self->storage->drop_database;
-    $self->storage->load_files($files);
   }
-  elsif ($mode eq 'append') {
-    $self->storage->load_files($files);
-  }
+  $self->storage->load_files($files);
 }
 
 # #-----------------------------------------------------------------------------
