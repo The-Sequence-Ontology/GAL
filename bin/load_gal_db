@@ -12,7 +12,7 @@ my $usage = "
 
 Synopsis:
 
-load_gal_db --driver SQLite --parser gff3 --db_name db_name  file.gff3
+load_gal_db file.gff3
 
 Description:
 
@@ -20,11 +20,11 @@ Load a gal_database
 
 Options:
 
-  --driver    (mysql SQLite)
-  --parser    A GAL::Parser subclass
-  --user      Database user name
-  --password  Database password
-  --db_name   Database name
+  --driver    SQLite or mysql [SQLite]
+  --parser    A GAL::Parser subclass [gff3]
+  --user      Database user name (for mySQL)
+  --password  Database password (for mySQL)
+  --db_name   Database name [Defaults to input filename file(.sqlite)]
 
 ";
 

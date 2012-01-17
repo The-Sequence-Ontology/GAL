@@ -1,0 +1,295 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+ucsc_gtf2gff3 ucsc_file.gtf
+
+Description:
+
+This script will convert UCSC knownGene and RefGene tables to GFF3 by
+doing single linkage clustering on all transcripts using exon overlap
+as the criteria for building links.
+
+";
+
+
+my ($help);
+my $opt_success = GetOptions('help'    => \$help,
+			      );
+
+die $usage if $help || ! $opt_success;
+
+my $file = shift;
+
+die $usage unless $file;
+
+my $features = parse_gene_table($file);
+my $graph    = build_graph($features);
+my $clusters = get_clusters($graph);
+my $genes    = build_genes($features, $clusters);
+
+
+foreach my $g_id (keys %{$genes}) {
+    my $gene = $genes->{$g_id};
+    print_feature($gene);
+    foreach my $t_id (keys %{$gene->{transcripts}}) {
+	my $transcript = $gene->{transcripts}{$t_id};
+	print_feature($transcript);
+	foreach my $type (keys %{$transcript->{features}}) {
+	    foreach my $feature (@{$transcript->{features}{$type}}) {
+		print_feature($feature);
+	    }
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub parse_gtf {
+
+    my $file = shift;
+
+    open ( my $FH, '<', $file) or die "Could not open file: $file";
+
+    my %features;
+    while (my $line = <$FH>) {
+
+	next if $line =~ /^\s*\#/;
+
+	my ($seq_id, $source, $type, $start, $stop, $score, $strand,
+	    $phase, $attributes) = split  /\t/, $line;
+
+	my ($t_id) = $attributes  =~ /transcript_id\s+\"(.*?)\"/;
+	die "No transcript ID in:\n$line\n" unless $t_id;
+
+       my $feature = {seq_id => $seq_id,
+		      source => $source,
+		      type   => $type,
+		      start  => $start,
+		      stop   => $stop,
+		      score  => $score,
+		      strand => $strand,
+		      phase  => $phase,
+		      t_id   => $t_id,
+		  };
+
+	push @{$features{$t_id}{$type}}, $feature;
+
+    }
+    return \%features;
+}
+#-----------------------------------------------------------------------------
+sub build_graph {
+
+    my $features = shift;
+
+    my %graph;
+
+    # Improve the effciency here by sorting on the transcript start positions
+    # and doing a next TRNSC2 of the loop if we are in features/exons that can't
+    # possibly overlap.
+    my @t1_ids = sort {$feature->{$a}{end} <=> $feature->{b}{end}} keys %{$features};
+    my @t2_ids = sort {$feature->{$a}{start} <=> $feature->{b}{start}} keys %{$features};
+    my $t2_idx_pointer = 0;
+    my ($t1_end_max, $t2_start_min);
+  T1:
+    for my $t1_idx (0 .. scalar @t1_ids) {
+	    my $t1     = $features->{$t1_ids[$t1_idx]};
+	    $t1_end = $t1->{end};
+	    if ($t1_end_max < $t1_end) {$t1_max = $t1_end};
+	    $t1_end_idx_pointer = ? $t1_end > $t1
+	  E1:
+	    for my $exon_1 (@{$t1->{exon}}) {
+		  T2:
+		    for my $t2_idx ($t2_idx_pointer .. scalar @t2_ids) {
+			    my $t2 = $feature->{$t2_id};
+			    my $t2_start = $t2->{start};
+			    if ($t2_start_min > $t2_start) {$t2_start_min = $t2_start};
+			    if ($t2_start_min > $t1_end_max) {
+				    $t2_start_min = $t1_end_max;
+				    $t2_idx_pointer = $t2_idx;
+				    last T2;
+			    }
+			  E2:
+			    for my $exon_2 (@{$features->{$t2_id}{exon}}) {
+
+				    next if ($exon_1->{seq_id} ne $exon_2->{seq_id} ||
+					     $exon_1->{strand} ne $exon_2->{strand}
+					    );
+				    if (overlaps($exon_1, $exon_2)) {
+					    $graph{$exon_1->{t_id}}{$exon_2->{t_id}}++;
+					    $graph{$exon_2->{t_id}}{$exon_1->{t_id}}++;
+
+					    last E2;
+				    }
+			    }
+		    }
+	    }
+    }
+    return \%graph;
+}
+#------------------------------------------------------------------------------
+sub overlaps {
+
+    my ($exon_1, $exon_2) = @_;
+
+    if ($exon_1->{start} >= $exon_2->{start} &&
+	$exon_1->{start} <= $exon_2->{stop})     {
+	return 1;
+    }
+#    elsif ($exon_1->{stop} >= $exon_2->{start} &&
+#	   $exon_1->{stop} <= $exon_2->{stop})     {
+#	return 1;
+#    }
+    elsif ($exon_2->{start} >= $exon_1->{start} &&
+	   $exon_2->{start} <= $exon_1->{stop})     {
+	return 1;
+    }
+#   elsif ($exon_2->{stop} >= $exon_1->{start} &&
+#	   $exon_2->{stop} <= $exon_1->{stop})     {
+#	return 1;
+#    }
+    return undef;
+}
+#------------------------------------------------------------------------------
+sub build_genes {
+
+    my ($features, $clusters) = @_;
+
+    my $counter = 1;
+
+    my %genes;
+    my %feature_count;
+
+    for my $t_ids (@{$clusters}) {
+	    my $g_id = sprintf 'GENE_%d06', $counter++;
+	    my ($seq_id, $source, $strand);
+	    my ($g_min, $g_max) = (10_000_000_000, 0);
+	    my %transcripts;
+
+	    for my $t_id (@{$t_ids}) {
+		    my ($t_min, $t_max) = (10_000_000_000, 0);
+		    for my $type (keys %{$features->{$t_id}}) {
+			    my @features;
+			    if ($features->{$t_id}{$type}[0]{strand} eq '+') {
+				    @features = sort {$a->{start} <=> $b->{stop}}
+				      @{$features->{$t_id}{$type}};
+			    }
+			    else {
+				    @features = sort {$b->{start} <=> $a->{stop}}
+				      @{$features->{$t_id}{$type}};
+			    }
+			    for my $feature (@features) {
+
+				    $feature->{parent} = $t_id;
+				    my $id = "$t_id:$type:". sprintf '%d06', ++$feature_count{$t_id}{$type};
+				    $feature->{id} = $id;
+
+				    $seq_id ||= $feature->{seq_id};
+				    $source ||= $feature->{source};
+				    $strand ||= $feature->{strand};
+
+				    $t_min = $feature->{start} < $t_min ?
+				      $feature->{start} : $t_min;
+				    $t_max = $feature->{stop} > $t_max ?
+				      $feature->{stop} : $t_max;
+			    }
+		    }
+		    $transcripts{$t_id} = {seq_id   => $seq_id,
+					   source   => $source,
+					   type     => 'mRNA',
+					   start    => $t_min,
+					   stop     => $t_max,
+					   score       => '.',
+					   strand   => $strand,
+					   phase       => '.',
+					   features => $features->{$t_id},
+					   parent   => $g_id,
+					   id       => $t_id,
+					  };
+
+		    $g_min = $t_min < $g_min ?
+		      $t_min : $g_min;
+		    $g_max = $t_max > $g_max ?
+		      $t_max : $g_max;
+	    }
+	    $genes{$g_id} = {seq_id      => $seq_id,
+			     source      => $source,
+			     type        => 'gene',
+			     start       => $g_min,
+			     stop        => $g_max,
+			     score       => '.',
+			     strand      => $strand,
+			     phase       => '.',
+			     transcripts => \%transcripts,
+			     id          => $g_id,
+			    };
+    }
+    return \%genes;
+}
+#-----------------------------------------------------------------------------
+sub get_clusters {
+
+    my $graph = shift;
+
+    my @clusters;
+    my $visited = {};
+    for my $i (keys %{$graph}) {
+
+	next if $visited->{$i};
+	$visited->{$i}++;
+
+	my $subgraph = {};
+	$subgraph->{$i}++;
+	$subgraph = collect_vertices($graph, $i, $visited, $subgraph);
+	push @clusters,  [keys %{$subgraph}];
+
+    }
+    return \@clusters;
+}
+#-----------------------------------------------------------------------------
+sub collect_vertices {
+
+    my ($graph, $i, $visited, $subgraph) = @_;
+
+    for my $j (keys %{$graph->{$i}}) {
+	next if $visited->{$j};
+	$visited->{$j}++;
+	$subgraph->{$j}++;
+
+	collect_vertices($graph, $j, $visited, $subgraph);
+    }
+
+    return $subgraph;
+}
+#-----------------------------------------------------------------------------
+sub print_feature {
+
+    my $feature = shift;
+
+    print join "\t", ($feature->{seq_id},
+		      $feature->{source},
+		      $feature->{type},
+		      $feature->{start},
+		      $feature->{stop},
+		      $feature->{score},
+		      $feature->{strand},
+		      $feature->{phase},
+		      );
+    print "\tID=" . $feature->{id} . ';';
+    if ($feature->{parent}) {
+	print "Parent=" . $feature->{parent} . ';';
+    }
+    print "\n";
+
+}
