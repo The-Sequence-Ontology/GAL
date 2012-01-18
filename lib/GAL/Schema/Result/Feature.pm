@@ -3,7 +3,7 @@ package GAL::Schema::Result::Feature;
 use strict;
 use warnings;
 use base qw/DBIx::Class/;
-use Set::Intspan::Fast;
+use Set::IntSpan::Fast;
 
 =head1 NAME
 

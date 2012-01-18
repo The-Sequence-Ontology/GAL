@@ -72,5 +72,5 @@ while (my $gene = $genes->next) {
   # Get the feature ID
   my $gene_id = $gene->feature_id;
   my $splc_cmplx = $gene->splice_complexity;
-  print "$gene_id\t$splc_cmplx\n" if $splice_complexity;
+  print "$gene_id\t$splc_cmplx\n" if $splc_cmplx;
 }
