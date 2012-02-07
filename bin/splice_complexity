@@ -38,7 +38,7 @@ if (-T $feature_db) {
   $feature_db =~ s/\.(gff3?|gvf)$//;
   $feature_db .= '.sqlite';
   # If DB is newer than text file
-  if ((stat($feature_db))[9] > (stat($text_file))[9]) {
+  if (-e $feature_db && (stat($feature_db))[9] > (stat($text_file))[9]) {
     $text_file = undef;
   }
 }

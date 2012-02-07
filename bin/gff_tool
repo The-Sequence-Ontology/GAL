@@ -111,6 +111,8 @@ to the altered copy of the feature.  All filters given are applied.
 		  defaults to 1 and end defaults start or 100,000,000,000
 		  if start is also not defined.
 
+  genes           Keep only the gene models from a complex GFF file.
+
 --Modify Options--
 
   merge|m         Merge takes a feature file(s) and combines the
@@ -211,7 +213,7 @@ to the altered copy of the feature.  All filters given are applied.
 		  implimented)
 
   splice_sequence Print the mature fasta sequence for spliced
-                  features (exons, CDS)
+		  features (exons, CDS)
 
   features|x      Print only feature lines, removing all meta-data,
 		  comments, empty lines and fasta from a GFF file.
@@ -231,7 +233,7 @@ to the altered copy of the feature.  All filters given are applied.
 		  empty lines) from a GFF file.
 
   meta_add|z      Add the meta-data contained in the given file to the
-                  begining of a GFF file.
+		  begining of a GFF file.
 
   pragmas|w       Interactively add GFF3/GVF pragmas to the top of the
 		  file.  Use GFF3 or GVF (case insensitive) as an
@@ -331,23 +333,25 @@ gff_tool --hash_ag "push @{$h{$f->{type}}}, $f"          \
 
 my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
     $SEQIDS_FILE, $include, $exclude, $code, $filter, $overlaps,
-    $merge, $blend, $sort, $alter, $hash_ag, $validate, $stats,
-    $print_gff, $sequence, $splice_sequence, $fasta_only, $fasta_no,
-    $fasta_add, $meta_only, $meta_no, $meta_add, $add_ID, $pragmas,
-    $features, $union, $intersection, $l_compliment, $s_difference,
-    $titv, $gvf_stats, $effect_stats, $gvf_sets, $fix_gvf);
+    $genes, $merge, $blend, $sort, $alter, $hash_ag, $validate,
+    $stats, $print_gff, $sequence, $splice_sequence, $fasta_only,
+    $fasta_no, $fasta_add, $meta_only, $meta_no, $meta_add, $add_ID,
+    $pragmas, $features, $union, $intersection, $l_compliment,
+    $s_difference, $titv, $gvf_stats, $effect_stats, $gvf_sets,
+    $fix_gvf,);
 
 my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'out_ext|o=s'     => \$out_ext,
 			     'fasta|j=s'       => \$FASTA_FILE,
 			     'so_file=s'       => \$SO_FILE,
 			     'ids|d=s'	       => \$IDS_FILE,
-		             'seqids|d=s'      => \$SEQIDS_FILE,
+			     'seqids|d=s'      => \$SEQIDS_FILE,
 			     'include|n'       => \$include,
 			     'exclude|e'       => \$exclude,
 			     'code|c=s'	       => \$code,
 			     'filter|t'        => \$filter,
 			     'overlaps=s'      => \$overlaps,
+			     'genes'           => \$genes,
 			     'merge|m'	       => \$merge,
 			     'blend|b'	       => \$blend,
 			     'sort|s'	       => \$sort,
@@ -397,6 +401,7 @@ my $SEQIDS   = parse_ids($SEQIDS_FILE)  if $SEQIDS_FILE;
 # Move the filter code to the passes_filters sub
 filter(\@files, $code)            if $filter;
 overlaps(\@files, $overlaps)      if $overlaps;
+genes(\@files)                    if $genes;
 merge(\@files)		          if $merge;
 blend_gff(\@files)		  if $blend;
 sort_gff(\@files)		  if $sort;
@@ -461,6 +466,7 @@ sub filter {
 	    print $OUT to_gff3($f_original);
 	}
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -499,6 +505,42 @@ sub overlaps {
 	    print $OUT to_gff3($f);
 	}
     }
+    exit;
+}
+
+#-----------------------------------------------------------------------------
+#  genes        Keep only the features commonly associated with gene models
+#               from a complex GFF file. (gene mRNA transcript exon CDS
+#               start_codon stop_codon three_prime_UTR five_prime_UTR).
+#
+#  Examples:
+#  gff_tool --genes file.gff
+#
+#-----------------------------------------------------------------------------
+
+sub genes {
+
+  my ($files, $code) = @_;
+
+  my %accept = (gene		=> 1,
+		mRNA		=> 1,
+		transcript	=> 1,
+		exon		=> 1,
+		CDS		=> 1,
+		start_codon     => 1,
+		stop_codon      => 1,
+		three_prime_UTR => 1,
+		five_prime_UTR  => 1,
+	       );
+  for my $file (@files) {
+    my $IN  = fh_in($file);
+    my $OUT = fh_out($file);
+    while (my $f = next_feature_hash($IN)) {
+      next unless defined $accept{$f->{type}};
+      print $OUT to_gff3($f);
+    }
+  }
+  exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -523,7 +565,7 @@ sub merge_gff {
     my $files = shift;
 
     die "gff_tool (merge) not yet implimented!\n";
-
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -607,6 +649,7 @@ sub blend_gff {
 	}
 	print $OUT to_gff3(\%base_feature);
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -635,6 +678,7 @@ sub sort_gff {
 
 	print $OUT to_gff3($f);
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -668,6 +712,7 @@ sub alter_gff {
 	    print $OUT to_gff3($f);
 	}
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -723,6 +768,7 @@ sub hash_ag {
 
 	print $OUT to_gff3(\@f);
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1555,7 +1601,7 @@ sub validate {
 sub stats {
 
     die "gff_tool (stats) not yet implimented!\n";
-
+    exit;
 }
 
 
@@ -1583,6 +1629,7 @@ sub sequence {
       print ">$header\n$seq\n";
     }
   }
+  exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1591,31 +1638,31 @@ sub sequence {
 #-----------------------------------------------------------------------------
 
 sub splice_sequence {
-  
+
   my $files = shift;
-  
+
   for my $file (@{$files}) {
     my $IN  = fh_in($file);
     my $OUT = fh_out($file);
-    
+
     my %spliced_seq;
     while (my $f = next_feature_hash($IN)) {
-      
+
       my $a = $f->{attributes};
-      
+
       if (exists $a->{Parent}) {
 	my @parents = @{$a->{Parent}};
-	
+
 	my ($seqid, $start, $end, $strand) = @{$f}{qw(seqid start end strand)};
-	
-	
+
+
 	for my $parent (@parents) {
 	  push @{$spliced_seq{$parent}{coords}{$seqid}}, [$start, $end];
 	  $spliced_seq{$parent}{strand} = $strand;
 	}
       }
     }
-    
+
     for my $id (keys %spliced_seq) {
       my $strand = $spliced_seq{$id}{strand};
       for my $seqid (keys %{$spliced_seq{$id}{coords}}) {
@@ -1626,7 +1673,7 @@ sub splice_sequence {
 	else {
 	  @coords = sort {$a->[1] <=> $b->[1]} @{$spliced_seq{$id}{coords}{$seqid}};
 	}
-	
+
 	my $spliced_seq;
 	for my $pair (@coords) {
 	  @{$pair} = reverse @{$pair} if $strand eq '-';
@@ -1640,6 +1687,7 @@ sub splice_sequence {
       }
     }
   }
+  exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1663,6 +1711,7 @@ sub fasta_add {
 	print $OUT `cat $fasta_add`;
 	close $OUT;
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1684,6 +1733,7 @@ sub fasta_only {
 	    print $OUT, $_;
 	}
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1704,6 +1754,7 @@ sub fasta_no {
 	    print $OUT, $_;
 	}
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1714,7 +1765,7 @@ sub fasta_no {
 sub add_ID {
 
     die "gff_tool (add_ID) not yet implimented!\n";
-
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1727,7 +1778,7 @@ sub add_ID {
 sub pragmas {
 
     die "gff_tool (gff_pragmas) not yet implimented!\n";
-
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1747,6 +1798,7 @@ sub headers_only {
 	    print $OUT $_;
 	}
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1766,6 +1818,7 @@ sub headers_no {
 	    print $OUT $_;
 	}
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1781,7 +1834,7 @@ sub meta_add {
 	print $OUT (<$HEAD>);
 	print $OUT (<$IN>);
     }
-
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1800,6 +1853,7 @@ sub features {
 	    print $OUT $_;
 	}
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1828,6 +1882,7 @@ sub union {
 	my $f = $union{$loc_id};
 	print $OUT to_gff3($f);
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1873,6 +1928,7 @@ sub intersection {
 	    print $OUT to_gff3($f);
 	}
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1918,6 +1974,7 @@ sub l_compliment {
 	    print $OUT to_gff3($f);
 	}
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1948,6 +2005,7 @@ sub s_difference {
 	    print $OUT to_gff3($f);
 	}
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -1984,6 +2042,7 @@ sub gvf_sets {
 #	    print $OUT to_gff3($f);
 #	}
 #     }
+  exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -2072,6 +2131,7 @@ sub calc_titv {
 	print join "\t", ($ti, $tv, $ti_tv_ratio);
 	print "\n";
     }
+    exit;
 }
 
 
@@ -2175,6 +2235,7 @@ sub gvf_stats {
 	print join "\t", ($file, $count, $het, $hom, $het_hom_ratio, $het/($het + $hom)*100, $ti, $tv, $ti_tv_ratio);
 	print "\n";
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
@@ -2210,27 +2271,28 @@ sub effect_stats {
 	}
 	print "\n";
     }
+    exit;
 }
 
 #-----------------------------------------------------------------------------
 
 sub parse_ids {
 
-	my $file = shift;
+  my $file = shift;
 
-	my %ids;
-	if ($file && ! -r $file) {
-	    warn "WARN : assuming_id_name : Assuming $file is an ID";
-	    $ids{$file}++;
-	    return \%ids;
-	}
+  my %ids;
+  if ($file && ! -r $file) {
+    warn "WARN : assuming_id_name : Assuming $file is an ID";
+    $ids{$file}++;
+    return \%ids;
+  }
 
-	open (my $IN, "<", $file) or
-	    die "Can't open $file for reading: $!\n";
+  open (my $IN, "<", $file) or
+    die "Can't open $file for reading: $!\n";
 
-	%ids = map {chomp;$_ => 1} (<$IN>);
+  %ids = map {chomp;$_ => 1} (<$IN>);
 
-	return \%ids;
+  return \%ids;
 }
 
 
@@ -2245,7 +2307,6 @@ sub parse_fasta {
   my $db = Bio::DB::Fasta->new($path);
 
   return $db;
-
 }
 
 #-----------------------------------------------------------------------------
@@ -2348,13 +2409,11 @@ sub next_feature_hash {
 
     my $line = <$fh>;
     return undef unless defined $line;
-    if ($line =~ /^\#\#FASTA/) {
-	handle_fasta($fh);
-	return undef;
-    }
+
     until ($line !~ /^(\#.*|\s+)$/) {
-	handle_header_line($line);
+	handle_header_line($line, $fh);
 	$line = <$fh>;
+	return undef unless defined $line;
     }
     chomp $line;
 
@@ -2389,9 +2448,15 @@ sub next_feature_hash {
 
 sub handle_header_line {
 
-    my $line = shift;
-    return if $meta_no;
-    return if $line =~ /^\#\#\#\s*$/;
+    my ($line, $fh) = @_;
+
+    if ($line =~ /^\#\#FASTA/) {
+	handle_fasta($fh);
+	return undef;
+    }
+
+    return undef if $meta_no;
+    return undef if $line =~ /^\#\#\#\s*$/;
 
     if ($line =~ /^\#\#sequence-region\s(\S+)/) {
 	if ($include && %{$SEQIDS} ) {
@@ -2409,17 +2474,29 @@ sub handle_header_line {
 sub handle_fasta {
 
     my $fh = shift;
-    
+
     if ($fasta_no) {
-	close $fh;
-	return;
+      my $line = <$fh>;
+      print STDERR "WARN : skipping_fasta_sequence : $line\n";
+      while (my $line = <$fh>) {
+	next unless $line;
+	chomp $line;
+	if ($line =~ /^>/) {
+	  print STDERR "WARN : skipping_fasta_sequence : $line\n";
+	  next;
+	}
+	if ($line !~ /^[ATGCN]*$/i) {
+	  print STDERR "FATAL : non_standard_fasta_line : $line\n";
+	}
+      }
+      return undef;
     }
-    
+
     require Bio::SeqIO;
-    
+
     my $seq_io  = Bio::SeqIO->new(-fh => $fh,
 				  -format => 'Fasta');
-    
+
     print "\n##FASTA\n";
     while (my $seq_obj = $seq_io->next_seq) {
 	my $id = $seq_obj->display_id;
@@ -2432,12 +2509,12 @@ sub handle_fasta {
 	my $header = $id . " " . $seq_obj->description;
 	my $seq = $seq_obj->seq;
 	$seq =~ s/(.{60})/$1\n/g;
-        print ">$header\n$seq\n";
+	print ">$header\n$seq\n";
     }
     close $fh;
 }
 
-#-----------------------------------------------------------------------------    
+#-----------------------------------------------------------------------------
 
 sub to_gff3 {
 
@@ -2615,77 +2692,76 @@ __END__
 
 
     elsif ($build eq 'hg18') {
-          %chrs = (chr1  => 247249719,
-                   chr2  => 242951149,
-                   chr3  => 199501827,
-                   chr4  => 191273063,
-                   chr5  => 180857866,
-                   chr6  => 170899992,
-                   chr7  => 158821424,
-                   chr8  => 146274826,
-                   chr9  => 140273252,
-                   chr10 => 135374737,
-                   chr11 => 134452384,
-                   chr12 => 132349534,
-                   chr13 => 114142980,
-                   chr14 => 106368585,
-                   chr15 => 100338915,
-                   chr16 => 88827254,
-                   chr17 => 78774742,
-                   chr18 => 76117153,
-                   chr19 => 63811651,
-                   chr20 => 62435964,
-                   chr21 => 46944323,
-                   chr22 => 49691432,
-                   chrX  => 154913754,
-                   chrY  => 57772954,
-                   chrM  => 16571,
-                   );
+	  %chrs = (chr1  => 247249719,
+		   chr2  => 242951149,
+		   chr3  => 199501827,
+		   chr4  => 191273063,
+		   chr5  => 180857866,
+		   chr6  => 170899992,
+		   chr7  => 158821424,
+		   chr8  => 146274826,
+		   chr9  => 140273252,
+		   chr10 => 135374737,
+		   chr11 => 134452384,
+		   chr12 => 132349534,
+		   chr13 => 114142980,
+		   chr14 => 106368585,
+		   chr15 => 100338915,
+		   chr16 => 88827254,
+		   chr17 => 78774742,
+		   chr18 => 76117153,
+		   chr19 => 63811651,
+		   chr20 => 62435964,
+		   chr21 => 46944323,
+		   chr22 => 49691432,
+		   chrX  => 154913754,
+		   chrY  => 57772954,
+		   chrM  => 16571,
+		   );
 
 	  elsif ($build eq 'hg19') {
-          %chrs = (chr1  => 249250621,
-                   chr2  => 243199373,
-                   chr3  => 198022430,
-                   chr4  => 191154276,
-                   chr5  => 180915260,
-                   chr6  => 171115067,
-                   chr7  => 159138663,
-                   chr8  => 146364022,
-                   chr9  => 141213431,
-                   chr10 => 135534747,
-                   chr11 => 135006516,
-                   chr12 => 133851895,
-                   chr13 => 115169878,
-                   chr14 => 107349540,
-                   chr15 => 102531392,
-                   chr16 => 90354753,
-                   chr17 => 81195210,
-                   chr18 => 78077248,
-                   chr19 => 59128983,
-                   chr20 => 63025520,
-                   chr21 => 48129895,
-                   chr22 => 51304566,
-                   chrX  => 155270560,
-                   chrY  => 59373566,
-                   chrM  => 16571,
-                   );
+	  %chrs = (chr1  => 249250621,
+		   chr2  => 243199373,
+		   chr3  => 198022430,
+		   chr4  => 191154276,
+		   chr5  => 180915260,
+		   chr6  => 171115067,
+		   chr7  => 159138663,
+		   chr8  => 146364022,
+		   chr9  => 141213431,
+		   chr10 => 135534747,
+		   chr11 => 135006516,
+		   chr12 => 133851895,
+		   chr13 => 115169878,
+		   chr14 => 107349540,
+		   chr15 => 102531392,
+		   chr16 => 90354753,
+		   chr17 => 81195210,
+		   chr18 => 78077248,
+		   chr19 => 59128983,
+		   chr20 => 63025520,
+		   chr21 => 48129895,
+		   chr22 => 51304566,
+		   chrX  => 155270560,
+		   chrY  => 59373566,
+		   chrM  => 16571,
+		   );
 
 
 
 # Pseudoautosomal regions
     my %par = ('hg18' => {chrX => {'five_prime'  => [1, 2709520],
-                                   'three_prime' => [154584238, 154913754]
-                                   },
+				   'three_prime' => [154584238, 154913754]
+				   },
 				       chrY => {'five_prime'  => [1, 2709520],
-                                   'three_prime' => [57443438,  57772954]
-                                   },
-                               },
-               'hg19' => {chrX => {'five_prime'  => [60001, 2699520],
-                                   'three_prime' => [154931044, 155260560],
-                               },
-                          chrY => {'five_prime'  => [10001, 2649520],
-                                   'three_prime' => [59034050,  59363566],
-                               }
-                      },
-               );
-
+				   'three_prime' => [57443438,  57772954]
+				   },
+			       },
+	       'hg19' => {chrX => {'five_prime'  => [60001, 2699520],
+				   'three_prime' => [154931044, 155260560],
+			       },
+			  chrY => {'five_prime'  => [10001, 2649520],
+				   'three_prime' => [59034050,  59363566],
+			       }
+		      },
+	       );
