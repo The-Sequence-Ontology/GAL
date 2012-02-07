@@ -1,0 +1,69 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+gvf_updater --current_version 1.05 --new_version 1.06 variants.gvf
+
+Description:
+
+This script will update an older GVF to comply with a newer version of
+the specification.  This script currently only supports GVF 1.05 to
+1.06 conversion and thus those are the defaults and the options below
+are for future use.
+
+Options:
+
+  --current_version, c [1.05]
+
+    The version of the GVF spec to which the file currently conforms.
+
+  --new_version, n [1.06]
+
+";
+
+
+my ($help);
+my $opt_success = GetOptions('help'    => \$help,
+			      );
+
+die $usage if $help || ! $opt_success;
+
+my $file = shift;
+die $usage unless $file;
+open (my $IN, '<', $file) or die "FATAL : cant_open_file_for_reading : $file\n";
+
+while (<$IN>) {
+    if (/^(\#|\s)/) {
+	print;
+	next;
+    }
+    chomp;
+    $_ .= ';';
+    s/;;$/;/;
+    my ($gt) = $_ =~ /Genotype=(.*?);/;
+    if ($gt) {
+	my $zt = $gt;
+	$gt =~ s/,/;/g;
+	$gt = ($zt eq 'homozygous'   ? '0:0' :
+	       $zt eq 'hemizygous'   ? '0:!' :
+	       $zt eq 'heterozygous' ? '0:1' :
+	       '');
+	if ($gt) {
+	    $_ =~ s/Genotype=(.*?);/Genotype=$gt;/;
+	    $_ .= "Zygosity=$zt;";
+	}
+	else {
+	    print STDERR "FATAL : could_not_interpret_genotype_attribute : $_\n";
+	}
+    }
+    print;
+    print "\n";
+}
