@@ -6,6 +6,7 @@ use Set::IntSpan::Fast;
 use Statistics::Descriptive;
 use Text::Graph;
 use Text::Graph::DataSet;
+use File::Temp qw(tempfile);
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -15,56 +16,243 @@ my $usage = "
 
 Synopsis:
 
-sam_inspector alignments.sam
+sam_inspector --summary alignments.sam
 
 Description:
 
 This script provides simple line-by-line access to SAM/BAM files.  It allows
-you do do simple filtering and reporting on the files.  Access to BAM files
-requires that samtools in installed and in the current PATH.
+you do do filtering and reporting on the files.  Access to BAM files
+requires that samtools is installed and in your \$PATH.
 
 Options:
 
-  --summary    Print a summary of the SAM file
+  --summary, s
 
-  --filter     Filter the SAM file based on some criteria
+      Print a summary of the SAM file
 
-  --clean      Remove invalid lines such as those that have an unmapped
-	       flag and yet still have a mapping quality because bwa mapped
-	       them off the end of the reference.
+  --filter, i 'perl code'
 
-  --region     Limit analysis to a region by passing a region to samtools
-	       view.  This only works on indexed BAM files.
+      Filter the SAM file based on some criteria.  This option takes a
+      string of perl code which is evaled for each read in the file.
+      If the code block RETURNS A TRUE VALUE then the read IS SKIPPED.
+      See the field tables below, the FILTER section below and the
+      examples below.
 
-  --bam        Output is in BAM format
+  --options, o
 
-  --fastq      Extract fastq from the SAM/BAM file. Single-end libraries
-               only.
+      Do extra work to parse the optional fields (column 12+) into a
+      hash.  Some functions force this behavior, and the user can
+      force this behavior with this option.  When this option is used
+      then a \$o hash reference is available to the filtering code
+      block.  See the the Code and Examples sections below.
 
-  --headers    Print headers with output
+  --flag, f INT
 
-  --intervals  Print a list of intervals where there is any coverage
+      Only output alignments with all bits in INT present in the FLAG
+      field.
+
+  --FLAG, F INT
+
+      Skip alignments with all bits present in INT.
+
+  --clean, c
+
+      Remove invalid lines such as those that have an unmapped flag
+      and yet still have a mapping quality because bwa mapped them off
+      the end of the reference.
+
+  --vaast_clean, a
+
+      Give the SAM/BAM file a hard scrubbing behind the ears to clean
+      up potential false positives often found in VAAST analyses.
+      This option will remove reads that match any of the following
+      criteria (Filter fails if any of):
+	1) MAPQ < 20
+	2) Number of Best Hits > 1
+	3) Number of Mismatches > 5
+        4) Insert Size < 100
+        5) Insert Size > 300
+        6) Mapping Quality < 20
+      Bit Flags:
+        1) MUST be paired in sequencing AND mapped in proper
+           pair.
+        2) MUST NOT be unmapped OR not primary OR fails
+           filter OR duplicate
+
+  --ill_rg, r
+
+      Adds RG header and tag for Illumina based files.  This uses an Illumina formatted header like this:
+
+      \@EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
+      |--------------------|
+
+      Each unique combination of:
+	EAS139	the unique instrument name
+	136	the run id
+	FC706VJ	the flowcell id
+	2	flowcell lane
+
+      Becomes a read group like this:
+        \@RG ID:RG_01 # Header
+        RG:Z:RG01    # Opt field
+
+      See http://en.wikipedia.org/wiki/FASTQ_format.
+
+  --regions, g
+
+      Limit analysis to a region by passing a region to samtools view.
+      This only works on indexed BAM files.
+
+  --bam, b
+
+      Output in BAM format
+
+  --fastq, q
+
+      Extract fastq from the SAM/BAM file. Single-end libraries only.
+
+  --headers, h
+
+      Print headers with output
+
+  --intervals, v
+
+      Print a list of intervals where there is any read coverage
+
+Code:
+
+The --filter option takes a block of perl code and the read is SKIPPED
+IF the code block returns TRUE.  Think of the code as defining SKIP
+IF.  The \$a variable is available as a hash reference with the 11
+required fields available as lowercase keys (see below).  If the
+--options option is set a \$o variable is also available as a hash
+reference with the tags in the optional 12th field parsed
+\$o->{TAG}{type} and \$o->{TAG}{value}.  For example:
+
+\$a = ('qname' => 'HWI-ST479:174:C03Y6ACXX:6:2307:17131:61693'
+      'flag'  => 147
+      'rname' => 'chr1'
+      'pos'   => 14600
+      'map'   => 23
+      'cigar' => '101M'
+      'mpos'  => 14518
+      'mrnm'  => '='
+      'isize' => '-182'
+      'seq'   => 'CCCAAGGAAGTAGGTCTGAGCTGCTTGTCCTGGCTGTGTCCATGTCAGAGCAACGGCCCAAGTCTAGGTCTGGGGGGGAAGGTGTCATGTAGCCCCCTACG'
+      'qual'  => ':?8AAA?8ABAA:>?A??7?7/B\@\@=:6&?=?=6BBBBA?8&8AA?A>A<\@=<<DB\@>;7FFC=5\'4>03?\@D=8\'GGGFAE<D>FD?:)8>/BBB;B\@8='
+      'length' => 100 # Added by sam_inspector length(\$a->{seq})
+      );
+
+\$o = ('X0' => HASH
+         'type' => 'i'
+         'value' => 1
+     );
+
+Examples:
+
+# Print a summary on a SAM file
+sam_inspector --summary alignment.sam
+
+# Print alignments from a BAM file for the region chr1:1-10000000 with
+# MAPQ >= 30.  Print output in BAM format.
+sam_inspector --region chr1:1-10000000 --filter '\$a->{map} < 30' \
+  --bam --headers alignment.bam
+
+# As above but also require the X0 optional feild to be <= 1;
+sam_inspector --region chr1:1-10000000 \
+  --filter '\$a->{map} < 30 || (exists \$o->{X0} && \$o->{X0}{value} > 1)' \
+  --bam --headers alignment.bam
+
+
+
+Reference Tables:
+
+Mandatory SAM/BAM fields
+See: http://samtools.sourceforge.net/SAM1.pdf
+--------------------------------------------------------------------------------
+Field  Descriptions
+================================================================================
+qname  Query (pair) NAME
+flag   bitwise FLAG
+rname  Reference sequence NAME
+pos    1-based leftmost POSition/coordinate of clipped sequence
+map    QMAPping Quality (Phred-scaled)
+cigar  extended CIGAR string
+mrnm   Mate Reference sequence NaMe (\342\200\230=\342\200\231 if same as RNAME)
+mpos   1-based Mate POSistion
+isize  Inferred insert SIZE
+seq    query SEQuence on the same strand as the reference
+qual   query QUALity (ASCII-33 gives the Phred base quality)
+opt    variable OPTional fields in the format TAG:VTYPE:VALUE
+
+Bitwise Flags
+See http://picard.sourceforge.net/explain-flags.html
+    http://bio-bwa.sourceforge.net/bwa.shtml
+--------------------------------------------------------------------------------
+Flag	Dec	Description
+================================================================================
+0x0001	1	the read is paired in sequencing
+0x0002	2	the read is mapped in a proper pair
+0x0004	4	the query sequence itself is unmapped
+0x0008	8	the mate is unmapped
+0x0010	16	strand of the query (1 for reverse)
+0x0020	32	strand of the mate
+0x0040	64	the read is the first read in a pair
+0x0080	128	the read is the second read in a pair
+0x0100	256	the alignment is not primary
+0x0200	512	the read fails platform/vendor quality checks
+0x0400	1024	the read is either a PCR or an optical duplicate
+
+BWA Opt fields
+See http://bio-bwa.sourceforge.net/bwa.shtml
+    http://samtools.sourceforge.net/SAM1.pdf
+--------------------------------------------------------------------------------
+Tag	Meaning
+================================================================================
+NM	Edit distance
+MD	Mismatching positions/bases
+AS	Alignment score
+BC	Barcode sequence
+X0	Number of best hits
+X1	Number of suboptimal hits found by BWA
+XN	Number of ambiguous bases in the referenece
+XM	Number of mismatches in the alignment
+XO	Number of gap opens
+XG	Number of gap extentions
+XT	Type: Unique/Repeat/N/Mate-sw
+XA	Alternative hits; format: (chr,pos,CIGAR,NM;)*
+XS	Suboptimal alignment score
+XF	Support from forward/reverse alignment
+XE	Number of supporting seeds
 
 ";
 
 
-my ($help, $summary, $filter, $clean, $region, $bam, $fastq, $headers,
-    $intervals);
+my ($help, $summary, $FILTER, $bflag, $BFLAG, $clean, $vaast_clean,
+    $region, $ill_rg, $bam_format, $fastq, $headers, $intervals,
+    $OPTIONS);
 
-my $opt_success = GetOptions('help'       => \$help,
-			     'summary'    => \$summary,
-			     'filter=s'   => \$filter,
-			     'clean'      => \$clean,
-			     'region=s'   => \$region,
-			     'bam'        => \$bam,
-			     'fastq'      => \$fastq,
-			     'headers'    => \$headers,
-			     'intervals'  => \$intervals,
+my $opt_success = GetOptions('help|h'        => \$help,
+			     'summary|s'     => \$summary,
+			     'filter|i=s'    => \$FILTER,
+                             'FLAG|F=i'      => \$BFLAG,
+                             'flag|f=i'      => \$bflag,
+			     'clean|c'       => \$clean,
+			     'vaast_clean|a' => \$vaast_clean,
+			     'regions|g=s'   => \$region,
+			     'ill_rg|r'      => \$ill_rg,
+			     'bam|b'         => \$bam_format,
+			     'fastq|q'       => \$fastq,
+			     'headers|h'     => \$headers,
+			     'intervals|v'   => \$intervals,
+			     'options|o'     => \$OPTIONS,
 			     );
 
 die $usage if $help || ! $opt_success;
 
+# Handle defaults and required combinations
 $region ||= '';
+$FILTER && $OPTIONS++;
 
 my %HEADERS;
 
@@ -84,11 +272,29 @@ my @files = @ARGV;
 
 die $usage unless ! grep {-r @_} @files;
 
+# Set predefined filters
+if ($clean) {
+        $FILTER = '($a->{flag} & $UNMAPPED) && ($a->{map} != 0 || $a->{cigar} ne "*")';
+}
+if ($vaast_clean) {                                             # Filters Fail IF		     
+    $FILTER = ('exists $o->{X0} && $o->{X0}{value} > 1 || '   . # Number of best hits > 1	     
+	       'exists $o->{XM} && $o->{XM}{value} > 5 || '   . # Number of mismatches must be > 5   
+	       'abs($a->{isize}) < 100 || ' . 			# Insert size < 100		     
+	       'abs($a->{isize}) > 300 || ' . 			# Insert size > 300		     
+	       '$a->{map} < 20');                               # Mapping quality < 20               
+
+    # Bit Flag MUST be paired in sequencing AND mapped in proper pair
+    $bflag = $PAIRED | $PAIR_MAPPED;
+    # Bit Flag MUST NOT be unmapped OR not primary OR fails filter OR duplicate
+    $BFLAG = $UNMAPPED + $NOT_PRIMARY + $FAILS + $DUPLICATE;
+}
+
+# Run appropriate functions
 if ($summary) {
     build_summary(\@files);
 }
-elsif ($clean) {
-    clean_file(\@files);
+elsif ($ill_rg) {
+    add_illumina_readgroup(\@files);
 }
 elsif ($intervals) {
     calc_intervals(\@files);
@@ -109,8 +315,10 @@ sub build_summary {
     my $files = shift;
 
     my %sets;
-    my $isizes = Statistics::Descriptive::Sparse->new();
-    my $lengths = Statistics::Descriptive::Sparse->new();
+    my $isizes  = Statistics::Descriptive::Full->new();
+    my $lengths = Statistics::Descriptive::Full->new();
+    my $best_hits  = Statistics::Descriptive::Full->new();
+    my $mismatches = Statistics::Descriptive::Full->new();
 
     my $count;
     my %mapped_length;
@@ -124,7 +332,7 @@ sub build_summary {
     my $bar_graph = Text::Graph->new('Bar', maxlen => 50, showval => 1);
 
     for my $file (@{$files}) {
-	my $iterator = make_iterator($file, $region);
+	my $iterator = make_iterator($file, $region, 'options');
 
 	while (my $a = &{$iterator}) {
 	    $count++;
@@ -133,7 +341,7 @@ sub build_summary {
 		=
 		@{$a}{qw(qname flag rname pos map cigar mrnm mpos
 			 isize seq qual opt)};
-	    
+
 	    $qnames{$qname}++;
 	    $raw_flags{$flag}++;
 	    ($flag & $PAIRED)        && $flags{paired}++;
@@ -147,17 +355,20 @@ sub build_summary {
 	    ($flag & $NOT_PRIMARY)   && $flags{not_primary}++;
 	    ($flag & $FAILS)	     && $flags{fails}++;
 	    ($flag & $DUPLICATE)     && $flags{duplicate}++;
-	    
+
 	    $mapped_length{$rname} += $a->{length} unless ($flag & $UNMAPPED);
 	    $mapped_length{$rname} += $a->{length} if ($flag & $PAIR_MAPPED);
-	    
+
 	    $rnames{$rname}++;
 	    $sets{$rname} ||= Set::IntSpan::Fast->new();
 	    $sets{$rname}->add_range($pos, $pos + $a->{length} - 1) if $pos;
 	    $sets{$rname}->add_range($mpos, $mpos + $a->{length} - 1) if $mpos;
 	    $mapqs{$mapq}++;
-	    $isizes->add_data($isize) if $isize;
+	    $isizes->add_data(abs($isize)) if $isize;
 	    $lengths->add_data($a->{length});
+	    $best_hits->add_data($a->{opt}{X0}{value})  if $a->{opt}{X0}{value};
+	    $mismatches->add_data($a->{opt}{XM}{value}) if $a->{opt}{XM}{value};
+
 	}
     }
     my %coverage;
@@ -179,8 +390,12 @@ sub build_summary {
     }
 
     print "TOTAL ALIGNMENTS:  $count\n\n";
-    print "TOTAL LENGTH:  " . $lengths->sum . "\n\n";
-    print "MAPPED LENGTH:  $total_mapped_length\n\n";
+
+    print "TOTAL LENGTH:  " . $lengths->sum . "\n";
+    print "MAPPED LENGTH:  $total_mapped_length\n";
+    print "MEAN   LENGTH:  " . sprintf("%.2f", $lengths->mean) . "\n";
+    print "MEDIAN LENGTH:  " . $lengths->median . "\n\n";
+
     print "QNAMES:  " . (scalar keys(%qnames)) . "\n\n";
 
     print "RNAMES:\n";
@@ -217,6 +432,49 @@ sub build_summary {
 
     print "TOTAL COVERAGE:  $total_coverage\n\n";
     print "AVERAGE DEPTH COVERAGE:  " . sprintf("%.2f", $total_mapped_length / $total_coverage) . "\n\n";
+
+    print "MEAN    INSERT SIZE:  " . sprintf("%.2f", $isizes->mean) . "\n";
+    print "TR_MEAN INSERT SIZE:  " . sprintf("%.2f", $isizes->trimmed_mean(0.1,0.1)) . "\n";
+    print "MIN     INSERT SIZE:  " . $isizes->min . "\n\n";
+    print "1ST Q   INSERT SIZE:  " . $isizes->quantile(1) . "\n";
+    print "MEDIAN  INSERT SIZE:  " . $isizes->median . "\n";
+    print "3RD Q   INSERT SIZE:  " . $isizes->quantile(3) . "\n";
+    print "STDEV   INSERT SIZE:  " . $isizes->standard_deviation() . "\n";
+    print "MAX     INSERT SIZE:  " . $isizes->max . "\n\n";
+    print "INSERT_SIZE:\n";
+    my @is_bins;
+    my $is_max = $isizes->median * 3;
+    my $step = abs(int(($isizes->quantile(3)/2 - $isizes->quantile(1)*2)/10));
+    for (my $bin = $isizes->quantile(1)/2; $bin <= $isizes->quantile(3)*2; $bin += $step) {push @is_bins, $bin};
+    print $bar_graph->to_string($isizes->frequency_distribution_ref(\@is_bins), sort => sub {sort {$a <=> $b} @_});
+    print "\n\n";
+
+
+    print "MEAN    BEST HITS:  " . sprintf("%.2f", $best_hits->mean) . "\n";
+    print "TR_MEAN BEST HITS:  " . sprintf("%.2f", $best_hits->trimmed_mean(0.1,0.1)) . "\n";
+    print "MIN     BEST HITS:  " . $best_hits->min . "\n";
+    print "1ST Q   BEST HITS:  " . $best_hits->quantile(1) . "\n";
+    print "MEDIAN  BEST HITS:  " . $best_hits->median . "\n";
+    print "3RD Q   BEST HITS:  " . $best_hits->quantile(3) . "\n";
+    print "STDEV   BEST HITS:  " . $best_hits->standard_deviation() . "\n";
+    print "MAX     BEST HITS:  " . $best_hits->max . "\n";
+    print "BEST HITS:\n";
+    print $bar_graph->to_string($best_hits->frequency_distribution_ref([(1..10)]), sort => sub {sort {$a <=> $b} @_});
+    print "\n\n";
+
+    print "MEAN    MISMATCHES:  " . sprintf("%.2f", $mismatches->mean) . "\n";
+    print "TR_MEAN MISMATCHES:  " . sprintf("%.2f", $mismatches->trimmed_mean(0.1,0.1)) . "\n";
+    print "MIN     MISMATCHES:  " . $mismatches->min . "\n\n";
+    print "1ST Q   MISMATCHES:  " . $mismatches->quantile(1) . "\n";
+    print "MEDIAN  MISMATCHES:  " . $mismatches->median . "\n";
+    print "3RD Q   MISMATCHES:  " . $mismatches->quantile(3) . "\n";
+    print "STDEV   MISMATCHES:  " . $mismatches->standard_deviation() . "\n";
+    print "MAX     MISMATCHES:  " . $mismatches->max . "\n\n";
+    print "MISMATCHES:\n";
+    print $bar_graph->to_string($mismatches->frequency_distribution_ref([(0..20)]), sort => sub {sort {$a <=> $b} @_});
+    print "\n\n";
+
+
     print "FLAGS:\n";
     print $bar_graph->to_string(\%flags, [qw(paired pair_mapped
 					     unmapped mate_unmapped
@@ -234,7 +492,7 @@ sub build_summary {
 
 #-----------------------------------------------------------------------------
 
-sub apply_filter {
+sub fails_filter {
 
     my $a = shift;
 
@@ -251,12 +509,16 @@ sub apply_filter {
     # QUAL   query QUALity (ASCII-33 gives the Phred base quality)
     # OPT    variable OPTional fields in the format TAG:VTYPE:VALUE
 
-    my $o = $a->{opts};
+    my $o = $a->{opt};
 
-    my $return_value = eval $filter;
-    die "Fatal Error in code ref: $filter\n$@\n" if $@;
+    my $eval_value = eval $FILTER;
+    die "Fatal Error in code ref: $FILTER\n$@\n" if $@;
 
-    return $return_value;
+    my ($f, $F);
+    $f = ! ($a->{flag} & $bflag) if $bflag;
+    $F =   ($a->{flag} & $BFLAG) if $BFLAG;
+
+    return $eval_value || $f || $F;
 }
 
 #-----------------------------------------------------------------------------
@@ -265,11 +527,83 @@ sub clean_file {
 
     my $files = shift;
 
+    $FILTER = '($a->{flag} & $UNMAPPED) && ($a->{map} != 0 || $a->{cigar} ne "*")';
+
     for my $file (@{$files}) {
 	my $iterator = make_iterator($file, $region);
+	my $fh = print_fh_out();
 	while (my $a = &{$iterator}) {
-	    next if (($a->{flag} & $UNMAPPED) && ($a->{map} != 0 || $a->{cigar} ne '*'));
-	    print_alignment($a);
+	    print_alignment($a, $fh);
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub vaast_clean {
+
+    my $files = shift;
+
+    # my $PAIRED        = 0x0001; # 1
+    # my $PAIR_MAPPED   = 0x0002; # 2
+    # my $UNMAPPED      = 0x0004; # 4
+    # my $MATE_UNMAPPED = 0x0008; # 5
+    # my $REVERSE       = 0x0010; # 16
+    # my $MATE_REVERSE  = 0x0020; # 32
+    # my $FIRST_READ    = 0x0040; # 64
+    # my $SECOND_READ   = 0x0080; # 128
+    # my $NOT_PRIMARY   = 0x0100; # 256
+    # my $FAILS         = 0x0200; # 512
+    # my $DUPLICATE     = 0x0400; # 1024
+
+    # This read will FAIL the filter if any of the following is true:
+    $FILTER = ('exists $o->{X0} && $o->{X0}{value} > 1 || '   . # Number of best hits < 1
+	       'exists $o->{XM} && $o->{XM}{value} > 5 || '   . # Number of mismatches must be < 5
+	       '$a->{isize} < 100 || ' . 			# Insert size < 100
+	       '$a->{isize} > 300 || ' . 			# Insert size > 300
+	       #'($a->{flag} & $UNMAPPED) || ' .                 # Read is unmapped
+	       # Read is paired, but pair is not mapped.
+	       #'($a->{flag} & $PAIRED) && ! ($a->{flag} & $PAIR_MAPPED) || ' .
+	       '$a->{map} < 20'); # Mapping quality < 20
+
+    for my $file (@{$files}) {
+	my $iterator = make_iterator($file, $region, 'options');
+	my $fh = get_fh_out();
+	while (my $a = &{$iterator}) {
+	    print_alignment($a, $fh);
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub add_illumina_readgroup {
+
+    my $files = shift;
+
+    for my $file (@{$files}) {
+	my $iterator = make_iterator($file, $region, 'options');
+	my $counter = make_counter(1);
+	my ($TEMP, $temp_file) = tempfile();
+	my %rgs;
+	while (my $a = &{$iterator}) {
+	    my $qname = $a->{qname};
+	    my ($instrument, $run_id, $flow_cell, $lane) = split /:/, $qname;
+	    my $rg_key = join '|', ($instrument, $run_id, $flow_cell, $lane);
+	    $rgs{$rg_key} ||= sprintf("RG_%02d", &$counter());
+	    $a->{opt}{RG} = {type  => 'Z', value => $rgs{$rg_key}};
+	    print_alignment($a, $TEMP);
+	}
+	close $TEMP;
+
+	for my $rg_key (keys %rgs) {
+	    push @{$HEADERS{RG}}, {ID => $rgs{$rg_key}};
+	}
+	my $fh = get_fh_out();
+	open($TEMP, '<', $temp_file);
+	print_headers(\%HEADERS, $fh);
+	while (<$TEMP>) {
+	    print $fh $_;
 	}
     }
 }
@@ -304,9 +638,39 @@ sub calc_intervals {
 
 #-----------------------------------------------------------------------------
 
+sub print_headers {
+
+    my ($headers, $fh) = @_;
+
+    $fh || open($fh, '>-') or die "FATAL : cant_open_stdout_for_writing : STDOUT";
+
+    # $HEADERS{$head_tag}{$key} = $value;
+
+    my %order = (HD => 1,
+		 SQ => 2,
+		 RG => 3,
+		 CO => 4);
+
+    for my $tag (sort {($order{$a} || 99) <=> ($order{$b} || 99)} keys %HEADERS) {
+	my $lines = $HEADERS{$tag};
+	for my $line (@{$lines}) {
+	    print $fh "\@$tag";
+	    for my $key (keys %{$line}) {
+		my $value = $line->{$key};
+		print $fh "\t$key:$value";
+	    }
+	    print $fh "\n";
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+
 sub print_alignment {
 
-    my $a = shift;
+    my ($a, $fh) = @_;
+
+    $fh || open($fh, '>-') or die "FATAL : cant_open_stdout_for_writing : STDOUT";
 
     my @opts = ();
     if (ref $a->{opt} eq 'HASH') {
@@ -318,9 +682,9 @@ sub print_alignment {
     else {
 	@opts = @{$a->{opt}};
     }
-    print join "\t", (@{$a}{qw(qname flag rname pos map cigar mrnm mpos isize
+    print $fh join "\t", (@{$a}{qw(qname flag rname pos map cigar mrnm mpos isize
 			      seq qual)}, @opts);
-    print "\n";
+    print $fh "\n";
 }
 
 #-----------------------------------------------------------------------------
@@ -331,8 +695,9 @@ sub print_file {
 
     for my $file (@{$files}) {
 	my $iterator = make_iterator($file, $region);
+	my $fh = get_fh_out();
 	while (my $a = &{$iterator}) {
-	    print_alignment($a);
+	    print_alignment($a, $fh);
 	}
     }
 }
@@ -360,7 +725,11 @@ sub make_iterator {
 
     my ($file, $region, $options) = @_;
 
-    $file = "samtools view $region $file |" if $file =~ /\.bam$/;
+    if ($region) {
+	`samtools index $file` unless -e ($file . 'bai');
+    }
+
+    $file = "samtools view -h $file $region |" if $file =~ /\.bam$/;
     my $IN;
     if ($file eq '-') {
     	open ($IN, "<&=STDIN") or die "FATAL : cant_open_STDIN :\n";
@@ -379,12 +748,14 @@ sub make_iterator {
 		    if ($headers) {
 			print "$line\n";
 		    }
-		    my ($head_tag, $pair_text) = split /\s+/, $line;
-		    my @pairs = split /\s+/, $pair_text;
+		    my ($head_tag, @pairs) = split /\t+/, $line;
+		    $head_tag =~ s/^\@//;
+		    my %pairs;
 		    for my $pair (@pairs) {
 			my ($key, $value) = split /:/, $pair;
-			$HEADERS{$head_tag}{$key} = $value;
+			$pairs{$key} = $value;
 		    }
+		    push @{$HEADERS{$head_tag}}, \%pairs;
 		    next LINE;
 		}
 		# QNAME  Query (pair) NAME
@@ -402,12 +773,10 @@ sub make_iterator {
 		my %alignment;
 		my @opts;
 		(@alignment{qw(qname flag rname pos map cigar mrnm mpos isize seq qual)}, @opts) = split /\t/, $line;
-		if ($options) {
+		if ($options || $OPTIONS) {
 		    my %opts;
-		    my $opt_text = $alignment{opt};
-		    my @opt_pairs = split /\t/, $opt_text;
-		    for my $opt_pair (@opt_pairs) {
-			my ($tag, $type, $value) = split /:/, $opt_pair;
+		    for my $opt (@opts) {
+			my ($tag, $type, $value) = split /:/, $opt;
 			$opts{$tag}{value} = $value;
 			$opts{$tag}{type} = $type;
 		    }
@@ -417,12 +786,33 @@ sub make_iterator {
 		    $alignment{opt} = \@opts;
 		}
 		$alignment{length} = (length $alignment{seq}) - 1;
-		if ($filter) {
-		    next LINE unless apply_filter(\%alignment);
+		if ($FILTER) {
+		    next LINE if fails_filter(\%alignment);
 		}
 		return %alignment ? \%alignment : undef;
 	    }
 	}
+}
+
+#-----------------------------------------------------------------------------
+
+sub make_counter {
+    my $counter = shift || 0;
+    return sub {$counter++};
+}
+
+#-----------------------------------------------------------------------------
+
+sub get_fh_out {
+
+    my $fh;
+    if ($bam_format) {
+	open($fh, '|-', 'samtools view -Sb -') or die "FATAL : cant_open_pipe : samtools view -Sb\n";
+    }
+    else {
+	open($fh, '>-') or die "FATAL : cant_open_stdout_for_writing : STDOUT\n";
+    }
+    return $fh;
 }
 
 #-----------------------------------------------------------------------------

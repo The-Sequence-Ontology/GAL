@@ -416,7 +416,7 @@ fasta_only(\@files)		  if $fasta_only;
 fasta_no(\@files)		  if $fasta_no;
 fasta_add(\@files, $fasta_add)    if $fasta_add;
 meta_only(\@files)		  if $meta_only;
-meta_no(\@files)		  if $meta_no;
+#meta_no(\@files)		  if $meta_no;
 meta_add(\@files)		  if $meta_add;
 add_ID(\@files)		          if $add_ID;
 print_gff(\@files)                if $print_gff;
@@ -2143,6 +2143,9 @@ sub gvf_stats {
 
     my $files = shift;
     my ($count, $ti, $tv, $het, $hom);
+
+    $meta_no = 1;
+    $| = 1;
 
     print join "\t", qw(File Count Het Hom Het/Hom Pct_Het Ti Tv Ti/Tv);
     print "\n";
