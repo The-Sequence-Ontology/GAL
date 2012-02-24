@@ -72,7 +72,6 @@ Options:
 	3) Number of Mismatches > 5
         4) Insert Size < 100
         5) Insert Size > 300
-        6) Mapping Quality < 20
       Bit Flags:
         1) MUST be paired in sequencing AND mapped in proper
            pair.
