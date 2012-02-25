@@ -118,6 +118,11 @@ Options:
 
       Print a list of intervals where there is any read coverage
 
+  --tmpdir, t 
+
+      Use the given directory as the location for temporary files.
+      Used by --ill_rg.
+
 Code:
 
 The --filter option takes a block of perl code and the read is SKIPPED
@@ -229,7 +234,7 @@ XE	Number of supporting seeds
 
 my ($help, $summary, $FILTER, $bflag, $BFLAG, $clean, $vaast_clean,
     $region, $ill_rg, $bam_format, $fastq, $headers, $intervals,
-    $OPTIONS);
+    $OPTIONS, $TMPDIR);
 
 my $opt_success = GetOptions('help|h'        => \$help,
 			     'summary|s'     => \$summary,
@@ -245,6 +250,7 @@ my $opt_success = GetOptions('help|h'        => \$help,
 			     'headers|h'     => \$headers,
 			     'intervals|v'   => \$intervals,
 			     'options|o'     => \$OPTIONS,
+			     'tmpdir|t=s'    => \$TMPDIR,
 			     );
 
 die $usage if $help || ! $opt_success;
@@ -252,6 +258,8 @@ die $usage if $help || ! $opt_success;
 # Handle defaults and required combinations
 $region ||= '';
 $FILTER && $OPTIONS++;
+$TMPDIR ||= './';
+$TMPDIR .= '/' unless $TMPDIR =~ /\/$/;
 
 my %HEADERS;
 
@@ -583,7 +591,9 @@ sub add_illumina_readgroup {
     for my $file (@{$files}) {
 	my $iterator = make_iterator($file, $region, 'options');
 	my $counter = make_counter(1);
-	my ($TEMP, $temp_file) = tempfile();
+	my $temp_file = $TMPDIR . $file . '.tmp';
+	open(my $TEMP, '>', $temp_file) or
+	    die "FATAL : cant_open_file_for_reading : $temp_file\n";
 	my %rgs;
 	while (my $a = &{$iterator}) {
 	    my $qname = $a->{qname};
@@ -604,6 +614,7 @@ sub add_illumina_readgroup {
 	while (<$TEMP>) {
 	    print $fh $_;
 	}
+	`rm -f $temp_file`;
     }
 }
 
