@@ -70,17 +70,18 @@ Options:
 	1) MAPQ < 20
 	2) Number of Best Hits > 1
 	3) Number of Mismatches > 5
-        4) Insert Size < 100
-        5) Insert Size > 300
+	4) Insert Size < 100
+	5) Insert Size > 300
       Bit Flags:
-        1) MUST be paired in sequencing AND mapped in proper
-           pair.
-        2) MUST NOT be unmapped OR not primary OR fails
-           filter OR duplicate
+	1) MUST be paired in sequencing AND mapped in proper
+	   pair.
+	2) MUST NOT be unmapped OR not primary OR fails
+	   filter OR duplicate
 
   --ill_rg, r
 
-      Adds RG header and tag for Illumina based files.  This uses an Illumina formatted header like this:
+      Adds RG header and tag for Illumina based files.  This uses an
+      Illumina formatted header like this:
 
       \@EAS139:136:FC706VJ:2:2104:15343:197393 1:Y:18:ATCACG
       |--------------------|
@@ -92,10 +93,16 @@ Options:
 	2	flowcell lane
 
       Becomes a read group like this:
-        \@RG ID:RG_01 # Header
-        RG:Z:RG01    # Opt field
+	\@RG ID:RG_01 # Header
+	RG:Z:RG01    # Opt field
 
       See http://en.wikipedia.org/wiki/FASTQ_format.
+
+  --sample, p
+
+      Provide the sample name to be used for @RG SM:Sample_Name.
+      Currently only used by --ill_rg.  Default is to use the filename
+      with the bam/sam extension removed.
 
   --regions, g
 
@@ -118,7 +125,7 @@ Options:
 
       Print a list of intervals where there is any read coverage
 
-  --tmpdir, t 
+  --tmpdir, t
 
       Use the given directory as the location for temporary files.
       Used by --ill_rg.
@@ -148,8 +155,8 @@ reference with the tags in the optional 12th field parsed
       );
 
 \$o = ('X0' => HASH
-         'type' => 'i'
-         'value' => 1
+	 'type' => 'i'
+	 'value' => 1
      );
 
 Examples:
@@ -233,18 +240,19 @@ XE	Number of supporting seeds
 
 
 my ($help, $summary, $FILTER, $bflag, $BFLAG, $clean, $vaast_clean,
-    $region, $ill_rg, $bam_format, $fastq, $headers, $intervals,
-    $OPTIONS, $TMPDIR);
+    $region, $ill_rg, $sample_name, $bam_format, $fastq, $headers,
+    $intervals, $OPTIONS, $TMPDIR);
 
 my $opt_success = GetOptions('help|h'        => \$help,
 			     'summary|s'     => \$summary,
 			     'filter|i=s'    => \$FILTER,
-                             'FLAG|F=i'      => \$BFLAG,
-                             'flag|f=i'      => \$bflag,
+			     'FLAG|F=i'      => \$BFLAG,
+			     'flag|f=i'      => \$bflag,
 			     'clean|c'       => \$clean,
 			     'vaast_clean|a' => \$vaast_clean,
 			     'regions|g=s'   => \$region,
 			     'ill_rg|r'      => \$ill_rg,
+			     'sample|p=s'    => \$sample_name,
 			     'bam|b'         => \$bam_format,
 			     'fastq|q'       => \$fastq,
 			     'headers|h'     => \$headers,
@@ -281,14 +289,14 @@ die $usage unless ! grep {-r @_} @files;
 
 # Set predefined filters
 if ($clean) {
-        $FILTER = '($a->{flag} & $UNMAPPED) && ($a->{map} != 0 || $a->{cigar} ne "*")';
+	$FILTER = '($a->{flag} & $UNMAPPED) && ($a->{map} != 0 || $a->{cigar} ne "*")';
 }
-if ($vaast_clean) {                                             # Filters Fail IF		     
-    $FILTER = ('exists $o->{X0} && $o->{X0}{value} > 1 || '   . # Number of best hits > 1	     
-	       'exists $o->{XM} && $o->{XM}{value} > 5 || '   . # Number of mismatches must be > 5   
-	       'abs($a->{isize}) < 100 || ' . 			# Insert size < 100		     
-	       'abs($a->{isize}) > 300 || ' . 			# Insert size > 300		     
-	       '$a->{map} < 20');                               # Mapping quality < 20               
+if ($vaast_clean) {                                             # Filters Fail IF
+    $FILTER = ('exists $o->{X0} && $o->{X0}{value} > 1 || '   . # Number of best hits > 1
+	       'exists $o->{XM} && $o->{XM}{value} > 5 || '   . # Number of mismatches must be > 5
+	       'abs($a->{isize}) < 100 || ' .			# Insert size < 100
+	       'abs($a->{isize}) > 300 || ' .			# Insert size > 300
+	       '$a->{map} < 20');                               # Mapping quality < 20
 
     # Bit Flag MUST be paired in sequencing AND mapped in proper pair
     $bflag = $PAIRED | $PAIR_MAPPED;
@@ -566,8 +574,8 @@ sub vaast_clean {
     # This read will FAIL the filter if any of the following is true:
     $FILTER = ('exists $o->{X0} && $o->{X0}{value} > 1 || '   . # Number of best hits < 1
 	       'exists $o->{XM} && $o->{XM}{value} > 5 || '   . # Number of mismatches must be < 5
-	       '$a->{isize} < 100 || ' . 			# Insert size < 100
-	       '$a->{isize} > 300 || ' . 			# Insert size > 300
+	       '$a->{isize} < 100 || ' .			# Insert size < 100
+	       '$a->{isize} > 300 || ' .			# Insert size > 300
 	       #'($a->{flag} & $UNMAPPED) || ' .                 # Read is unmapped
 	       # Read is paired, but pair is not mapped.
 	       #'($a->{flag} & $PAIRED) && ! ($a->{flag} & $PAIR_MAPPED) || ' .
@@ -589,6 +597,8 @@ sub add_illumina_readgroup {
     my $files = shift;
 
     for my $file (@{$files}) {
+      $sample_name ||= $file;
+      $sample_name =~ s/\.(sam|bam)$//;
 	my $iterator = make_iterator($file, $region, 'options');
 	my $counter = make_counter(1);
 	my $temp_file = $TMPDIR . $file . '.tmp';
@@ -606,7 +616,9 @@ sub add_illumina_readgroup {
 	close $TEMP;
 
 	for my $rg_key (keys %rgs) {
-	    push @{$HEADERS{RG}}, {ID => $rgs{$rg_key}};
+	  my %rg_data = (ID => $rgs{$rg_key},
+			 SM => $sample_name);
+	    push @{$HEADERS{RG}}, \%rg_data;
 	}
 	my $fh = get_fh_out();
 	open($TEMP, '<', $temp_file);
@@ -742,11 +754,11 @@ sub make_iterator {
     $file = "samtools view -h $file $region |" if $file =~ /\.bam$/;
     my $IN;
     if ($file eq '-') {
-    	open ($IN, "<&=STDIN") or die "FATAL : cant_open_STDIN :\n";
+	open ($IN, "<&=STDIN") or die "FATAL : cant_open_STDIN :\n";
     }
     else {
-    	open ($IN, $file) or
-    	    die "FATAL : cant_open_file_for_reading : $file\n";
+	open ($IN, $file) or
+	    die "FATAL : cant_open_file_for_reading : $file\n";
     }
 
     return
