@@ -100,7 +100,7 @@ Options:
 
   --sample, p
 
-      Provide the sample name to be used for @RG SM:Sample_Name.
+      Provide the sample name to be used for \@RG SM:Sample_Name.
       Currently only used by --ill_rg.  Default is to use the filename
       with the bam/sam extension removed.
 
