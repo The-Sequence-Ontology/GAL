@@ -1,0 +1,604 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use List::Util;
+use List::MoreUtils;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = '
+
+Synopsis:
+
+gff3_validator file1.gff3
+
+Description:
+
+A GFF3 validation tool provided by the Sequence Ontology.
+
+Options:
+
+  --so_file, s so.obo
+
+    A Sequence Ontology file in OBO format to use for validating SO Terms.
+
+';
+
+my ($help, $so_file);
+
+my $opt_success = GetOptions('help|h'      => \$help,
+			     'so_file|s=s' => \$so_file,
+			    );
+
+die $usage if $help || ! $opt_success;
+
+my $file = shift;
+
+validate_gff3($file, $so_file);
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+#
+#  The validate subroutine provides simple validation for GFF3 files.
+#  Constraints on values and attributes are checked as described in
+#  the GFF3 and specification.  Values that are constrained by the
+#  GFF3 specification to be SO terms are checked as valid SO terms but
+#  the SO relationships are not currently checked.  A SO.obo file can
+#  be passed to the --so_file argument and this file will be used to
+#  validate the SO terms used in the file.  If no SO file is given,
+#  gff_tools will attempt to access the the current SO file from the
+#  SO website.  If no SO file is available by any of the above
+#  methods, then no validation of SO terms will be done.  Errors will
+#  be printed to STDERR and a summary report to STDOUT.
+#
+#-----------------------------------------------------------------------------
+
+sub validate_gff3 {
+
+  my ($gff3_file, $so_file) = @_;
+
+  my ($so_data) = parse_so_file();
+
+  my $seen = {};
+  my $children = {};
+  #my %relationships = (is_a    => 1,
+  #		       part_of => 1,
+  #		       derives => 1,
+  #		      );
+  #
+  #
+  # # Get valid sequence_feature terms
+  # no warnings;
+  # ($seen, $children) = get_so_children($so_data, 'SO:0000110', \%relationships, $seen, $children);
+  # %{$valid_so_terms{sequence_feature}} = ('SO:0000110' => 1);
+  # use warnings;
+  # map {$valid_so_terms{sequence_feature}{$_}++} keys %{$children};
+  # map {$valid_so_terms{sequence_feature}{$_}++} @{$so_data->{map}}{keys %{$valid_so_terms{sequence_feature}}};
+  # if ($line =~ /^\#\#gff-version\s+(\d+\.?\d*)/) {
+  #   $pragmas{'gff-version'} = $1;
+  # }
+  # else {
+  #   my $error_code = 'invalid_gff-version_pragma_value';
+  #   push @{$errors{$error_code}}, [$line_count, $line];
+  #   handle_message('WARN', $error_code, $line);
+  # }
+  #
+  # map {$valid_so_terms{$_}++;$valid_so_terms{$so_data->{map}{$_}}++}
+  #   keys %{$so_data->{terms}};
+
+  handle_message('INFO', 'validating_GFF3_file', $file);
+  open(my $IN, '<', $file) or
+    handle_message('FATAL', 'cant_open_file_for_reading', $file);
+
+  my $line_count;
+  my %pragmas;
+  my %errors;
+  my %valid_so_terms;
+  my $gff_version;
+  my %feature_ids;
+  my %parents;
+  my %derives;
+  my @stack;
+  my $line = <$IN>;
+  $line_count++;
+  if ($line !~ /^\#\#gff-version\s+3$/) {
+    my $error_code = 'missing_required_gff-version_pragma';
+    push @{$errors{$error_code}}, [1, $line];
+    handle_message('WARN', $error_code,
+		   'Assuming this file is \#\#gff-version 3 for validation');
+    push @stack, $line;
+    $line_count--;
+  }
+ LINE:
+  while ($line = shift @stack || <$IN>) {
+    chomp $line;
+    $line_count++;
+    next LINE if $line =~ /^\s*$/;
+    next LINE if $line =~ /^\#[^\#]/;
+    # Features
+    if ($line !~ /^\#/) {
+      # There must by tabs
+      if ($line !~ /\t/) {
+	my $error_code = 'invalid_feature_line_not_tab_delimited';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+      }
+      my @columns = split /\t/, $line;
+      if (scalar @columns != 9) {
+	my $error_code = 'invalid_feature_line_must_have_nine_columns';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+      }
+      my ($seqid, $source, $type, $start, $end, $score, $strand,
+	  $phase, $att_text) = @columns;
+      # Seqid Characters
+      if ($seqid =~ /[^(a-zA-Z0-9\.:\^\*\$@!\+_\?\-\|)]/) {
+	my $error_code = 'invalid_characters_in_seqid_column';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, "($1) $line");
+      }
+      # Seqid and sequence-region
+      if ($pragmas{'sequence-region'} && ! $pragmas{'sequence-region'}{$seqid}) {
+	my $error_code = 'invalid_seqid_column_no_associated_sequence_region';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+      }
+      # Type
+      if ($valid_so_terms{sequence_feature} &&
+	  ! $valid_so_terms{sequence_feature}{$type}) {
+	my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+      }
+      # Start
+      if ($start !~ /^\d+$/) {
+	my $error_code = 'invalid_start_column_must_be_positive_integer';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+      }
+      # Start bounds checking
+      if ($pragmas{'sequence-region'} &&
+	  $pragmas{'sequence-region'}{$seqid} &&
+	  ($start < $pragmas{'sequence-region'}{$seqid}[0] ||
+	   $start > $pragmas{'sequence-region'}{$seqid}[1])) {
+	my $error_code = 'invalid_start_not_contained_within_sequence_region';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+      }
+      # End
+      if ($end !~ /^\d+$/) {
+	my $error_code = 'invalid_end_column_must_be_positive_integer';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+	# Do bounds checking if sequence-region
+      }
+      # End bounds checking
+      if ($pragmas{'sequence-region'} &&
+	  $pragmas{'sequence-region'}{$seqid} &&
+	  ($end < $pragmas{'sequence-region'}{$seqid}[0] ||
+	   $end > $pragmas{'sequence-region'}{$seqid}[1])) {
+	my $error_code = 'invalid_end_not_contained_within_sequence_region';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+      }
+      # Start less than end
+      if ($start > $end) {
+	my $error_code = 'invalid_feature_coordinates_start_is_greater_than_end';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+      }
+      # Score
+      if ($score ne '.' && $score !~ /^\-?\d+(\.(\d+|\d+e\-\d+))?$/) {
+	my $error_code = 'invalid_score_column_must_be_real_number';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+      }
+      # Strand
+      if ($strand  !~ /^[\.\-+\?]$/) {
+	my $error_code = 'invalid_strand_column';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+      }
+      # Phase
+      if ($phase  !~ /^[\.012]$/) {
+	my $error_code = 'invalid_character_in_phase_column';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+      }
+      # Phase && CDS
+      if ($type eq 'CDS' && $phase  !~ /^[012]$/) {
+	my $error_code = 'phase_is_required_for_CDS';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+      }
+      # Phase ! CDS
+      #if ($type ne 'CDS' && $phase  ne '.') {
+      #	my $error_code = 'invalid_phase_value_for_non_CDS_feature_type';
+      #	push @{$errors{$error_code}}, [$line_count, $line];
+      #	handle_message('WARN', $error_code, $line);
+      #}
+      # Attributes
+      my %attributes;
+      my @pairs = split /;/, $att_text;
+    PAIR:
+      for my $pair (@pairs) {
+	if ($pair !~ /(=)/) {
+	  my $error_code = 'attribute_key_value_pairs_must_be_separated_by_equal_sign';
+	  push @{$errors{$error_code}}, [$line_count, $line];
+	  handle_message('WARN', $error_code, "($pair) $line");
+	  next PAIR;
+	}
+	my ($key, $value) = split /=/, $pair;
+	if (! defined $key || ! defined $value) {
+	  my $error_code = 'attribute_key_value_pairs_must_have_key_and_value';
+	  push @{$errors{$error_code}}, [$line_count, $line];
+	  handle_message('WARN', $error_code, $line);
+	  next PAIR;
+	}
+	my @values = split /,/, $value;
+	push @{$attributes{$key}}, @values;
+      }
+      for my $key (sort keys %attributes) {
+	my @values = @{$attributes{$key}};
+	# ID
+	if ($key eq 'ID') {
+	  if (scalar @values > 1) {
+	    my $error_code = 'invalid_ID_attribute_multiple_values';
+	    push @{$errors{$error_code}}, [$line_count, $line];
+	    my $all_ids = join ' ', @values;
+	    handle_message('WARN', $error_code, "($all_ids) $line");
+	  }
+	  my $id = $values[0];
+	  #if (++$feature_ids{$id} > 1) {
+	  #    my $error_code = 'invalid_ID_attribute_not_unique';
+	  #    push @{$errors{$error_code}}, [$line_count, $line];
+	  #    handle_message('WARN', $error_code, "($id) $line");
+	  #}
+	  # TODO Validate ID characters
+	}
+	# Name
+	elsif ($key eq 'Name') {
+	  # No validation on Name values
+	}
+	# Alias
+	elsif ($key eq 'Alias') {
+	  # No validation on Alias values
+	}
+	# Parent
+	elsif ($key eq 'Parent') {
+	  for my $value (@values) {
+	    my $id = $attributes{ID}[0];
+	    push @{$parents{$value}{$type}}, [$line_count, $id];
+	  }
+	}
+	# Target
+	elsif ($key eq 'Target') {
+	  if (scalar @values > 1) {
+	    my $error_code = 'invalid_Target_attribute_multiple_values';
+	    push @{$errors{$error_code}}, [$line_count, $line];
+	    my $all_values = join ' ', @values;
+	    handle_message('WARN', $error_code, "($all_values) $line");
+	  }
+	  my $value = $values[0];
+	  if ($value !~ /\S+\s+\d+\s+\d+\s*[\-+]*/) {
+	    my $error_code = 'invalid_Target_attribute_value';
+	    push @{$errors{$error_code}}, [$line_count, $line];
+	    handle_message('WARN', $error_code, "($value) $line");
+	  }
+	}
+	# Gap
+	elsif ($key eq 'Gap') {
+	  if (scalar @values > 1) {
+	    my $error_code = 'invalid_Gap_attribute_multiple_values';
+	    push @{$errors{$error_code}}, [$line_count, $line];
+	    my $all_values = join ' ', @values;
+	    handle_message('WARN', $error_code, "($all_values) $line");
+	  }
+	  my $value = $values[0];
+	  # TODO: Validate the CIGAR format
+	}
+	# Derives_from
+	elsif ($key eq 'Derives_from') {
+	  if (scalar @values > 1) {
+	    my $error_code = 'invalid_Derives_from_attribute_multiple_values';
+	    push @{$errors{$error_code}}, [$line_count, $line];
+	    my $all_values = join ' ', @values;
+	    handle_message('WARN', $error_code, "($all_values) $line");
+	  }
+	  for my $value (@values) {
+	    my $id = $attributes{ID}[0];
+	    push @{$derives{$value}{$type}}, [$line_count, $id];
+	  }
+	  # TODO: Validate the Derives_from relationships
+	}
+	# Note
+	elsif ($key eq 'Note') {
+	  # No validation on Note value
+	}
+	# Dbxref
+	elsif ($key eq 'Dbxref') {
+	  for my $value (@values) {
+	    my ($db, $ID) = split /:/, $value;
+	    # TODO: Validate the Dbxref DB and ID;
+	  }
+	}
+	# Ontology_term
+	elsif ($key eq 'Ontology_term') {
+	  # TODO: Validate Ontology_term
+	}
+	# Is_circular
+	elsif ($key eq 'Is_circular') {
+	  if (scalar @values > 1) {
+	    my $error_code = 'invalid_Is_circular_attribute_multiple_values';
+	    push @{$errors{$error_code}}, [$line_count, $line];
+	    my $all_values = join ' ', @values;
+	    handle_message('WARN', $error_code, "($all_values) $line");
+	  }
+	  my $value = $values[0];
+	  # TODO: Validate Is_circular
+	}
+      }
+    }
+    # Pragmas
+    else {
+      ##FASTA
+      if ($line =~ /^\#\#FASTA/) {
+	#TODO: Validate FASTA
+	last LINE;
+      }
+      ##feature-ontology
+      if ($line =~ /^\#\#feature-ontology/) {
+	if ($line =~ /^\#\#(feature-ontology)\s+(\S+)/) {
+	  my $pragma_key   = $1;
+	  my $pragma_value = $2;
+	  $pragmas{$pragma_key} = $pragma_value;
+	  # TODO: test_uri($pragma_value);
+	}
+	else {
+	  my $error_code = 'invalid_pragma_format';
+	  push @{$errors{$error_code}}, [$line_count, $line];
+	  handle_message('WARN', $error_code, $line);
+	}
+      }
+      ##attribute-ontology
+      elsif ($line =~ /^\#\#attribute-ontology/) {
+	if ($line =~ /^\#\#(attribute-ontology)\s+(\S+)/) {
+	  my $pragma_key   = $1;
+	  my $pragma_value = $2;
+	  $pragmas{$pragma_key} = $pragma_value;
+	  #TODO: test_uri($pragma_value);
+	}
+	else {
+	  my $error_code = 'invalid_pragma_format';
+	  push @{$errors{$error_code}}, [$line_count, $line];
+	  handle_message('WARN', $error_code, $line);
+	}
+      }
+      ##source-ontology
+      elsif ($line =~ /^\#\#source-ontology/) {
+	if ($line =~ /^\#\#(source-ontology)\s+(\S+)/) {
+	  my $pragma_key   = $1;
+	  my $pragma_value = $2;
+	  $pragmas{$pragma_key} = $pragma_value;
+	  #TODO: test_uri($pragma_value);
+	}
+	else {
+	  my $error_code = 'invalid_pragma_format';
+	  push @{$errors{$error_code}}, [$line_count, $line];
+	  handle_message('WARN', $error_code, $line);
+	}
+      }
+      ##species
+      elsif ($line =~ /^\#\#species/) {
+	if ($line =~ /^\#\#(species)\s+(\S+)/) {
+	  my $pragma_key   = $1;
+	  my $pragma_value = $2;
+	  $pragmas{$pragma_key} = $pragma_value;
+	  # TODO: test_uri($pragma_value);
+	}
+	else {
+	  my $error_code = 'invalid_pragma_format';
+	  push @{$errors{$error_code}}, [$line_count, $line];
+	  handle_message('WARN', $error_code, $line);
+	}
+      }
+      ##genome-build
+      elsif ($line =~ /^\#\#genome-build/) {
+	if ($line =~ /^\#\#(genome-build)\s+(\S+)\s+(\S+)/) {
+	  my $pragma_key = $1;
+	  my $source     = $2;
+	  my $build_name = $3;
+	  $pragmas{$pragma_key}{$source} = $build_name;
+	}
+	else {
+	  my $error_code = 'invalid_pragma_format';
+	  push @{$errors{$error_code}}, [$line_count, $line];
+	  handle_message('WARN', $error_code, $line);
+	}
+      }
+      elsif ($line =~ /^\#\#sequence-region/) {
+	if ($line =~ /^\#\#(sequence-region)\s+(\S+)\s+(\d+)\s+(\d+)/) {
+	  my $pragma_key = $1;
+	  my $seqid      = $2;
+	  my $start      = $3;
+	  my $end        = $4;
+	  if (! $seqid || ! $start || ! $end) {
+	    my $error_code = 'missing_sequence-region_pragma_values';
+	    push @{$errors{$error_code}}, [$line_count, $line];
+	    handle_message('WARN', $error_code, $line);
+	  }
+	  elsif ($start !~ /^\d+$/ || $end !~ /^\d+$/) {
+	    my $error_code = 'invalid_sequence-region_pragma_value';
+	    push @{$errors{$error_code}}, [$line_count, $line];
+	    handle_message('WARN', $error_code, $line);
+	  }
+	  else {
+	    $pragmas{$pragma_key}{$seqid} = [$start, $end];
+	  }
+	}
+      }
+      ###
+      elsif ($line =~ /^\#\#\#$/) {
+	# Skip ### - there's no way to further validate it.
+      }
+      # All other pragmas
+      else {
+	$line =~ /^\#\#(\S+)\s*(.*)/;
+	my $pragma_key   = $1;
+	my $pragma_value = $2;
+	my $error_code = 'non_standard_pragma';
+	push @{$errors{$error_code}}, [$line_count, $line];
+	handle_message('WARN', $error_code, $line);
+	push @{$pragmas{$pragma_key}}, $pragma_value;
+      }
+    }
+  }
+
+  close $IN;
+  print "\n\n";
+  print "Error Summary for $file\n";
+  print '#' x 80;
+  print "\n";
+  if (scalar keys %errors) {
+    print "Error Code\tCount\n";
+    for my $error_code (keys %errors) {
+      print "$error_code\t" . scalar @{$errors{$error_code}} . "\n";
+    }
+  }
+  else {
+    print "No Errors found in this file\n";
+  }
+  print '#' x 80;
+  print "\n\n";
+}
+
+#-----------------------------------------------------------------------------
+
+sub parse_so_file {
+
+  $so_file = shift;
+
+  $so_file ||= $ENV{SO_OBO};
+  $so_file ||= 'curl -s http://www.sequenceontology.org/resources/obo_files/current_release.obo |';
+  open (my $IN, $so_file) or die "FATAL, cant_open_file, $so_file\n";
+
+
+    my $text = join '', (<$IN>);
+
+    die "FATAL, no_SO_data_available, $so_file (consider using --so_file or check file contents)\n"
+      unless $text;
+
+    $text =~ s/.*?\[Term\]/\[Term\]/s;
+
+    my @terms_array = $text =~ /^\[Term\]\n(.*?)\n{2,}/msg;
+
+    my %terms;
+    my %map;
+    my %graph;
+    for my $term_text (@terms_array) {
+	my %term;
+	my @pairs = split /\n/, $term_text;
+	for my $pair (@pairs) {
+	    my ($tag, $value) = split /:\s+/, $pair;
+	    push @{$term{$tag}}, $value;
+	}
+	my $id   = $term{id}[0];
+	my $name = $term{name}[0];
+	$terms{$id} = \%term;
+	$map{$name} = $id;
+	$map{$id}   = $name;
+	$term{is_a} ||= [];
+	for my $is_a (@{$term{is_a}}) {
+	    my ($is_a_object) = split /\s/, $is_a;
+	    $graph{$is_a_object}{is_a}{$id}++;
+	}
+	$term{relationship} ||= [];
+	for my $relationship (@{$term{relationship}}) {
+	    my ($predicate, $object) = split /\s+/, $relationship;
+	    $graph{$object}{$predicate}{$id}++;
+	}
+    }
+    my %so_data = (terms => \%terms,
+		   map   => \%map,
+		   graph => \%graph,
+		   );
+
+    return \%so_data;
+}
+
+#-----------------------------------------------------------------------------
+
+sub get_so_children {
+
+    my ($so_data, $term_id, $relationships, $seen, $children) = @_;
+
+    $term_id = $so_data->{map}{$term_id} unless $term_id =~ /^SO:\d{7}/;
+    my $term = $so_data->{terms}{$term_id};
+
+    for my $relationship (keys %{$relationships}) {
+	next unless $so_data->{graph}{$term_id}{$relationship};
+	map {$children->{$_}++}
+	    keys %{$so_data->{graph}{$term_id}{$relationship}};
+    }
+
+#    my %these_relationships;
+#    $these_relationships{$so_data->{graph}{$term_id}{is_a}}++
+#	if $relationships->{is_a};
+#    my @more_relationships = @{$so_data->{graph}{$term_id}{relationships}}
+#        if exists $so_data->{graph}{$term_id}{relationships};
+#    for my $relationship (@more_relationships) {
+#	$these_relationships{$so_data->{graph}{$term_id}{relationship}}++;
+#    }
+#
+#    my %these_children;
+#    for my $relationship (keys %these_relationships) {
+#	map {$these_children{$_}++; $children->{$_}++} @{$term->{relationships}{$relationship}};
+#    }
+
+
+    for my $child (keys %{$children}) {
+	next if $seen->{$child};
+	$seen->{$child}++;
+	my ($seen, $children) = get_so_children($so_data, $child,
+						$relationships, $seen,
+						$children);
+    }
+    return ($seen, $children);
+}
+
+#-----------------------------------------------------------------------------
+
+sub handle_message {
+
+    my ($level, $code, @comments) = @_;
+
+    $level ||= 'WARN';
+    $code  ||= 'unknown_warning';
+    my $comment = join ' ', @comments;
+
+    my $message = join ' : ', ($level, $code, $comment);
+    chomp $message;
+    $message .= "\n";
+
+    if ($level eq 'FATAL') {
+      print STDERR $message;
+      die;
+    }
+    else {
+      print STDERR $message;
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub parse_gff_pragmas {
+
+
+}
+
+#-----------------------------------------------------------------------------
