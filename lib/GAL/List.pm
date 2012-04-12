@@ -6,6 +6,7 @@ use vars qw($VERSION);
 $VERSION = '0.01';
 use base qw(GAL::Base);
 use List::Util;
+use List::MoreUtils;
 
 =head1 NAME
 
@@ -24,8 +25,7 @@ This document describes GAL::List version 0.01
     my $count    = $list_catg->count;
     $list_ref    = $list_catg->list;
     @list_ary    = $list_catg->list;
-    $class       = $list_catg->class;
-    $catg_counts = $list_catg->category_counts;
+    $catg_counts = $list_catg->cardinality;
     $count_uniq  = $list_catg->count_uniq;
     $max_str     = $list_catg->maxstr;
     $min_str     = $list_catg->minstr;
@@ -88,7 +88,7 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(list class);
+	my @valid_attributes = qw(list);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }
@@ -115,7 +115,6 @@ list (or referenece) of key value pairs.
 sub list {
   my ($self, $list) = @_;
   if ($list) {
-
     my $err_msg = ('GAL::List requires an array reference as the ' .
 		   'first argument, but you gave a  ' . ref $list
 		  );
@@ -128,44 +127,185 @@ sub list {
 }
 
 #-----------------------------------------------------------------------------
-#
-# =head2 class
-#
-#  Title   : class
-#  Usage   : $a = $self->class()
-#  Function: Get/Set the value of class.
-#  Returns : The value of class.
-#  Args    : A value to set class to.
-#
-# =cut
-#
-# sub class {
-#   my ($self, $class) = @_;
-#   $class =~ s/GAL::List:://;
-#   $class = 'GAL::List::' . $self->{class};
-#   $self->{class} = $class if $class;
-#   return $self->{class};
-# }
-#
+
+=head2 method
+
+ Title   : method
+ Usage   : $a = $self->method()
+ Function: Get/Set the value of method.
+ Returns : The value of method.
+ Args    : A value to set method to.
+
+=cut
+
+ sub method {
+   my ($self, $method) = @_;
+   $self->{method} = $method if $method;
+   return $self->{method};
+ }
+
+#-----------------------------------------------------------------------------
+
+=head2 key
+
+ Title   : key
+ Usage   : $a = $self->key()
+ Function: Get/Set the value of key.
+ Returns : The value of key.
+ Args    : A value to set key to.
+
+=cut
+
+ sub key {
+   my ($self, $key) = @_;
+   $self->{key} = $key if $key;
+   return $self->{key};
+ }
+
+#-----------------------------------------------------------------------------
+
+=head2 iterator
+
+ Title   : iterator
+ Usage   : $a = $self->iterator()
+ Function: Get/Set the value of iterator.
+ Returns : The value of iterator.
+ Args    : A value to set iterator to.
+
+=cut
+
+ sub iterator {
+   my ($self, $iterator) = @_;
+   $self->{iterator} = $iterator if $iterator;
+   return $self->{iterator};
+ }
+
 #-----------------------------------------------------------------------------
 #---------------------------------- Methods ----------------------------------
 #-----------------------------------------------------------------------------
 
 =head1 METHODS
 
+=head2 _parse_list
+
+ Title   : _parse_list
+ Usage   : $self->_parse_list()
+ Function: Parse the contents of the list and create an array of data if the
+	   data isn't already an array.
+ Returns : N/A
+ Args    : N/A
+
+=cut
+
+sub _parse_list {
+    my $self = shift;
+
+    my $list     = $self->list();
+    my $iterator = $self->iterator();
+    my $method   = $self->method();
+    my $key      = $self->method();
+
+  VALUE:
+    for my $value (@{$list}) {
+      if (! ref $value) {
+	next VALUE;
+      }
+      elsif (my $class = List::Util::blessed $value) {
+	if (! defined $method || ! $value->can($method)) {
+	  $self->warn('method_does_not_exist', "CLASS=$class; METHOD=$method");
+	  next VALUE;
+	}
+	$value = $value->$method;
+      }
+      elsif (ref $value eq 'HASH') {
+	if (! defined $key || ! exists $value->{$key}) {
+	  $self->warn('key_does_not_exist', ("KEY=$key; " .
+					     join ',', %{$value}));
+	  next VALUE;
+	}
+	$value = $value->{$key};
+      }
+    }
+
+    my @xtra_values;
+    if ($iterator && (my $class = List::Util::blessed $iterator)) {
+      if (! $iterator->can('next')) {
+	$self->warn('next_method_does_not_exist', "CLASS=$class; METHOD=next");
+      }
+      else {
+      ITR_LOOP:
+	while (my $value = $iterator->next) {
+	if (! defined $method || ! $value->can($method)) {
+	  $self->warn('method_does_not_exist', "CLASS=$class; METHOD=$method");
+	  next ITR_LOOP;
+	}
+	else {
+	  push @xtra_values, $value->$method;
+	}
+	}
+      }
+    }
+
+    push @{$self->{list}}, @xtra_values if @xtra_values;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 _hash_list
+
+ Title   : _hash_list
+ Usage   : $hash = $self->_hash_list()
+ Function:
+	   data isn't already an array.
+ Returns : N/A
+ Args    : N/A
+
+=cut
+
+sub _hash_list {
+  my $self = shift;
+
+  if (! exists $self->{hash_list}) {
+    map {$self->{hash_list}{$_}++} $self->list;
+  }
+
+  return wantarray ? %{$self->{hash_list}} : $self->{hash_list};
+
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 count
 
  Title   : count
- Usage   : $a = $self->count()
- Function: Get/Set the value of count.
- Returns : The value of count.
- Args    : A value to set count to.
+ Usage   : $a = $self->count
+ Function: Return the number of elements in the list
+ Returns : Integer
+ Args    : N/A
 
 =cut
 
 sub count {
-    my $self = shift;
-    return scalar @{$self->{list}};
+  my @list = shift->list;
+    return scalar @list;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 cardinality
+
+ Title   : cardinality
+ Usage   : $a = $self->cardinality
+ Function: Return the number of uniq elements in the list
+ Returns : Integer
+ Args    : N/A
+
+=cut
+
+sub cardinality {
+  my $self = shift;
+  my @uniq = $self->uniq;
+  return scalar @uniq;
 }
 
 #-----------------------------------------------------------------------------
@@ -174,15 +314,14 @@ sub count {
 
  Title   : count_uniq
  Usage   : $a = $self->count_uniq()
- Function:
- Returns :
- Args    :
+ Function: An alias for cardinality
+ Returns : Integer
+ Args    : N/A
 
 =cut
 
 sub count_uniq {
-    my $self = shift;
-    return scalar @{$self->uniq};
+    return shift->cardinality;
 }
 
 #-----------------------------------------------------------------------------
@@ -191,85 +330,17 @@ sub count_uniq {
 
  Title   : category_counts
  Usage   : $a = $self->category_counts()
- Function: Get/Set the value of category_counts.
- Returns : The value of category_counts.
- Args    : A value to set category_counts to.
+ Function: Return a hash(reference) with uniq elements as keys and element
+	   counts as values.
+ Returns : A hash(reference)
+ Args    : N/A
 
 =cut
 
 sub category_counts {
     my $self = shift;
-    my %hash;
-    map {$hash{$_}++} @{$self->{list}};
+    my %hash = $self->_hash_list;
     return wantarray ? %hash : \%hash;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 max
-
- Title   : max
- Usage   : $a = $self->max()
- Function:
- Returns :
- Args    :
-
-=cut
-
-sub max {
-    my $self = shift;
-    return List::Util::max @{$self->{list}};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 maxstr
-
- Title   : maxstr
- Usage   : $a = $self->maxstr()
- Function:
- Returns :
- Args    :
-
-=cut
-
-sub maxstr {
-    my $self = shift;
-    return List::Util::maxstr @{$self->{list}};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 min
-
- Title   : min
- Usage   : $a = $self->min()
- Function:
- Returns :
- Args    :
-
-=cut
-
-sub min {
-    my $self = shift;
-    return List::Util::min @{$self->{list}};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 minstr
-
- Title   : minstr
- Usage   : $a = $self->minstr()
- Function:
- Returns :
- Args    :
-
-=cut
-
-sub minstr {
-    my $self = shift;
-    return List::Util::minstr @{$self->{list}};
 }
 
 #-----------------------------------------------------------------------------
@@ -278,32 +349,15 @@ sub minstr {
 
  Title   : shuffle
  Usage   : $a = $self->shuffle()
- Function:
- Returns :
- Args    :
+ Function: Returns the elements of the list in random order
+ Returns : An array/array reference
+ Args    : N/A
 
 =cut
 
 sub shuffle {
-    my $self = shift;
-    return List::Util::shuffle @{$self->{list}};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 sum
-
- Title   : sum
- Usage   : $a = $self->sum()
- Function:
- Returns :
- Args    :
-
-=cut
-
-sub sum {
-    my $self = shift;
-    return List::Util::sum @{$self->{list}};
+  return wantarray ? List::Util::shuffle(shift->list) :
+    [List::Util::shuffle(shift->list)];
 }
 
 #-----------------------------------------------------------------------------
@@ -319,10 +373,9 @@ sub sum {
 =cut
 
 sub uniq {
-    my $self = shift;
-    my %seen;
-    my @uniq = grep {! $seen{$_}++} $self->list;
-    return wantarray ? @uniq : \@uniq;
+  my $self = shift;
+  my @uniq = List::MoreUtils::uniq($self->list);
+  return wantarray ? @uniq : \@uniq;
 }
 
 #-----------------------------------------------------------------------------

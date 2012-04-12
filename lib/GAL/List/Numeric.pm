@@ -148,6 +148,294 @@ sub stats {
 
 #-----------------------------------------------------------------------------
 
+=head2 count
+
+ Title   : count
+ Usage   : $a = $self->count()
+ Function: Returns the count of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub count {
+  return shift->stats->count();
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 mean
+
+ Title   : mean
+ Usage   : $a = $self->mean()
+ Function: Returns the mean of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub mean {
+  return shift->stats->mean;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 sum
+
+ Title   : sum
+ Usage   : $a = $self->sum()
+ Function: Returns the sum of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub sum {
+  return shift->stats->sum;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 variance
+
+ Title   : variance
+ Usage   : $a = $self->variance()
+ Function: Returns the variance of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub variance {
+  return shift->stats->variance();
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 standard_deviation
+
+ Title   : standard_deviation
+ Usage   : $a = $self->standard_deviation()
+ Function: Returns the standard_deviation of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub standard_deviation {
+  return shift->stats->standard_deviation();
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 min
+
+ Title   : min
+ Usage   : $a = $self->min()
+ Function: Returns the min of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub min {
+  return shift->stats->min();
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 mindex
+
+ Title   : mindex
+ Usage   : $a = $self->mindex()
+ Function: Returns the mindex of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub mindex {
+  return shift->stats->mindex();
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 max
+
+ Title   : max
+ Usage   : $a = $self->max()
+ Function: Returns the max of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub max {
+  return shift->stats->max();
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 maxdex
+
+ Title   : maxdex
+ Usage   : $a = $self->maxdex()
+ Function: Returns the maxdex of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub maxdex {
+  return shift->stats->maxdex();
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 sample_range
+
+ Title   : sample_range
+ Usage   : $a = $self->sample_range()
+ Function: Returns the sample_range of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub sample_range {
+  return shift->stats->sample_range();
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 median
+
+ Title   : median
+ Usage   : $a = $self->median()
+ Function: Returns the median of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub median {
+  return shift->stats->median();
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 percentile
+
+ Title   : percentile
+ Usage   : $a = $self->percentile()
+ Function: Returns the percentile of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub percentile {
+  return shift->stats->percentile(shift);
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 harmonic_mean
+
+ Title   : harmonic_mean
+ Usage   : $a = $self->harmonic_mean()
+ Function: Returns the harmonic_mean of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub harmonic_mean {
+  return shift->stats->harmonic_mean();
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 geometric_mean
+
+ Title   : geometric_mean
+ Usage   : $a = $self->geometric_mean()
+ Function: Returns the geometric_mean of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub geometric_mean {
+  return shift->stats->geometric_mean();
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 mode
+
+ Title   : mode
+ Usage   : $a = $self->mode()
+ Function: Returns the mode of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub mode {
+  return shift->stats->mode();
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 trimmed_mean
+
+ Title   : trimmed_mean
+ Usage   : $a = $self->trimmed_mean()
+ Function: Returns the trimmed_mean of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub trimmed_mean {
+  return shift->stats->trimmed_mean(@_);
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 frequency_distribution
+
+ Title   : frequency_distribution
+ Usage   : $a = $self->frequency_distribution()
+ Function: Returns the frequency_distribution of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub frequency_distribution {
+  return shift->stats->frequency_distribution(shift);
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 least_squares_fit
+
+ Title   : least_squares_fit
+ Usage   : $a = $self->least_squares_fit()
+ Function: Returns the least_squares_fit of the list of elements
+ Returns :
+ Args    :
+
+=cut
+
+sub least_squares_fit {
+  return shift->stats->least_squares_fit(@_);
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 histogram
 
  Title   : histogram

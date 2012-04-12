@@ -186,8 +186,8 @@ list (or referenece) of key value pairs.
  Function: Handle a message.
  Returns : None
  Args    : level (INFO, WARM, FATAL)
-           code (a_single_string_description)
-           message (Free text explination)
+	   code (a_single_string_description)
+	   message (Free text explination)
 
 =cut
 
@@ -630,6 +630,292 @@ sub genetic_code {
 	  TTG => 'L',
 	  TTT => 'F',
 	 };
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 amino_acid_data
+
+ Title   : amino_acid_data
+ Usage   : $base->amino_acid_data($aa, $value);
+ Function: Returns data about an amino acid
+ Returns : A string representing data about an amino acid
+ Args    : 1) An amino acid in either:
+	      a) single-letter code
+	      b) three-letter
+	   2) A code for the value to return.  Any of:
+	      a) name : The full name of the amino acid.
+	      b) one_letter : The one-letter code for the amino acid.
+	      c) three_letter : The three-letter code for the amino acid.
+	      d) polarity : The polarity of the amino acid.
+	      e) charge : The charge of the amino acid's side chain (at pH 7.4).
+	      f) hydropathy : The hydropathy index of the amino acid.
+	      g) weight : The molecular weight of the amino acid in g/mol.
+	      h) size : Returns small or large.
+	      i) h_bond : return 1 or 0 indicating if the amino acid can form hydrogen bonds
+	      j) aromaticity : Returns aromatic, aliphatic or undef.
+
+=cut
+
+sub amino_acid_data {
+
+  my ($self, $aa, $datum) = @_;
+
+  my %aa321 = (Ala => 'A',
+	       Arg => 'R',
+	       Asn => 'N',
+	       Asp => 'D',
+	       Cys => 'C',
+	       Glu => 'E',
+	       Gln => 'Q',
+	       Gly => 'G',
+	       His => 'H',
+	       Ile => 'I',
+	       Leu => 'L',
+	       Lys => 'K',
+	       Met => 'M',
+	       Phe => 'F',
+	       Pro => 'P',
+	       Ser => 'S',
+	       Thr => 'T',
+	       Trp => 'W',
+	       Tyr => 'Y',
+	       Val => 'V',
+	       Sec => 'U',
+	       Pyl => 'O',
+	      );
+
+  if (length($aa) == 3) {
+    $aa = $aa321{$aa}
+  }
+
+  return $aa if $datum eq 'one_letter';
+
+  $datum =~ s/_letter//;
+
+  my %aa_data = (A => {name        => 'Alanine',
+		       three       => 'Ala',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => 1.8,
+		       weight      => 71.09,
+		       size        => 'small',
+		       h_bond      => 0,
+		       aromaticity => 'aliphatic',
+		      },
+		 R => {name        => 'Arginine',
+		       three       => 'Arg',
+		       polarity    => 'polar',
+		       charge      => 'positive',
+		       hydropathy  => -4.5,
+		       weight      => 156.19,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 N => {name        => 'Asparagine',
+		       three       => 'Asn',
+		       polarity    => 'polar',
+		       charge      => 'neutral',
+		       hydropathy  => -3.5,
+		       weight      => 114.11,
+		       size        => 'small',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 D => {name        => 'Aspartic acid',
+		       three       => 'Asp',
+		       polarity    => 'polar',
+		       charge      => 'negative',
+		       hydropathy  => -3.5,
+		       weight      => 115.09,
+		       size        => 'small',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 C => {name        => 'Cysteine',
+		       three       => 'Cys',
+		       polarity    => 'polar',
+		       charge      => 'neutral',
+		       hydropathy  => 2.5,
+		       weight      => 103.15,
+		       size        => 'small',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 E => {name        => 'Glutamic acid',
+		       three       => 'Glu',
+		       polarity    => 'polar',
+		       charge      => 'negative',
+		       hydropath   => -3.5,
+		       weight      => 129.12,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		     },
+		 Q => {name        => 'Glutamine',
+		       three       => 'Gln',
+		       polarity    => 'polar',
+		       charge      => 'neutral',
+		       hydropathy  => -3.5,
+		       weight      => 128.14,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 G => {name        => 'Glycine',
+		       three       => 'Gly',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => -0.4,
+		       weight      => 57.05,
+		       size        => 'small',
+		       h_bond      => 0,
+		       aromaticity => 'aliphatic',
+		      },
+		 H => {name        => 'Histidine',
+		       three       => 'His',
+		       polarity    => 'polar',
+		       charge      => 'positive',
+		       hydropathy  => -3.2,
+		       weight      => 137.14,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => 'aromatic',
+		      },
+		 I => {name        => 'Isoleucine',
+		       three       => 'Ile',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => 4.5,
+		       weight      => 113.16,
+		       size        => 'large',
+		       h_bond      => 0,
+		       aromaticity => 'aliphatic',
+		      },
+		 L => {name        => 'Leucine',
+		       three       => 'Leu',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => 3.8,
+		       weight      => 113.16,
+		       size        => 'large',
+		       h_bond      => 0,
+		       aromaticity => 'aliphatic',
+		      },
+		 K => {name        => 'Lysine',
+		       three       => 'Lys',
+		       polarity    => 'polar',
+		       charge      => 'positive',
+		       hydropathy  => -3.9,
+		       weight      => 128.17,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 M => {name        => 'Methionine',
+		       three       => 'Met',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => 1.9,
+		       weight      => 131.19,
+		       size        => 'large',
+		       h_bond      => 0,
+		       aromaticity => undef,
+		      },
+		 F => {name        => 'Phenylalanine',
+		       three       => 'Phe',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => 2.8,
+		       weight      => 147.18,
+		       size        => 'large',
+		       h_bond      => 0,
+		       aromaticity => 'aromatic',
+		      },
+		 P => {name        => 'Proline',
+		       three       => 'Pro',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => -1.6,
+		       weight      => 97.12,
+		       size        => 'small',
+		       h_bond      => 0,
+		       aromaticity => 'aliphatic',
+		      },
+		 S => {name        => 'Serine',
+		       three       => 'Ser',
+		       polarity    => 'polar',
+		       charge      => 'neutral',
+		       hydropathy  => -0.8,
+		       weight      => 87.08,
+		       size        => 'small',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 T => {name        => 'Threonine',
+		       three       => 'Thr',
+		       polarity    => 'polar',
+		       charge      => 'neutral',
+		       hydropathy  => -0.7,
+		       size        => 'small',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 W => {name        => 'Tryptophan',
+		       three       => 'Trp',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => -0.9,
+		       weight      => 186.21,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => 'aromatic',
+		      },
+		 Y => {name        => 'Tyrosine',
+		       three       => 'Tyr',
+		       polarity    => 'polar',
+		       charge      => 'neutral',
+		       hydropathy  => -1.3,
+		       weight      => 163.18,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => 'aromatic',
+		      },
+		 V => {name        => 'Valine',
+		       three       => 'Val',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => 4.2,
+		       weight      => 99.14,
+		       size        => 'small',
+		       h_bond      => 0,
+		       aromaticity => 'aliphatic',
+		      },
+		 U => {name        => 'Selenocysteine',
+		       three       => 'Sec',
+		       polarity    => undef,
+		       charge      => undef,
+		       hydropathy  => undef,
+		       weight      => undef,
+		       size        => undef,
+		       h_bond      => undef,
+		       aromaticity => undef,
+		      },
+		 O => {name        => 'Pyrrolysine',
+		       three       => 'Pyl',
+		       polarity    => undef,
+		       charge      => undef,
+		       hydropathy  => undef,
+		       weight      => undef,
+		       size        => undef,
+		       h_bond      => undef,
+		       aromaticity => undef,
+		      }
+		);
+
+  my $value = $aa_data{$aa}{$datum};
+  return $value;
 }
 
 #-----------------------------------------------------------------------------

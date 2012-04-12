@@ -22,14 +22,21 @@ This document describes GAL::Annotation version 0.01
 
     use GAL::Annotation;
 
-    my $feat_store = GAL::Annotation->new(fasta => '/path/to/fasta_dir/');
+    # Assuming defaults (GFF3 parser and SQLite storage)
+    my $annot = GAL::Annotation->new(qw(file.gff file.fasta);
+    my $features = $annot->features;
 
-    $feat_store->load_files(files => $feature_file,
-			    mode  => 'overwrite',
-			   );
 
+    # Otherwise be explicit about everything.
+    my %feat_store_args = (class    => 'SQLite',
+                           database => '/path/to/file.gff'
+                          );
+    my $feat_store = GAL::Annotation->new(storage => \%feat_store_args,
+                                          fasta   => '/path/to/file.fa');
+    $feat_store->load_files($feature_file);
     my $features = $feat_store->schema->resultset('Feature');
 
+    # Either way, once you have features - get to work.
     my $mrnas = $features->search({type => 'mRNA'});
     while (my $mrna = $mrnas->next) {
       print $mrna->feature_id . "\n";
@@ -50,7 +57,7 @@ fast.  Users of GAL first create an annotation object which in turn
 will contain Parser, Storage and Schema objects.  The parser allows
 features to be loaded into GAL's storage from a variety of formats.
 The storage object specifies how the features should be stored, and
-the schema object provides flexible query and iteration functions over
+the schema object provides flexible query and iterator functions over
 the features.  In addtion, Index objects (not yet implimented) provide
 additional key/value mapped look up tables, and List objects provide
 aggregation and analysis functionality for lists of feature
@@ -58,10 +65,10 @@ attributes.
 
 A wide variety of parsers are available to convert sequence features
 from various formats, and new parsers are easy to write.  See
-GAL::Parser for more details.  Currently MySQL and SQLite storage
+GAL::Parser for more details.  Currently SQLite and MySQL storage
 options are available (a fast RAM storage engine is on the TODO list).
 Schema objects are provided by DBIx::Class and a familiarity with that
-package is necessary for understanding how to query and iterate over
+package is necessary to fully understand how to query and iterate over
 feature objects.
 
 =head1 CONSTRUCTOR
@@ -73,10 +80,12 @@ the call to new, but reasonable defaults will be used where ever
 possilbe to keep object creation simple.  An simple example of object
 creation would look like this:
 
-    my $feat_store = GAL::Annotation->new();
+    my $feat_store = GAL::Annotation->new($gff_file);
+    my $feat_store = GAL::Annotation->new($gff_file, $fasta_file);
 
 The resulting object would use a GFF3 parser and SQLite storage by
-default and it would not have access to feature sequence.
+default The first example would not have access to feature sequence,
+the second one would.
 
 A more complex object creation might look like this:
 
@@ -107,13 +116,13 @@ mysql.
 
 =item * C<< fasta => '/path/to/fasta/files/ >>
 
-This optional parameter defines a path to a collection of fasta files
-that correspond the annotated features.  The IDs (first contiguous
-non-whitespace charachters) of the fasta headers must correspond to
-the sequence IDs (seqids) in the annotated features.  The fasta
-parameter is optional, but if the fasta attribute is not set then the
-features will not have access to their sequence.  Access to the
-sequence in provided by Bio::DB::Fasta.
+This optional parameter defines a path to a fasta file or a collection
+of fasta files that correspond the annotated features.  The IDs (first
+contiguous non-whitespace charachters) of the fasta headers must
+correspond to the sequence IDs (seqids) in the annotated features.
+The fasta parameter is optional, but if the fasta attribute is not set
+then the features will not have access to their sequence.  Access to
+the sequence in provided by Bio::DB::Fasta.
 
 =cut
 
@@ -133,7 +142,11 @@ sequence in provided by Bio::DB::Fasta.
 
 sub new {
 	my ($class, @args) = @_;
-	my $self = $class->SUPER::new(@args);
+
+	my ($args, $feature_file) = _check_for_simple_args(@args);
+
+	my $self = $class->SUPER::new($args);
+	$self->load_files($feature_file) if $feature_file;
 	return $self;
 }
 
@@ -143,16 +156,45 @@ sub _initialize_args {
 	my ($self, @args) = @_;
 
 	######################################################################
-	# This block of code handels class attributes.  Use the
+	# This block of code handles class attributes.  Use the
 	# @valid_attributes below to define the valid attributes for
 	# this class.  You must have identically named get/set methods
 	# for each attribute.  Leave the rest of this block alone!
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(parser storage);
+	my @valid_attributes = qw(fasta parser storage);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
+}
+
+#-----------------------------------------------------------------------------
+
+sub _check_for_simple_args {
+
+  my @args = @_;
+
+  # If one or two files are passed in along
+  # we'll assume they are a GFF3 and Fasta file
+  my ($args, $feature_file, $fasta_file);
+  # If one or two files and not
+  if (@args <= 2) {
+    if (! ref $args[0] && $args[0] !~ /^(parser|storage|fasta)$/) {
+      ($feature_file, $fasta_file) = @args;
+      my $sqlite_file;
+      ($sqlite_file = $feature_file) =~ s/\.[^\.]+$//;
+      $sqlite_file .= '.sqlite';
+      $args = ({parser  => {class => 'gff3'},
+		storage => {class    => 'SQLite',
+			    database => $sqlite_file}
+	       });
+      $args->{fasta} = $fasta_file if $fasta_file;
+    }
+    else {
+      $args = shift @args;
+    }
+  }
+  return ($args, $feature_file);
 }
 
 #-----------------------------------------------------------------------------
@@ -246,14 +288,14 @@ details.
   Function: Return a GAL::Schema::Result::Feature object (a 
             DBIx::Class::ResultSet for all features).
   Returns : A GAL::Schema::Result::Feature object
-  Args    : A query appropriate for DBIx::Class::ResultSet::search
+  Args    : N/A
 
 =cut
 
 sub features {
   my ($self, $query) = shift;
   my $features = $self->schema->resultset('Feature');
-  return $query ? $features->search->($query) : $features;
+  return $features;
 }
 
 #-----------------------------------------------------------------------------
@@ -300,23 +342,36 @@ sub schema {
 
  Title   : load_files
  Usage   : $a = $self->load_files();
- Function: Parse and store all of the features in a file.
+ Function: Parse and store all of the features in a file. If a single
+           file is given as an argument and if there are gff[3] and
+           sqlite versions of that files base name then time stamps
+           are compared and the database is only (re)loaded if the
+           GFF3 file is newer.
  Returns : N/A
- Args    : (files => \@feature_files,
-	    mode  => 'overwrite',
-	   )
+ Args    : A list of files.
  Notes   : Default
 
 =cut
 
 sub load_files {
-  my ($self, @args) = @_;
-  my $args = $self->prepare_args(\@args);
-  # TODO: This functionality should be in GAL::Storage.pm
-  my ($mode, $files) = @{$args}{qw/mode files/};
-  $mode ||= 'overwrite';
-  if ($mode eq 'overwrite') {
-    $self->storage->drop_database;
+
+  my ($self, $files) = @_;
+
+  # If a single file
+  if (! ref $files) {
+    my ($file_ext) = $files =~ /\.([^\.]+)$/;
+    my $file_base;
+    ($file_base = $files) =~ s/\.[^\.]+$//;
+    my $sqlite_file = $file_base . '.sqlite';
+    # If an SQLite versions of the file exists
+    if (-e $files && -e $sqlite_file) {
+      # If the SQLite file is newer
+      if ((stat($sqlite_file))[9] > (stat($files))[9]) {
+	# Then load that SQLite file
+	$self->storage->database($sqlite_file);
+	return;
+      }
+    }
   }
   $self->storage->load_files($files);
 }

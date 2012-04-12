@@ -248,6 +248,38 @@ sub next_record {
 
 #-----------------------------------------------------------------------------
 
+=head2 counter
+
+ Title   : counter
+ Usage   : $a = $self->counter('name', $start);
+           $a = $self->counter('name');
+ Function: Return a counter associated with the given name.  A counter with
+           that name will only created once during the life of the
+           object and will return incrementing values each time called
+           thereafter.  A start value may optionally be given.  This
+           can be given each time, but will only be used the first
+           time given and discarded thereafter.
+ Returns : An incrementing value for the counter
+ Args    : A name for the counter and optionally a integer each for a start and
+           step value.
+
+=cut
+
+sub counter {
+  my ($self, $name, $start) = @_;
+
+  if (exists $self->{counters}{$name}) {
+    return $self->{counters}{$name}++;
+  }
+
+  $start ||= 1;
+
+  $self->{counters}{$name} = $start + 1;
+  return $start;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 next_feature_hash
 
  Title   : next_feature_hash

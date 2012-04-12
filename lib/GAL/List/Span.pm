@@ -86,14 +86,15 @@ sub _initialize_args {
 =cut
 
 sub list {
-    my ($self, $list) = @_;
+  my ($self, $list) = @_;
+  if ($list) {
     if (ref $list ne 'ARRAY') {
       my $err_msg = ('GAL::List::Span requires a reference to an '   .
 		     'array as the first argument, but you gave a  ' .
 		     ref $list);
-      $self->throw('invalid_arguments', $erro_msg);
+      $self->throw('invalid_arguments', $err_msg);
     }
-    elsif (ref $list->[0] ne 'ARRAY' || scalar @{$list->[0]} == 2) {
+    elsif ($list && ref $list->[0] ne 'ARRAY' || scalar @{$list->[0]} != 2) {
       my $err_msg = ('GAL::List::Span requires a reference to an ' .
 		     'array as the first argument and that array ' .
 		     'must contain references to two element '     .
@@ -102,9 +103,10 @@ sub list {
 		     ' elements');
       $self->throw('invalid_arguments', $err_msg);
     }
-    $self->{list} = $list if $list;
-    $self->{list} ||= [];
-    return wantarray ? @{$self->{list}} : $self->{list};
+    $self->{list} = $list;
+  }
+  $self->{list} ||= [];
+  return wantarray ? @{$self->{list}} : $self->{list};
 }
 
 #-----------------------------------------------------------------------------
@@ -141,10 +143,33 @@ sub list {
 
 sub set {
   my $self = shift;
-  if (! $self->{set}) {
-      my $set = Set::IntSpan::Fast->new(map {$_->[0], $_->[1]} $self->list);
+  if (! exists $self->{set}) {
+      my $set = Set::IntSpan::Fast->new();
+    DATUM:
+      for my $datum ($self->list) {
+	if (Scalar::Util::blessed($datum) &&
+	    $datum->can('start')          &&
+	    $datum->can('end')) {
+	  $set->add_range($datum->start, $datum->end);
+	}
+	elsif ((ref $datum eq 'HASH') &&
+		exists $datum->{start}  &&
+		exists $datum->{end}) {
+          $set->add_range($datum->{start}, $datum->{end});
+        }
+	elsif ((ref $datum eq 'ARRAY') &&
+		defined $datum->[0]  &&
+		defined $datum->[1]) {
+          $set->add_range($datum->[0], $datum->[1]);
+        }
+	else {
+	  self->warn('invalid_data_type',
+		     'Need range data, but got' . ref $datum);
+	  next DATUM;
+	}
+      }
       $self->{set} = $set;
-  }
+    }
   return $self->{set};
 }
 
