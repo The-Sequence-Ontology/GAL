@@ -27,12 +27,23 @@ isa_ok($annotation->storage(dsn   => 'DBI:SQLite:data/test_storage.sqlite',
 			   ), 'GAL::Storage::SQLite', '$annotation->storage');
 
 # TEST 
-ok($annotation->load_files(mode  => 'overwrite',
-			   files => './data/dmel-4-r5.24.partial.gff'),
+ok($annotation->load_files('./data/dmel-4-r5.24.partial.gff'),
    '$annotation->load_files');
 
 # TEST 
 isa_ok($annotation->schema, 'GAL::Schema', '$annotation->schema');
+
+# TEST 
+my $annotation = GAL::Annotation->new('./data/dmel-4-r5.24.partial.gff');
+isa_ok($annotation, 'GAL::Annotation');
+
+my $features = $annotation->features;
+isa_ok($features, 'DBIx::Class::ResultSet');
+
+while (my $feature = $features->next) {
+  ok($feature->seqid, '$feature->seqid');
+  last;
+}
 
 
 ################################################################################

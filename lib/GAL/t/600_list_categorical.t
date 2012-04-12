@@ -14,17 +14,40 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
+my $list = GAL::List::Categorical->new(list => [qw(red red red blue
+						   blue green yellow
+						   orange orange
+						   purple purple
+						   purple purple)]);
 # TEST 2
-my $list = List->new([qw(red red red blue blue green yellow orange orange
-			 purple purple purple purple)]);
-isaok($list, 'GAL::List::Categorical');
+#isaok($list, 'GAL::List::Categorical');
 
 # TEST 3
 ok($list->count == 13, '$list->count');
 
 # TEST 4
+ok($list->cardinality == 6, '$list->cardinality');
 
+# TEST 5
+ok($list->count_uniq == 6, '$list->count_uniq');
 
+# TEST 6
+ok($list->maxstr eq 'yellow', '$list->maxstr');
+
+# TEST 7
+ok($list->minstr eq 'blue' , '$list->minstr');
+
+# TEST 8
+my @random = $list->shuffle;
+ok(scalar @random == 13, '$list->shuffle');
+
+# TEST 9
+my @uniq = $list->uniq;
+ok(scalar @uniq == 6, '$list->uniq');
+
+# TEST 10
+my $random_element = $list->random_pick;
+ok($random_element =~ /^(red|blue|green|yellow|orange|purple)$/, '$list->count');
 
 ################################################################################
 ################################# Ways to Test #################################

@@ -2,7 +2,13 @@ package GAL::List::Categorical;
 
 use strict;
 use vars qw($VERSION);
+use List::Util;
+use List::MoreUtils;
 
+# List::UtilsBy qw(sort_by nsort_by rev_sort_by rev_nsort_by max_by
+#		 max_by min_by min_by uniq_by partition_by count_by
+#		 zip_by unzip_by extract_by weighted_shuffle_by
+#		 bundle_by);
 
 $VERSION = '0.01';
 use base qw(GAL::List);
@@ -18,35 +24,52 @@ This document describes GAL::List::Categorical version 0.01
 =head1 SYNOPSIS
 
     use GAL::List::Categorical;
-    my $list_catg = GAL::List::Categorical->new(list => [qw(red red red blue blue
-							       green yellow orange orange
-							       purple purple purple purple)]);
+    my $list = GAL::List::Categorical->new(list => [qw(red blue green)];
     my $count    = $list_catg->count;
     $list_ref    = $list_catg->list;
     @list_ary    = $list_catg->list;
     $class       = $list_catg->class;
-    $catg_counts = $list_catg->category_counts;
+    $cardinality = $list_catg->cardinality
     $count_uniq  = $list_catg->count_uniq;
     $max_str     = $list_catg->maxstr;
     $min_str     = $list_catg->minstr;
-    @shff_list   = $list_catg_shuffle;
-    @uniq_list   = $list_catg_uniq;
+    @shff_list   = $list_catg->shuffle;
+    @uniq_list   = $list_catg->uniq;
     $item        = $list_catg->random_pick;
 
+    # Create a list by passing an iterator that has a 'next' method.
+    # The values of the list will be accessed for each object via the
+    # method passed by the method attribute.
+
+    my $obj_list = GAL::List::Categorical->new(iterator => \@objs
+					       method   => 'type');
+
+    # Create a list by calling the given method on each object in
+    # list.
+
+    my $obj_list = GAL::List::Categorical->new(list   => \@objs
+					       method => 'type');
+
+    # Create a list by getting the value of the given key from each
+    # hash in the list.  This is an alias for the method attribute -
+    # GAL::List::Categorical will check each item in the list to see
+    # if it is an object or a hash reference and do the right thing.
+
+    my $hash_list = GAL::List::Categorical->new(list => \@objs
+						key  => 'type');
 
 =head1 DESCRIPTION
 
-<GAL::List> serves as a base class for the modules below it and
-provides basic list summarization details.  It is not intended to be
-used on it's own.  You should use it's subclasses instead.
+<GAL::List::Categorical> provides methods to work with list of
+categorical data.
 
 =head1 CONSTRUCTOR
 
-To construct a GAL::List subclass simply pass it an appropriate list.
+To construct a GAL::List::Categorical simply pass a list as an array
+reference to the list attribute.  See the method and key attributes for
+additional ways to pass a list.
 
-    my $list_catg = GAL::List::Categorical->new(list => [qw(red red red blue blue
-							       green yellow orange orange
-							       purple purple purple purple)]);
+    my $list = GAL::List::Categorical->new(list => [qw(red blue green)];
 
 =cut
 
@@ -61,12 +84,15 @@ To construct a GAL::List subclass simply pass it an appropriate list.
      Function: Creates a GAL::List::Categorical object;
      Returns : A GAL::List::Categorical object
      Args    : list => \@list
+	       But see the method, key, and iterator attributes for other
+	       ways to construct a list.
 
 =cut
 
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
+	$self->_parse_list;
 	return $self;
 }
 
@@ -89,41 +115,134 @@ sub _initialize_args {
 #-----------------------------------------------------------------------------
 #--------------------------------- Attributes --------------------------------
 #-----------------------------------------------------------------------------
-#
-# =head2 attribute
-#
-#  Title   : attribute
-#  Usage   : $a = $self->attribute()
-#  Function: Get/Set the value of attribute.
-#  Returns : The value of attribute.
-#  Args    : A value to set attribute to.
-#
-# =cut
-#
-# sub attribute {
-#   my ($self, $attribute) = @_;
-#   $self->{attribute} = $attribute if $attribute;
-#   return $self->{attribute};
-# }
-#
+
 #-----------------------------------------------------------------------------
 #------------------------------------ Methods --------------------------------
 #-----------------------------------------------------------------------------
 
-=head2 method
+=head2 count
 
- Title   : method
- Usage   : $a = $self->method()
- Function:
- Returns :
+ Title   : count
+ Usage   : $count = $self->count()
+ Function: Return the count of elements in the list.
+ Returns : A integer
+ Args    : N/A
+
+=cut
+
+#-----------------------------------------------------------------------------
+
+=head2 cardinality
+
+ Title   : cardinality
+ Usage   : $a = $self->cardinality()
+ Function: Returns the number of uniq elements in the list
+ Returns : An integer
+ Args    : N/A
+
+=cut
+
+#-----------------------------------------------------------------------------
+
+=head2 count_uniq
+
+ Title   : count_uniq
+ Usage   : $a = $self->count_uniq()
+ Function: An alias for cardinality - returns the number of uniq elements in
+	   the list
+ Returns : An integer
  Args    :
 
 =cut
 
-sub method {
+#-----------------------------------------------------------------------------
+
+=head2 category_counts
+
+ Title   : category_counts
+ Usage   : $a = $self->category_counts()
+ Function: Return a hash(reference) with uniq elements as keys and element
+	   counts as values.
+ Returns : A hash(reference)
+ Args    : N/A
+
+=cut
+
+sub category_counts {
     my $self = shift;
-    $self->throw('developer_error', 'Method not implimented yet');
+    my %hash = $self->_hash_list;
+    return wantarray ? %hash : \%hash;
 }
+
+#-----------------------------------------------------------------------------
+
+=head2 maxstr
+
+ Title   : maxstr
+ Usage   : $a = $self->maxstr()
+ Function: Return the max value of the list sorted alphanumerically
+ Returns : Scalar string
+ Args    : N/A
+
+=cut
+
+sub maxstr {
+  my $self = shift;
+  my @list = $self->list;
+  return List::Util::maxstr(@list);
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 minstr
+
+ Title   : minstr
+ Usage   : $a = $self->minstr()
+ Function: Return the min value of the list sorted alphanumerically
+ Returns : Scalar string
+ Args    : N/A
+
+=cut
+
+sub minstr {
+  return List::Util::minstr(shift->list);
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 shuffle
+
+ Title   : shuffle
+ Usage   : $a = $self->shuffle()
+ Function: Returns the elements of the list in random order
+ Returns : An array/array reference
+ Args    : N/A
+
+=cut
+
+#-----------------------------------------------------------------------------
+
+=head2 uniq
+
+ Title   : uniq
+ Usage   : $a = $self->uniq()
+ Function: Return the uniq elements in the list
+ Returns : An array/reference
+ Args    :
+
+=cut
+
+#-----------------------------------------------------------------------------
+
+=head2 random_pick
+
+ Title   : random_pick
+ Usage   : $a = $self->random_pick()
+ Function: Return and element from the list at random.
+ Returns : A scalar element from the list
+ Args    : N/A
+
+=cut
 
 #-----------------------------------------------------------------------------
 

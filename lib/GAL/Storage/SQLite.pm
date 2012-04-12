@@ -83,7 +83,7 @@ database.
 
 =back
 
-=head1 METHODS
+=head1 CONSTRUCTOR
 
 =cut
 
@@ -121,6 +121,33 @@ sub _initialize_args {
 	my @valid_attributes = qw();
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
+}
+
+=head1 Attributes
+
+=cut
+
+#-----------------------------------------------------------------------------
+
+=head2 mode
+
+     Title   : mode
+     Usage   : GAL::Storage::SQLite->mode('append');
+     Function: Get/set the value of mode. This defines
+               whether the database is overwritten or
+               appended.
+     Returns : The value of mode
+     Args    : The valude append or the default overwrite.
+
+=cut
+
+sub mode {
+
+  my ($self, $mode) = @_;
+
+  $self->{mode} = $mode if $mode;
+  $self->{mode} ||= 'overwrite';
+  return $self->{mode};
 }
 
 #-----------------------------------------------------------------------------
@@ -350,7 +377,10 @@ sub load_files {
 
   my ($self, $files) = @_;
   $files = ref $files eq 'ARRAY' ? $files : [$files];
+
   my $parser = $self->annotation->parser;
+
+  $self->drop_database if $self->mode eq 'overwrite';
 
   for my $file (@{$files}) {
     $parser->file($file);

@@ -18,6 +18,15 @@ chdir($path);
 my $object = GAL::List::Span->new();
 isa_ok($object, 'GAL::List::Span');
 
+my @data = ([1,10], [20,30], [40,50]);
+
+my $span = GAL::List::Span->new(list => \@data);
+
+# TEST 2
+ok($span->footprint, '$span->footprint');
+
+print '';
+
 # To get a list of all of the subs and throws:
 # Select an empty line and then: C-u M-| grep -nP '^sub ' ../Class.pm
 # Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Class.pm

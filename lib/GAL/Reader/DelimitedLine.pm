@@ -266,10 +266,11 @@ sub next_record {
     my $fh = $self->fh;
     my $line;
     my $comment_pattern = $self->comment_pattern;
-    my $field_separator   = $self->field_separator;
+    my $field_separator = $self->field_separator;
   LINE:
     while ($line = <$fh>) {
 	chomp $line;
+	$self->{current_line} = $line;
 	next if $line =~ /^\s*$/;
 	if ($line =~ $comment_pattern) {
 	    $self->comments($line);
@@ -310,6 +311,22 @@ sub headers {
 
 	push @{$self->{headers}}, $header if $header;
 	return wantarray ? @{$self->{headers}} : $self->{headers};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 current_line
+
+ Title   : current_line
+ Usage   : $line = $reader->current_line();
+ Function: Return the current line that the reader has most recently read.
+ Returns : A string
+ Args    : N/A
+
+=cut
+
+sub current_line {
+  return shift->{current_line};
 }
 
 #-----------------------------------------------------------------------------
