@@ -48,9 +48,9 @@ parsed and operated on.
 
   so_file         The location of a Sequence Ontology OBO format file.
 		  The location of the file may also be given with the
-		  environment variable SO_OBO.  If no file an attempt
-		  will be made to retrieve the latest version from the
-		  Sequence Ontology website.
+		  environment variable SO_OBO.  If no file is
+		  available an attempt will be made to retrieve the
+		  latest version from the Sequence Ontology website.
 
 --Include/Exclude Options--
 
@@ -384,8 +384,8 @@ my $opt_success = GetOptions('in_place|i'      => \$in_place,
 
 die $usage if $help || ! $opt_success;
 
-die "FATAL : unable_to_open_file : $FASTA_FILE\n" if ($FASTA_FILE && ! -r $FASTA_FILE);
-die "FATAL : unable_to_open_file : $SO_FILE\n"    if ($SO_FILE    && ! -r $SO_FILE);
+die "FATAL : unreadable_file : $FASTA_FILE\n" if ($FASTA_FILE && ! -r $FASTA_FILE);
+die "FATAL : unreadable_file : $SO_FILE\n"    if ($SO_FILE    && ! -r $SO_FILE);
 
 my @files = @ARGV;
 die "$usage\n\nMust give one or more feature files\n\n" unless (scalar @files || ! -t STDIN);
@@ -796,9 +796,13 @@ sub hash_ag {
 
 sub validate {
 
-    my ($so_data) = parse_so_file();
+  my $files = shift;
 
-    for my $file (@files) {
+  my ($so_data) = parse_so_file();
+  #map {$valid_so_terms{$_}++;$valid_so_terms{$so_data->{map}{$_}}++}
+  #  keys %{$so_data->{terms}};
+
+    for my $file (@{$files}) {
 	warn "Validating: $file\n";
 	open(my $IN, '<', $file) or
 	    die "FATAL : cant_open_file_for_reading : $file\n";
@@ -806,14 +810,14 @@ sub validate {
 	my $line_count;
 	my %pragmas;
 	my %errors;
+	my %valid_so_terms;
 	my $gff_version;
 	my $gvf_version;
 	my %feature_ids;
 	my %parents;
-	my %valid_so_terms;
 
 	my @stack;
-	my $line = <$IN>;
+	#my $line = <$IN>;
 	my ($format_type, $version) = split /\t+/, $line;
 	if ($format_type !~ /g[vf]f-version/) {
 	    my $error_code = 'missing_required_gff-version_or_gvf-version_pragma';
@@ -1410,6 +1414,7 @@ sub validate {
 			warn "WARNING : $error_code : $line\n";
 		    }
 		}
+		##sequence-region
 		elsif ($line =~ /^\#\#sequence-region/) {
 		    if ($line =~ /^\#\#(sequence-region)\s+(\S+)\s+(\d+)\s+(\d+)/) {
 			my $pragma_key = $1;
@@ -1560,6 +1565,10 @@ sub validate {
 			push @{$errors{$error_code}}, [$line_count, $line];
 			warn "WARNING : $error_code : $line\n";
 		    }
+		}
+		###
+		elsif ($line =~ /^\#\#\#$/) {
+		  # Skip ### - there's no way to further validate it.
 		}
 		# All other pragmas
 		else {
@@ -2581,6 +2590,10 @@ sub parse_so_file {
 
 
     my $text = join '', (<$IN>);
+
+    die "FATAL : no_SO_data_available : $SO_FILE (consider using --so_file or check file contents)\n"
+      unless $text;
+
     $text =~ s/.*?\[Term\]/\[Term\]/s;
 
     my @terms_array = $text =~ /^\[Term\]\n(.*?)\n{2,}/msg;
