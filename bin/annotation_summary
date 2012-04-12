@@ -13,18 +13,17 @@ my $usage = "
 
 Synopsis:
 
-gal_example_seq_features feature.gff3 genome.fasta
+annotation_summary feature.gff3 genome.fasta
 
 Description:
 
-This is an example script for using the GAL library for working
-with sequence features in GAL.
+This script will summarize the annotations in GFF3 file.
 
 ";
 
 my ($help);
 
-my $opt_success = GetOptions('help|h'            => \$help,
+my $opt_success = GetOptions('help|h' => \$help,
 			      );
 
 die $usage if $help || ! $opt_success;
@@ -35,6 +34,30 @@ my $annotation = GAL::Annotation->new($feature_file,
 				      $fasta_file);
 
 my $features = $annotation->features;
+
+
+my %counts;
+for my $column (qw(seqid source type strand phase)) {
+  my $rs = $features->get_column($column);
+  map {$counts{$column}{$_}++} $rs->all;
+}
+
+my %lengths;
+map {push @{$lengths{$_->type}}, $_->length} $features->all;
+
+my %gc_content;
+while (my $feature = $features->next) {
+  my $seq = $feature->seq;
+  my $length = length($seq);
+  my $gc_count = $seq =~ tr/GCgc/GCgc/;
+  my $pct_gc = $gc_count / $length;
+  push @{$gc_content{$feature->type}}, $pct_gc;
+}
+
+my %children;
+
+
+print '';
 
 # Do the search and get an interator for all matching features
 my $mrnas = $features->search({type => 'mRNA'});
