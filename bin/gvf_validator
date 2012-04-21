@@ -61,7 +61,6 @@ sub validate_gvf {
 		  );
   my %relationships = ('is_a' => 1);
 
-
   # Get valid terms
   my %valid_terms;
   no warnings;
@@ -82,9 +81,6 @@ sub validate_gvf {
   my $line_count;
   my %pragmas;
   my %errors;
-  my %types;
-  my %parents;
-  my %derives;
   my @stack;
 
   # Grab the first line;
@@ -119,7 +115,7 @@ sub validate_gvf {
 
   my $Variant_seq_regex = qr/^([A-DGHKMNR-WY]+| # Any valid IUPAC Nucleotide
 			     ~\d*|            # A ~ optionally followed by an integer
-			     [.\-!^]          # Any [.-!^]
+			     [.\-!^\*]        # Any [.-!^*]
 			    )$/ix;
   my $Reference_seq_regex = qr/^([A-DGHKMNR-WY]+|~\d*|[.\-])$/i;
 
@@ -254,14 +250,6 @@ sub validate_gvf {
 	    my $all_ids = join ' ', @values;
 	    handle_message('ERROR', $error_code, "($all_ids) $line");
 	  }
-	  my $id = $values[0];
-	  $types{$id} = $type;
-	  #if (++$feature_ids{$id} > 1) {
-	  #    my $error_code = 'invalid_ID_attribute_not_unique';
-	  #    $errors{$error_code}++;
-	  #    handle_message('ERROR', $error_code, "($id) $line");
-	  #}
-	  # TODO Validate ID characters
 	}
 	# Name
 	elsif ($key eq 'Name') {
@@ -271,52 +259,30 @@ sub validate_gvf {
 	elsif ($key eq 'Alias') {
 	  # No validation on Alias values
 	}
-	## Parent
-	#elsif ($key eq 'Parent') {
-	#  for my $value (@values) {
-	#    push @{$parents{$type}{$value}}, [$line_count, "$seqid:$start-$end"];
-	#  }
-	#}
-	## Target
-	#elsif ($key eq 'Target') {
-	#  if (scalar @values > 1) {
-	#    my $error_code = 'invalid_Target_attribute_multiple_values';
-	#    $errors{$error_code}++;
-	#    my $all_values = join ' ', @values;
-	#    handle_message('ERROR', $error_code, "($all_values) $line");
-	#  }
-	#  my $value = $values[0];
-	#  if ($value !~ /\S+\s+\d+\s+\d+\s*[\-+]*/) {
-	#    my $error_code = 'invalid_Target_attribute_value';
-	#    $errors{$error_code}++;
-	#    handle_message('ERROR', $error_code, "($value) $line");
-	#  }
-	#}
-	## Gap
-	#elsif ($key eq 'Gap') {
-	#  if (scalar @values > 1) {
-	#    my $error_code = 'invalid_Gap_attribute_multiple_values';
-	#    $errors{$error_code}++;
-	#    my $all_values = join ' ', @values;
-	#    handle_message('ERROR', $error_code, "($all_values) $line");
-	#  }
-	#  my $value = $values[0];
-	#  # TODO: Validate the CIGAR format
-	#}
-	## Derives_from
-	#elsif ($key eq 'Derives_from') {
-	#  if (scalar @values > 1) {
-	#    my $error_code = 'invalid_Derives_from_attribute_multiple_values';
-	#    $errors{$error_code}++;
-	#    my $all_values = join ' ', @values;
-	#    handle_message('ERROR', $error_code, "($all_values) $line");
-	#  }
-	#  for my $value (@values) {
-	#    my $id = $attributes{ID}[0];
-	#    push @{$derives{$value}{$type}}, [$line_count, $id];
-	#  }
-	#  # TODO: Validate the Derives_from relationships
-	#}
+	# Parent
+	elsif ($key eq 'Parent') {
+	    my $error_code = 'Parent_attribute_in_GVF';
+	    $errors{$error_code}++;
+	    handle_message('WARN', $error_code, "Please contact song-devel\@lists.sourceforge.net for Parent attribute support in GVF: $line ");
+	}
+	# Target
+	elsif ($key eq 'Target') {
+	    my $error_code = 'Target_attribute_in_GVF';
+	    $errors{$error_code}++;
+	    handle_message('WARN', $error_code, "Target attribute doesn't make sense in GVF: $line ");
+	}
+	# Gap
+	elsif ($key eq 'Gap') {
+	    my $error_code = 'Gap_attribute_in_GVF';
+	    $errors{$error_code}++;
+	    handle_message('WARN', $error_code, "Gap attribute doesn't make sense in GVF: $line ");
+	}
+	# Derives_from
+	elsif ($key eq 'Derives_from') {
+	    my $error_code = 'Derives_from_attribute_in_GVF';
+	    $errors{$error_code}++;
+	    handle_message('WARN', $error_code, "Please contact song-devel\@lists.sourceforge.net for Derives_from attribute support in GVF: $line ");
+	}
 	# Note
 	elsif ($key eq 'Note') {
 	  # No validation on Note value
@@ -328,55 +294,55 @@ sub validate_gvf {
 	    # TODO: Validate the Dbxref DB and ID;
 	  }
 	}
-	## Ontology_term
-	#elsif ($key eq 'Ontology_term') {
-	#  # TODO: Validate Ontology_term
-	#}
-	## Is_circular
-	#elsif ($key eq 'Is_circular') {
-	#  if (scalar @values > 1) {
-	#    my $error_code = 'invalid_Is_circular_attribute_multiple_values';
-	#    $errors{$error_code}++;
-	#    my $all_values = join ' ', @values;
-	#    handle_message('ERROR', $error_code, "($all_values) $line");
-	#  }
-	#  my $value = $values[0];
-	#  # TODO: Validate Is_circular
-	#}
+	# Ontology_term
+	elsif ($key eq 'Ontology_term') {
+	    my $error_code = 'Ontology_term_attribute_in_GVF';
+	    $errors{$error_code}++;
+	    handle_message('WARN', $error_code, "Please contact song-devel\@lists.sourceforge.net for Ontology_term attribute support in GVF: $line ");
+	}
+	# Is_circular
+	elsif ($key eq 'Is_circular') {
+	    my $error_code = 'Is_circular_attribute_in_GVF';
+	    $errors{$error_code}++;
+	    handle_message('WARN', $error_code, "Is_circular attribute doesn't make sense in GVF: $line ");
+	}
 	# Variant_seq
 	elsif ($key eq 'Variant_seq') {
 	  for my $value (@values) {
 	    # TODO: Validate the length of the Variant_seq
-	    # Compile once above
+	    # Compile regex once above
 	    # my $Variant_seq_regex = qr/[A-DGHKMNR-WY]+| # Any valid IUPAC Nucleotide
 	    # 			       ~\d*|            # A ~ optionally followed by an integer
-	    # 			       [.\-!^]          # Any [.-!^]
+	    # 			       [.\-!^\*]        # Any of [.-!^*]
 	    # 			      /x;
 	    if ($value =~ $Variant_seq_regex) {
 	      if ($type eq 'SNV') {
-		# A single nt or .!^
-		if ($value !~ /[A-DGHKMNR-WY]|[.!^]/i) {
+		# A single nt or .!^*
+		if ($value !~ /^([A-DGHKMNR-WY]|[.!^\*])$/i) {
 		  my $error_code = 'invalid_Variant_seq_attribute_value_for_SNV';
 		  $errors{$error_code}++;
 		  warn "WARN : $error_code : ($value) $line\n";
 		}
 	      }
+	      # A nt string or .!^*
 	      elsif ($type eq 'insertion') {
-		if ($value !~ /[A-DGHKMNR-WY]|~\d*|[.!^]/i) {
+		if ($value !~ /^([A-DGHKMNR-WY]+|~\d*|[.!^\*])$/i) {
 		  my $error_code = 'invalid_Variant_seq_attribute_value_for_insertion';
 		  $errors{$error_code}++;
 		  warn "WARN : $error_code : ($value) $line\n";
 		}
 	      }
+	      # Any of .!^-
 	      elsif ($type eq 'deletion') {
-		if ($value !~ /[\.\^!-]/i) {
+		if ($value !~ /^[\.\^!-]$/i) {
 		  my $error_code = 'invalid_Variant_seq_attribute_value_for_deletion';
 		  $errors{$error_code}++;
 		  warn "WARN : $error_code : ($value) $line\n";
 		}
 	      }
+	      # A nt string or .!^*-
 	      elsif ($type eq 'indel') {
-		if ($value !~ /[A-DGHKMNR-WY]|~\d*|[.\-!^]/i) {
+		if ($value !~ /^([A-DGHKMNR-WY]+|~\d*|[.\-!^])$/i) {
 		  my $error_code = 'invalid_Variant_seq_attribute_value_for_indel';
 		  $errors{$error_code}++;
 		  warn "WARN : $error_code : ($value) $line\n";
@@ -395,28 +361,28 @@ sub validate_gvf {
 	  for my $value (@values) {
 	    if ($value =~ $Reference_seq_regex) {
 	      if ($type eq 'SNV') {
-		if ($value !~ /^[ATGCN]+|\.$/) {
+		if ($value !~ /^([A-DGHKMNR-WY]+|\.)$/) {
 		  my $error_code = 'invalid_Reference_seq_attribute_value_for_SNV';
 		  $errors{$error_code}++;
 		  warn "WARN : $error_code : ($value) $line\n";
 		}
 	      }
 	      elsif ($type eq 'insertion') {
-		if ($value !~ /[ATGCN]+|-/) {
+		if ($value ne '-') {
 		  my $error_code = 'invalid_Reference_seq_attribute_value_insertion';
 		  $errors{$error_code}++;
 		  warn "WARN : $error_code : ($value) $line\n";
 		}
 	      }
 	      elsif ($type eq 'deletion') {
-		if ($value !~ /[ATGCN]+|~/) {
+		if ($value !~ /^([A-DGHKMNR-WY]+|[\.~])$/) {
 		  my $error_code = 'invalid_Reference_seq_attribute_value_deletion';
 		  $errors{$error_code}++;
 		  warn "WARN : $error_code : ($value) $line\n";
 		}
 	      }
 	      elsif ($type eq 'indel') {
-		if ($value !~ /[ATGCN]+|[-~]/) {
+		if ($value !~ /^([A-DGHKMNR-WY]+|[\.\-~])$/) {
 		  my $error_code = 'invalid_Reference_seq_attribute_value_indel';
 		  $errors{$error_code}++;
 		  warn "WARN : $error_code : ($value) $line\n";
@@ -457,18 +423,13 @@ sub validate_gvf {
 	}
 	# Genotype
 	elsif ($key eq 'Genotype') {
-	  if (scalar @values > 1) {
-	    my $error_code = 'invalid_Genotype_attribute_multiple_values';
-	    $errors{$error_code}++;
-	    my $all_values = join ' ', @values;
-	    warn "ERROR : $error_code : ($all_values) $line\n";
-	  }
-	  my $value = $values[0];
-	  if ($value !~ /^(hetero|homo|hemi)zygous$/) {
-	    my $error_code = 'invalid_Genotype_attribute_value';
-	    $errors{$error_code}++;
-	    warn "ERROR : $error_code : ($value) $line\n";
-	  }
+	    for my $value (@values) {
+		if ($value !~ /^\d+:\d+$/) {
+		    my $error_code = 'invalid_Genotype_attribute_value';
+		    $errors{$error_code}++;
+		    warn "ERROR : $error_code : ($value) $line\n";
+		}
+	    }
 	}
 	# Variant_freq
 	elsif ($key eq 'Variant_freq') {
@@ -508,7 +469,7 @@ sub validate_gvf {
 	elsif ($key eq 'Variant_copy_number') {
 	  for my $value (@values) {
 	    if ($value !~ /^d+$/) {
-	      my $error_code = 'invalid_attribute_value';
+	      my $error_code = 'invalid_Variant_copy_number_attribute_value';
 	      $errors{$error_code}++;
 	      warn "ERROR : $error_code : ($value) $line\n";
 	    }
@@ -552,7 +513,7 @@ sub validate_gvf {
 	    warn "ERROR : $error_code : ($all_values, $start) $line\n";
 	  }
 	  for my $value (@values) {
-	    if ($value ne '.' && $value !~ /^\d+$/) {
+	    if ($value !~ /^(\.|\d+)$/) {
 	      my $error_code = 'invalid_Start_range_attribute_value';
 	      $errors{$error_code}++;
 	      warn "ERROR : $error_code : ($value) $line\n";
@@ -562,7 +523,7 @@ sub validate_gvf {
 	# End_range
 	elsif ($key eq 'End_range') {
 	  if (scalar @values != 2) {
-	    my $error_code = 'invalid_Etart_range_attribute_must_have_2_values';
+	    my $error_code = 'invalid_End_range_attribute_must_have_2_values';
 	    $errors{$error_code}++;
 	    my $all_values = join ',', @values;
 	    warn "ERROR : $error_code : ($all_values) $line\n";
@@ -616,7 +577,7 @@ sub validate_gvf {
 	  # TODO: test_uri($pragma_value);
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_feature-ontology_pragma_format';
 	  $errors{$error_code}++;
 	  handle_message('ERROR', $error_code, $line);
 	}
@@ -630,7 +591,7 @@ sub validate_gvf {
 	  #TODO: test_uri($pragma_value);
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_attribute-ontology_pragma_format';
 	  $errors{$error_code}++;
 	  handle_message('ERROR', $error_code, $line);
 	}
@@ -644,7 +605,7 @@ sub validate_gvf {
 	  #TODO: test_uri($pragma_value);
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_source-ontology_pragma_format';
 	  $errors{$error_code}++;
 	  handle_message('ERROR', $error_code, $line);
 	}
@@ -658,7 +619,7 @@ sub validate_gvf {
 	  # TODO: test_uri($pragma_value);
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_species_pragma_format';
 	  $errors{$error_code}++;
 	  handle_message('ERROR', $error_code, $line);
 	}
@@ -672,7 +633,7 @@ sub validate_gvf {
 	  $pragmas{$pragma_key}{$source} = $build_name;
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_genome-build_pragma_format';
 	  $errors{$error_code}++;
 	  handle_message('ERROR', $error_code, $line);
 	}
@@ -702,27 +663,27 @@ sub validate_gvf {
 	}
       }
       ##file-date
-      elsif ($line =~ /^\#\#file-date /) {
+      elsif ($line =~ /^\#\#file-date/) {
 	if ($line =~ /^\#\#(file-date)\s+(20[1-9][0-9]-\d\d-\d\d)/) {
 	  my $pragma_key = $1;
 	  my $date       = $2;
 	  $pragmas{$pragma_key} = $date;
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_file-date_pragma_format';
 	  $errors{$error_code}++;
 	  warn "ERROR : $error_code : $line\n";
 	}
       }
       ##file-version
-      elsif ($line =~ /^\#\#file-version /) {
+      elsif ($line =~ /^\#\#file-version/) {
 	if ($line =~ /^\#\#(file-version)\s+(.*?)/) {
 	  my $pragma_key = $1;
 	  my $version    = $2;
 	  $pragmas{$pragma_key} = $version;
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_file-version_pragma_format';
 	  $errors{$error_code}++;
 	  warn "ERROR : $error_code : $line\n";
 	}
@@ -735,7 +696,7 @@ sub validate_gvf {
 	  $pragmas{$pragma_key} = $pragma_value;
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_individual-id_pragma_format';
 	  $errors{$error_code}++;
 	  warn "ERROR : $error_code : $line\n";
 	}
@@ -748,7 +709,7 @@ sub validate_gvf {
 	  $pragmas{$pragma_key} = $pragma_value;
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_score-method_pragma_format';
 	  $errors{$error_code}++;
 	  warn "ERROR : $error_code : $line\n";
 	}
@@ -761,7 +722,7 @@ sub validate_gvf {
 	  $pragmas{$pragma_key} = $pragma_value;
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_source-method_pragma_format';
 	  $errors{$error_code}++;
 	  warn "ERROR : $error_code : $line\n";
 	}
@@ -774,7 +735,7 @@ sub validate_gvf {
 	  $pragmas{$pragma_key} = $pragma_value;
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_attribute-method_pragma_format';
 	  $errors{$error_code}++;
 	  warn "ERROR : $error_code : $line\n";
 	}
@@ -787,7 +748,7 @@ sub validate_gvf {
 	  $pragmas{$pragma_key} = $pragma_value;
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_technology-platform_pragma_format';
 	  $errors{$error_code}++;
 	  warn "ERROR : $error_code : $line\n";
 	}
@@ -800,7 +761,7 @@ sub validate_gvf {
 	  $pragmas{$pragma_key} = $pragma_value;
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_data-source_pragma_format';
 	  $errors{$error_code}++;
 	  warn "ERROR : $error_code : $line\n";
 	}
@@ -813,7 +774,7 @@ sub validate_gvf {
 	  $pragmas{$pragma_key} = $pragma_value;
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_phenotype-description_pragma_format';
 	  $errors{$error_code}++;
 	  warn "ERROR : $error_code : $line\n";
 	}
@@ -826,7 +787,7 @@ sub validate_gvf {
 	  $pragmas{$pragma_key} = $pragma_value;
 	}
 	else {
-	  my $error_code = 'invalid_pragma_format';
+	  my $error_code = 'invalid_phased-genotypes_pragma_format';
 	  $errors{$error_code}++;
 	  warn "ERROR : $error_code : $line\n";
 	}
@@ -856,20 +817,6 @@ sub validate_gvf {
     }
   }
 
-  ## Validate relationships
-  #for my $kid_type (keys %parents) {
-  #    for my $parent (keys %{$parents{$kid_type}}) {
-  #	  my $parent_type = $types{$parent};
-  #	  if (! exists $so_data->{parts}{$kid_type} ||
-  #	      ! exists $so_data->{parts}{$kid_type}{$parent_type}) {
-  #	      my $data = $parents{$kid_type}{$parent_type};
-  #	      for my $datum (@{$data}) {
-  #		  handle_message('ERROR', 'invalid_part_of_relationship', $datum);
-  #	      }
-  #	  }
-  #    }
-  #}
-
   close $IN;
   print "\n\n";
   print "Error Summary for $file\n";
@@ -880,6 +827,15 @@ sub validate_gvf {
     for my $error_code (keys %errors) {
       print "$error_code\t" . $errors{$error_code} . "\n";
     }
+    print <<'END';
+
+The current version of the GVF specification can be found at
+http://www.sequenceontology.org/resources/gvf.html. Please contact
+song-devel@lists.sourceforge.net for help with errors or to provide
+feedback for improving and updating the GVF specification.
+
+END
+
   }
   else {
     print "No Errors found in this file\n";
