@@ -134,6 +134,26 @@ sub mRNAs {
 
 #-----------------------------------------------------------------------------
 
+=head2 is_coding
+
+ Title   : is_coding
+ Usage   : $is_coding = $self->is_coding
+ Function: Get the genes mRNA features
+ Returns : A DBIx::Class::Result object loaded up with mRNA features.
+ Args    : None
+
+=cut
+
+sub is_coding {
+
+  my $self = shift;
+
+  return 1 if $self->mRNAs->all;
+
+}
+
+#-----------------------------------------------------------------------------
+
 =head1 DIAGNOSTICS
 
 This module does not throw any error or warning messages.
