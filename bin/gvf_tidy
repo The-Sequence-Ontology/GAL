@@ -1,0 +1,247 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+gvf_tidy messy.gvf > tidy.gvf
+
+Description:
+
+Clean up some common problems in GVF files.
+
+
+Options:
+
+  --fatal
+
+    Turn warnings to fatal errors;
+
+  --toggle_chr
+
+    Add or remove chr from the begining of chromosome names.
+
+  --source
+
+    Make the source column the given value.
+
+  --diploid
+
+    Force diploid genotypes.
+
+  --keep_all_atts
+
+    Force gvf_tidy to keep all non-standard atts
+
+  --seq_atts_only
+
+    Have gvf_tidy only keep ID, Variant_seq, Reference_seq and
+    Genotype attributes.
+
+  --add_genotype
+
+    Add the Genotype attribute.
+
+  --old_genotype
+
+    Add the GVF 1.05 style Genotype attribute (homozygous,
+    heterozygous, hemizygous).
+
+";
+
+
+my ($help, $fatal, $toggle_chrs, $new_source, $diploid,
+    $keep_all_atts, $seq_atts_only, $add_genotype, $old_genotype);
+my $opt_success = GetOptions(help          => \$help,
+			     fatal         => \$fatal,
+			     toggle_chrs   => \$toggle_chrs,
+			     source        => \$new_source,
+			     diploid       => \$diploid,
+			     keep_all_atts => \$keep_all_atts,
+			     seq_atts_only => \$seq_atts_only,
+			     add_genotype  => \$add_genotype,
+			     old_genotype  => \$old_genotype
+			    );
+
+die $usage if $help || ! $opt_success;
+
+my @files = @ARGV;
+die $usage unless @files;
+
+my %seq_atts = (ID            => 1,
+		Variant_seq   => 1,
+		Reference_seq => 1,
+		Genotype      => 1,
+	       );
+
+my %valid_atts = (ID                => 1,
+		  Variant_seq	    => 2,
+		  Reference_seq	    => 3,
+		  Genotype	    => 4,
+		  Variant_effect    => 5,
+		  Variant_codon	    => 6,
+		  Reference_codon   => 7,
+		  Alias		    => 8,
+		  Dbxref	    => 9,
+		  Variant_reads	    => 10,
+		  Total_reads	    => 11,
+		  Zygosity	    => 12,
+		  Variant_freq	    => 13,
+		  Start_range	    => 14,
+		  End_range	    => 15,
+		  Phased	    => 16,
+		  Individual	    => 17,
+		  Variant_aa	    => 18,
+		  Reference_aa	    => 19,
+		  Breakpoint_detail => 20,
+		  Sequence_context  => 21,
+		  );
+
+my %valid_types = (sequence_alteration   => 1,
+		   insertion		 => 1,
+		   indel		 => 1,
+		   copy_number_variation => 1,
+		   inversion		 => 1,
+		   deletion		 => 1,
+		   substitution		 => 1,
+		   translocation	 => 1,
+		   structural_alteration => 1,
+		   variant_collection	 => 1,
+		   UPD			 => 1,
+		   MNP			 => 1,
+		   SNV			 => 1,
+		  );
+
+for my $file (@files) {
+  open (my $IN, '<', $file) or
+    handle_message('FATAL', 'cant_open_file_for_reading', $file);
+
+  while (<$IN>) {
+    if (/^(\#|\s)/) {
+      print;
+    }
+    else {
+      chomp;
+      my ($seqid, $source, $type, $start, $end, $score,
+	  $strand, $phase, $attrb_text) = split /\t/, $_;
+
+      if ($toggle_chrs) {
+	if ($seqid =~ /^chr/) {
+	  $seqid =~ s/^chr//;
+	}
+	else {
+	  $seqid = 'chr' . $seqid;
+	}
+      }
+      $source = $new_source if $new_source;
+      $type = 'SNV' if ($type =~ /^SNP$/i);
+      $type = 'nucleotide_insertion' if ($type =~ /^insertion$/i);
+      $type = 'nucleotide_deletion'  if ($type =~ /^deletion$/i);
+      $type = 'sequence_alteration'
+	unless ($type =~ /^(SNV|MNP|gap|nucleotide_insertion|
+			    nucleotide_deletion|complex_substitution)$/ix);
+      ($start, $end) = ($end, $start) if $start > $end;
+      $score = '.' unless $score =~ /^\n+(\.\n+([eE][+\-]?\n+)?)?/;
+      $strand = '.' unless $strand =~ /^[+\-]$/;
+      $phase = '.';
+      my $attributes = parse_attributes($attrb_text);
+      my %tidy_atts;
+      if ($diploid) {
+	my @var_seqs = @{$attributes->{Variant_seq}};
+	my $ref_seq = $attributes->{Reference_seq}[0];
+	@var_seqs = grep {$_ ne $ref_seq} @var_seqs;
+	@var_seqs = @var_seqs[0,1];
+	$attributes->{Variant_seq} = \@var_seqs;
+      }
+      if ($add_genotype) {
+	my $genotype = @{$attributes->{Variant_seq}} > 1 ? '0:1' : '0:0';
+	$attributes->{Genotype} = $genotype;
+      }
+      if ($old_genotype) {
+	my $genotype = @{$attributes->{Variant_seq}} > 1 ? 'heterozygous' : 'homozygous';
+	$genotype = 'hemizygous' if grep {$_ eq '!'} @{$attributes->{Variant_seq}};
+	$attributes->{Genotype} = $genotype;
+      }
+      unless ($keep_all_atts) {
+	map {delete $attributes->{$_} unless exists $valid_atts{$_}}
+	  keys %{$attributes};
+      }
+      if ($seq_atts_only) {
+	map {delete $attributes->{$_} unless exists $seq_atts{$_}}
+	  keys %{$attributes};
+      }
+      $attrb_text = get_attribute_text($attributes);
+      print join "\t", ($seqid, $source, $type, $start, $end, $score,
+			$strand, $phase, $attrb_text);
+      print "\n";
+    }
+  }
+}
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub parse_attributes {
+
+  my $text = shift;
+
+  my %attributes;
+  my @pairs = split /;/, $text;
+  for my $pair (@pairs) {
+    my ($key, $value) = split /=/, $pair;
+    my @values = split /,/, $value;
+    $attributes{$key} = \@values;
+  }
+  return \%attributes;
+}
+
+#-----------------------------------------------------------------------------
+
+sub get_attribute_text {
+
+  my $attributes = shift;
+
+  my $attrb_text;
+  for my $key (sort sort_atts (keys %{$attributes})) {
+    my $value_text = join ',', @{$attributes->{$key}};
+    $attrb_text .= "$key=$value_text;";
+  }
+  return $attrb_text;
+}
+
+#-----------------------------------------------------------------------------
+
+sub sort_atts {
+
+  my $x = exists $valid_atts{$a} ? $valid_atts{$a} : 99;
+  my $y = exists $valid_atts{$b} ? $valid_atts{$b} : 99;
+  
+  return $x <=> $y || $a cmp $b;
+  
+}
+
+#-----------------------------------------------------------------------------
+
+sub handle_message {
+
+  my ($level, $code, $message) = @_;
+
+  $level   ||= 'FATAL';
+  $code    ||= 'unknown_error_code';
+  $message ||= 'No error message';
+
+  if ($level eq 'FATAL') {
+    die join ' : ', ($level, $code, $message);
+  }
+  else {
+    print STDERR join ' : ', ($level, $code, $message);
+  }
+
+}
