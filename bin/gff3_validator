@@ -147,6 +147,7 @@ sub validate_gff3 {
 	push @{$errors{$error_code}}, [$line_count, $line];
 	handle_message('WARN', $error_code, $line);
       }
+      # Source - No validation
       # Type
       if ($valid_terms->{sequence_feature} &&
 	  ! $valid_terms->{sequence_feature}{$type}) {
