@@ -1064,6 +1064,1435 @@ sub float_ge {
 
 #-----------------------------------------------------------------------------
 
+#=head2  validate_feature
+#
+# Title   : validate_feature
+# Usage   : $self->validate_feature($feature_hash)
+# Function: Validates a feature hash.
+# Returns : NA
+# Args    : A feature hash reference in the form returned by next_feature_hash
+#
+#=cut
+#
+#sub validate_feature {
+#  my ($self, $feature) = @_;
+#
+#  my ($feature_id, $seqid, $source, $type, $start, $end, $score,
+#      $strand, $phase, $attributes) =
+#	@{$feature}{qw(feature_id seqid source type start end
+#		       score strand phase attributes)};
+#
+#  my $feature_text = $self->to_gff3($feature);
+#
+#  # Validate seqid
+#  unless ($self->is_valid_seqid) {
+#    my $error_code = 'invalid_characters_in_seqid_column';
+#    $self->throw($error_code, "($seqid) $feature_text");
+#  }
+#  # Validate source - No validation
+#  # Validate type
+#  unless ($self->is_valid_sequence_feature($type)) {
+#    my $error_code = 'invalid_type_value';
+#    $self->warn($error_code, "($type) $feature_text");
+#  }
+#  # Validate start
+#  unless ($self->is_integer($start)) {
+#    my $error_code = 'invalid_start_value';
+#    $self->throw($error_code, "($start) $feature_text");
+#  }
+#  # Validate end
+#  unless ($self->is_integer($end)) {
+#    my $error_code = 'invalid_end_value';
+#    $self->throw($error_code, "($end) $feature_text");
+#  }
+#  # Validate end > start
+#  unless ($start <= $end) {
+#    my $error_code = 'invalid_start_gt_end_value';
+#    $self->throw($error_code, "($start > $end) $feature_text");
+#  }
+#  # Validate score
+#  unless ($self->is_real_number($score)) {
+#    my $error_code = 'invalid_score_value';
+#    $self->warn($error_code, "($score) $feature_text");
+#  }
+#  # Validate strand
+#  unless ($strand =~ /^[.+-]/) {
+#    my $error_code = 'invalid_strand_value';
+#    $self->throw($error_code, "($strand) $feature_text");
+#  }
+#  # Validate phase
+#  unless ($phase =~ /^[012.]/) {
+#    my $error_code = 'invalid_phase_value';
+#    $self->warn($error_code, "($phase) $feature_text");
+#  }
+#  # Validate attributes
+#  $self->validate_attributes($attributes);
+#
+#  # feature_id
+#  $feature->{feature_id} ||= $feature->{attributes}{ID}[0];
+#  if ($feature->{feature_id} ne $feature->{attributes}{ID}[0]) {
+#    my $fid = $feature->{feature_id};
+#    my $aid = $feature->{attributes}{ID}[0];
+#    my $error_code = 'feature_id_ne_attribute_ID';
+#    $self->throw($error_code, "($fid ne $aid) $feature_text");
+#  }
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_gff3_attribute_key
+#
+# Title   : is_valid_gff3_attribute_key
+# Usage   : $self->is_valid_gff3_attribute_key($key)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : An attribute key
+#
+#=cut
+#
+#sub validate_attributes {
+#
+#  $self->{valid_gff3_attributes_keys} ||= {};
+#
+#  return 1 if exists
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_gvf_attribute_key
+#
+# Title   : is_valid_gvf_attribute_key
+# Usage   : $self->is_valid_gvf_attribute_key($key)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : An attribute key
+#
+#=cut
+#
+#sub validate_attributes {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  validate_attributes
+#
+# Title   : validate_attributes
+# Usage   : $self->validate_attributes($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub validate_attributes {
+#
+#  my $attributes = shift;
+#
+#  if (! defined $attributes) {
+#    my $error_code = 'missing_attributes';
+#    $self->warn($error_code, $feature_text);
+#  }
+#  elsif (ref $attributes ne 'HASH') {
+#    my $error_code = 'attributes_must_be_hash';
+#    $self->warn($error_code, $feature_text);
+#  }
+#  else {
+#    for my $key (keys %{$attributes}) {
+#      unless ($self->is_valid_gff3_attribute_key($key) ||
+#	      $self->is_valid_gvf_attribute_key($key)) {
+#	my $error_code = 'invalid_attribute_key';
+#	$self->throw($error_code, "($key) $feature_text");
+#      }
+#      unless (defined $attributes->{$key}) {
+#	my $error_code = 'missing_attribute_value';
+#	$self->throw($error_code, "($key) $feature_text");
+#      }
+#      unless (ref $attributes->{$key} eq 'ARRAY') {
+#	my $error_code = 'attribute_value_must_be_array';
+#	$self->throw($error_code, "($key) $feature_text");
+#      }
+#      my @values = @{$attributes->{$key}};
+#      # Validate GFF3 Attributes
+#      # ID
+#      if ($key eq 'ID') {
+#	if (scalar @values > 1) {
+#	  my $error_code = 'invalid_ID_attribute_multiple_values';
+#	  my $all_ids = join ' ', @values;
+#	  $self->throw($error_code, "($all_ids) $feature_text");
+#	}
+#      }
+#      # Name
+#      elsif ($key eq 'Name') {
+#	# No validation on Name values
+#      }
+#      # Alias
+#      elsif ($key eq 'Alias') {
+#	# No validation on Alias values
+#      }
+#      # Parent
+#      elsif ($key eq 'Parent') {
+#	# No validation on Alias values
+#      }
+#      # Target
+#      elsif ($key eq 'Target') {
+#      }
+#      # Gap
+#      elsif ($key eq 'Gap') {
+#      }
+#      # Derives_from
+#      elsif ($key eq 'Derives_from') {
+#      }
+#      # Note
+#      elsif ($key eq 'Note') {
+#      }
+#      # Dbxref
+#      elsif ($key eq 'Dbxref') {
+#      }
+#      # Ontology_term
+#      elsif ($key eq 'Ontology_term') {
+#	# TODO: Validate Ontology_term
+#      }
+#      # Is_circular
+#      elsif ($key eq 'Is_circular') {
+#      }
+#      # Validate GVF attributes
+#      # Variant_seq
+#      elsif ($key eq 'Variant_seq') {
+#      }
+#      # Reference_seq
+#      elsif ($key eq 'Reference_seq') {
+#      }
+#      # Variant_reads
+#      elsif ($key eq 'Variant_reads') {
+#      }
+#      # Total_reads
+#      elsif ($key eq 'Total_reads') {
+#      }
+#      # Zygosity
+#      elsif ($key eq 'Zygosity') {
+#      }
+#      # Variant_freq
+#      elsif ($key eq 'Variant_freq') {
+#      }
+#      # Variant_effect
+#      elsif ($key eq 'Variant_effect') {
+#      }
+#      # Start_range
+#      elsif ($key eq 'Start_range') {
+#      }
+#      # End_range
+#      elsif ($key eq 'End_range') {
+#      }
+#      # Phased
+#      elsif ($key eq 'Phased') {
+#      }
+#      # Genotype
+#      elsif ($key eq 'Genotype') {
+#      }
+#      # Individual
+#      elsif ($key eq 'Individual') {
+#      }
+#      # Variant_copy_number
+#      elsif ($key eq 'Variant_copy_number') {
+#      }
+#      # Reference_copy_number
+#      elsif ($key eq 'Reference_copy_number') {
+#      }
+#      # Variant_codon
+#      elsif ($key eq 'Variant_codon') {
+#      }
+#      # Reference_codon
+#      elsif ($key eq 'Reference_codon') {
+#      }
+#      # Variant_aa
+#      elsif ($key eq 'Variant_aa') {
+#      }
+#      # Reference_aa
+#      elsif ($key eq 'Reference_aa') {
+#      }
+#      # Breakpoint_detail
+#      elsif ($key eq 'Breakpoint_detail') {
+#      }
+#      # Sequence_context
+#      elsif ($key eq 'Sequence_context') {
+#      }
+#      # All others
+#      else {
+#	if ($key =~ /^[A-Z]/) {
+#	  my $error_code = 'non_standard_attribute_must_begin_with_lowercase';
+#	  $self->throw($error_code, "($key) $feature_text");
+#	}
+#      }
+#    }
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_integer
+#
+# Title   : is_integer
+# Usage   : $self->is_integer($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_integer {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_real_number
+#
+# Title   : is_real_number
+# Usage   : $self->is_real_number($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_real_number {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_aa_sequence
+#
+# Title   : is_valid_aa_sequence
+# Usage   : $self->is_valid_aa_sequence($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_aa_sequence {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_iupac_nt
+#
+# Title   : is_valid_iupac_nt
+# Usage   : $self->is_valid_iupac_nt($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_iupac_nt {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_seqid
+#
+# Title   : is_valid_seqid
+# Usage   : $self->is_valid_seqid($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_seqid {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_type
+#
+# Title   : is_valid_type
+# Usage   : $self->is_valid_type($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_type {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_start
+#
+# Title   : is_valid_start
+# Usage   : $self->is_valid_start($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_start {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_end
+#
+# Title   : is_valid_end
+# Usage   : $self->is_valid_end($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_end {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_strand
+#
+# Title   : is_valid_strand
+# Usage   : $self->is_valid_strand($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_strand {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_phase
+#
+# Title   : is_valid_phase
+# Usage   : $self->is_valid_phase($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_phase {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_id_attribute
+#
+# Title   : is_valid_id_attribute
+# Usage   : $self->is_valid_id_attribute($feature_hash)
+# Function: Validates a id_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_id_attribute {
+#
+#  my $value = shift;
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid
+#
+# Title   : is_valid
+# Usage   : $self->is_valid($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid {
+#
+#  my $values = shift;
+#  if (scalar @{$values} > 1) {
+#    my $error_code = 'invalid_ID_attribute_multiple_values';
+#    my $all_ids = join ' ', @values;
+#    $self->throw($error_code, "($all_ids) $feature_text");
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_name_attribute
+#
+# Title   : is_valid_name_attribute
+# Usage   : $self->is_valid_name_attribute($feature_hash)
+# Function: Validates a name_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_name_attribute {
+#
+#  my $values = shift;
+#  # No validation of Name attribute
+#  return 1;
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_alias_attribute
+#
+# Title   : is_valid_alias_attribute
+# Usage   : $self->is_valid_alias_attribute($feature_hash)
+# Function: Validates a alias_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_alias_attribute {
+#
+#  my $values = shift;
+#  # No validation of Alias attribute
+#  return 1;
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_parent_attribute
+#
+# Title   : is_valid_parent_attribute
+# Usage   : $self->is_valid_parent_attribute($feature_hash)
+# Function: Validates a parent_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_parent_attribute {
+#
+#  my $values = shift;
+#  # No validation of Parent attribute
+#  return 1;
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_target_attribute
+#
+# Title   : is_valid_target_attribute
+# Usage   : $self->is_valid_target_attribute($feature_hash)
+# Function: Validates a target_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_target_attribute {
+#
+#  my $values = shift;
+#
+#  if (scalar @{$values} > 1) {
+#    my $error_code = 'invalid_Target_attribute_multiple_values';
+#    my $all_values = join ' ', @{$values};
+#    $self->throw($error_code, "($all_values) $feature_text");
+#  }
+#  my $value = $values->[0];
+#  if ($value !~ /\S+\s+\d+\s+\d+\s*[\-+]*/) {
+#    my $error_code = 'invalid_Target_attribute_value';
+#    $self->throw($error_code, "($value) $feature_text");
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_gap_attribute
+#
+# Title   : is_valid_gap_attribute
+# Usage   : $self->is_valid_gap_attribute($feature_hash)
+# Function: Validates a gap_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_gap_attribute {
+#
+#  my $values = shift;
+#  if (scalar @values > 1) {
+#    my $error_code = 'invalid_Gap_attribute_multiple_values';
+#    my $all_values = join ' ', @values;
+#    $self->throw($error_code, "($all_values) $feature_text");
+#  }
+#  my $value = $values[0];
+#  # TODO: Validate the CIGAR format
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_derives_from_attribute
+#
+# Title   : is_valid_derives_from_attribute
+# Usage   : $self->is_valid_derives_from_attribute($feature_hash)
+# Function: Validates a derives_from_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_derives_from_attribute {
+#
+#  my $values = shift;
+#
+#  if (scalar @values > 1) {
+#    my $error_code = 'invalid_Derives_from_attribute_multiple_values';
+#    my $all_values = join ' ', @values;
+#    $self->throw($error_code, "($all_values) $feature_text");
+#  }
+#  # TODO: Validate the Derives_from relationships
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_note_attribute
+#
+# Title   : is_valid_note_attribute
+# Usage   : $self->is_valid_note_attribute($feature_hash)
+# Function: Validates a note_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_note_attribute {
+#
+#  my $values = shift;
+#  # No validation of Note attribute
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_dbxref_attribute
+#
+# Title   : is_valid_dbxref_attribute
+# Usage   : $self->is_valid_dbxref_attribute($feature_hash)
+# Function: Validates a dbxref_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_dbxref_attribute {
+#
+#  my $values = shift;
+#  return 1;
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_ontology_term_attribute
+#
+# Title   : is_valid_ontology_term_attribute
+# Usage   : $self->is_valid_ontology_term_attribute($feature_hash)
+# Function: Validates a ontology_term_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_ontology_term_attribute {
+#
+#  my $values = shift;
+#  if (scalar @values > 1) {
+#    my $error_code = 'invalid_Is_circular_attribute_multiple_values';
+#    my $all_values = join ' ', @values;
+#    $self->throw($error_code, "($all_values) $feature_text");
+#  }
+#  my $value = $values[0];
+#  return 1;
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_is_circular_attribute
+#
+# Title   : is_valid_is_circular_attribute
+# Usage   : $self->is_valid_is_circular_attribute($feature_hash)
+# Function: Validates a is_circular_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_is_circular_attribute {
+#
+#  my $values = shift;
+#  # TODO: Validate Is_circular
+#  return 1;
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_variant_seq_attribute
+#
+# Title   : is_valid_variant_seq_attribute
+# Usage   : $self->is_valid_variant_seq_attribute($feature_hash)
+# Function: Validates a variant_seq_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_variant_seq_attribute {
+#
+#  my $values = shift;
+#  for my $value (@values) {
+#    # TODO: Validate the length of the Variant_seq
+#    # Compile regex once above
+#    # my $Variant_seq_regex = qr/[A-DGHKMNR-WY]+| # Any valid IUPAC Nucleotide
+#    #                          ~\d*|            # A ~ optionally followed by an integer
+#    #                          [.\-!^\*]        # Any of [.-!^*]
+#    #                         /x;
+#    if (! $self->is_valid_variant_seq_term($value)) {
+#      if ($type eq 'SNV') {
+#	# A single nt or .!^*
+#	if ($value !~ /^([A-DGHKMNR-WY]|[.!^\*])$/i) {
+#	  my $error_code = 'invalid_Variant_seq_attribute_value_for_SNV';
+#	  $self->warn($error_code, "($value) $feature_text");
+#	}
+#      }
+#      # A nt string or .!^*
+#      elsif ($type eq 'insertion') {
+#	if ($value !~ /^([A-DGHKMNR-WY]+|~\d*|[.!^\*])$/i) {
+#	  my $error_code = 'invalid_Variant_seq_attribute_value_for_insertion';
+#	  $self->warn($error_code, "($value) $feature_text");
+#	}
+#      }
+#      # Any of .!^-
+#      elsif ($type eq 'deletion') {
+#	if ($value !~ /^[\.\^!-]$/i) {
+#	  my $error_code = 'invalid_Variant_seq_attribute_value_for_deletion';
+#	  $self->warn($error_code, "($value) $feature_text");
+#	}
+#      }
+#      # A nt string or .!^*-
+#      elsif ($type eq 'indel') {
+#	if ($value !~ /^([A-DGHKMNR-WY]+|~\d*|[.\-!^])$/i) {
+#	  my $error_code = 'invalid_Variant_seq_attribute_value_for_indel';
+#	  $self->warn($error_code, "($value) $feature_text");
+#	}
+#      }
+#    }
+#    else {
+#      my $error_code = 'invalid_Variant_seq_attribute_value';
+#      $self->warn($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_reference_seq_attribute
+#
+# Title   : is_valid_reference_seq_attribute
+# Usage   : $self->is_valid_reference_seq_attribute($feature_hash)
+# Function: Validates a reference_seq_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_reference_seq_attribute {
+#
+#  my $values = shift;
+#  if (scalar @values > 1) {
+#    my $error_code = 'invalid_Reference_seq_attribute_multiple_values';
+#    my $all_values = join ', ', @values;
+#    $self->warn($error_code, "($all_values) $feature_text");
+#  }
+#  my $value = $values[0];
+#  if (! $self->is_valid_reference_seq($value)) {
+#    if ($type eq 'SNV') {
+#      if ($value !~ /^([A-DGHKMNR-WY]+|\.)$/) {
+#	my $error_code = 'invalid_Reference_seq_attribute_value_for_SNV';
+#	$self->warn($error_code, "($value) $feature_text");
+#      }
+#    }
+#    elsif ($type eq 'insertion') {
+#      if ($value ne '-') {
+#	my $error_code = 'invalid_Reference_seq_attribute_value_insertion';
+#	$self->warn($error_code, "($value) $feature_text");
+#      }
+#    }
+#    elsif ($type eq 'deletion') {
+#      if ($value !~ /^([A-DGHKMNR-WY]+|[\.~])$/) {
+#	my $error_code = 'invalid_Reference_seq_attribute_value_deletion';
+#	$self->warn($error_code, "($value) $feature_text");
+#      }
+#    }
+#    elsif ($type eq 'indel') {
+#      if ($value !~ /^([A-DGHKMNR-WY]+|[\.\-~])$/) {
+#	my $error_code = 'invalid_Reference_seq_attribute_value_indel';
+#	$self->warn($error_code, "($value) $feature_text");
+#      }
+#    }
+#  }
+#  else {
+#    my $error_code = 'invalid_Reference_seq_attribute_value';
+#    $self->throw($error_code, "($value) $feature_text");
+#  }
+#  if ($self->fasta) {
+#    my $fasta_seq = $self->fasta->get_seq($seqid, $start, $end);
+#    if ($fasta_seq ne $value) {
+#      my $error_code = 'Reference_seq_attribute_value_ne_fasta_seq';
+#      $self->throw($error_code, "($value ne $fasta_seq) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_variant_reads_attribute
+#
+# Title   : is_valid_variant_reads_attribute
+# Usage   : $self->is_valid_variant_reads_attribute($feature_hash)
+# Function: Validates a variant_reads_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_variant_reads_attribute {
+#
+#  my $values = shift;
+#  for my $value (@values) {
+#    if (! $self->is_integer($value)) {
+#      my $error_code = 'invalid_Variant_reads_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_total_reads_attribute
+#
+# Title   : is_valid_total_reads_attribute
+# Usage   : $self->is_valid_total_reads_attribute($feature_hash)
+# Function: Validates a total_reads_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_total_reads_attribute {
+#
+#  my $values = shift;
+#  if (scalar @values > 1) {
+#    my $error_code = 'invalid_Total_reads_attribute_multiple_values';
+#    my $all_values = join ' ', @values;
+#    $self->throw($error_code, "($all_values) $feature_text");
+#  }
+#  my $value = $values[0];
+#  if (! $self->is_integer($value)) {
+#    my $error_code = 'invalid_Total_reads_attribute_value';
+#    $self->throw($error_code, "($value) $feature_text");
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_zygosity_attribute
+#
+# Title   : is_valid_zygosity_attribute
+# Usage   : $self->is_valid_zygosity_attribute($feature_hash)
+# Function: Validates a zygosity_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_zygosity_attribute {
+#
+#  my $values = shift;
+#  for my $value (@values) {
+#    if ($value !~ /^(hetero|homo|hemi)zygous$/) {
+#      my $error_code = 'invalid_Zygosity_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_variant_freq_attribute
+#
+# Title   : is_valid_variant_freq_attribute
+# Usage   : $self->is_valid_variant_freq_attribute($feature_hash)
+# Function: Validates a variant_freq_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_variant_freq_attribute {
+#
+#  my $values = shift;
+#  for my $value (@values) {
+#    if (! $self->is_real_number($value)) {
+#      my $error_code = 'invalid_Variant_freq_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_variant_effect_attribute
+#
+# Title   : is_valid_variant_effect_attribute
+# Usage   : $self->is_valid_variant_effect_attribute($feature_hash)
+# Function: Validates a variant_effect_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_variant_effect_attribute {
+#
+#  my $values = shift;
+#  for my $value (@values) {
+#    my ($sequence_variant, $index, $sequence_feature, @featureIDs) = split /\s+/, $value;
+#    # TODO: Validate $sequence_variant
+#    if (! $self->is_integer($index) || $index > (scalar @{$attributes->{lVariant_seq}} - 1)) {
+#      my $error_code = 'invalid_Variant_effect_attribute_index_value';
+#      $self->throw($error_code, "($index) $feature_text");
+#    }
+#    if (! $self->is_valid_variant_effect($sequence_variant)) {
+#      my $error_code = 'invalid_Variant_effect_attribute_seq_var_id_value';
+#      $self->throw($error_code, "($sequence_variant) $feature_text");
+#    }
+#    if (! $self->is_valid_sequence_feature($sequence_feature)) {
+#      my $error_code = 'invalid_Variant_effect_attribute_seq_feat_id_value';
+#      $self->throw($error_code, "($sequence_feature) $feature_text");
+#    }
+#    # TODO: Validate featureIDs
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_start_range_attribute
+#
+# Title   : is_valid_start_range_attribute
+# Usage   : $self->is_valid_start_range_attribute($feature_hash)
+# Function: Validates a start_range_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_start_range_attribute {
+#
+#  my $values = shift;
+#  if (scalar @values != 2) {
+#    my $error_code = 'invalid_Start_range_attribute_must_have_two_values';
+#    my $all_values = join ',', @values;
+#    $self->throw($error_code, "($all_values) $feature_text");
+#  }
+#  if (is_integer($values[0]) && $values[0] > $start) {
+#    my $error_code = 'invalid_Start_range_attribute_values_must_contain_start';
+#    my $all_values = join ',', @values;
+#    $self->throw($error_code, "($all_values, $start) $feature_text");
+#  }
+#  if (is_integer($values[1]) && $values[1] < $start) {
+#    my $error_code = 'invalid_Start_range_attribute_values_must_contain_start';
+#    my $all_values = join ',', @values;
+#    $self->throw($error_code, "($all_values, $start) $feature_text");
+#  }
+#  for my $value (@values) {
+#    if ($value ne '.' && ! $self->is_integer($value)) {
+#      my $error_code = 'invalid_Start_range_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_end_range_attribute
+#
+# Title   : is_valid_end_range_attribute
+# Usage   : $self->is_valid_end_range_attribute($feature_hash)
+# Function: Validates a end_range_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_end_range_attribute {
+#
+#  my $values = shift;
+#  if (scalar @values != 2) {
+#    my $error_code = 'invalid_End_range_attribute_must_have_2_values';
+#    my $all_values = join ',', @values;
+#    $self->throw($error_code, "($all_values) $feature_text");
+#  }
+#  if (is_integer($values[0]) && $values[0] > $end) {
+#    my $error_code = 'invalid_End_range_attribute_values_must_contain_end';
+#    my $all_values = join ',', @values;
+#    $self->throw($error_code, "($all_values, $end) $feature_text");
+#  }
+#  for my $value (@values) {
+#    if ($value ne '.' && ! $self->is_integer($value)) {
+#      my $error_code = 'invalid_End_range_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_phased_attribute
+#
+# Title   : is_valid_phased_attribute
+# Usage   : $self->is_valid_phased_attribute($feature_hash)
+# Function: Validates a phased_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_phased_attribute {
+#
+#  my $values = shift;
+#  if (scalar @values > 1) {
+#    my $error_code = 'invalid_Phased_attribute_multiple_values';
+#    my $all_values = join ' ', @values;
+#    $self->throw($error_code, "($all_values) $feature_text");
+#  }
+#  my $value = $values[0];
+#  # TODO: Validate the Phased attribute
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_genotype_attribute
+#
+# Title   : is_valid_genotype_attribute
+# Usage   : $self->is_valid_genotype_attribute($feature_hash)
+# Function: Validates a genotype_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_genotype_attribute {
+#
+#  my $values = shift;
+#  for my $value (@values) {
+#    if ($value !~ /^\d+:\d+$/) {
+#      my $error_code = 'invalid_Genotype_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_individual_attribute
+#
+# Title   : is_valid_individual_attribute
+# Usage   : $self->is_valid_individual_attribute($feature_hash)
+# Function: Validates a individual_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_individual_attribute {
+#
+#  my $values = shift;
+#  for my $value (@values) {
+#    if (! $self->is_integer($value)) {
+#      my $error_code = 'invalid_Individual_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_variant_copy_number_attribute
+#
+# Title   : is_valid_variant_copy_number_attribute
+# Usage   : $self->is_valid_variant_copy_number_attribute($feature_hash)
+# Function: Validates a variant_copy_number_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_variant_copy_number_attribute {
+#
+#  my $values = shift;
+#  for my $value (@values) {
+#    if (! $self->is_integer($value)) {
+#      my $error_code = 'invalid_Variant_copy_number_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_reference_copy_number_attribute
+#
+# Title   : is_valid_reference_copy_number_attribute
+# Usage   : $self->is_valid_reference_copy_number_attribute($feature_hash)
+# Function: Validates a reference_copy_number_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_reference_copy_number_attribute {
+#
+#  my $values = shift;
+#  if (scalar @values > 1) {
+#    my $error_code = 'invalid_Reference_copy_number_attribute_multiple_values';
+#    my $all_values = join ' ', @values;
+#    $self->throw($error_code, "($all_values) $feature_text");
+#  }
+#  my $value = $values[0];
+#  for my $value (@values) {
+#    if (! $self->is_integer($value)) {
+#      my $error_code = 'invalid_Reference_copy_number_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_variant_codon_attribute
+#
+# Title   : is_valid_variant_codon_attribute
+# Usage   : $self->is_valid_variant_codon_attribute($feature_hash)
+# Function: Validates a variant_codon_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_variant_codon_attribute {
+#
+#  my $values = shift;
+#  for my $value (@values) {
+#    if (! $self->is_iupac_nt($value)) {
+#      my $error_code = 'invalid_Variant_codon_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_reference_codon_attribute
+#
+# Title   : is_valid_reference_codon_attribute
+# Usage   : $self->is_valid_reference_codon_attribute($feature_hash)
+# Function: Validates a reference_codon_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_reference_codon_attribute {
+#
+#  my $values = shift;
+#  for my $value (@values) {
+#    if (! $self->is_iupac_nt($value)) {
+#      my $error_code = 'invalid_Reference_codon_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_variant_aa_attribute
+#
+# Title   : is_valid_variant_aa_attribute
+# Usage   : $self->is_valid_variant_aa_attribute($feature_hash)
+# Function: Validates a variant_aa_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_variant_aa_attribute {
+#
+#  my $values = shift;
+#  for my $value (@values) {
+#    if (! $self->is_aa_sequence($value)) {
+#      my $error_code = 'invalid_Variant_aa_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_reference_aa_attribute
+#
+# Title   : is_valid_reference_aa_attribute
+# Usage   : $self->is_valid_reference_aa_attribute($feature_hash)
+# Function: Validates a reference_aa_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_reference_aa_attribute {
+#
+#  my $values = shift;
+#  for my $value (@values) {
+#    if (! $self->is_aa_sequence($value)) {
+#      my $error_code = 'invalid_Reference_aa_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_breakpoint_detail_attribute
+#
+# Title   : is_valid_breakpoint_detail_attribute
+# Usage   : $self->is_valid_breakpoint_detail_attribute($feature_hash)
+# Function: Validates a breakpoint_detail_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_breakpoint_detail_attribute {
+#
+#  my $values = shift;
+#  my $value = $values[0];
+#  my ($seqid, $start_end, $strand) = split /:/, $value;
+#  my ($start, $end) = split /\-/, $start_end;
+#  if (! $self->is_integer($start)) {
+#    my $error_code = 'invalid_start_in_Breakpoint_detail_attribute';
+#    $self->warn($error_code, $feature_text);
+#  }
+#  if ($end && ! $self->is_integer($end)) {
+#    my $error_code = 'invalid_end_in_Breakpoint_detail_attribute';
+#    $self->warn($error_code, $feature_text);
+#  }
+#  if ($strand && $strand !~ /^(=|\-)$/) {
+#    my $error_code = 'invalid_strand_in_Breakpoint_detail_attribute';
+#    $self->warn($error_code, $feature_text);
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_sequence_context_attribute
+#
+# Title   : is_valid_sequence_context_attribute
+# Usage   : $self->is_valid_sequence_context_attribute($feature_hash)
+# Function: Validates a sequence_context_attribute.
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_sequence_context_attribute {
+#
+#  my $values = shift;
+#  for my $value (@values) {
+#    if (! $self->is_iupac_nt($value)) {
+#      my $error_code = 'invalid_Sequence_context_attribute_value';
+#      $self->throw($error_code, "($value) $feature_text");
+#    }
+#  }
+#  return 1;
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_all
+#
+#
+# Title   : is_valid_all
+# Usage   : $self->is_valid_all($feature_hash)
+# Function: Validates all attributes
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_all {
+#
+#  my $values = shift;
+#  return 1;
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid
+#
+# Title   : is_valid
+# Usage   : $self->is_valid($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_reference_seq
+#
+# Title   : is_valid_reference_seq
+# Usage   : $self->is_valid_reference_seq($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_reference_seq {
+#
+#
+#}
+#
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_sequence_feature
+#
+# Title   : is_valid_sequence_feature
+# Usage   : $self->is_valid_sequence_feature($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_sequence_feature {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_sequence_alteration
+#
+# Title   : is_valid_sequence_alteration
+# Usage   : $self->is_valid_sequence_alteration($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_sequence_alteration {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_variant_effect
+#
+# Title   : is_valid_variant_effect
+# Usage   : $self->is_valid_variant_effect($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_variant_effect {
+#
+#
+#}
+#
+##-----------------------------------------------------------------------------
+#
+#=head2  is_valid_variant_seq
+#
+# Title   : is_valid_variant_seq
+# Usage   : $self->is_valid_variant_seq($feature_hash)
+# Function: Validates a ...
+# Returns : 1 if valid undef otherwise.
+# Args    : A string of text.
+#
+#=cut
+#
+#sub is_valid_variant_seq {
+#
+#
+#}
+
+#-----------------------------------------------------------------------------
+
 =head1 DIAGNOSTICS
 
 =over

@@ -29,9 +29,9 @@ my $opt_success = GetOptions('help|h'            => \$help,
 
 die $usage if $help || ! $opt_success;
 
-my ($feature_file, $fasta_file) = @ARGV;
+my ($gff3_file, $fasta_file) = @ARGV;
 
-my $annotation = GAL::Annotation->new($feature_file,
+my $annotation = GAL::Annotation->new($gff3_file,
 				      $fasta_file);
 
 my $features = $annotation->features;
