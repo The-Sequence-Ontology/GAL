@@ -88,7 +88,7 @@ sub introns {
   my $introns = $self->children->search(@search_args);
 
   if (! $introns->count) {
-     $self->infer_introns($introns) unless $introns->count;
+     $self->infer_introns($introns);
   }
 
   return wantarray ? $introns->all : $introns;

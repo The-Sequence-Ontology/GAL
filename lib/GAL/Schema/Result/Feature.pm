@@ -475,6 +475,44 @@ sub get_feature_bins {
 
 #-----------------------------------------------------------------------------
 
+=head2 to_gff3
+
+ Title   : to_gff3
+ Usage   : $self->to_gff3
+ Function: Return a string representation of this feature in GFF3 format.
+ Returns : A string of GFF3 text
+ Args    : N/A
+
+=cut
+
+sub to_gff3 {
+
+  my $self = shift;
+
+  my $seqid      = $self->seqid;
+  my $source     = $self->source;
+  my $type       = $self->type;
+  my $start      = $self->start;
+  my $end        = $self->end;
+  my $score      = $self->score;
+  my $strand     = $self->strand;
+  my $phase      = $self->phase;
+  my $attributes = $self->attributes_hash;
+
+  map {$_ = join ',', @{$_}} values %{$attributes};
+  my $attrb_text;
+  for my $key (keys %{$attributes}) {
+    $attrb_text .= "$key=" . $attributes->{$key} . ';';
+  }
+
+  my $gff3_text = join "\t", ($seqid, $source, $type, $start, $end,
+			      $score, $strand, $phase, $attrb_text);
+
+  return $gff3_text;
+}
+
+#-----------------------------------------------------------------------------
+
 =head1 DIAGNOSTICS
 
 

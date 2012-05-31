@@ -135,8 +135,28 @@ sub parse_record {
 
   my $hgvs_cdna = $record->{hgvs_cdna};
   my ($rna_id, $hgvs_detail) = split /:/, $hgvs_cdna;
-  my ($cdna_start, $reference_seq, $variant_seq) =
-    $hgvs_detail =~ /(\d+)([A-z])-([A-z])/;
+  unless ($rna_id && $hgvs_detail) {
+    my $error_code = 'incomplete_hgvs_data';
+    my $message = "($hgvs_cd) " . $self->reader->current_line;
+    $self->warn($error_code, $message);
+    return undef;
+  }
+
+  my ($cdna_start, $reference_seq, $variant_seq);
+  if ($hgvs_detail =~ /(\d+)([A-z])-([A-z])/) {
+    ($cdna_start, $reference_seq, $variant_seq) = ($1, $2, $3);
+  }
+  else {
+    my $error_code = 'unable_to_parse_hgvs_data';
+    my $message = "($hgvs_cd) " . $self->reader->current_line;
+    $self->warn($error_code, $message);
+    return undef;
+  }
+
+  if ($strand eq '-') {
+    $reference_seq = $self->revcomp($reference_seq);
+    $variant_seq   = $self->revcomp($variant_seq);
+  }
 
   # If you need to look up the reference sequence
   # Then be sure that you pass (fasta => '/path/to/fasta') as an

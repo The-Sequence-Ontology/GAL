@@ -252,16 +252,16 @@ sub next_record {
 
  Title   : counter
  Usage   : $a = $self->counter('name', $start);
-           $a = $self->counter('name');
+	   $a = $self->counter('name');
  Function: Return a counter associated with the given name.  A counter with
-           that name will only created once during the life of the
-           object and will return incrementing values each time called
-           thereafter.  A start value may optionally be given.  This
-           can be given each time, but will only be used the first
-           time given and discarded thereafter.
+	   that name will only created once during the life of the
+	   object and will return incrementing values each time called
+	   thereafter.  A start value may optionally be given.  This
+	   can be given each time, but will only be used the first
+	   time given and discarded thereafter.
  Returns : An incrementing value for the counter
  Args    : A name for the counter and optionally a integer each for a start and
-           step value.
+	   step value.
 
 =cut
 
@@ -311,40 +311,42 @@ that document for details on constrants for each value and attribute.
 =cut
 
 sub next_feature_hash {
-	my $self = shift;
+  my $self = shift;
 
-	my $feature;
+  my $feature;
 
-	# If a previous record has returned multiple features then
-	# grab them off the stack first instead of reading a new one
-	# from the file.
-	if (ref $self->{_feature_stack} eq 'ARRAY' &&
-	    scalar @{$self->{_feature_stack}} > 0) {
-		$feature = shift @{$self->{_feature_stack}};
-		return wantarray ? %{$feature} : $feature;
-	}
+  # If a previous record has returned multiple features then
+  # grab them off the stack first instead of reading a new one
+  # from the file.
+  if (ref $self->{_feature_stack} eq 'ARRAY' &&
+      scalar @{$self->{_feature_stack}} > 0) {
+    $feature = shift @{$self->{_feature_stack}};
+    return wantarray ? %{$feature} : $feature;
+  }
 
-	# Allow parse_record to return undef to ignore a record, but
-	# still keep parsing the file.
-	until ($feature) {
-		# Get the next record from the file.
-		my $record = $self->next_record;
-		return undef if ! defined $record;
+  # Allow parse_record to return undef to ignore a record, but
+  # still keep parsing the file.
+  until ($feature) {
+    # Get the next record from the file.
+    my $record = $self->next_record;
+    return undef if ! defined $record;
 
-		# Parser the record - probably overridden by a subclass.
-		$feature = $self->parse_record($record);
-	}
+    # Parser the record - probably overridden by a subclass.
+    $feature = $self->parse_record($record);
+  }
 
-	# Allow parsers to return more than one feature.
-	# This allows the parser to expand a single record into
-	# multiple features.
-	if (ref $feature eq 'ARRAY') {
-		my $this_feature = shift @{$feature};
-		push @{$self->{_feature_stack}}, @{$feature};
-		$feature = $this_feature;
-	}
+  # Allow parsers to return more than one feature.
+  # This allows the parser to expand a single record into
+  # multiple features.
+  if (ref $feature eq 'ARRAY') {
+    my $this_feature = shift @{$feature};
+    push @{$self->{_feature_stack}}, @{$feature};
+    $feature = $this_feature;
+  }
 
-	return wantarray ? %{$feature} : $feature;
+  #$self->validate_feature($feature);
+
+  return wantarray ? %{$feature} : $feature;
 }
 
 #-----------------------------------------------------------------------------
