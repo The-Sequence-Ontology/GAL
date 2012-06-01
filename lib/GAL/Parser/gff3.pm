@@ -108,11 +108,7 @@ sub parse_record {
 
 	my $attributes = $self->parse_attributes($record->{attributes});
 
-	my $feature_id = $attributes->{ID}[0] || join ':',
-	  @{$record}{qw(seqid source type start)};
-
-	my %feature_hash = (feature_id => $feature_id,
-			    seqid      => $record->{seqid},
+	my %feature_hash = (seqid      => $record->{seqid},
 			    source     => $record->{source},
 			    type       => $record->{type},
 			    start      => $record->{start},
@@ -122,6 +118,15 @@ sub parse_record {
 			    phase      => $record->{phase},
 			    attributes => $attributes,
 			   );
+
+	if (exists $attributes->{ID}         &&
+	    ref $attributes->{ID} eq 'ARRAY' &&
+	    $attributes->{ID}[0]) {
+	  $feature_hash{feature_id} = $attributes->{ID}[0];
+	}
+	else {
+	  $feature_hash{feature_id} =  $self->create_unique_id(\%feature_hash);
+	}
 
 	return wantarray ? %feature_hash : \%feature_hash;
 }

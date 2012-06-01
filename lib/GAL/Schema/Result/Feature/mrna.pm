@@ -51,7 +51,10 @@ sub CDS_seq_genomic {
   my $self = shift;
 
   my $CDS_seq_genomic;
-  map {$CDS_seq_genomic .= $_->genomic_seq} $self->CDSs->all;
+  for my $CDS ($self->CDSs->all) {
+    my $this_seq = $CDS->genomic_seq;
+    $CDS_seq_genomic .= $this_seq if $this_seq;
+  }
   return $CDS_seq_genomic;
 }
 

@@ -144,8 +144,8 @@ list (or referenece) of key value pairs.
 
    if ($fasta_path) {
      # $fasta_path ||= $self->config('default_fasta_path');
-     my $fasta_index = Bio::DB::Fasta->new($fasta_path);
-     $self->{fasta} = $fasta_index;
+     my $fasta = Bio::DB::Fasta->new($fasta_path);
+     $self->{fasta} = $fasta;
    }
    return $self->{fasta};
  }

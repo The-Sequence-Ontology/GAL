@@ -424,11 +424,7 @@ sub parse_record {
 
 	my $attributes = $self->parse_attributes($record->{attributes});
 
-	my $feature_id = exists $attributes->{ID} ? $attributes->{ID} :
-	  join ':', @{$record}{qw(seqid source type start)};
-
-	my %feature = (feature_id => $feature_id,
-		       seqid      => $record->{seqid},
+	my %feature = (seqid      => $record->{seqid},
 		       source     => $record->{source},
 		       type       => $record->{type},
 		       start      => $record->{start},
@@ -438,6 +434,15 @@ sub parse_record {
 		       phase      => $record->{phase},
 		       attributes => $attributes,
 		     );
+
+        if (exists $attributes->{ID}         &&
+            ref $attributes->{ID} eq 'ARRAY' &&
+            $attributes->{ID}[0]) {
+          $feature{feature_id} = $attributes->{ID}[0];
+        }
+        else {
+          $feature{feature_id} =  $self->create_unique_id(\%feature);
+        }
 
 	return wantarray ? %feature : \%feature;
 }
@@ -465,6 +470,35 @@ sub parse_attributes {
 		push @{$attrb_hash{$tag}}, @values;
 	}
 	return wantarray ? %attrb_hash : \%attrb_hash;
+}
+
+
+
+#-----------------------------------------------------------------------------
+
+=head2 create_unique_id
+
+ Title   : create_unique_id
+ Usage   : $feature_id = $self->create_unique_id(\%feature_hash, 8);
+ Function: Creates a uniq_id for the feature of the form gene_0000001
+           where the prefix (gene) is the feature type and the numerical
+           sufix is an incrementing count padded with zeros to the length
+           specified or 8 by default.
+ Returns : A unique ID
+ Args    : A feature hash and an integer (12 max) for padding the
+           numerical portion of the ID.
+
+=cut
+
+sub create_unique_id {
+	my ($self, $feature, $pad) = @_;
+
+	$pad ||= 8;
+	my $type = $feature->{type};
+
+	my $id = "${type}_" . sprintf("%0${pad}s", ++$self->{id_counter}{$type});
+
+	return $id;
 }
 
 
