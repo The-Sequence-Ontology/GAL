@@ -27,9 +27,17 @@ my ($help);
 my $opt_success = GetOptions('help|h'            => \$help,
 			      );
 
-die $usage if $help || ! $opt_success;
+die $usage unless $opt_success;
+if ($help) {
+  print $usage;
+  exit(0);
+}
+
 
 my ($gff3_file, $fasta_file) = @ARGV;
+
+die "$usage\n\nFATAL : missing_fasta_file : Fasta file required\n" unless $fasta_file;
+die "$usage\n\nFATAL : missing_gff3_file : GFF3 file required\n" unless $gff3_file;
 
 my $annotation = GAL::Annotation->new($gff3_file,
 				      $fasta_file);

@@ -272,8 +272,13 @@ sub feature_seq {
 					  $self->start,
 					  $self->end
 					 );
+  $self->warn('feature_returned_no_sequence',
+	      "Be sure you passed a fasta file and that this seqid exists")
+    if ! $seq;
+
   $seq = $self->annotation->revcomp($seq) if
     $self->strand eq '-';
+
   return $seq;
 }
 
