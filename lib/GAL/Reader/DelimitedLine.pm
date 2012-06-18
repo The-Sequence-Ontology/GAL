@@ -126,7 +126,7 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(field_names field_separator
+	my @valid_attributes = qw(field_names field_separator end_of_data
                                   comment_pattern header_count);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
@@ -187,6 +187,30 @@ sub field_separator {
   $self->{field_separator} = $field_separator if $field_separator;
   $self->{field_separator} ||= qr/\t/;
   return $self->{field_separator};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 end_of_data
+
+ Title   : end_of_data
+ Usage   : $self->end_of_data("^\#\#FASTA");
+ Function: Set a pattern for a line that signals end of data in the file.
+ Returns : The field separator as a complied regular expression.
+ Args    : A string or complied regular expression pattern.
+
+=cut
+
+sub end_of_data {
+
+  my ($self, $end_of_data) = @_;
+
+  if ($end_of_data) {
+    $end_of_data = qr/$end_of_data/
+      unless ref $end_of_data eq 'Regexp';
+  }
+  $self->{end_of_data} = $end_of_data if $end_of_data;
+  return $self->{end_of_data};
 }
 
 #-----------------------------------------------------------------------------
@@ -267,21 +291,26 @@ sub next_record {
     my $line;
     my $comment_pattern = $self->comment_pattern;
     my $field_separator = $self->field_separator;
+    my $end_of_data     = $self->end_of_data;
   LINE:
     while ($line = <$fh>) {
-	chomp $line;
-	$self->{current_line} = $line;
-	next if $line =~ /^\s*$/;
-	if ($line =~ $comment_pattern) {
-	    $self->comments($line);
-	    next LINE;
-	}
-	if ($self->header_count > 0) {
-	    push @{$self->{headers}}, $line;
-	    $self->{header_count}--;
-	    next LINE;
-	}
-	last;
+      if ($end_of_data && $line =~ $end_of_data) {
+	$line = undef;
+	last LINE
+      }
+      chomp $line;
+      $self->{current_line} = $line;
+      next LINE if $line =~ /^\s*$/;
+      if ($line =~ $comment_pattern) {
+	$self->comments($line);
+	next LINE;
+      }
+      if ($self->header_count > 0) {
+	push @{$self->{headers}}, $line;
+	$self->{header_count}--;
+	next LINE;
+      }
+      last;
     }
     return undef unless defined $line;
     my @record_array = split $field_separator, $line;
