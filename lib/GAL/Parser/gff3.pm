@@ -177,7 +177,8 @@ sub reader {
     my @field_names = qw(seqid source type start end score strand phase
 			 attributes);
     my $reader = GAL::Reader::DelimitedLine->new(field_separator => "\t",
-						 field_names     => \@field_names);
+						 field_names     => \@field_names,
+						 end_of_data     => qr/\#\#FASTA/);
     $self->{reader} = $reader;
   }
   return $self->{reader};

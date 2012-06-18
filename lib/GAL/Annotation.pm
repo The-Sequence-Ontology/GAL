@@ -174,6 +174,8 @@ sub _check_for_simple_args {
 
   my @args = @_;
 
+  return {} unless @args;
+
   # If one or two files are passed in along
   # we'll assume they are a GFF3 and Fasta file
   my ($args, $feature_file, $fasta_file);

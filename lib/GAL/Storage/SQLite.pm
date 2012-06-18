@@ -234,7 +234,7 @@ sub _load_schema {
   $dbh->do("DROP TABLE IF EXISTS relationship");
   $dbh->do("CREATE TABLE feature ("    .
 	   "subject_id TEXT, "    .
-	   "feature_id TEXT, "    .
+	   "feature_id TEXT NOT NULL UNIQUE, "    .
 	   "seqid      TEXT, "    .
 	   "source     TEXT, "    .
 	   "type       TEXT, "    .
@@ -343,7 +343,7 @@ sub index_database {
   # $dbh->do("CREATE INDEX feat_seqid_start_end_index ON feature (seqid, start, end)");
   $self->info('indexing_feature_bins', $self->database);
   $dbh->do("CREATE INDEX feat_bin_index ON feature (bin)");
-  # $dbh->do("CREATE INDEX feat_type_index ON feature (type)");
+  $dbh->do("CREATE INDEX feat_type_index ON feature (type)");
 
   # Create attribute indeces
   $self->info('indexing_feature_attributes', $self->database);
