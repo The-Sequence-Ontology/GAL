@@ -48,8 +48,10 @@ Options:
 
   --alias, a FILE
 
-    An external alias file that can be used to map transcript IDs
-    to gene symbols (e.g. merge_data --col1 1 --col2 0 ccdsKgMap.txt kgXref.txt | perl -lane 'print join \"\t\", \@F[0,10]' > ccds2GeneSymbol.txt)
+    An external alias file that can be used to map transcript IDs to
+    gene symbols (e.g. merge_data --col1 1 --col2 0 ccdsKgMap.txt
+    kgXref.txt | perl -lane 'print join \"\t\", \@F[0,10]' >
+    ccds2GeneSymbol.txt)
 
 ";
 
@@ -68,9 +70,13 @@ my $opt_success = GetOptions('help'      => \$help,
 die $usage if $help || ! $opt_success;
 
 my %ALIASES;
-if (-r $alias_file) {
+if ($alias_file) {
+    die "FATAL : file_does_not_exist : $alias_file\n"
+	unless -e $alias_file;
+    die "FATAL : cant_read_file : $alias_file\n"
+	unless -e $alias_file;
     open (my $IN, '<', $alias_file) or
-	die "Can't open $alias_file for reading\n$!\n";
+	die "FATAL : cant_open_file_for_reading : $alias_file\n";
     while (<$IN>) {
 	chomp;
 	next if ($_ =~ /^\#/ || ! $_);	
