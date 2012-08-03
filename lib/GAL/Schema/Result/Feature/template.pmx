@@ -6,7 +6,7 @@ use base qw(GAL::Schema::Result::Feature::template);
 
 =head1 NAME
 
-GAL::Schema::Result::Feature::template - A exon object for the GAL Library
+GAL::Schema::Result::Feature::template - A template object for the GAL Library
 
 =head1 VERSION
 

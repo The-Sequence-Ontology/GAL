@@ -22,7 +22,7 @@ This document describes GAL::Schema::Result::Feature version 0.01
 					 );
 
     $feat_store->load_files(files => $feature_file,
-     		            mode  => 'overwrite',
+			    mode  => 'overwrite',
 			    );
 
     my $features = $feat_store->schema->resultset('Feature');
@@ -55,21 +55,20 @@ data as defined by the first 8 columns of GFF3
 =cut
 
 # Map feature types to a parent that has an subclass.
-my %FEATURE_MAP = (gene            => 'gene',
-		   transcript      => 'transcript',
-		   mRNA            => 'mrna',
-		   exon            => 'exon',
-		   intron          => 'intron',
-		   three_prime_UTR => 'three_prime_utr',
-		   five_prime_UTR  => 'five_prime_utr',
-		   ncRNA           => 'transcript',
-		   rRNA            => 'transcript',
-		   snRNA           => 'transcript',
-		   snoRNA          => 'transcript',
-		   tRNA            => 'transcript',
-		  );
+my %FEATURE_MAP;
 
-# Eventually get this from SO at runtime.
+map {$FEATURE_MAP{$_} = 'transcript'} $self->get_transcript_types;
+
+map {$FEATURE_MAP{$_} = lc $_}  = qw(gene
+				     transcript
+				     mRNA
+				     exon
+				     intron
+				     three_prime_UTR
+				     five_prime_UTR
+				   );
+
+ # Eventually get this from SO at runtime.
 my @sequence_alterations = qw(copy_number_variation deletion indel
 			      insertion duplication tandem_duplication
 			      transgenic_insertion inversion substitution
@@ -128,7 +127,7 @@ __PACKAGE__->many_to_many(children => 'my_children', 'your_children');
  Title   : type
  Usage   : $type = $self->type
  Function: Get the features type - a value constrained to be a child of the
-           SO's sequence feature term.
+	   SO's sequence feature term.
  Returns : The value of the type as text.
  Args    : None
 
@@ -201,9 +200,9 @@ __PACKAGE__->many_to_many(children => 'my_children', 'your_children');
  Title   : attributes_hash
  Usage   : $self->attributes_hash
  Function: Return the attributes as a hash (or reference) with all values as
-           array references.  For consistency, even those values, such as ID,
-           that can have only one value are still returned as array
-           references.
+	   array references.  For consistency, even those values, such as ID,
+	   that can have only one value are still returned as array
+	   references.
  Returns : A hash or hash reference of attribute key/value pairs.
  Args    : None.
 
@@ -226,9 +225,9 @@ sub attributes_hash {
  Title   : attribute_value
  Usage   : $self->attribute_value($tag)
  Function: Return the value(s) of a particular attribute as an array or
-           reference.  Note that for consistency, values are always returned
-           as arrays (or reference) even in cases where only a single value
-           could exist such as ID.
+	   reference.  Note that for consistency, values are always returned
+	   as arrays (or reference) even in cases where only a single value
+	   could exist such as ID.
  Returns : An array or reference of values.
  Args    : None
 
@@ -252,8 +251,8 @@ sub attribute_value {
  Title   : feature_seq
  Usage   : $self->feature_seq
  Function: Returns the features sequence as text 5' to 3' in the context of
-           the feature, so features on the reverse strand are reverse
-           complimented.
+	   the feature, so features on the reverse strand are reverse
+	   complimented.
  Returns : A text string of the features sequence.
  Args    : None
 
@@ -289,7 +288,7 @@ sub feature_seq {
  Title   : gc_content
  Usage   : $self->gc_content
  Function: Returns the ratio of the count of G or C nts over the sequence
-           length.
+	   length.
  Returns : A fractional value from 0 to 1
  Args    : None
 
@@ -312,8 +311,8 @@ sub gc_content {
  Title   : genomic_seq
  Usage   : $self->genomic_seq
  Function: Returns the features sequence as text 5' to 3' in the context of
-           the genome, so features on the reverse strand are not reverse
-           complimented.
+	   the genome, so features on the reverse strand are not reverse
+	   complimented.
  Returns : A text string of the features sequence on the genome.
  Args    : None
 
@@ -336,9 +335,9 @@ sub genomic_seq {
  Title   : length
  Usage   : $self->length
  Function: Returns the features length on the genome.  If a feature is
-           not contiguous on the genome (i.e. a transcript) then this method
-           will be (or should be) overridden by that subclass to provide the
-           'spliced' length of that feature.
+	   not contiguous on the genome (i.e. a transcript) then this method
+	   will be (or should be) overridden by that subclass to provide the
+	   'spliced' length of that feature.
  Returns : An integer.
  Args    : None
 
@@ -357,8 +356,8 @@ sub length {
  Title   : genomic_length
  Usage   : $self->genomic_length
  Function: Returns the features genomic_length on the genome.  If a feature is
-           not contiguous on the genome (i.e. a transcript) then this method
-           will still provide the genomic length of (end - start + 1)
+	   not contiguous on the genome (i.e. a transcript) then this method
+	   will still provide the genomic length of (end - start + 1)
  Returns : An integer.
  Args    : None
 
@@ -377,8 +376,8 @@ sub genomic_length {
  Title   : annotation
  Usage   : $self->annotation
  Function: Each feature has a weakened reference of the GAL::Annotation
-           object that created it and this method provides access to that
-           object.
+	   object that created it and this method provides access to that
+	   object.
  Returns : A GAL::Annotation object.
  Args    : None
 
@@ -395,9 +394,9 @@ sub annotation {
  Title   : throw
  Usage   : $self->throw
  Function: This is a convinience function that forwards throwings on to the
-           L<GAL::Annotation> object so that L<GAL::Base> can handle them.
-           You could get the same behaviour by doing 
-           C<$self->annotation->throw(message => 'throwing'>.
+	   L<GAL::Annotation> object so that L<GAL::Base> can handle them.
+	   You could get the same behaviour by doing
+	   C<$self->annotation->throw(message => 'throwing'>.
  Returns : Nothing
  Args    : The following list: ($code, $message)
 
@@ -414,9 +413,9 @@ sub throw {
  Title   : warn
  Usage   : $self->warn
  Function: This is a convinience function that forwards warnings on to the
-           L<GAL::Annotation> object so that L<GAL::Base> can handle them.
-           You could get the same behaviour by doing 
-           C<$self->annotation->warn(message => 'warning'>.
+	   L<GAL::Annotation> object so that L<GAL::Base> can handle them.
+	   You could get the same behaviour by doing
+	   C<$self->annotation->warn(message => 'warning'>.
  Returns : Nothing
  Args    : The following list: ($code, $message)
 
@@ -480,6 +479,40 @@ sub get_feature_bins {
 
 #-----------------------------------------------------------------------------
 
+=head2 to_gff3_recursive
+
+ Title   : to_gff3_recursive
+ Usage   : $self->to_gff3_recursive
+ Function: Return a list of the string representation of this feature
+	   and all of it's part_of children in GFF3 format.
+ Returns : An array or ref
+ Args    : N/A
+
+=cut
+
+sub to_gff3_recursive {
+
+  my $self = shift;
+
+  my @gff_lines;
+  my @features;
+  $self->get_recursive_children(\@features);
+
+  unshift @features, $self;
+
+  @features = sort {($a->seqid cmp $b->seqid ||
+		     $a->start <=> $b->start ||
+		     $a->end   <=> $b->end
+		   } @features;
+
+  for my $feature (@features) {
+    push @gff_lines, $feature->to_gff3;
+  }
+  return wantarray ? @gff_lines : \@gff_lines;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 to_gff3
 
  Title   : to_gff3
@@ -514,6 +547,137 @@ sub to_gff3 {
 			      $score, $strand, $phase, $attrb_text);
 
   return $gff3_text;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 get_recursive_children
+
+ Title   : get_recursive_children
+ Usage   : $self->get_recursive_children(\@children);
+ Function: Collect all part_of children of an object recursively adding them to
+           the provided array reference.
+ Returns : Fills the supplied array reference.
+ Args    : An array reference.
+
+=cut
+
+sub get_recursive_children {
+
+  my ($self, $list) = @_;
+
+  my $children = $self->children;
+
+  while (my $child = $children->next) {
+    push @{$list}, $child;
+    $self->get_recursive_children($list);
+  }
+  return;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 get_transcript_types
+
+ Title   : get_transcript_types
+ Usage   : $transcript_types = $self->get_transcript_types
+ Function: Get a list of all features that are types of transcripts.
+ Returns : An array or ref
+ Args    : None
+
+=cut
+
+sub get_transcript_types {
+
+  my @transcripts = qw(EST
+		       RNase_MRP_RNA
+		       RNase_P_RNA
+		       SRP_RNA
+		       SRP_RNA_primary_transcript
+		       Y_RNA
+		       aberrant_processed_transcript
+		       alternatively_spliced_transcript
+		       antisense_RNA
+		       antisense_primary_transcript
+		       capped_mRNA
+		       capped_primary_transcript
+		       class_II_RNA
+		       class_I_RNA
+		       consensus_mRNA
+		       dicistronic_mRNA
+		       dicistronic_primary_transcript
+		       dicistronic_transcript
+		       edited_mRNA
+		       edited_transcript
+		       edited_transcript_by_A_to_I_substitution
+		       enhancerRNA
+		       enzymatic_RNA
+		       exemplar_mRNA
+		       guide_RNA
+		       lnc_RNA
+		       mRNA
+		       mRNA_recoded_by_codon_redefinition
+		       mRNA_recoded_by_translational_bypass
+		       mRNA_region
+		       mRNA_with_frameshift
+		       mRNA_with_minus_1_frameshift
+		       mRNA_with_minus_2_frameshift
+		       mRNA_with_plus_1_frameshift
+		       mRNA_with_plus_2_frameshift
+		       mature_transcript
+		       mature_transcript_region
+		       miRNA_primary_transcript
+		       mini_exon_donor_RNA
+		       monocistronic_mRNA
+		       monocistronic_primary_transcript
+		       monocistronic_transcript
+		       ncRNA
+		       nc_primary_transcript
+		       piRNA
+		       polyadenylated_mRNA
+		       polycistronic_mRNA
+		       polycistronic_primary_transcript
+		       polycistronic_transcript
+		       pre_edited_mRNA
+		       primary_transcript
+		       primary_transcript_region
+		       processed_transcript
+		       protein_coding_primary_transcript
+		       pseudogenic_transcript
+		       rRNA
+		       rRNA_cleavage_RNA
+		       rRNA_primary_transcript
+		       rasiRNA
+		       recoded_mRNA
+		       regional_centromere_outer_repeat_transcript
+		       riboswitch
+		       ribozyme
+		       scRNA
+		       scRNA_primary_transcript
+		       siRNA
+		       small_regulatory_ncRNA
+		       snRNA
+		       snRNA_primary_transcript
+		       snoRNA
+		       snoRNA_primary_transcript
+		       spliced_leader_RNA
+		       stRNA
+		       tRNA
+		       tRNA_primary_transcript
+		       tasiRNA
+		       tasiRNA_primary_transcript
+		       telomerase_RNA
+		       tmRNA_primary_transcript
+		       trans_spliced_mRNA
+		       trans_spliced_transcript
+		       transcript
+		       transcript_bound_by_nucleic_acid
+		       transcript_bound_by_protein
+		       transcript_region
+		       transcript_with_translational_frameshift
+		       vault_RNA
+		  );
+  return wantarray ? @transcripts : \@transcripts;
 }
 
 #-----------------------------------------------------------------------------
