@@ -11,7 +11,7 @@ use vars qw($VERSION);
 $VERSION = '0.01';
 
 =head1 NAME
-
+    
 GAL::Annotation - Genome Annotation Library
 
 =head1 VERSION
@@ -131,7 +131,7 @@ the sequence in provided by Bio::DB::Fasta.
 #-----------------------------------------------------------------------------
 
 =head2 new
-
+    
      Title   : new
      Usage   : GAL::Annotation->new();
      Function: Creates a GAL::Annotation object;
@@ -139,64 +139,65 @@ the sequence in provided by Bio::DB::Fasta.
      Args    : A list of key value pairs for the attributes specified above.
 
 =cut
-
+    
 sub new {
-	my ($class, @args) = @_;
-
-	my ($args, $feature_file) = _check_for_simple_args(@args);
-
-	my $self = $class->SUPER::new($args);
-	$self->load_files($feature_file) if $feature_file;
-	return $self;
+    my ($class, @args) = @_;
+    
+    my ($args, $feature_file) = _check_for_simple_args(@args);
+    
+    my $self = $class->SUPER::new($args);
+    $self->load_files($feature_file) if $feature_file;
+    return $self;
 }
 
 #-----------------------------------------------------------------------------
 
 sub _initialize_args {
-	my ($self, @args) = @_;
-
-	######################################################################
-	# This block of code handles class attributes.  Use the
-	# @valid_attributes below to define the valid attributes for
-	# this class.  You must have identically named get/set methods
-	# for each attribute.  Leave the rest of this block alone!
-	######################################################################
-	my $args = $self->SUPER::_initialize_args(@args);
-	# Set valid class attributes here
-	my @valid_attributes = qw(fasta parser storage);
-	$self->set_attributes($args, @valid_attributes);
-	######################################################################
+    my ($self, @args) = @_;
+    
+    ######################################################################
+    # This block of code handles class attributes.  Use the
+    # @valid_attributes below to define the valid attributes for
+    # this class.  You must have identically named get/set methods
+    # for each attribute.  Leave the rest of this block alone!
+    ######################################################################
+    my $args = $self->SUPER::_initialize_args(@args);
+    # Set valid class attributes here
+    my @valid_attributes = qw(fasta parser storage);
+    $self->set_attributes($args, @valid_attributes);
+    ######################################################################
 }
 
 #-----------------------------------------------------------------------------
 
 sub _check_for_simple_args {
-
-  my @args = @_;
-
-  return {} unless @args;
-
-  # If one or two files are passed in along
-  # we'll assume they are a GFF3 and Fasta file
-  my ($args, $feature_file, $fasta_file);
-  # If one or two files and not
-  if (@args <= 2) {
-    if (! ref $args[0] && $args[0] !~ /^(parser|storage|fasta)$/) {
-      ($feature_file, $fasta_file) = @args;
-      my $sqlite_file;
-      ($sqlite_file = $feature_file) =~ s/\.[^\.]+$//;
-      $sqlite_file .= '.sqlite';
-      $args = ({parser  => {class => 'gff3'},
-		storage => {class    => 'SQLite',
-			    database => $sqlite_file}
-	       });
-      $args->{fasta} = $fasta_file if $fasta_file;
+    
+    my @args = @_;
+    
+    return {} unless @args;
+    
+    # If one or two files are passed in along
+    # we'll assume they are a GFF3 and Fasta file
+    my ($args, $feature_file, $fasta_file);
+    # If one or two files and not
+    if (@args <= 2) {
+	if (! ref $args[0] && $args[0] !~ /^(parser|storage|fasta)$/) {
+	    ($feature_file, $fasta_file) = @args;
+	    my $sqlite_file;
+	    ($sqlite_file = $feature_file) =~ s/\.[^\.]+$//;
+	    $sqlite_file .= '.sqlite';
+	    $args = ({parser  => {class => 'gff3'},
+		      storage => {class    => 'SQLite',
+				  database => $sqlite_file}
+		  });
+	    $args->{fasta} = $fasta_file if $fasta_file;
+	}
+	else {
+	    my %args = @args;
+	    $args = \%args;
+	}
+	return ($args, $feature_file);
     }
-    else {
-      $args = shift @args;
-    }
-  }
-  return ($args, $feature_file);
 }
 
 #-----------------------------------------------------------------------------
@@ -217,7 +218,7 @@ constructor as a list (or referenece) of key value pairs.
  Function: Create or return a parser object.
  Returns : A GAL::Parser::subclass object.
  Args    : (class => gal_parser_subclass)
-	   See GAL::Parser and it's subclasses for more arguments.
+	   See GAL::Parser and its subclasses for more arguments.
  Notes   : The parser object is created as a singleton, but it
 	   can be changed by passing new arguments to a call to
 	   parser.
@@ -248,7 +249,7 @@ sub parser {
   Function: Create or return a storage object.
   Returns : A GAL::Storage::subclass object.
   Args    : (class => gal_storage_subclass)
-	    See GAL::Storage and it's subclasses for more arguments.
+	    See GAL::Storage and its subclasses for more arguments.
   Notes   : The storage object is created as a singleton and can not be
 	    destroyed or recreated after being created.
 

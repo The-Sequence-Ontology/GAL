@@ -57,9 +57,9 @@ data as defined by the first 8 columns of GFF3
 # Map feature types to a parent that has an subclass.
 my %FEATURE_MAP;
 
-map {$FEATURE_MAP{$_} = 'transcript'} $self->get_transcript_types;
+map {$FEATURE_MAP{$_} = 'transcript'} GAL::Schema::Result::Feature::get_transcript_types();
 
-map {$FEATURE_MAP{$_} = lc $_}  = qw(gene
+map {$FEATURE_MAP{$_} = lc $_}  qw(gene
 				     transcript
 				     mRNA
 				     exon
@@ -68,7 +68,7 @@ map {$FEATURE_MAP{$_} = lc $_}  = qw(gene
 				     five_prime_UTR
 				   );
 
- # Eventually get this from SO at runtime.
+# Eventually get this from SO at runtime.
 my @sequence_alterations = qw(copy_number_variation deletion indel
 			      insertion duplication tandem_duplication
 			      transgenic_insertion inversion substitution
@@ -484,7 +484,7 @@ sub get_feature_bins {
  Title   : to_gff3_recursive
  Usage   : $self->to_gff3_recursive
  Function: Return a list of the string representation of this feature
-	   and all of it's part_of children in GFF3 format.
+	   and all of its part_of children in GFF3 format.
  Returns : An array or ref
  Args    : N/A
 
@@ -502,8 +502,8 @@ sub to_gff3_recursive {
 
   @features = sort {($a->seqid cmp $b->seqid ||
 		     $a->start <=> $b->start ||
-		     $a->end   <=> $b->end
-		   } @features;
+		     $b->end   <=> $a->end)
+		    } @features;
 
   for my $feature (@features) {
     push @gff_lines, $feature->to_gff3;
@@ -568,9 +568,11 @@ sub get_recursive_children {
 
   my $children = $self->children;
 
+  return unless $children->count > 0;
+
   while (my $child = $children->next) {
     push @{$list}, $child;
-    $self->get_recursive_children($list);
+    $child->get_recursive_children($list);
   }
   return;
 }

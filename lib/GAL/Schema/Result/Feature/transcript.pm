@@ -145,15 +145,15 @@ sub infer_introns {
 		   att_value  => $feature_id},
 		  {feature_id => $feature_id,
 		   att_key    => 'Parent',
-		   att_value  => $feature_id},
+		   att_value  => $parent_id},
 		 );
-    my %rel = (parent => $parent_id,
-	       child  => $feature_id);
+    my @rels = {parent => $parent_id,
+		child  => $feature_id};
 
     my %intron = %template;
-    @intron{qw(feature_id start end)} =
-      ($feature_id, $start, $end, \@attrbs);
-    my $intron = $introns->create(\%intron);
+    @intron{qw(feature_id start end attributes my_parents)} =
+      ($feature_id, $start, $end, \@attrbs, \@rels);
+    my $intron = $introns->find_or_create(\%intron);
     bless $intron, 'GAL::Schema::Result::Feature::intron';
     push @introns, $intron;
     print '';
