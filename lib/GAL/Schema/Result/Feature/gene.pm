@@ -92,7 +92,7 @@ sub infer_introns {
   my $transcript_types = $self->get_transcript_types;
   my $transcripts = $self->children->search({type => $transcript_types});
 
-  while my ($transcript = $transcripts->next) {
+  while (my $transcript = $transcripts->next) {
     $transcript->infer_introns;
   }
 }

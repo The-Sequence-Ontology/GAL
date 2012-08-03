@@ -579,7 +579,8 @@ sub get_attribute_text {
 
     my $attributes = $feature->{attributes};
     my @pairs;
-    for my $key (sort {$order{$a} <=> $order{$b}} keys %{$attributes}) {
+    for my $key (sort {($order{$a} || $a) <=> ($order{$b} || $b)}
+		 keys %{$attributes}) {
 	my $values = $attributes->{$key};
 	my $value_text = join ',', @{$values};
 	my $pair = join '=', ($key, $value_text);
