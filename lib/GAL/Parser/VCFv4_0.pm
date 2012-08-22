@@ -114,7 +114,7 @@ sub parse_record {
     # This allows us to get the data as an array and deal with multiple genotypes per line.
     @record{qw(chrom pos id ref alt qual filter info format)} = splice(@{$data}, 0, 9);
 
-    my $seqid      = $record{chrom} =~ /^chr/ ? $record{chrom} : 'chr' . $record{chrom};
+    my $seqid      = $record{chrom}; # =~ /^chr/ ? $record{chrom} : 'chr' . $record{chrom};
     my $source;
     my $type       = 'SNV';
     my $start      = $record{pos};
@@ -152,8 +152,14 @@ sub parse_record {
     # SOMATIC indicates that the record is a somatic mutation, for cancer genomics
     # VALIDATED validated by follow-up experiment
 
-    my %info = split /=|;/, $record{info};
-    map {$info{$_} = [split /,/, $info{$_}]} keys %info;
+    my %info;
+    my @pairs = split /;/, $record{info};
+    for my $pair (@pairs) {
+      my ($key, $value) = split /=/, $pair;
+      $value = defined $value ? $value : '';
+      my @values = split /,/, $value;
+      push @{$info{$key}}, @values;
+    }
 
     my @format_order = split /:/, $record{format};
 
@@ -206,7 +212,7 @@ sub parse_record {
 	  }
 	}
 
-	my $read_count = $individual_hash{DP} || $info{DP} || undef;
+	my $read_count = $individual_hash{DP} || $info{DP}[0] || undef;
 
 	# Make sure that at least one variant sequence differs from
 	# the reference sequence.
