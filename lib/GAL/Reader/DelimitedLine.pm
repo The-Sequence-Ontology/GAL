@@ -235,8 +235,34 @@ sub comment_pattern {
       unless ref $comment_pattern eq 'Regexp';
   }
   $self->{comment_pattern} = $comment_pattern if $comment_pattern;
-  $self->{comment_pattern} ||= qr/^\s*#/;
+  $self->{comment_pattern} ||= qr/^\s*#\[^#]/;
   return $self->{comment_pattern};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 metadata_pattern
+
+ Title   : metadata_pattern
+ Usage   : $self->metadata_pattern("^\#");
+ Function: Set the field separator for spliting lines of data.  Default
+           is "\t" (tab).
+ Returns : The field separator as a complied regular expression.
+ Args    : A string or complied regular expression pattern.
+
+=cut
+
+sub metadata_pattern {
+
+  my ($self, $metadata_pattern) = @_;
+
+  if ($metadata_pattern) {
+    $metadata_pattern = qr/$metadata_pattern/
+      unless ref $metadata_pattern eq 'Regexp';
+  }
+  $self->{metadata_pattern} = $metadata_pattern if $metadata_pattern;
+  $self->{metadata_pattern} ||= qr/^\s*##/;
+  return $self->{metadata_pattern};
 }
 
 #-----------------------------------------------------------------------------
@@ -289,8 +315,9 @@ sub next_record {
     my $self = shift;
     my $fh = $self->fh;
     my $line;
-    my $comment_pattern = $self->comment_pattern;
-    my $field_separator = $self->field_separator;
+    my $comment_pattern  = $self->comment_pattern;
+    my $metadata_pattern = $self->metadata_pattern;
+    my $field_separator  = $self->field_separator;
     my $end_of_data     = $self->end_of_data;
   LINE:
     while ($line = <$fh>) {
@@ -298,19 +325,23 @@ sub next_record {
 	$line = undef;
 	last LINE
       }
-      chomp $line;
-      $self->{current_line} = $line;
-      next LINE if $line =~ /^\s*$/;
-      if ($line =~ $comment_pattern) {
-	$self->comments($line);
-	next LINE;
-      }
-      if ($self->header_count > 0) {
-	push @{$self->{headers}}, $line;
-	$self->{header_count}--;
-	next LINE;
-      }
-      last;
+	chomp $line;
+	$self->{current_line} = $line;
+	next if $line =~ /^\s*$/;
+	if ($line =~ $metadata_pattern) {
+	    $self->metadata($line);
+	    next LINE;
+	}
+	if ($line =~ $comment_pattern) {
+	    $self->comments($line);
+	    next LINE;
+	}
+	if ($self->header_count > 0) {
+	    push @{$self->{headers}}, $line;
+	    $self->{header_count}--;
+	    next LINE;
+	}
+	last;
     }
     return undef unless defined $line;
     my @record_array = split $field_separator, $line;
@@ -376,6 +407,26 @@ sub comments {
 
 	push @{$self->{comments}}, $comment if $comment;
 	return wantarray ? @{$self->{comments}} : $self->{comments};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 metadata
+
+ Title   : metadata
+ Usage   : $commnet = $reader->metadata($line);
+ Function: Add a comment (as defined by L</"comment_pattern">) to the
+           metadata stack or return all the metadata in the stack.
+ Returns : An array or array reference of metadata.
+ Args    : A comment.
+
+=cut
+
+sub metadata {
+	my ($self, $comment) = @_;
+
+	push @{$self->{metadata}}, $comment if $comment;
+	return wantarray ? @{$self->{metadata}} : $self->{metadata};
 }
 
 #-----------------------------------------------------------------------------
