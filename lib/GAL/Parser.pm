@@ -248,6 +248,30 @@ sub next_record {
 
 #-----------------------------------------------------------------------------
 
+=head2 metadata
+
+ Title   : metadata
+ Usage   : $a = $self->metadata
+ Function: Return the metadata as parsed by the parse_metadata
+ Returns : A hash (reference)
+ Args    : A hash reference of metadata
+
+=cut
+
+sub metadata {
+    my ($self, $metadata) = @_;
+
+    if ($metadata) {
+	$self->{metadata} = $metadata;
+    }
+    if (! $self->{metadata}) {
+	$self->parse_metadata;
+    }
+    return $self->{metadata};
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 counter
 
  Title   : counter
@@ -404,6 +428,26 @@ sub to_gff3 {
 				   );
 
 	return $gff3_text;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 parse_metadata
+
+ Title   : parse_metadata
+ Usage   : $a = $self->parse_metadata
+ Function: Call the reader to return metadata and then parse and store it.
+ Returns : N/A
+ Args    : A hash reference of parse_metadata
+
+=cut
+
+sub parse_metadata {
+    my $self = shift;
+
+    my $raw_data = $self->reader->metadata;
+    # Subclasses can override and do something here.
+    $self->{metadata} = $raw_data;
 }
 
 #-----------------------------------------------------------------------------
