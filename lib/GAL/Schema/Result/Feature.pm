@@ -55,6 +55,7 @@ data as defined by the first 8 columns of GFF3
 =cut
 
 # Map feature types to a parent that has an subclass.
+
 my %FEATURE_MAP;
 
 map {$FEATURE_MAP{$_} = 'transcript'} GAL::Schema::Result::Feature::get_transcript_types();
@@ -542,6 +543,8 @@ sub to_gff3 {
   for my $key (keys %{$attributes}) {
     $attrb_text .= "$key=" . $attributes->{$key} . ';';
   }
+
+  $attrb_text ||= '';
 
   my $gff3_text = join "\t", ($seqid, $source, $type, $start, $end,
 			      $score, $strand, $phase, $attrb_text);

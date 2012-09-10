@@ -218,10 +218,10 @@ to the altered copy of the feature.  All filters given are applied.
   features|x      Print only feature lines, removing all meta-data,
 		  comments, empty lines and fasta from a GFF file.
 
-  fasta_only|q    Print only the fasta sequences from the ##FASTA
+  fasta_only|r    Print only the fasta sequences from the ##FASTA
 		  section from a GFF3 file.
 
-  fasta_no|Q      Remove the ##FASTA section from a GFF3 file.
+  fasta_no|R      Remove the ##FASTA section from a GFF3 file.
 
   fasta_add|r     Add the given fasta file to the GFF3 output in a ##FASTA
 		  section.
@@ -817,7 +817,7 @@ sub validate {
 	my %parents;
 
 	my @stack;
-	#my $line = <$IN>;
+	my $line = <$IN>;
 	my ($format_type, $version) = split /\t+/, $line;
 	if ($format_type !~ /g[vf]f-version/) {
 	    my $error_code = 'missing_required_gff-version_or_gvf-version_pragma';
@@ -1752,15 +1752,15 @@ sub fasta_only {
 
 sub fasta_no {
 
-    die "\n\ngff_tool (fasta_no) function is written, but untested\n\n";
+    #die "\n\ngff_tool (fasta_no) function is written, but untested\n\n";
 
     for my $file (@files) {
-	unlink $file or die "Can't unlink $file\n$!\n";
-	open (my $OUT, '>', $file) or die "Can't open $file for writing :\n$!\n";
+	#unlink $file or die "Can't unlink $file\n$!\n";
+	#open (my $OUT, '>', $file) or die "Can't open $file for writing :\n$!\n";
 	open (my $IN, '<', $file) or die "Can't open $file for reading :\n$!\n";
 	while (<$IN>) {
 	    last if /^\#\#\s*FASTA/;
-	    print $OUT, $_;
+	    print $_;
 	}
     }
     exit;
