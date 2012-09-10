@@ -234,7 +234,7 @@ sub _load_schema {
   $dbh->do("DROP TABLE IF EXISTS relationship");
   $dbh->do("CREATE TABLE feature ("    .
 	   "subject_id TEXT, "    .
-	   "feature_id TEXT NOT NULL UNIQUE, "    .
+	   "feature_id TEXT NOT NULL, "    .
 	   "seqid      TEXT, "    .
 	   "source     TEXT, "    .
 	   "type       TEXT, "    .
