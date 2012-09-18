@@ -50,11 +50,30 @@ subclass for transcript specific behavior.
 
 #-----------------------------------------------------------------------------
 
+=head2 exons_genomic
+
+ Title   : exons_genomic
+ Usage   : $exons = $self->exons_genomic
+ Function: Get the transcripts exons sorted in genomic order
+ Returns : A DBIx::Class::Result object loaded up with exons
+ Args    : None
+
+=cut
+
+sub exons_genomic {
+  my $self = shift;
+  my $exons = $self->children->search({type => 'exon'},
+				      {order_by => {'-asc' => 'start'}});
+  return wantarray ? $exons->all : $exons;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 exons
 
  Title   : exons
  Usage   : $exons = $self->exons
- Function: Get the features exons
+ Function: Get the transcript's exons sorted in order of the transcripts strand
  Returns : A DBIx::Class::Result object loaded up with exons
  Args    : None
 
@@ -62,9 +81,45 @@ subclass for transcript specific behavior.
 
 sub exons {
   my $self = shift;
+
+  my $sort_order;
+  if ($self->strand eq '-') {
+    $sort_order = {'-desc' => 'end'};
+  }
+  else {
+    $sort_order = {'-asc' => 'start'};
+  }
+
   my $exons = $self->children->search({type => 'exon'},
-				      {order_by => { -asc => 'start' }});
+				      {order_by => $sort_order});
   return wantarray ? $exons->all : $exons;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 introns_genomic
+
+ Title   : introns_genomic
+ Usage   : $introns = $self->introns_genomic
+ Function: Get the transcript's introns sorted in genomic order
+ Returns : A DBIx::Class::Result object loaded up with introns
+ Args    : None
+
+=cut
+
+sub introns_genomic {
+  my $self = shift;
+
+  my @search_args = ({type => 'intron'},
+		     {order_by => {'-asc' => 'start'}});
+
+  my $introns = $self->children->search(@search_args);
+
+  if (! $introns->count) {
+    $self->infer_introns($introns);
+  }
+
+  return wantarray ? $introns->all : $introns;
 }
 
 #-----------------------------------------------------------------------------
@@ -73,7 +128,8 @@ sub exons {
 
  Title   : introns
  Usage   : $introns = $self->introns
- Function: Get the features introns
+ Function: Get the transcripts introns sorted in the order of the transcripts
+	   strand.
  Returns : A DBIx::Class::Result object loaded up with introns
  Args    : None
 
@@ -82,13 +138,21 @@ sub exons {
 sub introns {
   my $self = shift;
 
+  my $sort_order;
+  if ($self->strand eq '-') {
+    $sort_order = {'-desc' => 'end'};
+  }
+  else {
+    $sort_order = {'-asc' => 'start'};
+  }
+
   my @search_args = ({type => 'intron'},
-		     {order_by => { -asc => 'start' }});
+		     {order_by => {$sort_order}});
 
   my $introns = $self->children->search(@search_args);
 
   if (! $introns->count) {
-     $self->infer_introns($introns);
+    $self->infer_introns($introns);
   }
 
   return wantarray ? $introns->all : $introns;
@@ -100,7 +164,7 @@ sub introns {
 
  Title   : infer_introns
  Usage   : $introns = $self->infer_introns
- Function: Infer introns for the features
+ Function: Infer introns for the transcript.
  Returns : A DBIx::Class::Result object loaded up with introns
  Args    : None
 
@@ -109,9 +173,22 @@ sub introns {
 sub infer_introns {
   my ($self, $introns) = @_;
 
-  $introns ||= $self->children->search({type => 'intron'},
-				       {order_by => { -asc => 'start' }});
+  if (! $introns) {
+    my $sort_order;
+    if ($self->strand eq '-') {
+      $sort_order = {'-desc' => 'end'};
+    }
+    else {
+      $sort_order = {'-asc' => 'start'};
+    }
 
+    my @search_args = ({type => 'intron'},
+		       {order_by => {$sort_order}});
+
+    $introns ||= $self->children->search(@search_args);
+  }
+
+  # Keep the order_by like this so we stay in genomic order
   my $exons = $self->children->search({type => 'exon'},
 				      {order_by => { -asc => 'start' }});
 
@@ -156,10 +233,29 @@ sub infer_introns {
     my $intron = $introns->find_or_create(\%intron);
     bless $intron, 'GAL::Schema::Result::Feature::intron';
     push @introns, $intron;
-    print '';
   }
   $introns->set_cache(\@introns);
-  print '';
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 three_prime_UTRs_genomic
+
+ Title   : three_prime_UTRs_genomic
+ Usage   : $three_prime_UTRs = $self->three_prime_UTRs_genomic
+ Function: Get the transcripts three_prime_UTRs sorted in genomic order
+	   transcripts strand.
+ Returns : A DBIx::Class::Result object loaded up with three_prime_UTRs
+ Args    : None
+
+=cut
+
+sub three_prime_UTRs_genomic {
+  my $self = shift;
+
+  my $three_prime_UTRs = $self->children->search({type     => 'three_prime_UTR'},
+						 {order_by => {'-asc' => 'start'}});
+  return wantarray ? $three_prime_UTRs->all : $three_prime_UTRs;
 }
 
 #-----------------------------------------------------------------------------
@@ -168,7 +264,8 @@ sub infer_introns {
 
  Title   : three_prime_UTRs
  Usage   : $three_prime_UTRs = $self->three_prime_UTRs
- Function: Get the features three_prime_UTRs
+ Function: Get the transcripts three_prime_UTRs sorted in the order of the
+	   transcripts strand.
  Returns : A DBIx::Class::Result object loaded up with three_prime_UTRs
  Args    : None
 
@@ -176,9 +273,39 @@ sub infer_introns {
 
 sub three_prime_UTRs {
   my $self = shift;
+
+  my $sort_order;
+  if ($self->strand eq '-') {
+    $sort_order = {'-desc' => 'end'};
+  }
+  else {
+    $sort_order = {'-asc' => 'start'};
+  }
+
   my $three_prime_UTRs = $self->children->search({type     => 'three_prime_UTR'},
-						 {order_by => { -asc => 'start' }});
+						 {order_by => $sort_order});
   return wantarray ? $three_prime_UTRs->all : $three_prime_UTRs;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 five_prime_UTRs_genomic
+
+ Title   : five_prime_UTRs_genomic
+ Usage   : $five_prime_UTRs = $self->five_prime_UTRs_genomic
+ Function: Get the transcript's five_prime_UTRs sorted in the order of the
+	   transcript's strand.
+ Returns : A DBIx::Class::Result object loaded up with five_prime_UTRs
+ Args    : None
+
+=cut
+
+sub five_prime_UTRs_genomic {
+  my $self = shift;
+
+  my $five_prime_UTRs = $self->children->search({type => 'five_prime_UTR'},
+						{order_by => {'-asc' => 'start'}});
+  return wantarray ? $five_prime_UTRs->all : $five_prime_UTRs;
 }
 
 #-----------------------------------------------------------------------------
@@ -187,7 +314,8 @@ sub three_prime_UTRs {
 
  Title   : five_prime_UTRs
  Usage   : $five_prime_UTRs = $self->five_prime_UTRs
- Function: Get the features five_prime_UTRs
+ Function: Get the transcript's five_prime_UTRs sorted in the order of the
+	   transcript's strand.
  Returns : A DBIx::Class::Result object loaded up with five_prime_UTRs
  Args    : None
 
@@ -195,8 +323,17 @@ sub three_prime_UTRs {
 
 sub five_prime_UTRs {
   my $self = shift;
+
+  my $sort_order;
+  if ($self->strand eq '-') {
+    $sort_order = {'-desc' => 'end'};
+  }
+  else {
+    $sort_order = {'-asc' => 'start'};
+  }
+
   my $five_prime_UTRs = $self->children->search({type => 'five_prime_UTR'},
-						{order_by => { -asc => 'start' }});
+						{order_by => $sort_order});
   return wantarray ? $five_prime_UTRs->all : $five_prime_UTRs;
 }
 
@@ -215,8 +352,9 @@ sub five_prime_UTRs {
 
 sub mature_seq_genomic {
   my $self = shift;
+
   my $mature_seq_genomic;
-  map {$mature_seq_genomic .= $_->genomic_seq} $self->exons->all;
+  map {$mature_seq_genomic .= $_->genomic_seq} $self->exons_genomic->all;
   return $mature_seq_genomic;
 }
 
@@ -235,11 +373,10 @@ sub mature_seq_genomic {
 
 sub mature_seq {
   my $self = shift;
+
   my $mature_seq = $self->mature_seq_genomic;
-  if ($self->strand eq '-') {
-    $mature_seq =
-      $self->annotation->revcomp($mature_seq);
-  }
+  $mature_seq = $self->annotation->revcomp($mature_seq)
+    if ($self->strand eq '-');
   return $mature_seq;
 }
 
@@ -259,7 +396,8 @@ sub mature_seq {
 sub five_prime_UTR_seq_genomic {
   my $self = shift;
   my $five_prime_UTR_seq_genomic;
-  map {$five_prime_UTR_seq_genomic .= $_->genomic_seq} $self->five_prime_UTRs->all;
+  map {$five_prime_UTR_seq_genomic .= $_->genomic_seq}
+    $self->five_prime_UTRs_genomic->all;
   return $five_prime_UTR_seq_genomic;
 }
 
@@ -302,7 +440,8 @@ sub five_prime_UTR_seq {
 sub three_prime_UTR_seq_genomic {
   my $self = shift;
   my $three_prime_UTR_seq_genomic;
-  map {$three_prime_UTR_seq_genomic .= $_->genomic_seq} $self->three_prime_UTRs->all;
+  map {$three_prime_UTR_seq_genomic .= $_->genomic_seq}
+    $self->three_prime_UTRs_genomic->all;
   return $three_prime_UTR_seq_genomic;
 }
 
@@ -382,7 +521,7 @@ sub coordinate_map {
     my $strand = $self->strand;
     my $length = $self->length;
     my %coordinate_map;
-    my @exons = $self->exons->all;
+    my @exons = $self->exons_genomic->all;
     my ($transcript_position, $increment);
     if ($strand eq '-') {
       $transcript_position = $length - 1;
@@ -457,7 +596,7 @@ sub me2genome {
  Title   : AED
  Usage   : $aed = $self->AED($transcript);
  Function: Calculate the annotation edit distance (AED) between two
-           transcripts. (PMID:19236712)
+	   transcripts. (PMID:19236712)
  Returns : An array or reference of genomic coordinates.
  Args    : A GAL::Schema::Result::Feature::transcript (or is_a) object
 

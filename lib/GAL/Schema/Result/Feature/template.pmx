@@ -33,7 +33,21 @@ This document describes GAL::Schema::Result::Feature::template version 0.01
 
 #-----------------------------------------------------------------------------
 
+=head2 method
 
+ Title   : method
+ Usage   : $value = $self->method
+ Function: This method does...
+ Returns : This method returns...
+ Args    : 
+
+=cut
+
+sub method {
+
+  my $self = shift;
+
+}
 
 #-----------------------------------------------------------------------------
 
