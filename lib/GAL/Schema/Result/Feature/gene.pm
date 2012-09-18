@@ -51,7 +51,8 @@ subclass for gene specific behavior.
 
  Title   : transcripts
  Usage   : $transcripts = $self->transcripts
- Function: Get the genes transcript features
+ Function: Get the gene's transcript sorted by start with the longest
+           transcripts first when start locations are equal.
  Returns : A DBIx::Class::Result object loaded up with transcripts.
  Args    : None
 
@@ -64,8 +65,21 @@ sub transcripts {
   #TODO: GAL::lib::GAL::Schema::Result::Feature::gene::transcripts
   #TODO: should use SO directly.
 
+  my $sort_order;
+  if ($self->strand eq '-') {
+    $sort_order = [{ -desc => 'end' },
+		   { -asc =>  'start'},
+		  ];
+  }
+  else {
+    $sort_order = [{ -asc  => 'start' },
+		   { -desc =>  'end'},
+		  ];
+  }
+
   my $transcript_types = $self->get_transcript_types;
-  my $transcripts = $self->children->search({type => $transcript_types});
+  my $transcripts = $self->children->search({type     => $transcript_types,
+					     order_by => $sort_order});
   return wantarray ? $transcripts->all : $transcripts;
 
 }
@@ -85,16 +99,7 @@ sub transcripts {
 sub infer_introns {
 
   my $self = shift;
-
-  #TODO: GAL::lib::GAL::Schema::Result::Feature::gene::transcripts
-  #TODO: should use SO directly.
-
-  my $transcript_types = $self->get_transcript_types;
-  my $transcripts = $self->children->search({type => $transcript_types});
-
-  while (my $transcript = $transcripts->next) {
-    $transcript->infer_introns;
-  }
+  $_->infer_introns for $self->transcripts;
 }
 
 #-----------------------------------------------------------------------------
@@ -151,12 +156,9 @@ sub mRNAs {
 
   my $self = shift;
 
-  #TODO: GAL::lib::GAL::Schema::Result::Feature::gene::mRNA
   #TODO: should use SO directly.
-
   my $mRNAs = $self->children->search({type => 'mRNA'});
   return wantarray ? $mRNAs->all : $mRNAs;
-
 }
 
 #-----------------------------------------------------------------------------
@@ -165,8 +167,8 @@ sub mRNAs {
 
  Title   : is_coding
  Usage   : $is_coding = $self->is_coding
- Function: Get the genes mRNA features
- Returns : A DBIx::Class::Result object loaded up with mRNA features.
+ Function: Return true if this gene has mRNA
+ Returns : 1 or undef
  Args    : None
 
 =cut
@@ -174,9 +176,7 @@ sub mRNAs {
 sub is_coding {
 
   my $self = shift;
-
   return 1 if $self->mRNAs->all;
-
 }
 
 #-----------------------------------------------------------------------------

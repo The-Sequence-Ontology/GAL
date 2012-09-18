@@ -33,25 +33,75 @@ This document describes GAL::Schema::Result::Feature::mrna version 0.01
 
 #-----------------------------------------------------------------------------
 
-sub CDSs {
+=head2 CDSs_genomic
+
+ Title   : CDSs_genomic
+ Usage   : $CDSs = $self->CDSs_genomic
+ Function: Get the mRNA's CDSs sorted in genomic order
+ Returns : A DBIx::Class::Result object loaded up with exons
+ Args    : None
+
+=cut
+
+sub CDSs_genomic {
 
   my $self = shift;
 
   my $CDSs = $self->children->search({type => 'CDS'},
-				     {order_by => { -asc => 'start' }});
+				     {order_by => {'-asc' => 'start'}});
 
   return wantarray ? $CDSs->all : $CDSs;
-
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 CDSs
+
+ Title   : CDSs
+ Usage   : $CDSs = $self->CDSs
+ Function: Get the mRNA's CDSs sorted in the order of the mRNA's strand.
+ Returns : A DBIx::Class::Result object loaded up with exons
+ Args    : None
+
+=cut
+
+sub CDSs {
+
+  my $self = shift;
+
+  my $sort_order;
+  if ($self->strand eq '-') {
+    $sort_order = {'-desc' => 'end'};
+  }
+  else {
+    $sort_order = {'-asc' => 'start'};
+  }
+
+  my $CDSs = $self->children->search({type => 'CDS'},
+				     {order_by => $sort_order});
+
+  return wantarray ? $CDSs->all : $CDSs;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 CDS_seq_genomic
+
+ Title   : CDS_seq_genomic
+ Usage   : $seq = $self->CDS_seq_genomic
+ Function: Return the genomic sequence (on the plus strand of the genome) of
+           the full CDS for this mRNA.
+ Returns : A DNA sequence
+ Args    : None
+
+=cut
 
 sub CDS_seq_genomic {
 
   my $self = shift;
 
   my $CDS_seq_genomic;
-  for my $CDS ($self->CDSs->all) {
+  for my $CDS ($self->CDSs_genomic->all) {
     my $this_seq = $CDS->genomic_seq;
     $CDS_seq_genomic .= $this_seq if $this_seq;
   }
@@ -59,6 +109,16 @@ sub CDS_seq_genomic {
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 CDS_seq
+
+ Title   : CDS_seq
+ Usage   : $seq = $self->CDS_seq
+ Function: Return the sequence of the full CDS for this mRNA.
+ Returns : A DNA sequence
+ Args    : None
+
+=cut
 
 sub CDS_seq {
 
@@ -73,80 +133,179 @@ sub CDS_seq {
 
 #-----------------------------------------------------------------------------
 
+=head2 protein_seq
+
+ Title   : protein_seq
+ Usage   : $seq = $self->protein_seq
+ Function: Return the protein sequence for this mRNA.
+ Returns : Protein sequence
+ Args    : None
+
+=cut
+
 sub protein_seq {
 
   my $self = shift;
 
   my $CDS_seq = $self->CDS_seq;
   my $protein_seq = $self->annotation->translate($CDS_seq);
+  $protein_seq =~ s/\*$//;
   return $protein_seq;
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 map2CDS
+
+ Title   : map2CDS
+ Usage   : @CDS_coordinates = $self->map2CDS(@genomic_coordinates);
+           ($CDS_coordinate) = $self->map2CDS($genomic_coordinate);
+ Function: Transform genomic coordinates to CDS coordinates.
+ Returns : An array(ref) of integers or an empty list if the genomic
+           coordinates given do not overlap the CDS of this mRNA.
+ Args    : An array of integers
+
+=cut
 
 sub map2CDS {
 
   my ($self, @coordinates) = @_;
 
   my ($CDS_start) = $self->genome2me($self->CDS_start);
+  my ($CDS_end)   = $self->genome2me($self->CDS_end);
+
   my @CDS_coordinates = $self->genome2me(@coordinates);
-  map {$_ = $_ - $CDS_start + 1} @CDS_coordinates;
+  for my $coordinate (@CDS_coordinates) {
+    if ($coordinate && $coordinate >= $CDS_start && $coordinate <= $CDS_end) {
+      $coordinate = $coordinate - $CDS_start + 1;
+    }
+    else {
+      $coordinate = undef;
+    }
+  }
 
   return wantarray ? @CDS_coordinates : \@CDS_coordinates;
 }
 
 #-----------------------------------------------------------------------------
 
+=head2 map2protein
+
+ Title   : map2protein
+ Usage   : @protein_coordinates = $self->map2protein(@genomic_coordinates);
+ Function: Transform genomic coordinates to protein sequence coordinates.
+           Note that 3 genomic coordinates will return the same protein
+           coordinate if they fall in the same codon.
+ Returns : An array(ref) of integers or an empty list if the genomic
+           coordinates given do not overlap the protein (CDS) of this mRNA.
+ Args    : An array of integers
+
+=cut
+
 sub map2protein {
 
   my ($self, @coordinates) = @_;
 
   my @protein_coordinates = $self->map2CDS(@coordinates);
-  map {$_ = int($_ / 3) + 1} @protein_coordinates;
+  map {$_ = int(($_ - 1) / 3) + 1 if $_} @protein_coordinates;
 
   return wantarray ? @protein_coordinates : \@protein_coordinates;
 }
 
 #-----------------------------------------------------------------------------
 
+=head2 CDS_start
+
+ Title   : CDS_start
+ Usage   : $start = $self->CDS_start
+ Function: Returns the genomic coordinate of the start of this CDS.
+ Returns : An integer
+ Args    : None
+
+=cut
+
 sub CDS_start {
 
   my $self = shift;
   my $strand = $self->strand;
-  my @CDSs = $self->CDSs;
+  my @CDSs = $self->CDSs_genomic;
   my $CDS_start = $strand eq '-' ? $CDSs[-1]->end : $CDSs[0]->start;
-
+  return $CDS_start;
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 CDS_end
+
+ Title   : CDS_end
+ Usage   : $end = $self->CDS_end
+ Function: Returns the genomic coordinate of the end of this CDS.
+ Returns : An integer
+ Args    : None
+
+=cut
 
 sub CDS_end {
 
   my $self = shift;
   my $strand = $self->strand;
-  my $CDSs = $self->CDSs;
-  my $CDS_start = $strand eq '-' ? $CDSs->first->start : $CDSs->last->end;
-
+  my @CDSs = $self->CDSs_genomic;
+  my $CDS_end = $strand eq '-' ? $CDSs[0]->start : $CDSs[-1]->end;
+  return $CDS_end;
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 CDS_length
+
+ Title   : CDS_length
+ Usage   : $length = $self->CDS_length
+ Function: Return the length of the CDS for this mRNA.
+ Returns : An integer
+ Args    : None
+
+=cut
 
 sub CDS_length {
 
   my $self = shift;
   my $CDS_length;
-  map {$CDS_length += $_->genomic_length} $self->CDSs->all;
+  map {$CDS_length += $_->genomic_length} $self->CDSs_genomic->all;
   return $CDS_length;
 }
 
 #-----------------------------------------------------------------------------
 
+=head2 protein_length
+
+ Title   : protein_length
+ Usage   : $length = $self->protein_length
+ Function: Return the length of the protein for this mRNA.  If the CDS length
+           is not divisable by three this method will truncate the integral
+           portion of the protein length.
+ Returns : An integer
+ Args    : None
+
+=cut
+
 sub protein_length {
   my $self = shift;
-  return int($self->CDS_length / 3);
+  return length $self->protein_seq;
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 phase_at_location
+
+ Title   : phase_at_location
+ Usage   : $phase = $self->phase_at_location($genomic_coordinate)
+ Function: Return the phase (how many nts 3' does the next codon begin) for
+           a given genomic coordinate or undef if the coordinate does not overlap
+           the CDS of this mRNA.
+ Returns : An integer
+ Args    : An intger (genomic coordinate).
+
+=cut
 
 sub phase_at_location {
 
@@ -157,11 +316,24 @@ sub phase_at_location {
 		   0 => 1,
 		  );
   my ($CDS_location) = $self->map2CDS($location);
+  return undef unless $CDS_location;
   my $modulus = $CDS_location % 3;
   return $mod2phase{$modulus};
 }
 
 #-----------------------------------------------------------------------------
+
+=head2 frame_at_location
+
+ Title   : frame_at_location
+ Usage   : $frame = $self->frame_at_location($genomic_coordinate);
+ Function: Return the reading frame (what position within a codon) for a given
+           genomic coordinate or undef if the coordinate does not overlap
+           the CDS of this mRNA.
+ Returns : An integer
+ Args    : An integer
+
+=cut
 
 sub frame_at_location {
 
@@ -171,6 +343,7 @@ sub frame_at_location {
 		   0 => 2,
 		  );
   my ($CDS_location) = $self->map2CDS($location);
+  return undef unless $CDS_location;
   my $modulus = $CDS_location % 3;
   my $frame = $mod2frame{$modulus};
   return $frame;
@@ -178,12 +351,26 @@ sub frame_at_location {
 
 #-----------------------------------------------------------------------------
 
+=head2 codon_at_location
+
+ Title   : codon_at_location
+ Usage   : $codon = $self->codon_at_location($genomic_coordinate);
+           ($codon, $frame) = $self->codon_at_location
+ Function: Return the codon (and frame in list context) that overlaps a given
+           genomic coordinate.  Returns undef in the genomic coordinate does
+           not overlap a complete codon.
+ Returns : An scalar string and in list context also returns an integer.
+ Args    : An integer
+
+=cut
+
 sub codon_at_location {
 
   my ($self, $location) = @_;
 
   my $CDS_sequence = $self->CDS_seq;
   my ($CDS_location) = $self->map2CDS($location);
+  return undef unless $CDS_location;
   my $frame = $self->frame_at_location($location);
   my $codon_start = $CDS_location - $frame;
   $codon_start--;

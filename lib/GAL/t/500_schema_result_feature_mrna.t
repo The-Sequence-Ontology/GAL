@@ -1,12 +1,13 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 3;
+use Test::More;
 
 BEGIN {
 	use lib '../../';
 	#TEST 1
 	use_ok('GAL::Schema::Result::Feature::mrna');
+	use_ok('GAL::Annotation');
 }
 
 my $path = $0;
@@ -18,13 +19,129 @@ chdir($path);
 my $object = GAL::Schema::Result::Feature::mrna->new();
 isa_ok($object, 'GAL::Schema::Result::Feature::mrna');
 
-# To get a list of all of the subs and throws:
-# Select an empty line and then: C-u M-| grep -nP '^sub ' ../Schema::Result::Feature::mrna.pm
-# Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Schema::Result::Feature::mrna.pm
+#ok(my $schema = GAL::Annotation->new('/data/ucsc/hg19/gff/11-05-16/refGene/refGene_hg19.gff3',
+#				     '/data/ucsc/hg19/fasta/chrAll.fa'));
 
-# TEST 3
+ok(my $schema = GAL::Annotation->new('data/dmel-4-r5.46.genes.gff',
+				     'data/'),
+   '$schema = GAL::Annotation->new("dmel.gff", "dmel.fasta"');
 
+ok(my $features = $schema->features, '$features = $schema->features');
 
+#--------------------------------------------------------------------------------
+# Plus strand
+#--------------------------------------------------------------------------------
+ok(my ($mRNA_plus) = $features->search({feature_id => 'FBtr0089157'}),
+   '$features->search({feature_id => "FBtr0089157"})');
+
+ok(my $mrna_seq = $mRNA_plus->seq, '$mrna_seq = $mRNA->seq');
+
+ok(my $CDSs = $mRNA_plus->CDSs, '$mRNA_plus->CDSs');
+ok(my $first_CDS = $CDSs->first, '$first_CDS = $CDSs->first');
+ok($first_CDS->type eq 'CDS', '$first_CDSs->type');
+ok(substr($first_CDS->seq, 0, 3) eq 'ATG', 'substr($first_CDS->seq, 0, 3) eq "ATG"');
+
+ok(my $last_CDS = ($mRNA_plus->CDSs)[-1], '$first_CDS = $CDSs->last');
+ok(substr($last_CDS->seq, -3, 3) =~ /^(TAG|TGA|TAA)$/, 'substr($last_CDS->seq, -3, 3) =~ /^(TAG|TGA|TAA)$/');
+
+ok(my $gseq = $mRNA_plus->CDS_seq_genomic, '$mRNA_plus->CDS_seq_genomic');
+ok($gseq =~ /^[ATGCN]+$/i, '$gseq =~ /^[ATGCN]+$/i');
+
+ok($mRNA_plus->protein_seq =~ /^[A-Z]+$/, '$mRNA_plus->protein_seq =~ /^[A-Z]+$/');
+
+ok(! ($mRNA_plus->map2CDS(93055))[0],        '! ($mRNA_plus->map2CDS(93055))[0]');
+ok(($mRNA_plus->map2CDS(93056))[0] == 1,     '($mRNA_plus->map2CDS(93056))[0] == 1');
+ok(($mRNA_plus->map2CDS(93057))[0] == 2,     '($mRNA_plus->map2CDS(93057))[0] == 2');
+ok(($mRNA_plus->map2CDS(93058))[0] == 3,     '($mRNA_plus->map2CDS(93058))[0] == 3');
+ok(($mRNA_plus->map2CDS(93059))[0] == 4,     '($mRNA_plus->map2CDS(93059))[0] == 4');
+ok(($mRNA_plus->map2CDS(93060))[0] == 5,     '($mRNA_plus->map2CDS(93060))[0] == 5');
+ok(! ($mRNA_plus->map2CDS(103263))[0],       '! ($mRNA_plus->map2CDS(93055))[0]');
+ok(($mRNA_plus->map2CDS(103264))[0] == 310,  '($mRNA_plus->map2CDS(93056))[0] == 1');
+ok(($mRNA_plus->map2protein(93056))[0] == 1, '($mRNA_plus->map2protein(93056))[0] ==1');
+ok(($mRNA_plus->map2protein(93057))[0] == 1, '($mRNA_plus->map2protein(93057))[0] ==1');
+ok(($mRNA_plus->map2protein(93058))[0] == 1, '($mRNA_plus->map2protein(93058))[0] ==1');
+ok(($mRNA_plus->map2protein(93059))[0] == 2, '($mRNA_plus->map2protein(93059))[0] ==2');
+ok(($mRNA_plus->map2protein(93060))[0] == 2, '($mRNA_plus->map2protein(93060))[0] ==2');
+ok(($mRNA_plus->map2protein(93061))[0] == 2, '($mRNA_plus->map2protein(93061))[0] ==2');
+ok($mRNA_plus->CDS_start == 93056,           '$mRNA_plus->CDS_start');
+ok($mRNA_plus->CDS_end == 129118,            '$mRNA_plus->CDS_end');
+ok($mRNA_plus->CDS_length == 2256,           '$mRNA_plus->CDS_length');
+ok($mRNA_plus->protein_length == 751,        '$mRNA_plus->protein_length');
+
+ok(! $mRNA_plus->phase_at_location(93055),   '$mRNA_plus->phase_at_location');
+ok($mRNA_plus->phase_at_location(93056) == 0, '$mRNA_plus->phase_at_location');
+ok($mRNA_plus->phase_at_location(93057) == 2, '$mRNA_plus->phase_at_location');
+ok($mRNA_plus->phase_at_location(93058) == 1, '$mRNA_plus->phase_at_location');
+ok($mRNA_plus->phase_at_location(93059) == 0, '$mRNA_plus->phase_at_location');
+
+ok(! $mRNA_plus->frame_at_location(93055),    '$mRNA_plus->frame_at_location');
+ok($mRNA_plus->frame_at_location(93056) == 0, '$mRNA_plus->frame_at_location');
+ok($mRNA_plus->frame_at_location(93057) == 1, '$mRNA_plus->frame_at_location');
+ok($mRNA_plus->frame_at_location(93058) == 2, '$mRNA_plus->frame_at_location');
+ok($mRNA_plus->frame_at_location(93059) == 0, '$mRNA_plus->frame_at_location');
+
+ok(! $mRNA_plus->codon_at_location(93055),        '$mRNA_plus->codon_at_location');
+ok($mRNA_plus->codon_at_location(93056) eq 'ATG', '$mRNA_plus->codon_at_location');
+ok($mRNA_plus->codon_at_location(93057) eq 'ATG', '$mRNA_plus->codon_at_location');
+ok($mRNA_plus->codon_at_location(93058) eq 'ATG', '$mRNA_plus->codon_at_location');
+ok($mRNA_plus->codon_at_location(93059) eq 'CCT', '$mRNA_plus->codon_at_location');
+
+#--------------------------------------------------------------------------------
+# Minus strand
+#--------------------------------------------------------------------------------
+
+ok(my ($mRNA_minus) = $features->search({feature_id => 'FBtr0304048'}),
+   '$features->search({feature_id => "FBtr0304048"})');
+
+ok(my $mrna_seq = $mRNA_minus->seq, '$mrna_seq = $mRNA->seq');
+
+ok(my $CDSs = $mRNA_minus->CDSs, '$mRNA_minus->CDSs');
+ok(my $first_CDS = $CDSs->first, '$first_CDS = $CDSs->first');
+ok($first_CDS->type eq 'CDS', '$first_CDSs->type');
+ok(substr($first_CDS->seq, 0, 3) eq 'ATG', 'substr($first_CDS->seq, 0, 3) eq "ATG"');
+
+ok(my $last_CDS = ($mRNA_minus->CDSs)[-1], '$first_CDS = $CDSs->last');
+ok(substr($last_CDS->seq, -3, 3) =~ /^(TAG|TGA|TAA)$/, 'substr($last_CDS->seq, -3, 3) =~ /^(TAG|TGA|TAA)$/');
+
+ok(my $gseq = $mRNA_minus->CDS_seq_genomic, '$mRNA_minus->CDS_seq_genomic');
+ok($gseq =~ /^[ATGCN]+$/i, '$gseq =~ /^[ATGCN]+$/i');
+ok($mRNA_minus->protein_seq =~ /^[A-Z]+$/, '$mRNA_minus->protein_seq =~ /^[A-Z]+$/');
+
+#ok(! ($mRNA_minus->map2CDS(93055))[0],        '! ($mRNA_minus->map2CDS(93055))[0]');
+#ok(($mRNA_minus->map2CDS(93056))[0] == 1,     '($mRNA_minus->map2CDS(93056))[0] == 1');
+#ok(($mRNA_minus->map2CDS(93057))[0] == 2,     '($mRNA_minus->map2CDS(93057))[0] == 2');
+#ok(($mRNA_minus->map2CDS(93058))[0] == 3,     '($mRNA_minus->map2CDS(93058))[0] == 3');
+#ok(($mRNA_minus->map2CDS(93059))[0] == 4,     '($mRNA_minus->map2CDS(93059))[0] == 4');
+#ok(($mRNA_minus->map2CDS(93060))[0] == 5,     '($mRNA_minus->map2CDS(93060))[0] == 5');
+#ok(! ($mRNA_minus->map2CDS(103263))[0],       '! ($mRNA_minus->map2CDS(93055))[0]');
+#ok(($mRNA_minus->map2CDS(103264))[0],         '($mRNA_minus->map2CDS(93056))[0] == 1');
+#ok(($mRNA_minus->map2protein(93056))[0] == 1, '($mRNA_minus->map2protein(93056))[0] ==1');
+#ok(($mRNA_minus->map2protein(93057))[0] == 1, '($mRNA_minus->map2protein(93057))[0] ==1');
+#ok(($mRNA_minus->map2protein(93058))[0] == 1, '($mRNA_minus->map2protein(93058))[0] ==1');
+#ok(($mRNA_minus->map2protein(93059))[0] == 2, '($mRNA_minus->map2protein(93059))[0] ==2');
+#ok(($mRNA_minus->map2protein(93060))[0] == 2, '($mRNA_minus->map2protein(93060))[0] ==2');
+#ok(($mRNA_minus->map2protein(93061))[0] == 2, '($mRNA_minus->map2protein(93061))[0] ==2');
+#ok($mRNA_minus->CDS_start == 93056,           '$mRNA_minus->CDS_start');
+#ok($mRNA_minus->CDS_end == 129118,            '$mRNA_minus->CDS_end');
+#ok($mRNA_minus->CDS_length == 2256,           '$mRNA_minus->CDS_length');
+#ok($mRNA_minus->protein_length == 751,        '$mRNA_minus->protein_length');
+
+#ok($mRNA_minus->phase_at_location(93056), '$mRNA_minus->phase_at_location');
+#ok($mRNA_minus->phase_at_location(93057), '$mRNA_minus->phase_at_location');
+#ok($mRNA_minus->phase_at_location(93058), '$mRNA_minus->phase_at_location');
+#ok($mRNA_minus->phase_at_location(93059), '$mRNA_minus->phase_at_location');
+#
+#ok($mRNA_minus->frame_at_location(93056), '$mRNA_minus->frame_at_location');
+#ok($mRNA_minus->frame_at_location(93057), '$mRNA_minus->frame_at_location');
+#ok($mRNA_minus->frame_at_location(93058), '$mRNA_minus->frame_at_location');
+#ok($mRNA_minus->frame_at_location(93059), '$mRNA_minus->frame_at_location');
+#
+#ok($mRNA_minus->codon_at_location(93056), '$mRNA_minus->codon_at_location');
+#ok($mRNA_minus->codon_at_location(93057), '$mRNA_minus->codon_at_location');
+#ok($mRNA_minus->codon_at_location(93058), '$mRNA_minus->codon_at_location');
+#ok($mRNA_minus->codon_at_location(93059), '$mRNA_minus->codon_at_location');
+
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################
