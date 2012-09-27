@@ -466,6 +466,8 @@ sub validate_gff3 {
   for my $kid_type (keys %parents) {
       for my $parent (keys %{$parents{$kid_type}}) {
 	  my $parent_type = $types{$parent};
+	  handle_message('FATAL', 'referenced_parent_does_not_exist', $parent)
+	      unless $parent_type;
 	  if (! exists $so_data->{parts}{$kid_type} ||
 	      ! exists $so_data->{parts}{$kid_type}{$parent_type}) {
 	      my $data = $parents{$kid_type}{$parent_type};
