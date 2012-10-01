@@ -162,6 +162,15 @@ sub mRNAs {
 }
 
 #-----------------------------------------------------------------------------
+# This probably shouldn't be here, but leaving it as comment for now 10/1/12 BM
+
+# sub feature_id {
+# 
+#     my $self = shift;
+#     return $self->id;
+# 
+# }
+#-----------------------------------------------------------------------------
 
 =head2 is_coding
 

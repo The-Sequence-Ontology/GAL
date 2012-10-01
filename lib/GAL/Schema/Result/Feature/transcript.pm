@@ -484,19 +484,12 @@ sub three_prime_UTR_seq {
 sub length {
   my $self = shift;
   my $length;
-  map {$length += $_->length} $self->exons->all;
-  ##############################
-  ### DO WE REALLY NEED THIS ###
-  ##############################
-  # $length++;
-  ##############################
-  ##############################
-  # $self->warn('developer_error', ("Make sure that this length is correct!!!!" .
-  #			  "Length: $length\nSeq Length: "             .
-  #			  length ($self->mature_seq)
-  #			 )
-  #	     );
-
+  my @exons = $self->exons->all;
+  if (! scalar @exons) {
+      $self->warn('transcript_has_no_exons', $self->feature_id);
+      return undef
+  }
+  map {$length += $_->length}
   return $length;
 }
 

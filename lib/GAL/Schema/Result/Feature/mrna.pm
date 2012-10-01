@@ -381,6 +381,216 @@ sub codon_at_location {
 
 #-----------------------------------------------------------------------------
 
+=head2 three_prime_UTRs
+
+ Title   : three_prime_UTRs
+ Usage   : $three_prime_UTRs = $self->three_prime_UTRs
+ Function: Get the features three_prime_UTRs
+ Returns : A DBIx::Class::Result object loaded up with three_prime_UTRs
+ Args    : None
+
+=cut
+
+sub three_prime_UTRs {
+  my $self = shift;
+  my $three_prime_UTRs = $self->children->search({type     => 'three_prime_UTR'},
+ {order_by => { -asc => 'start' }});
+  return wantarray ? $three_prime_UTRs->all : $three_prime_UTRs;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 five_prime_UTRs
+
+ Title   : five_prime_UTRs
+ Usage   : $five_prime_UTRs = $self->five_prime_UTRs
+ Function: Get the features five_prime_UTRs
+ Returns : A DBIx::Class::Result object loaded up with five_prime_UTRs
+ Args    : None
+
+=cut
+
+sub five_prime_UTRs {
+  my $self = shift;
+  my $five_prime_UTRs = $self->children->search({type => 'five_prime_UTR'},
+{order_by => { -asc => 'start' }});
+  return wantarray ? $five_prime_UTRs->all : $five_prime_UTRs;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 infer_three_prime_UTR
+
+ Title   : infer_three_prime_UTR
+ Usage   : $three_prime_UTR = $self->infer_three_prime_UTR
+ Function: Infer three_prime_UTR for the features
+ Returns : A DBIx::Class::Result object loaded up with three_prime_UTR
+ Args    : None
+
+=cut
+
+sub infer_three_prime_UTR {
+  my ($self, $three_prime_UTR) = @_;
+
+  $three_prime_UTR ||= $self->children->search({type => 'three_prime_UTR'},
+       {order_by => { -asc => 'start' }});
+
+  my $exons = $self->children->search({type => 'exon'},
+      {order_by => { -asc => 'start' }});
+
+  my $strand = $self->strand;
+
+  my $start;
+
+  #### MOVE THIS TO cds.pm ###
+  if ($strand eq '+') {
+      my $CDSs = $self->children->search({type => 'CDS'},
+					 {order_by => { -asc => 'start' }});
+
+      $start = $CDSs->next->start;
+  }
+  else {
+      my $CDSs = $self->children->search({type => 'CDS'},
+					 {order_by => { -desc => 'end' }});
+
+      $start = $CDSs->next->end;
+  }
+
+  my @coordinates;
+  while(my $exon = $exons->next) {
+    push @coordinates, ($exon->start, $exon->end);
+  }
+
+  shift @coordinates;
+  pop   @coordinates;
+
+  my %template = (seqid  => $self->seqid,
+  source => $self->source,
+  type   => 'three_prime_UTR',
+  score  => '.',
+  strand => $self->strand,
+  phase  => '.',
+ );
+
+  my $parent_id = $self->feature_id;
+
+  my $count = 1;
+  my @three_prime_UTR;
+  while (@coordinates) {
+    my ($start, $end) = (shift @coordinates,
+ shift @coordinates);
+    my $feature_id = $parent_id . ':three_prime_UTR:';
+    $feature_id .= sprintf("%03d", $count++);
+    my @attrbs = ({feature_id => $feature_id,
+   att_key    => 'ID',
+   att_value  => $feature_id},
+  {feature_id => $feature_id,
+   att_key    => 'Parent',
+   att_value  => $parent_id},
+ );
+    my @rels = {parent => $parent_id,
+child  => $feature_id};
+
+    my %three_prime_UTR = %template;
+    @three_prime_UTR{qw(feature_id start end attributes my_parents)} =
+      ($feature_id, $start, $end, \@attrbs, \@rels);
+    my $three_prime_UTR = $three_prime_UTR->find_or_create(\%three_prime_UTR);
+    bless $three_prime_UTR, 'GAL::Schema::Result::Feature::three_prime_UTR';
+    push @three_prime_UTR, $three_prime_UTR;
+    print '';
+  }
+  $three_prime_UTR->set_cache(\@three_prime_UTR);
+  print '';
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 five_prime_UTR_seq_genomic
+
+ Title   : five_prime_UTR_seq_genomic
+ Usage   : $seq = $self->five_prime_UTR_seq_genomic
+ Function: Get the transcripts spliced five_prime_UTR genomic sequence (not
+   reverse complimented for minus strand features.
+ Returns : A text string of the five_prime_UTR spliced genomic sequence.
+ Args    : None
+
+=cut
+
+sub five_prime_UTR_seq_genomic {
+  my $self = shift;
+  my $five_prime_UTR_seq_genomic;
+  map {$five_prime_UTR_seq_genomic .= $_->genomic_seq} $self->five_prime_UTRs->all;
+  return $five_prime_UTR_seq_genomic;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 five_prime_UTR_seq
+
+ Title   : five_prime_UTR_seq
+ Usage   : $seq = $self->five_prime_UTR_seq
+ Function: Get the transcripts spliced five_prime_UTR sequence reverse
+   complimented for minus strand features.
+ Returns : A text string of the five_prime_UTR spliced sequence.
+ Args    : None
+
+=cut
+
+sub five_prime_UTR_seq {
+  my $self = shift;
+  my $five_prime_UTR_seq = $self->five_prime_UTR_seq_genomic;
+  if ($self->strand eq '-') {
+    $five_prime_UTR_seq =
+      $self->annotation->revcomp($five_prime_UTR_seq);
+  }
+  return $five_prime_UTR_seq;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 three_prime_UTR_seq_genomic
+
+ Title   : three_prime_UTR_seq_genomic
+ Usage   : $seq = $self->three_prime_UTR_seq_genomic
+ Function: Get the transcripts spliced three_prime_UTR genomic sequence (not
+   reverse complimented for minus strand features.
+ Returns : A text string of the three_prime_UTR spliced genomic sequence.
+ Args    : None
+
+=cut
+
+sub three_prime_UTR_seq_genomic {
+  my $self = shift;
+  my $three_prime_UTR_seq_genomic;
+  map {$three_prime_UTR_seq_genomic .= $_->genomic_seq} $self->three_prime_UTRs->all;
+  return $three_prime_UTR_seq_genomic;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 three_prime_UTR_seq
+
+ Title   : three_prime_UTR_seq
+ Usage   : $seq = $self->three_prime_UTR_seq
+ Function: Get the transcripts spliced three_prime_UTR sequence reverse
+   complimented for minus strand features.
+ Returns : A text string of the three_prime_UTR spliced sequence.
+ Args    : None
+
+=cut
+
+sub three_prime_UTR_seq {
+  my $self = shift;
+  my $three_prime_UTR_seq = $self->three_prime_UTR_seq_genomic;
+  if ($self->strand eq '-') {
+    $three_prime_UTR_seq =
+      $self->annotation->revcomp($three_prime_UTR_seq);
+  }
+  return $three_prime_UTR_seq;
+}
+
+#-----------------------------------------------------------------------------
+
 =head1 DIAGNOSTICS
 
 =for author to fill in:
