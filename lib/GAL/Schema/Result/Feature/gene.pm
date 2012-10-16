@@ -153,7 +153,6 @@ sub splice_complexity {
 =cut
 
 sub mRNAs {
-
   my $self = shift;
 
   #TODO: should use SO directly.
@@ -185,7 +184,7 @@ sub mRNAs {
 sub is_coding {
 
   my $self = shift;
-  return 1 if $self->mRNAs->all;
+  return 1 if grep {$_->type eq 'mRNA'} $self->children->all;
 }
 
 #-----------------------------------------------------------------------------
