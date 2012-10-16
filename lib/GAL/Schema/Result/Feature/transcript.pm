@@ -510,12 +510,8 @@ sub three_prime_UTR_seq {
 sub length {
   my $self = shift;
   my $length;
-  my @exons = $self->exons_rs;
-  #if (! scalar @exons) {
-  #    $self->warn('transcript_has_no_exons', $self->feature_id);
-  #    return undef
-  #}
-  map {$length += $_->length} @exons;
+  map {$length += $_->length} grep {$_->type eq 'exon'} $self->children->all;
+  $self->warn('transcript_has_no_exons', $self->feature_id) unless $length;
   return $length;
 }
 
