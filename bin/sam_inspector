@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Set::IntSpan::Fast;
-use Statistics::Descriptive;
+use Statistics::Descriptive::Discrete;
 use Text::Graph;
 use Text::Graph::DataSet;
 use File::Temp qw(tempfile);
@@ -330,10 +330,10 @@ sub build_summary {
     my $files = shift;
 
     my %sets;
-    my $isizes  = Statistics::Descriptive::Full->new();
-    my $lengths = Statistics::Descriptive::Full->new();
-    my $best_hits  = Statistics::Descriptive::Full->new();
-    my $mismatches = Statistics::Descriptive::Full->new();
+    my $isizes  = Statistics::Descriptive::Discrete->new();
+    my $lengths = Statistics::Descriptive::Discrete->new();
+    my $best_hits  = Statistics::Descriptive::Discrete->new();
+    my $mismatches = Statistics::Descriptive::Discrete->new();
 
     my $count;
     my %mapped_length;
@@ -380,7 +380,7 @@ sub build_summary {
 	    $sets{$rname}->add_range($mpos, $mpos + $a->{length} - 1) if $mpos;
 	    $mapqs{$mapq}++;
 	    $isizes->add_data(abs($isize)) if $isize;
-	    $lengths->add_data($a->{length});
+	    $lengths->add_data($a->{length}) if $a->{length};
 	    $best_hits->add_data($a->{opt}{X0}{value})  if $a->{opt}{X0}{value};
 	    $mismatches->add_data($a->{opt}{XM}{value}) if $a->{opt}{XM}{value};
 
