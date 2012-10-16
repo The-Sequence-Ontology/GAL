@@ -3,7 +3,6 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Bio::DB::Fasta;
-use Carp;
 use Data::Dumper;
 
 #-----------------------------------------------------------------------------
@@ -53,18 +52,34 @@ Options:
     kgXref.txt | perl -lane 'print join \"\t\", \@F[0,10]' >
     ccds2GeneSymbol.txt)
 
+  --add_genes
+
+    By default this script will just generate transcripts, exons and
+    CDSs because gene IDs are not always mapped accurately in the UCSC
+    tables.  Another script build_genes is then used to cluster the
+    transcripts and create genes for the resulting clusters.  However
+    ins some datasets such as Ensembl (ensGene) the transcript to gene
+    mapping given in the table data is sufficient to build the genes
+    directly.  This option will create gene features and parent the
+    transcripts to those genes.  The genes will all be at the end of
+    the file, so the file should be sorted by location after using
+    this option.
+
 ";
 
 
 my $command_line = join ' ', ($0, @ARGV);
 
-my ($help, $table, $pragma_file, $fasta_file, $clean, $alias_file);
+my ($help, $table, $pragma_file, $fasta_file, $clean, $alias_file,
+    $add_genes);
+
 my $opt_success = GetOptions('help'      => \$help,
 			     'table=s'   => \$table,
 			     'pragma=s'  => \$pragma_file,
 			     'fasta=s'   => \$fasta_file,
 			     'clean'     => \$clean,
 			     'alias|a=s' => \$alias_file,
+			     'add_genes' => \$add_genes,
 			     );
 
 die $usage if $help || ! $opt_success;
@@ -101,6 +116,7 @@ if ($pragma_file) {
 print "# $command_line\n";
 print "# " . `date` . "\n";
 
+my %genes;
 my %duplicates;
 while (<$IN>) {
     chomp;
@@ -126,14 +142,14 @@ while (<$IN>) {
     $txStart++;
     $cdsStart++;
 
-    carp  "WARN : invalid_strand : $name, $strand"    if $strand  !~ /\+|-/;
-    croak "FATAL : invalid_txStart : $name, $txStart" if $txStart !~ /^\d+$/;
-    croak "FATAL : invalid_txEnd : $name, $txEnd"     if $txEnd   !~ /^\d+$/;
+    warn  "WARN : invalid_strand : $name, $strand"    if $strand  !~ /\+|-/;
+    die "FATAL : invalid_txStart : $name, $txStart" if $txStart !~ /^\d+$/;
+    die "FATAL : invalid_txEnd : $name, $txEnd"     if $txEnd   !~ /^\d+$/;
 
     my $old_name = $name;
     if (exists $duplicates{$name}) {
 	$name = $name . '_DUP_' . sprintf('%02s', $duplicates{$name});
-	carp "WARN : duplicate_transcript_id : $old_name changed to $name";
+	warn "WARN : duplicate_transcript_id : $old_name changed to $name";
     }
     $duplicates{$old_name}++;
 
@@ -149,6 +165,8 @@ while (<$IN>) {
 		  };
 
     $transcript->{attributes}{ID} = [$name];
+    $transcript->{attributes}{cdsStartStat} = [$cdsStartStat] if $cdsStartStat;
+    $transcript->{attributes}{cdsEndStat}   = [$cdsEndStat]   if $cdsEndStat;
 
     my @external_aliases;
     @external_aliases = keys %{$ALIASES{$name}} if ref $ALIASES{$name} eq 'HASH';
@@ -156,22 +174,69 @@ while (<$IN>) {
     my @aliases = grep {$_ } ($name2, $proteinID, @external_aliases);
     $transcript->{attributes}{Alias} = \@aliases if scalar @aliases;
 
+    if ($add_genes) {
+	my $gene_name;
+	if ($name2) {
+	    $gene_name = $name2;
+	}
+	else {
+	    warn "WARN : missing_gene_name : Using $name as gene name";
+	    $gene_name = $name;
+	}
+	
+	if (exists $genes{$gene_name}) {
+	    if ($genes{$gene_name}{seqid} ne $chrom) {
+		warn ("WARN : seqid_mismatch_on_gene_creation : For $gene_name; " .
+		      "existing seqid = $genes{$gene_name}{seqid} and new " .
+		      "seqid = $chrom");
+	    }
+	    if ($genes{$gene_name}{strand} ne $strand) {
+		warn ("WARN : strand_mismatch_on_gene_creation : For $gene_name; " .
+		      "existing strand = $genes{$gene_name}{strand} and new " .
+		      "strand = $strand");
+	    }
+	    $genes{$gene_name}{start} = ($genes{$gene_name}{start} < $txStart ?
+					 $genes{$gene_name}{start}            :
+					 $txStart);
+	    $genes{$gene_name}{end} = ($genes{$gene_name}{end} > $txEnd ?
+				       $genes{$gene_name}{end}           :
+				       $txEnd);
+	}
+	else {
+	my $gene = {feature_id => $gene_name,
+		    seqid      => $chrom,
+		    source     => 'UCSC_' . $table,
+		    type       => 'gene',
+		    start      => $txStart,
+		    end        => $txEnd,
+		    score      => '.',
+		    strand     => $strand,
+		    phase      => '.'};
+
+	$gene->{attributes}{ID} = [$gene_name];
+	$genes{$gene_name} = $gene;
+	}
+
+	add_aliases($genes{$gene_name}, \@aliases);
+	push @{$transcript->{attributes}{Parent}}, $gene_name;
+    }
+
     my @exon_starts = split ',', $exonStarts;
     map {$_++} @exon_starts;
     my @exon_ends   = split ',', $exonEnds;
 
-    carp "WARN : mis_matched_exon_start_ends : $name\n"
+    warn "WARN : mis_matched_exon_start_ends : $name\n"
 	if (scalar @exon_starts != scalar @exon_ends);
 
     my @exon_pairs;
     for my $i (0 .. scalar @exon_starts - 1) {
 	my ($start, $end) = ($exon_starts[$i], $exon_ends[$i]);
-	carp "WARN : negative_length_exon : $name, $start, $end\n" if $start > $end;
-	carp "WARN : zero_length_exon : $name, $start, $end\n"     if $start == $end;
+	warn "WARN : negative_length_exon : $name, $start, $end\n" if $start > $end;
+	warn "WARN : short_exon : $name, $start, $end\n"     if $end - $start <= 3;
 	push @exon_pairs, [$start, $end];
     }
 
-    carp "WARN : exons_overlap : $name\n" if any_overlaps(@exon_pairs);
+    warn "WARN : exons_overlap : $name\n" if any_overlaps(@exon_pairs);
 
     my @cds_pairs;
     for my $pair (@exon_pairs) {
@@ -198,8 +263,11 @@ while (<$IN>) {
 				    ) if scalar @cds_pairs;
     $CDSs ||= [];
 
-    write_gff($transcript, $exons, $CDSs);
+    write_gff($transcript, @{$exons}, @{$CDSs});
+}
 
+for my $gene_name (keys %genes) {
+    write_gff($genes{$gene_name});
 }
 
 #-----------------------------------------------------------------------------
@@ -305,9 +373,7 @@ sub revcomp {
 
 sub write_gff {
 
-    my ($transcript, $exons, $CDSs) = @_;
-
-    my @features = ($transcript, @{$exons}, @{$CDSs});
+    my @features = @_;
 
     for my $feature (sort {$a->{start} <=> $b->{start} ||
 			   $b->{end}   <=> $a->{end}}  @features) {
@@ -327,14 +393,17 @@ sub get_attribute_text {
     my $feature = shift;
     my $attributes = $feature->{attributes};
 
-    my %ORDER = (ID     => 1,
-		 Parent => 2,
-		 Alias  => 3,
-		 Note   => 4,
+    my %ORDER = (ID           => 1,
+		 Parent       => 2,
+		 Alias        => 3,
+		 Note         => 4, 
+		 cdsStartStat => 5,
+		 cdsEndStat   => 6,
 		 );
 
     my @pairs;
-    for my $key (sort {$ORDER{$a} <=> $ORDER{$b}} keys %{$attributes}) {
+    for my $key (sort {($ORDER{$a} || 99) <=> ($ORDER{$b} || 99) || $a cmp $b}
+		 keys %{$attributes}) {
 	my @values = @{$attributes->{$key}};
 	my $value_text = join ',', @values;
 	push @pairs, join '=', ($key, $value_text);
@@ -363,6 +432,22 @@ sub any_overlaps {
     }
     # We never overlaped so return false
     return 0;
+}
+
+#-----------------------------------------------------------------------------
+
+sub add_aliases {
+
+    my ($gene, $aliases) = @_;
+
+    my %unique;
+    $gene->{attributes}{Alias} ||= [];
+    my $feature_id = $gene->{feature_id};
+    map {$unique{$_}++ unless $_ eq $feature_id} (@{$gene->{attributes}{Alias}}, @{$aliases});
+    $gene->{attributes}{Alias} = [ sort keys %unique ];
+    delete $gene->{attributes}{Alias}
+       unless scalar @{$gene->{attributes}{Alias}};
+    return;
 }
 
 #-----------------------------------------------------------------------------
