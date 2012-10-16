@@ -69,17 +69,17 @@ sub exons_genomic {
 
 #-----------------------------------------------------------------------------
 
-=head2 exons
+=head2 exons_rs
 
- Title   : exons
- Usage   : $exons = $self->exons
+ Title   : exons_rs
+ Usage   : $exons_rs = $self->exons_rs
  Function: Get the transcript's exons sorted in order of the transcripts strand
  Returns : A DBIx::Class::Result object loaded up with exons
  Args    : None
 
 =cut
 
-sub exons {
+sub exons_rs {
   my $self = shift;
 
   my $sort_order;
@@ -90,9 +90,35 @@ sub exons {
     $sort_order = {'-asc' => 'start'};
   }
 
-  my $exons = $self->children->search({type => 'exon'},
-				      {order_by => $sort_order});
+  my $exons = $self->children->search({'type' => 'exon'});
+
   return wantarray ? $exons->all : $exons;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 exons
+
+ Title   : exons
+ Usage   : $exons = $self->exons
+ Function: Get the transcript's exons sorted in order of the transcripts strand
+ Returns : An array(ref) of exon objects
+ Args    : None
+
+=cut
+
+sub exons {
+  my $self = shift;
+
+  my @exons = grep {$_->type eq 'exon'} $self->children->all;
+  if ($self->strand eq '-') {
+    @exons = sort {$b->end <=> $a->end} @exons;
+  }
+  else {
+    @exons = sort {$a->start <=> $b->start} @exons;
+  }
+
+  return wantarray ? @exons : \@exons;
 }
 
 #-----------------------------------------------------------------------------
@@ -484,12 +510,12 @@ sub three_prime_UTR_seq {
 sub length {
   my $self = shift;
   my $length;
-  my @exons = $self->exons->all;
-  if (! scalar @exons) {
-      $self->warn('transcript_has_no_exons', $self->feature_id);
-      return undef
-  }
-  map {$length += $_->length}
+  my @exons = $self->exons_rs;
+  #if (! scalar @exons) {
+  #    $self->warn('transcript_has_no_exons', $self->feature_id);
+  #    return undef
+  #}
+  map {$length += $_->length} @exons;
   return $length;
 }
 
