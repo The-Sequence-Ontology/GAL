@@ -5,6 +5,7 @@ use warnings;
 use base qw/DBIx::Class/;
 use Set::IntSpan::Fast;
 use Storable qw(dclone);
+use List::MoreUtils qw(uniq);
 
 =head1 NAME
 
@@ -539,7 +540,7 @@ sub to_gff3 {
   my $phase      = $self->phase;
   my $attributes = $self->attributes_hash;
 
-  map {$_ = join ',', @{$_}} values %{$attributes};
+  map {$_ = join ',', uniq @{$_}} values %{$attributes};
   my $attrb_text;
   for my $key (keys %{$attributes}) {
     $attrb_text .= "$key=" . $attributes->{$key} . ';';
