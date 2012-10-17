@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use base qw/DBIx::Class/;
 use Set::IntSpan::Fast;
+use Storable qw(dclone);
 
 =head1 NAME
 
@@ -216,7 +217,7 @@ sub attributes_hash {
     map {push @{$self->{my_attributes}{$_->att_key}}, $_->att_value}
 	   $self->attributes->all;
   }
-  return wantarray ? %{$self->{my_attributes}} : $self->{my_attributes};
+  return wantarray ? %{$self->{my_attributes}} : dclone($self->{my_attributes});
 }
 
 #-----------------------------------------------------------------------------
