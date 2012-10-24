@@ -78,8 +78,10 @@ sub transcripts {
   }
 
   my $transcript_types = $self->get_transcript_types;
-  my $transcripts = $self->children->search({type     => $transcript_types,
-					     order_by => $sort_order});
+  my $transcripts = $self->children({type => $transcript_types},
+				    {order_by => $sort_order,
+				    distinct => 1});
+
   return wantarray ? $transcripts->all : $transcripts;
 
 }
@@ -156,7 +158,8 @@ sub mRNAs {
   my $self = shift;
 
   #TODO: should use SO directly.
-  my $mRNAs = $self->children->search({type => 'mRNA'});
+  my $mRNAs = $self->children({type => 'mRNA'},
+			      {distinct => 1});
   return wantarray ? $mRNAs->all : $mRNAs;
 }
 
@@ -184,7 +187,7 @@ sub mRNAs {
 sub is_coding {
 
   my $self = shift;
-  return 1 if grep {$_->type eq 'mRNA'} $self->children->all;
+  return 1 if grep {$_->type eq 'mRNA'} $self->children(undef, {distinct => 1})->all;
 }
 
 #-----------------------------------------------------------------------------

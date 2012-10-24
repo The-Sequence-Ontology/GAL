@@ -571,7 +571,7 @@ sub get_recursive_children {
 
   my ($self, $list) = @_;
 
-  my $children = $self->children;
+  my $children = $self->children(undef, {distinct => 1});
 
   return unless $children->count > 0;
 

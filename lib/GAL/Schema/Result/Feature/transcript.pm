@@ -62,8 +62,10 @@ subclass for transcript specific behavior.
 
 sub exons_genomic {
   my $self = shift;
-  my $exons = $self->children->search({type => 'exon'},
-				      {order_by => {'-asc' => 'start'}});
+  my $exons = $self->children({type => 'exon'},
+			      {order_by => {'-asc' => 'start'},
+			       distinct => 1});
+
   return wantarray ? $exons->all : $exons;
 }
 
@@ -90,7 +92,9 @@ sub exons_rs {
     $sort_order = {'-asc' => 'start'};
   }
 
-  my $exons = $self->children->search({'type' => 'exon'});
+  my $exons = $self->children({type => 'exon'},
+			       {order_by => $sort_order,
+				distinct => 1});
 
   return wantarray ? $exons->all : $exons;
 }
@@ -136,10 +140,9 @@ sub exons {
 sub introns_genomic {
   my $self = shift;
 
-  my @search_args = ({type => 'intron'},
-		     {order_by => {'-asc' => 'start'}});
-
-  my $introns = $self->children->search(@search_args);
+  my $introns = $self->children({type => 'intron'},
+				 {order_by => {'-asc' => 'start'},
+				  distinct => 1});
 
   if (! $introns->count) {
     $self->infer_introns($introns);
@@ -172,10 +175,9 @@ sub introns {
     $sort_order = {'-asc' => 'start'};
   }
 
-  my @search_args = ({type => 'intron'},
-		     {order_by => {$sort_order}});
-
-  my $introns = $self->children->search(@search_args);
+  my $introns = $self->children({type => 'intron'},
+				{order_by => $sort_order,
+				 distinct => 1});
 
   if (! $introns->count) {
     $self->infer_introns($introns);
@@ -208,15 +210,15 @@ sub infer_introns {
       $sort_order = {'-asc' => 'start'};
     }
 
-    my @search_args = ({type => 'intron'},
-		       {order_by => {$sort_order}});
-
-    $introns ||= $self->children->search(@search_args);
+    $introns ||= $self->children({type => 'intron'},
+				 {order_by => $sort_order,
+				  distinct => 1});
   }
 
   # Keep the order_by like this so we stay in genomic order
-  my $exons = $self->children->search({type => 'exon'},
-				      {order_by => { -asc => 'start' }});
+  my $exons = $self->children({type => 'exon'},
+			      {order_by => { -asc => 'start' },
+			       distinct => 1});
 
   my @coordinates;
   while(my $exon = $exons->next) {
@@ -261,106 +263,6 @@ sub infer_introns {
     push @introns, $intron;
   }
   $introns->set_cache(\@introns);
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 three_prime_UTRs_genomic
-
- Title   : three_prime_UTRs_genomic
- Usage   : $three_prime_UTRs = $self->three_prime_UTRs_genomic
- Function: Get the transcripts three_prime_UTRs sorted in genomic order
-	   transcripts strand.
- Returns : A DBIx::Class::Result object loaded up with three_prime_UTRs
- Args    : None
-
-=cut
-
-sub three_prime_UTRs_genomic {
-  my $self = shift;
-
-  my $three_prime_UTRs = $self->children->search({type     => 'three_prime_UTR'},
-						 {order_by => {'-asc' => 'start'}});
-  return wantarray ? $three_prime_UTRs->all : $three_prime_UTRs;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 three_prime_UTRs
-
- Title   : three_prime_UTRs
- Usage   : $three_prime_UTRs = $self->three_prime_UTRs
- Function: Get the transcripts three_prime_UTRs sorted in the order of the
-	   transcripts strand.
- Returns : A DBIx::Class::Result object loaded up with three_prime_UTRs
- Args    : None
-
-=cut
-
-sub three_prime_UTRs {
-  my $self = shift;
-
-  my $sort_order;
-  if ($self->strand eq '-') {
-    $sort_order = {'-desc' => 'end'};
-  }
-  else {
-    $sort_order = {'-asc' => 'start'};
-  }
-
-  my $three_prime_UTRs = $self->children->search({type     => 'three_prime_UTR'},
-						 {order_by => $sort_order});
-  return wantarray ? $three_prime_UTRs->all : $three_prime_UTRs;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 five_prime_UTRs_genomic
-
- Title   : five_prime_UTRs_genomic
- Usage   : $five_prime_UTRs = $self->five_prime_UTRs_genomic
- Function: Get the transcript's five_prime_UTRs sorted in the order of the
-	   transcript's strand.
- Returns : A DBIx::Class::Result object loaded up with five_prime_UTRs
- Args    : None
-
-=cut
-
-sub five_prime_UTRs_genomic {
-  my $self = shift;
-
-  my $five_prime_UTRs = $self->children->search({type => 'five_prime_UTR'},
-						{order_by => {'-asc' => 'start'}});
-  return wantarray ? $five_prime_UTRs->all : $five_prime_UTRs;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 five_prime_UTRs
-
- Title   : five_prime_UTRs
- Usage   : $five_prime_UTRs = $self->five_prime_UTRs
- Function: Get the transcript's five_prime_UTRs sorted in the order of the
-	   transcript's strand.
- Returns : A DBIx::Class::Result object loaded up with five_prime_UTRs
- Args    : None
-
-=cut
-
-sub five_prime_UTRs {
-  my $self = shift;
-
-  my $sort_order;
-  if ($self->strand eq '-') {
-    $sort_order = {'-desc' => 'end'};
-  }
-  else {
-    $sort_order = {'-asc' => 'start'};
-  }
-
-  my $five_prime_UTRs = $self->children->search({type => 'five_prime_UTR'},
-						{order_by => $sort_order});
-  return wantarray ? $five_prime_UTRs->all : $five_prime_UTRs;
 }
 
 #-----------------------------------------------------------------------------
@@ -510,7 +412,8 @@ sub three_prime_UTR_seq {
 sub length {
   my $self = shift;
   my $length;
-  map {$length += $_->length} grep {$_->type eq 'exon'} $self->children->all;
+  map {$length += $_->length} $self->children({type => 'exon'},
+					      {distinct => 1})->all;
   $self->warn('transcript_has_no_exons', $self->feature_id) unless $length;
   return $length;
 }
