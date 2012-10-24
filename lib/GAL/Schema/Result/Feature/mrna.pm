@@ -47,8 +47,9 @@ sub CDSs_genomic {
 
   my $self = shift;
 
-  my $CDSs = $self->children->search({type => 'CDS'},
-				     {order_by => {'-asc' => 'start'}});
+  my $CDSs = $self->children({type => 'CDS'},
+			     {order_by => {'-asc' => 'start'},
+			      distinct => 1});
 
   return wantarray ? $CDSs->all : $CDSs;
 }
@@ -77,8 +78,12 @@ sub CDSs {
     $sort_order = {'-asc' => 'start'};
   }
 
-  my $CDSs = $self->children->search({type => 'CDS'},
-				     {order_by => $sort_order});
+  #  my $CDSs = $self->children(undef, {distinct => 1})->search({type => 'CDS'},
+  #				     {order_by => $sort_order});
+
+  my $CDSs = $self->children({type => 'CDS'},
+			     {order_by => $sort_order,
+			      distinct => 1});
 
   return wantarray ? $CDSs->all : $CDSs;
 }
@@ -393,8 +398,10 @@ sub codon_at_location {
 
 sub three_prime_UTRs {
   my $self = shift;
-  my $three_prime_UTRs = $self->children->search({type     => 'three_prime_UTR'},
- {order_by => { -asc => 'start' }});
+  my $three_prime_UTRs = $self->children({type => 'three_prime_UTR'},
+					 {order_by => { -asc => 'start' },
+					  distinct => 1});
+
   return wantarray ? $three_prime_UTRs->all : $three_prime_UTRs;
 }
 
@@ -412,8 +419,10 @@ sub three_prime_UTRs {
 
 sub five_prime_UTRs {
   my $self = shift;
-  my $five_prime_UTRs = $self->children->search({type => 'five_prime_UTR'},
-{order_by => { -asc => 'start' }});
+  my $five_prime_UTRs = $self->children({type => 'five_prime_UTR'},
+					{order_by => { -asc => 'start' },
+					 distinct => 1});
+
   return wantarray ? $five_prime_UTRs->all : $five_prime_UTRs;
 }
 
@@ -432,11 +441,14 @@ sub five_prime_UTRs {
 sub infer_three_prime_UTR {
   my ($self, $three_prime_UTR) = @_;
 
-  $three_prime_UTR ||= $self->children->search({type => 'three_prime_UTR'},
-       {order_by => { -asc => 'start' }});
+  $three_prime_UTR ||= $self->children({type => 'three_prime_UTR'},
+				       {order_by => { -asc => 'start' },
+					distinct => 1});
 
-  my $exons = $self->children->search({type => 'exon'},
-      {order_by => { -asc => 'start' }});
+
+  my $exons = $self->children({type => 'exon'},
+			      {order_by => { -asc => 'start' },
+			       distinct => 1});
 
   my $strand = $self->strand;
 
@@ -444,14 +456,16 @@ sub infer_three_prime_UTR {
 
   #### MOVE THIS TO cds.pm ###
   if ($strand eq '+') {
-      my $CDSs = $self->children->search({type => 'CDS'},
-					 {order_by => { -asc => 'start' }});
+      my $CDSs = $self->children({type => 'CDS'},
+				  {order_by => { -asc => 'start' },
+				   distinct => 1});
 
       $start = $CDSs->next->start;
   }
   else {
-      my $CDSs = $self->children->search({type => 'CDS'},
-					 {order_by => { -desc => 'end' }});
+      my $CDSs = $self->children({type => 'CDS'},
+				 {order_by => { -desc => 'end' },
+				  distinct => 1});
 
       $start = $CDSs->next->end;
   }
