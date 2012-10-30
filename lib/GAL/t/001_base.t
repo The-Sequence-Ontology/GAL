@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 27;
+use Test::More;
 
 BEGIN {
 	use lib '../../';
@@ -22,7 +22,8 @@ isa_ok($base, 'GAL::Base');
 # ok($base->throw('error_code', 'Test throw'), '$base->throw');
 
 # TEST 3
-ok($base->warn('warn_code', 'Test warn'), '$base->warn');
+ok(! $base->warn('warn_code', 'Test warn'), '$base->warn');
+ok(! $base->info('info', 'Test info'), '$base->info');
 
 # TEST 4
 my $wrap_text = 'x' x 100;
@@ -117,6 +118,7 @@ ok($base->float_gt(0.000124, 0.000123), '$base->float_gt');
 ok($base->float_ge(0.000123, 0.000123), '$base->float_ge');
 ok(! $base->float_gt(0.000123, 0.000124), '$base->float_gt');
 
+done_testing;
 
 ################################################################################
 ################################# Ways to Test #################################
