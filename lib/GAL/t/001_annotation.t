@@ -27,7 +27,12 @@ isa_ok($annotation->storage(dsn   => 'DBI:SQLite:data/test_storage.sqlite',
 			   ), 'GAL::Storage::SQLite', '$annotation->storage');
 
 # TEST 
-ok($annotation->load_files('data/dmel-4-r5.24.partial.gff'),
+
+my $data_file = 'data/dmel-4-r5.24.partial.gff';
+my $db_file;
+($db_file = $data_file) =~ s/\.gff$/.sqlite/;
+`rm -f $db_file` if -e $db_file;
+ok($annotation->load_files($data_file),
    '$annotation->load_files');
 
 # TEST 
