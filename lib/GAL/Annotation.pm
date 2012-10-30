@@ -11,7 +11,7 @@ use vars qw($VERSION);
 $VERSION = '0.01';
 
 =head1 NAME
-    
+
 GAL::Annotation - Genome Annotation Library
 
 =head1 VERSION
@@ -29,10 +29,10 @@ This document describes GAL::Annotation version 0.01
 
     # Otherwise be explicit about everything.
     my %feat_store_args = (class    => 'SQLite',
-                           database => '/path/to/file.gff'
-                          );
+			   database => '/path/to/file.gff'
+			  );
     my $feat_store = GAL::Annotation->new(storage => \%feat_store_args,
-                                          fasta   => '/path/to/file.fa');
+					  fasta   => '/path/to/file.fa');
     $feat_store->load_files($feature_file);
     my $features = $feat_store->schema->resultset('Feature');
 
@@ -131,7 +131,7 @@ the sequence in provided by Bio::DB::Fasta.
 #-----------------------------------------------------------------------------
 
 =head2 new
-    
+
      Title   : new
      Usage   : GAL::Annotation->new();
      Function: Creates a GAL::Annotation object;
@@ -139,12 +139,12 @@ the sequence in provided by Bio::DB::Fasta.
      Args    : A list of key value pairs for the attributes specified above.
 
 =cut
-    
+
 sub new {
     my ($class, @args) = @_;
-    
+
     my ($args, $feature_file) = _check_for_simple_args(@args);
-    
+
     my $self = $class->SUPER::new($args);
     $self->load_files($feature_file) if $feature_file;
     return $self;
@@ -154,7 +154,7 @@ sub new {
 
 sub _initialize_args {
     my ($self, @args) = @_;
-    
+
     ######################################################################
     # This block of code handles class attributes.  Use the
     # @valid_attributes below to define the valid attributes for
@@ -171,11 +171,11 @@ sub _initialize_args {
 #-----------------------------------------------------------------------------
 
 sub _check_for_simple_args {
-    
+
     my @args = @_;
-    
+
     return {} unless @args;
-    
+
     # If one or two files are passed in along
     # we'll assume they are a GFF3 and Fasta file
     my ($args, $feature_file, $fasta_file);
@@ -288,8 +288,8 @@ details.
 
   Title   : features
   Usage   : $self->features();
-  Function: Return a GAL::Schema::Result::Feature object (a 
-            DBIx::Class::ResultSet for all features).
+  Function: Return a GAL::Schema::Result::Feature object (a
+	    DBIx::Class::ResultSet for all features).
   Returns : A GAL::Schema::Result::Feature object
   Args    : N/A
 
@@ -346,10 +346,10 @@ sub schema {
  Title   : load_files
  Usage   : $a = $self->load_files();
  Function: Parse and store all of the features in a file. If a single
-           file is given as an argument and if there are gff[3] and
-           sqlite versions of that files base name then time stamps
-           are compared and the database is only (re)loaded if the
-           GFF3 file is newer.
+	   file is given as an argument and if there are gff[3] and
+	   sqlite versions of that files base name then time stamps
+	   are compared and the database is only (re)loaded if the
+	   GFF3 file is newer.
  Returns : N/A
  Args    : A list of files.
  Notes   : Default
