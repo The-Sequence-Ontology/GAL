@@ -52,7 +52,7 @@ subclass for gene specific behavior.
  Title   : transcripts
  Usage   : $transcripts = $self->transcripts
  Function: Get the gene's transcript sorted by start with the longest
-           transcripts first when start locations are equal.
+	   transcripts first when start locations are equal.
  Returns : A DBIx::Class::Result object loaded up with transcripts.
  Args    : None
 
@@ -157,9 +157,23 @@ sub splice_complexity {
 sub mRNAs {
   my $self = shift;
 
+  my $sort_order;
+  if ($self->strand eq '-') {
+      $sort_order = [{ -desc => 'end' },
+		     { -asc =>  'start'},
+	  ];
+  }
+  else {
+      $sort_order = [{ -asc  => 'start' },
+		     { -desc =>  'end'},
+	  ];
+  }
+
+
   #TODO: should use SO directly.
   my $mRNAs = $self->children({type => 'mRNA'},
-			      {distinct => 1});
+			      {order_by => $sort_order,
+			       distinct => 1});
   return wantarray ? $mRNAs->all : $mRNAs;
 }
 
@@ -167,10 +181,10 @@ sub mRNAs {
 # This probably shouldn't be here, but leaving it as comment for now 10/1/12 BM
 
 # sub feature_id {
-# 
+#
 #     my $self = shift;
 #     return $self->id;
-# 
+#
 # }
 #-----------------------------------------------------------------------------
 
