@@ -436,7 +436,6 @@ sub add_features {
       my $warn_code = 'bad_feature_table_insert :';
       my $data = join ', ', @{$feat_row};
       $warn_message .= $data;
-      $warn_code    .= $data;
       $self->warn($warn_code,
 		  $warn_message);
     }
