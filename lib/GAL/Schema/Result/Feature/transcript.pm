@@ -50,57 +50,6 @@ subclass for transcript specific behavior.
 
 #-----------------------------------------------------------------------------
 
-=head2 exons_genomic
-
- Title   : exons_genomic
- Usage   : $exons = $self->exons_genomic
- Function: Get the transcripts exons sorted in genomic order
- Returns : A DBIx::Class::Result object loaded up with exons
- Args    : None
-
-=cut
-
-sub exons_genomic {
-  my $self = shift;
-  my $exons = $self->children({type => 'exon'},
-			      {order_by => {'-asc' => 'start'},
-			       distinct => 1});
-
-  return wantarray ? $exons->all : $exons;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 exons_rs
-
- Title   : exons_rs
- Usage   : $exons_rs = $self->exons_rs
- Function: Get the transcript's exons sorted in order of the transcripts strand
- Returns : A DBIx::Class::Result object loaded up with exons
- Args    : None
-
-=cut
-
-sub exons_rs {
-  my $self = shift;
-
-  my $sort_order;
-  if ($self->strand eq '-') {
-    $sort_order = {'-desc' => 'end'};
-  }
-  else {
-    $sort_order = {'-asc' => 'start'};
-  }
-
-  my $exons = $self->children({type => 'exon'},
-			       {order_by => $sort_order,
-				distinct => 1});
-
-  return wantarray ? $exons->all : $exons;
-}
-
-#-----------------------------------------------------------------------------
-
 =head2 exons
 
  Title   : exons
@@ -108,7 +57,9 @@ sub exons_rs {
  Function: Get the transcript's exons.
  Returns : In list context returns an unsorted array of exon objects.
  	   In scalar context returns an iterator (DBIC::ResultSet)
- 	   with exons sorted in 5'->3' on the transcript's strand
+ 	   with exons sorted in 5'->3' on the transcript's strand.
+           Calling in list context is much faster but loads all exons
+           immediately into memory.
  Args    : None
 
 =cut
@@ -227,9 +178,10 @@ sub infer_introns {
 			       distinct => 1});
 
   my @coordinates;
-  while(my $exon = $exons->next) {
+  for my $exon (@exons) {
     push @coordinates, ($exon->start, $exon->end);
   }
+  @coordinates = sort {$a <=> $b} @coordinates;
 
   shift @coordinates;
   pop   @coordinates;
