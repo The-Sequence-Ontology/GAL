@@ -173,9 +173,9 @@ sub infer_introns {
   }
 
   # Keep the order_by like this so we stay in genomic order
-  my $exons = $self->children({type => 'exon'},
+  my @exons = $self->children({type => 'exon'},
 			      {order_by => { -asc => 'start' },
-			       distinct => 1});
+			       distinct => 1})->all;
 
   my @coordinates;
   for my $exon (@exons) {
