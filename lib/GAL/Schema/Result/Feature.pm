@@ -89,6 +89,27 @@ my @sequence_alterations = qw(copy_number_variation deletion indel
 			      simple_sequence_length_variation translocation);
 map {$FEATURE_MAP{$_} = 'sequence_alteration'} @sequence_alterations;
 
+# The ! to make it sort before any letters
+my %ATT_ORDER = (ID              => '!01',
+		 Variant_seq	 => '!02',
+		 Reference_seq   => '!03',
+		 Variant_effect  => '!04',
+		 Genotype	 => '!05',
+		 Variant_codon   => '!06',
+		 Reference_codon => '!07',
+		 Variant_aa	 => '!08',
+		 Reference_aa	 => '!09',
+		 Name		 => '!10',
+		 Alias	   	 => '!11',  
+		 Parent	   	 => '!12',
+		 Target	   	 => '!13',
+		 Gap		 => '!14',
+		 Derives_from	 => '!15',
+		 Dbxref	         => '!16',
+		 Ontology_term   => '!17',
+		 Is_circular     => '!18',
+    );
+
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('feature');
 __PACKAGE__->add_columns(qw/ subject_id feature_id seqid source type start end score strand phase bin/);
@@ -542,7 +563,8 @@ sub to_gff3 {
 
   map {$_ = join ',', uniq @{$_}} values %{$attributes};
   my $attrb_text;
-  for my $key (keys %{$attributes}) {
+
+  for my $key (sort {($ATT_ORDER{$a} || $a) cmp ($ATT_ORDER{b} || $b)} keys %{$attributes}) {
     $attrb_text .= "$key=" . $attributes->{$key} . ';';
   }
 
