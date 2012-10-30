@@ -105,8 +105,10 @@ sub exons_rs {
 
  Title   : exons
  Usage   : $exons = $self->exons
- Function: Get the transcript's exons sorted in order of the transcripts strand
- Returns : An array(ref) of exon objects
+ Function: Get the transcript's exons.
+ Returns : In list context returns an unsorted array of exon objects.
+ 	   In scalar context returns an iterator (DBIC::ResultSet)
+ 	   with exons sorted in 5'->3' on the transcript's strand
  Args    : None
 
 =cut
@@ -114,15 +116,19 @@ sub exons_rs {
 sub exons {
   my $self = shift;
 
-  my @exons = grep {$_->type eq 'exon'} $self->children->all;
-  if ($self->strand eq '-') {
-    @exons = sort {$b->end <=> $a->end} @exons;
+  if (wantarray) {
+      return grep {$_->type eq 'exon'} $self->children->all;
   }
   else {
-    @exons = sort {$a->start <=> $b->start} @exons;
+      my $sort_order = ($self->strand eq '-' ?
+			{'-desc' => 'end'}   :
+			{'-asc'  => 'start'});
+      
+      my $exons = $self->children({type => 'exon'},
+				  {order_by => $sort_order,
+				   distinct => 1});
+      return $exons;
   }
-
-  return wantarray ? @exons : \@exons;
 }
 
 #-----------------------------------------------------------------------------
@@ -412,8 +418,7 @@ sub three_prime_UTR_seq {
 sub length {
   my $self = shift;
   my $length;
-  map {$length += $_->length} $self->children({type => 'exon'},
-					      {distinct => 1})->all;
+  map {$length += $_->length} $self->exons;
   $self->warn('transcript_has_no_exons', $self->feature_id) unless $length;
   return $length;
 }
