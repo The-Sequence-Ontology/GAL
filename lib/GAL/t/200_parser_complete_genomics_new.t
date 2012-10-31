@@ -1,11 +1,10 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 3;
+use Test::More skip_all => 'GAL::Parser::complete_genomics_new in developement';
 
 BEGIN {
 	use lib '../../';
-	#TEST 1
 	use_ok('GAL::Parser::complete_genomics_new');
 }
 
@@ -14,7 +13,6 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-# TEST 2
 my $object = GAL::Parser::complete_genomics_new->new();
 isa_ok($object, 'GAL::Parser::complete_genomics_new');
 
@@ -22,9 +20,7 @@ isa_ok($object, 'GAL::Parser::complete_genomics_new');
 # Select an empty line and then: C-u M-| grep -nP '^sub ' ../Class.pm
 # Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Class.pm
 
-# TEST 3
-
-
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################

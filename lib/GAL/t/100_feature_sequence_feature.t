@@ -1,12 +1,11 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 3;
+use Test::More;
 
 BEGIN {
 	use lib '../../';
-	#TEST 1
-	use_ok('GAL::Feature::Sequence_Feature');
+	use_ok('GAL::Feature::sequence_feature');
 }
 
 my $path = $0;
@@ -14,16 +13,14 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-# TEST 2
-my $object = GAL::Feature::Sequence_Feature->new();
-isa_ok($object, 'GAL::Feature::Sequence_Feature');
+my $object = GAL::Feature::sequence_feature->new();
+isa_ok($object, 'GAL::Feature::sequence_feature');
 
 # To get a list of all of the subs and throws:
 # Select an empty line and then: C-u M-| grep -nP '^sub ' ../Class.pm
 # Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Class.pm
 
-# TEST 3
-
+done_testing();
 
 
 ################################################################################

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 4;
+use Test::More  skip_all => 'GAL::Parser::basic_cosmic in developement';
 
 BEGIN {
 	use lib '../../';
@@ -14,8 +14,6 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-BAIL_OUT('This module needs work before it can be tested');
-
 my $parser = GAL::Parser::cosmic->new(file => 'data/cosmic.txt');
 
 # TEST 2
@@ -26,6 +24,8 @@ ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
 
 # TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');
+
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################

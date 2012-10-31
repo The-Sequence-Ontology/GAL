@@ -1,12 +1,12 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 3;
+use Test::More;
 
 BEGIN {
-	use lib '../../';
-	#TEST 1
-	use_ok('GAL::Class');
+  use FindBin;
+  use lib "$FindBin::Bin/../../";
+  use_ok('GAL::Annotation');
 }
 
 my $path = $0;
@@ -14,16 +14,14 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-# TEST 2
-my $object = GAL::Class->new();
-isa_ok($object, 'GAL::Class');
+my $object = GAL::Annotation->new();
+isa_ok($object, 'GAL::Annotation');
 
 # To get a list of all of the subs and throws:
 # Select an empty line and then: C-u M-| grep -nP '^sub ' ../Class.pm
 # Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Class.pm
 
-# TEST 3
-
+done_testing();
 
 
 ################################################################################

@@ -1,11 +1,10 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 4;
+use Test::More skip_all => 'GAL::Parser::dbsnp_flat';
 
 BEGIN {
 	use lib '../../';
-	#TEST 1
 	use_ok('GAL::Parser::dbsnp_flat');
 }
 
@@ -14,18 +13,15 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-BAIL_OUT('This module needs work before it can be tested');
-
 my $parser = GAL::Parser::dbsnp_flat->new(file => 'data/dbsnp_flat.txt');
 
-# TEST 2
 isa_ok($parser, 'GAL::Parser::dbsnp_flat');
 
-# Test 3
 ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
 
-# TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');
+
+done_testing;
 
 ################################################################################
 ################################# Ways to Test #################################
