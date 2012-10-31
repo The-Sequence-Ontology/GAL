@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 4;
+use Test::More skip_all => 'GAL::Parser::basic_snp in developement';
 
 BEGIN {
 	use lib '../../';
@@ -9,7 +9,6 @@ BEGIN {
 	use_ok('GAL::Parser::basic_snp');
 }
 
-BAIL_OUT('This module needs work before it can be tested');
 
 my $path = $0;
 $path =~ s/[^\/]+$//;

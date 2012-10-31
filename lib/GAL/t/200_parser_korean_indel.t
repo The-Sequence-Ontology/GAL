@@ -6,7 +6,7 @@ use Test::More tests => 4;
 BEGIN {
 	use lib '../../';
 	#TEST 1
-	use_ok('GAL::Parser::illumina_indel');
+	use_ok('GAL::Parser::korean_indel');
 }
 
 my $path = $0;
@@ -14,13 +14,13 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $parser = GAL::Parser::illumina_indel->new(file => 'data/illumina_indel.gff');
+my $parser = GAL::Parser::korean_indel->new(file => 'data/korean_indel.gff');
 
 # TEST 2
-isa_ok($parser, 'GAL::Parser::illumina_indel');
+isa_ok($parser, 'GAL::Parser::korean_indel');
 
 # Test 3
-ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
+ok(my $record = $parser->next_record, '$parser->next_record');
 
 # TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');

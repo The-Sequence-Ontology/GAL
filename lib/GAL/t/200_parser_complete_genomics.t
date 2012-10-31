@@ -1,11 +1,10 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 4;
+use Test::More skip_all => 'GAL::Parser::complete_genomics in developement';
 
 BEGIN {
 	use lib '../../';
-	#TEST 1
 	use_ok('GAL::Parser::complete_genomics');
 }
 
@@ -24,6 +23,8 @@ ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
 
 # TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');
+
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################
