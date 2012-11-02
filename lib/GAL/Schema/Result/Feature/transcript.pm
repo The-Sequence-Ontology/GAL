@@ -396,7 +396,7 @@ sub coordinate_map {
     my $strand = $self->strand;
     my $length = $self->length;
     my %coordinate_map;
-    my @exons = $self->exons_genomic->all;
+    my @exons = $self->exons;
     my ($transcript_position, $increment);
     if ($strand eq '-') {
       $transcript_position = $length - 1;

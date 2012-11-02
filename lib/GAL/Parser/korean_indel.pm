@@ -213,8 +213,6 @@ sub parse_record {
 sub reader {
   my $self = shift;
 
-	$self->fields([qw()]);
-
   if (! $self->{reader}) {
     my @field_names = qw(transcript_id chromosome location total_reads seq context1
 			  context2 zygosity gene_name gene_part);

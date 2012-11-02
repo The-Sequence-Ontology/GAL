@@ -516,7 +516,7 @@ sub to_gff3 {
 				   );
 
 	my $att_text = 'ID=' . $self->id . ';';
-	if (my @parents = $self->parents) {
+	if (my @parents = $self->parent) {
 		$att_text .= 'Parent=' . join ',', @parents . ';';
 	}
 	if ($self->name) {
