@@ -42,62 +42,31 @@ Options:
 
 ";
 
-my ($help, $fasta, $feature_db, $variant_db, $limit_chr);
+my ($help, $fasta_file, $gff_file, $gvf_file, $limit_chr);
 
 my $opt_success = GetOptions('help'          => \$help,
-			     'fasta=s'       => \$fasta,
-			     'features=s'    => \$feature_db,
-			     'variants=s'    => \$variant_db,
+			     'fasta=s'       => \$fasta_file,
+			     'features=s'    => \$gff_file,
+			     'variants=s'    => \$gvf_file,
 			     'chr=s'         => \$limit_chr,
 			      );
 
 die $usage if $help || ! $opt_success;
 
-my $driver = 'SQLite';
-my $parser = 'gff3';
 
-# Create db_names if we were passed GFF3 or GVF
-my ($feature_file, $variant_file);
-if (-T $feature_db) {
-  $feature_file = $feature_db;
-  $feature_db =~ s/\.gff3?$/.sqlite/;
-}
-if (-T $variant_db) {
-  $variant_file = $variant_db;
-  $variant_db =~ s/\.gvf$/.sqlite/;
-}
+die "$usage\n\nFATAL : missing_fasta_file : Fasta file required\n" unless $fasta_file;
+die "$usage\n\nFATAL : missing_gff3_file : GFF3 file required\n"   unless $gff_file;
+die "$usage\n\nFATAL : missing_gvf_file : GVF file required\n"     unless $gvf_file;
 
-# Making a hash of the arguments for the features and variants
-my %feat_store_args = (class    => $driver,
-		       database => $feature_db
-		      );
+my $gff_anno = GAL::Annotation->new($gff_file,
+				    $fasta_file);
 
-my %var_store_args = (class    => $driver,
-		      database => $variant_db,
-		     );
+my $features = $gff_anno->features;
 
-# Lazy connect to the database for the features and variants
-my $feat_store = GAL::Annotation->new(storage => \%feat_store_args,
-				      fasta   => $fasta,
-				     );
+my $gvf_anno = GAL::Annotation->new($gvf_file,
+				    $fasta_file);
 
-my $var_store = GAL::Annotation->new(storage => \%var_store_args,
-				     fasta   => $fasta,
-				    );
-
-# Load files to DB if given as a text file.
-if ($feature_file) {
-  $feat_store->parser(class => $parser);
-  $feat_store->load_files(files => $feature_file);
-}
-if ($variant_file) {
-  $var_store->parser(class => $parser);
-  $var_store->load_files(files => $variant_file);
-}
-
-# Load a resultset.
-my $features = $feat_store->schema->resultset('Feature');
-my $variants = $var_store->schema->resultset('Feature');
+my $variants = $gvf_anno->features;
 
 # Define the search
 my %feature_where = (type => 'mRNA');
@@ -114,9 +83,9 @@ while (my $mrna = $mrnas->next) {
     my $CDSs = $mrna->CDSs;
     # Iterate over each CDS
     while (my $CDS = $CDSs->next) {
-        # Calculate which genomic bins this feature overlaps
+	# Calculate which genomic bins this feature overlaps
 	my $bins = $CDS->get_feature_bins;
-        # Get my start and end
+	# Get my start and end
 	my $cds_start = $CDS->start;
 	my $cds_end   = $CDS->end;
 	# Set up a new set of search criteria for overlapping variants
