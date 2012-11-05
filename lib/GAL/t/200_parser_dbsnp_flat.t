@@ -17,7 +17,7 @@ my $parser = GAL::Parser::dbsnp_flat->new(file => 'data/dbsnp_flat.txt');
 
 isa_ok($parser, 'GAL::Parser::dbsnp_flat');
 
-ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
+ok(my $record = $parser->next_record, '$parser->next_record');
 
 ok($parser->parse_record($record), '$parser->parse_record');
 

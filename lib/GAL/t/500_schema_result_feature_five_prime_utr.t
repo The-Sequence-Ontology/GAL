@@ -1,11 +1,10 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 3;
+use Test::More;
 
 BEGIN {
 	use lib '../../';
-	#TEST 1
 	use_ok('GAL::Schema::Result::Feature::five_prime_utr');
 }
 
@@ -14,7 +13,6 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-# TEST 2
 my $object = GAL::Schema::Result::Feature::five_prime_utr->new();
 isa_ok($object, 'GAL::Schema::Result::Feature::five_prime_utr');
 
@@ -22,9 +20,7 @@ isa_ok($object, 'GAL::Schema::Result::Feature::five_prime_utr');
 # Select an empty line and then: C-u M-| grep -nP '^sub ' ../Schema::Result::Feature::five_prime_utr.pm
 # Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Schema::Result::Feature::five_prime_utr.pm
 
-# TEST 3
-
-
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################

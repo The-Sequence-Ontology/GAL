@@ -1,11 +1,10 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 3;
+use Test::More;
 
 BEGIN {
 	use lib '../../';
-	#TEST 1
 	use_ok('GAL::Reader::Template');
 }
 
@@ -14,7 +13,6 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-# TEST 2
 my $object = GAL::Reader::Template->new();
 isa_ok($object, 'GAL::Reader::Template');
 
@@ -22,9 +20,7 @@ isa_ok($object, 'GAL::Reader::Template');
 # Select an empty line and then: C-u M-| grep -nP '^sub ' ../Reader::Template.pm
 # Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Reader::Template.pm
 
-# TEST 3
-
-
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################

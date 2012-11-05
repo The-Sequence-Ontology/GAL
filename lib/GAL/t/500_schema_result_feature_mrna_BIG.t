@@ -49,14 +49,6 @@ while (my $mrna = $mrnas->next) {
 
 done_testing();
 
-# To get a list of all of the subs and throws:
-# Select an empty line and then: C-u M-| grep -nP '^sub ' ../Schema::Result::Feature::transcript.pm
-# Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Schema::Result::Feature::transcript.pm
-
-# TEST 3
-
-
-
 ################################################################################
 ################################# Ways to Test #################################
 ################################################################################

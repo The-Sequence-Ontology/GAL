@@ -20,7 +20,7 @@ my $parser = GAL::Parser::watson_cshl->new(file => 'data/watson_cshl.txt');
 isa_ok($parser, 'GAL::Parser::watson_cshl');
 
 # Test 3
-ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
+ok(my $record = $parser->next_record, '$parser->next_record');
 
 # TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');

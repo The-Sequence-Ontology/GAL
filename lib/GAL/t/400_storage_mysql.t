@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 3;
+use Test::More;
 
 BEGIN {
 	use lib '../../';
@@ -22,9 +22,7 @@ isa_ok($object, 'GAL::Storage::mysql');
 # Select an empty line and then: C-u M-| grep -nP '^sub ' ../Storage::mysql.pm
 # Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Storage::mysql.pm
 
-# TEST 3
-
-
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################

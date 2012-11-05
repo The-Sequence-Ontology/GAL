@@ -178,7 +178,7 @@ sub parse_record {
 	my ($their_zygosity, $variant_type) =
 	  $record->{variant_type} =~ /(.*?)_(.*)/;
 
-	return undef unless $variant_type eq 'SNP';
+	#return undef unless $variant_type eq 'SNP';
 
 	my %type_map = (deletion               => 'nucleotide_deletion',
 			insertion              => 'nucleotide_insertion',
@@ -190,7 +190,7 @@ sub parse_record {
 	$type = $type_map{$variant_type};
 
 	my $reference_seq = uc $self->fasta->seq($seqid, $start, $end);
-        $reference_seq = $self->revcomp($reference_seq) if $strand eq '-';
+	$reference_seq = $self->revcomp($reference_seq) if $strand eq '-';
 
 	my ($seq_text) = split /;/, $record->{seqs};
 	my @variant_seqs = split m|/|, $seq_text;
@@ -198,17 +198,17 @@ sub parse_record {
 
 	# if ($reference_seq ne $real_ref) {
 	#     $self->warn('reference_seq_mismatch',
-	# 		('The reference sequence given for this record ' .
-	# 		'does not match the reference sequence in the ' .
-	# 		'given fasta files.'
-	# 		)
-	# 		);
+	#		('The reference sequence given for this record ' .
+	#		'does not match the reference sequence in the ' .
+	#		'given fasta files.'
+	#		)
+	#		);
 	# }
-	
+
 	#unshift @variant_seqs, $reference_seq
 	#  if $record->{variant_type} =~ /^heterozygous/;
 
-        my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+	my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 	# sort | uniq -c | sort -nr
 	# 1624998 heterozygous_SNP
@@ -257,7 +257,7 @@ sub reader {
 
   if (! $self->{reader}) {
     my @field_names = qw(chromosome variant_id variant_type start end score
-                          orientation seqs processing);
+			  orientation seqs processing);
     my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
     $self->{reader} = $reader;
   }

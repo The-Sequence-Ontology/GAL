@@ -21,7 +21,7 @@ my $parser = GAL::Parser::basic_snp->new(file => 'data/basic_snp.txt');
 isa_ok($parser, 'GAL::Parser::basic_snp');
 
 # Test 3
-ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
+ok(my $record = $parser->next_record, '$parser->next_record');
 
 # TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');

@@ -147,7 +147,8 @@ sub _initialize_args {
 sub next_record {
 	my $self = shift;
 	my $line;
-	while ($line = <$self->{fh}>) {
+	my $fh = $self->fh;
+	while (my $line = <$fh>) {
 	  last unless $line =~ /\s*\#/;
 	}
 	my @fields = split /\t/, $line;

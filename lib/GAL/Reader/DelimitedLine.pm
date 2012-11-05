@@ -290,6 +290,7 @@ sub header_count {
   if ($header_count) {
     $self->{header_count} = $header_count;
   }
+  $self->{header_count} ||= 0;
   return $self->{header_count};
 }
 
