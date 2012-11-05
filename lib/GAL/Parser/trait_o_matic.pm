@@ -2,6 +2,9 @@ package GAL::Parser::trait_o_matic;
 
 use strict;
 use vars qw($VERSION);
+
+$VERSION = '0.01';
+use base qw(GAL::Parser);
 use GAL::Reader::DelimitedLine;
 
 =head1 NAME

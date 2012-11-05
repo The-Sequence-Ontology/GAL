@@ -19,7 +19,7 @@ my $parser = GAL::Parser::complete_genomics->new(file => 'data/complete_genomics
 isa_ok($parser, 'GAL::Parser::complete_genomics');
 
 # Test 3
-ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
+ok(my $record = $parser->next_record, '$parser->next_record');
 
 # TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');

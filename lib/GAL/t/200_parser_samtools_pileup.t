@@ -20,7 +20,7 @@ my $parser = GAL::Parser::samtools_pileup->new(file => 'data/samtools_pileup.txt
 isa_ok($parser, 'GAL::Parser::samtools_pileup');
 
 # Test 3
-ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
+ok(my $record = $parser->next_record, '$parser->next_record');
 
 # TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');

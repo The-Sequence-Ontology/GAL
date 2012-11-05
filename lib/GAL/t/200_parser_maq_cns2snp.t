@@ -1,12 +1,12 @@
 #!/usr/bin/perl -w
 use strict;
 
-use Test::More tests => 4;
+use Test::More;
 
 BEGIN {
 	use lib '../../';
 	#TEST 1
-	use_ok('GAL::Parser::maq_csn2snp');
+	use_ok('GAL::Parser::maq_cns2snp');
 }
 
 my $path = $0;
@@ -14,16 +14,18 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $parser = GAL::Parser::maq_csn2snp->new(file => 'data/maq_csn2snp.gff');
+my $parser = GAL::Parser::maq_cns2snp->new(file => 'data/maq_cns2snp.snp');
 
 # TEST 2
-isa_ok($parser, 'GAL::Parser::maq_csn2snp');
+isa_ok($parser, 'GAL::Parser::maq_cns2snp');
 
 # Test 3
-ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
+ok(my $record = $parser->next_record, '$parser->next_record');
 
 # TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');
+
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################

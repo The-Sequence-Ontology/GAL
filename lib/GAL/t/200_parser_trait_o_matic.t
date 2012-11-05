@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 4;
+use Test::More;
 
 BEGIN {
 	use lib '../../';
@@ -14,7 +14,8 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $parser = GAL::Parser::trait_o_matic->new(file => 'data/trait_o_matic.gff');
+my $parser = GAL::Parser::trait_o_matic->new(file  => 'data/trait_o_matic.gff',
+					     fasta => 'data/fasta_hg18/chr22_hg18.fasta');
 
 # TEST 2
 isa_ok($parser, 'GAL::Parser::trait_o_matic');
@@ -24,6 +25,22 @@ ok(my $record = $parser->next_record, '$parser->next_record');
 
 # TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');
+
+while (my $variant = $parser->next_feature_hash) {
+  ok($variant->{seqid},   'variant->{seqid}');
+  ok($variant->{source},  'variant->{source}');
+  ok($variant->{type},    'variant->{type}');
+  like($variant->{start}, qr/^\d+$/,'variant->{start}');
+  like($variant->{end},   qr/^\d+$/,  'variant->{end}');
+  ok($variant->{score},   'variant->{end}');
+  like($variant->{strand}, qr/^[+\-]$/,  'variant->{end}');
+  ok($variant->{phase} eq '.',   'variant->{end}');
+  ok($variant->{attributes}{ID}[0], 'variant->{attributes}{ID}[0]');
+  like($variant->{attributes}{Variant_seq}[0], qr/^[ATGCN]+$/i, 'variant->{attributes}{Variant_seq}[0]');
+  like($variant->{attributes}{Reference_seq}[0], qr/^[ATGCN]+$/i,  'variant->{attributes}{Reference_seq}[0]');
+}
+
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################

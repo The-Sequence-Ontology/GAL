@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 use strict;
 
 use Test::More tests => 4;
@@ -6,7 +6,7 @@ use Test::More tests => 4;
 BEGIN {
 	use lib '../../';
 	#TEST 1
-	use_ok('GAL::Parser::soap_indel');
+	use_ok('GAL::Parser::solid_snp');
 }
 
 my $path = $0;
@@ -14,13 +14,13 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $parser = GAL::Parser::soap_indel->new(file => 'data/soap_indel.gff');
+my $parser = GAL::Parser::solid_snp->new(file => 'data/solid_snp.txt');
 
 # TEST 2
-isa_ok($parser, 'GAL::Parser::soap_indel');
+isa_ok($parser, 'GAL::Parser::solid_snp');
 
 # Test 3
-ok(my $record = $parser->_read_next_record, '$parser->_read_next_record');
+ok(my $record = $parser->next_record, '$parser->next_record');
 
 # TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');

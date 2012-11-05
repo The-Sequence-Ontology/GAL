@@ -1,11 +1,10 @@
 #!/usr/bin/perl
-use strict;
 
-use Test::More tests => 3;
+use strict;
+use Test::More;
 
 BEGIN {
 	use lib '../../';
-	#TEST 1
 	use_ok('GAL::Schema::Result::Feature::template');
 }
 
@@ -14,7 +13,6 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-# TEST 2
 my $object = GAL::Schema::Result::Feature::template->new();
 isa_ok($object, 'GAL::Schema::Result::Feature::template');
 
@@ -22,9 +20,7 @@ isa_ok($object, 'GAL::Schema::Result::Feature::template');
 # Select an empty line and then: C-u M-| grep -nP '^sub ' ../Schema::Result::Feature::template.pm
 # Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Schema::Result::Feature::template.pm
 
-# TEST 3
-
-
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################

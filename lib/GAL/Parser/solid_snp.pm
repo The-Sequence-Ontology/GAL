@@ -162,7 +162,8 @@ sub reader {
 
   if (! $self->{reader}) {
     my @field_names = qw(chr pos ref_base con_base coverage);
-    my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
+    my $reader = GAL::Reader::DelimitedLine->new(field_names       => \@field_names,
+						 comment_pattern   => qr/^\#[^\#]/);
     $self->{reader} = $reader;
   }
   return $self->{reader};
