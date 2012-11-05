@@ -12,7 +12,7 @@ my $usage = "
 
 Synopsis:
 
-ucsc_gene_table_2_gff --table knownGene
+ucsc2gff --table knownGene knownGene.txt
 
 Description:
 
@@ -49,7 +49,7 @@ Options:
 
     An external alias file that can be used to map transcript IDs to
     gene symbols (e.g. merge_data --col1 1 --col2 0 ccdsKgMap.txt
-    kgXref.txt | perl -lane 'print join \"\t\", \@F[0,10]' >
+    kgXref.txt | perl -lane 'print join \"\\t\", \@F[0,10]' >
     ccds2GeneSymbol.txt)
 
   --add_genes
@@ -84,6 +84,15 @@ my $opt_success = GetOptions('help'      => \$help,
 
 die $usage if $help || ! $opt_success;
 
+my $file = shift;
+die $usage unless $file;
+open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
+
+die "FATAL : fasta_file_required : $fasta_file\n" unless $fasta_file;
+die "FATAL : file_does_not_exist : $fasta_file\n" unless -e $fasta_file;
+die "FATAL : file_not_readable : $fasta_file\n"   unless -r $fasta_file;
+my $fasta = Bio::DB::Fasta->new($fasta_file);
+
 my %ALIASES;
 if ($alias_file) {
     die "FATAL : file_does_not_exist : $alias_file\n"
@@ -99,12 +108,6 @@ if ($alias_file) {
 	$ALIASES{$id}{$alias}++;
     }
 }
-
-my $file = shift;
-die $usage unless $file;
-open (my $IN, '<', $file) or die "Can't open $file for reading\n$!\n";
-
-my $fasta = Bio::DB::Fasta->new($fasta_file);
 
 if ($pragma_file) {
     open(my $PG, '<', $pragma_file) or
