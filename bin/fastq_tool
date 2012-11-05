@@ -24,6 +24,8 @@ Options:
 
   --count	  Return the count of reads in the file.
   --lengths	  Print a summary of the read lengths.
+  --seq           Print only the sequences.
+  --fasta         Print the sequences in fasta format.
   --extract_ids   Extract the records who's IDs are in the given file.
   --quals	  Print a summary of quality values.
   --summary       Print a summary of read counts, lengths and base qualities
@@ -42,13 +44,14 @@ Options:
 ";
 
 
-my ($help, $count, $lengths, $id_file, $quals, $summary, $total, $ill2sanger,
+my ($help, $count, $lengths, $seq, $id_file, $quals, $summary, $total, $ill2sanger,
     $sol2sanger, $fastq2fasta, $trim_qual, $guess_format, $grep_seq,
     $verbose);
 
 my $opt_success = GetOptions('help'          => \$help,
 			     'count'	     => \$count,
 			     'lengths'	     => \$lengths,
+			     'seq'           => \$seq,
 			     'extract_ids=s' => \$id_file,
 			     'quals'	     => \$quals,
 			     'summary'       => \$summary,
@@ -66,13 +69,17 @@ die $usage if $help || ! $opt_success;
 
 my $file = shift;
 
-die $usage unless -r $file;
+die "FATAL : missing_required_input_fastq_file\n" unless -e $file;
+die "FATAL : cant_read_fastq_file : $file\n"      unless -r $file;
 
 if ($count) {
     read_count($file);
 }
 elsif ($lengths) {
     length_summary($file);
+}
+elsif ($seq) {
+    seq_only($file);
 }
 elsif ($id_file) {
     extract_ids($id_file, $file);
@@ -153,6 +160,18 @@ sub length_summary {
 
 #-----------------------------------------------------------------------------
 
+sub seq_only {
+    my $file = shift;
+
+    my $iterator = make_read_iterator($file);
+
+    while (my $read = &$iterator) {
+	print $read->[1] . "\n";
+    }
+}
+
+#-----------------------------------------------------------------------------
+
 sub extract_ids {
     my ($id_file, $fastq_file) = @_;
 
@@ -218,10 +237,14 @@ sub all_summary {
 	$total_length += $length;
 	$length_stat->add_data($length);
 	my @quals = split '', $read->[3];
+	map {$_ = ord($_) - 33} @quals;
 	map {$atgc_count{$_}++} split '', $read->[1];
-	map {$_ = ord} @quals;
 	my $loc = 0;
-	map {$read_location_qual[$loc++] += $_} @quals;
+	for my $qual (@quals) {
+	    $read_location_qual[$loc] ||= Statistics::Descriptive::Discrete->new();
+	    $read_location_qual[$loc]->add_data($qual);
+	    $loc++;
+	}
 	$qual_stat->add_data(@quals);
     }
     print ((' ' x 80) . "\r") if $verbose;
@@ -243,10 +266,14 @@ sub all_summary {
 	print " ($pct\%)\n";
     }
     print "Base Location/Quality Metric\n";
+    print "nt\tmin\tmean\tmedian\tmax\n";
     my $loc = 1;
     for my $read_loc (@read_location_qual) {
 	print $loc++ . "\t";
-	printf("%.1f", $read_loc / $read_count);
+	print $read_loc->min . "\t";
+	printf("%.1f\t", $read_loc->mean);
+	print $read_loc->median . "\t";
+	print $read_loc->max . "\t";
 	print "\n";
     }
     # print get_stat_histogram($stat);
@@ -274,19 +301,21 @@ sub ill2sanger {
 
     my $stat = Statistics::Descriptive::Sparse->new();
 
-    my $count;
-    my $min;
-    while (my $read = &$iterator) {
-	my @quals = split '', $read->[3];
-	map {$_ = ord} @quals;
-	$stat->add_data(@quals);
-	if (++$count == 10000) {
-	    $min = $stat->min;
-	    last;
-	}
-    }
+    # This was an attempt to account for Illumin 1.5+ not using 0,1,2
+    # as quality scores, but I don't think it's necessary any more.
+    #my $count;
+    #my $min;
+    #while (my $read = &$iterator) {
+    #	my @quals = split '', $read->[3];
+    #	map {$_ = ord} @quals;
+    #	$stat->add_data(@quals);
+    #	if (++$count == 10000) {
+    #	    $min = $stat->min;
+    #	    last;
+    #	}
+    #}
 
-    my $adjust = $min - 33;
+    my $adjust = 31; #$min - 33;
     $iterator = make_read_iterator($file);
 
     while (my $read = &$iterator) {
@@ -319,7 +348,8 @@ sub fastq2fasta {
     my $iterator = make_read_iterator($file);
 
     while (my $read = &$iterator) {
-	my $head = $read->[0];
+	my ($head) = split /\s/, $read->[0];
+	$head =~ s/^\@//;
 	my $seq  = $read->[1];
 	print ">$head\n$seq\n";
     }
@@ -346,6 +376,8 @@ sub guess_format {
     my $iterator = make_read_iterator($file);
 
     my $stat = Statistics::Descriptive::Sparse->new();
+
+    $| = 1;
 
     while (my $read = &$iterator) {
 	my @quals = split '', $read->[3];
@@ -420,7 +452,12 @@ sub make_read_iterator {
 	open ($IN, "<&=STDIN") or die "Can't open STDIN\n";
     }
     else {
-	open ($IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
+	my $mode = '<';
+	if ($file =~ /\.gz$/) {
+	    $ mode = '-|';
+	    $file = "gunzip < $file";
+	}
+	open ($IN, $mode, $file) or die "Can't open $file for reading:\n$!\n";
     }
 
     return sub {
