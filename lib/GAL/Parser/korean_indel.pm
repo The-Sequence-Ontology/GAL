@@ -151,7 +151,7 @@ sub parse_record {
 	my $zygosity = $record->{zygosity} eq 'HET' ? 'heterozygous' : 'homozygous';
 
 	my $intersected_gene;
-	$intersected_gene = $record->{gene_name} ne 'Non_genic' ? 'gene:HGNC:' . $record->gene_name : undef;
+	$intersected_gene = $record->{gene_name} ne 'Non_genic' ? 'gene:HGNC:' . $record->{gene_name} : undef;
 
 	#perl -lane 'print $F[9] unless $F[9] eq "Other"' KOREF-solexa-indel-X30_d3D50E20.gff | sort | uniq -c | sort -nr
 	#  127516 Intron

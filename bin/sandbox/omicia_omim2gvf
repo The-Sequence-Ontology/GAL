@@ -36,7 +36,16 @@ my $opt_success = GetOptions('help'           => \$help,
 			     'fasta=s'        => \$fasta,
 			    );
 
-die $usage if $help || ! $opt_success;
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gff_tool --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
 
 $gvf_version  ||= '1.02';
 $file_version ||= '1.00';

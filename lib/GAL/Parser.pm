@@ -336,9 +336,9 @@ that document for details on constrants for each value and attribute.
 
 sub next_feature_hash {
   my $self = shift;
-
+  
   my $feature;
-
+  
   # If a previous record has returned multiple features then
   # grab them off the stack first instead of reading a new one
   # from the file.
@@ -347,29 +347,29 @@ sub next_feature_hash {
     $feature = shift @{$self->{_feature_stack}};
     return wantarray ? %{$feature} : $feature;
   }
-
+  
   # Allow parse_record to return undef to ignore a record, but
   # still keep parsing the file.
   until ($feature) {
     # Get the next record from the file.
     my $record = $self->next_record;
     return undef if ! defined $record;
-
+    
     # Parser the record - probably overridden by a subclass.
     $feature = $self->parse_record($record);
+    
+    # Allow parsers to return more than one feature.
+    # This allows the parser to expand a single record into
+    # multiple features.
+    if (ref $feature eq 'ARRAY') {
+      my $this_feature = shift @{$feature};
+      push @{$self->{_feature_stack}}, @{$feature};
+      $feature = $this_feature;
+    }
   }
-
-  # Allow parsers to return more than one feature.
-  # This allows the parser to expand a single record into
-  # multiple features.
-  if (ref $feature eq 'ARRAY') {
-    my $this_feature = shift @{$feature};
-    push @{$self->{_feature_stack}}, @{$feature};
-    $feature = $this_feature;
-  }
-
-  #$self->validate_feature($feature);
-
+  
+  $self->validate_feature($feature);
+  
   return wantarray ? %{$feature} : $feature;
 }
 
@@ -386,48 +386,48 @@ sub next_feature_hash {
 =cut
 
 sub to_gff3 {
-	my ($self, $feature) = @_;
-
-	my %ATTRB_ORDER = (ID	 => 1,
-			   Name	 => 2,
-			   Alias	 => 3,
-			   Parent	 => 3,
-			   Target	 => 4,
-			   Gap	 => 5,
-			   Derives_from	 => 6,
-			   Note	 => 7,
-			   Dbxref	 => 8,
-			   Ontology_term	 => 9,
-			   Variant_seq	 => 10,
-			   Reference_seq	 => 11,
-			   Variant_reads	 => 12,
-			   Total_reads	 => 13,
-			   Genotype	 => 14,
-			   Variant_effect	 => 15,
-			   Variant_copy_number   => 16,
-			   Reference_copy_number => 17,
-			   );
-
-	my $attribute_text;
-	for my $key (sort {($ATTRB_ORDER{$a} || 99) <=> ($ATTRB_ORDER{$b} || 99) ||
-			       $a cmp $b}
-		     keys %{$feature->{attributes}}) {
-	    my $value_text = join ',', @{$feature->{attributes}{$key}};
-	    $attribute_text .= "$key=$value_text;";
-	}
-
-	my $gff3_text = join "\t", ($feature->{seqid},
-				    $feature->{source},
-				    $feature->{type},
-				    $feature->{start},
-				    $feature->{end},
-				    $feature->{score},
-				    $feature->{strand},
-				    $feature->{phase},
-				    $attribute_text,
-				   );
-
-	return $gff3_text;
+  my ($self, $feature) = @_;
+  
+  my %ATTRB_ORDER = (ID	 => 1,
+		     Name	 => 2,
+		     Alias	 => 3,
+		     Parent	 => 3,
+		     Target	 => 4,
+		     Gap	 => 5,
+		     Derives_from	 => 6,
+		     Note	 => 7,
+		     Dbxref	 => 8,
+		     Ontology_term	 => 9,
+		     Variant_seq	 => 10,
+		     Reference_seq	 => 11,
+		     Variant_reads	 => 12,
+		     Total_reads	 => 13,
+		     Genotype	 => 14,
+		     Variant_effect	 => 15,
+		     Variant_copy_number   => 16,
+		     Reference_copy_number => 17,
+		    );
+  
+  my $attribute_text;
+  for my $key (sort {($ATTRB_ORDER{$a} || 99) <=> ($ATTRB_ORDER{$b} || 99) ||
+		       $a cmp $b}
+	       keys %{$feature->{attributes}}) {
+    my $value_text = join ',', @{$feature->{attributes}{$key}};
+    $attribute_text .= "$key=$value_text;";
+  }
+  
+  my $gff3_text = join "\t", ($feature->{seqid},
+			      $feature->{source},
+			      $feature->{type},
+			      $feature->{start},
+			      $feature->{end},
+			      $feature->{score},
+			      $feature->{strand},
+			      $feature->{phase},
+			      $attribute_text,
+			     );
+  
+  return $gff3_text;
 }
 
 #-----------------------------------------------------------------------------
@@ -443,11 +443,11 @@ sub to_gff3 {
 =cut
 
 sub parse_metadata {
-    my $self = shift;
-
-    my $raw_data = $self->reader->metadata;
-    # Subclasses can override and do something here.
-    $self->{metadata} = $raw_data;
+  my $self = shift;
+  
+  my $raw_data = $self->reader->metadata;
+  # Subclasses can override and do something here.
+  $self->{metadata} = $raw_data;
 }
 
 #-----------------------------------------------------------------------------
@@ -464,31 +464,32 @@ sub parse_metadata {
 =cut
 
 sub parse_record {
-	my ($self, $record) = @_;
-
-	my $attributes = $self->parse_attributes($record->{attributes});
-
-	my %feature = (seqid      => $record->{seqid},
-		       source     => $record->{source},
-		       type       => $record->{type},
-		       start      => $record->{start},
-		       end        => $record->{end},
-		       score      => $record->{score},
-		       strand     => $record->{strand},
-		       phase      => $record->{phase},
-		       attributes => $attributes,
-		     );
-
-        if (exists $attributes->{ID}         &&
-            ref $attributes->{ID} eq 'ARRAY' &&
-            $attributes->{ID}[0]) {
-          $feature{feature_id} = $attributes->{ID}[0];
-        }
-        else {
-          $feature{feature_id} =  $self->create_unique_id(\%feature);
-        }
-
-	return wantarray ? %feature : \%feature;
+  my ($self, $record) = @_;
+  
+  my $attributes = $self->parse_attributes($record->{attributes});
+  
+  my %feature = (seqid      => $record->{seqid},
+		 source     => $record->{source},
+		 type       => $record->{type},
+		 start      => $record->{start},
+		 end        => $record->{end},
+		 score      => $record->{score},
+		 strand     => $record->{strand},
+		 phase      => $record->{phase},
+		 attributes => $attributes,
+		);
+  
+  if (exists $attributes->{ID}         &&
+      ref $attributes->{ID} eq 'ARRAY' &&
+      $attributes->{ID}[0]) {
+    $feature{feature_id} = $attributes->{ID}[0];
+  }
+  else {
+    $feature{feature_id} =  $self->create_unique_id(\%feature);
+    $attributes->{ID}[0] = $feature{feature_id}
+  }
+  
+  return wantarray ? %feature : \%feature;
 }
 
 #-----------------------------------------------------------------------------
@@ -516,8 +517,6 @@ sub parse_attributes {
 	return wantarray ? %attrb_hash : \%attrb_hash;
 }
 
-
-
 #-----------------------------------------------------------------------------
 
 =head2 create_unique_id
@@ -525,24 +524,77 @@ sub parse_attributes {
  Title   : create_unique_id
  Usage   : $feature_id = $self->create_unique_id(\%feature_hash, 8);
  Function: Creates a uniq_id for the feature of the form gene_0000001
-           where the prefix (gene) is the feature type and the numerical
-           sufix is an incrementing count padded with zeros to the length
-           specified or 8 by default.
+	   where the prefix (gene) is the feature type and the numerical
+	   sufix is an incrementing count padded with zeros to the length
+	   specified or 8 by default.
  Returns : A unique ID
  Args    : A feature hash and an integer (12 max) for padding the
-           numerical portion of the ID.
+	   numerical portion of the ID.
 
 =cut
 
 sub create_unique_id {
-	my ($self, $feature, $pad) = @_;
+  my ($self, $feature, $pad) = @_;
+  
+  $pad ||= 8;
+  my $type = $feature->{type};
+  
+  my $id = "${type}_" . sprintf("%0${pad}s", ++$self->{id_counter}{$type});
+  
+  return $id;
+}
 
-	$pad ||= 8;
-	my $type = $feature->{type};
+#-----------------------------------------------------------------------------
 
-	my $id = "${type}_" . sprintf("%0${pad}s", ++$self->{id_counter}{$type});
+=head2 validate_feature
 
-	return $id;
+ Title   : validate_feature
+ Usage   : $self->validate_feature(%feature_hash);
+ Function: Provides very basic syntactic validation for features.
+ Returns : 1 on success - dies on errors
+ Args    : A feature hash as a hash reference.
+
+=cut
+
+sub validate_feature {
+
+   my ($self, $feature) = @_;
+
+   $self->throw('missing_feature_id', $self->to_gff3($feature))
+     unless $feature->{feature_id};
+   $self->throw('missing_seqid', $self->to_gff3($feature))
+     unless $feature->{seqid};
+   $self->throw('missing_source', $self->to_gff3($feature))
+     unless $feature->{source};
+   $self->throw('missing_type', $self->to_gff3($feature))
+     unless $feature->{type};
+   $self->throw('missing_start', $self->to_gff3($feature))
+     unless $feature->{start};
+   $self->throw('invalid_start', $self->to_gff3($feature))
+     unless $feature->{start} =~ /^\d+$/;
+   $self->throw('missing_end', $self->to_gff3($feature))
+     unless $feature->{end};
+   $self->throw('invalid_end', $self->to_gff3($feature))
+     unless $feature->{end} =~ /^\d+$/;
+   $self->throw('missing_score', $self->to_gff3($feature))
+     unless $feature->{score};
+   $self->throw('missing_strand', $self->to_gff3($feature))
+     unless $feature->{strand};
+   $self->throw('invalid_strand', $self->to_gff3($feature))
+     unless $feature->{strand} =~ /^[\.\+\-]$/;
+   $self->throw('missing_phase', $self->to_gff3($feature))
+     unless defined $feature->{phase};
+   $self->throw('invalid_phase', $self->to_gff3($feature))
+     unless $feature->{phase} =~ /^[\.012]/;
+   $self->throw('missing_attributes', $self->to_gff3($feature))
+     unless $feature->{attributes};
+   $self->throw('missing_attribute_ID', $self->to_gff3($feature))
+     unless $feature->{attributes}{ID};
+   $self->throw('invalid_attribute_ID', $self->to_gff3($feature))
+     unless ref $feature->{attributes}{ID} eq 'ARRAY';
+   $self->throw('missing_attribute_ID', $self->to_gff3($feature))
+     unless $feature->{attributes}{ID}[0];
+   return 1;
 }
 
 #-----------------------------------------------------------------------------

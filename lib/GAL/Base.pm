@@ -258,6 +258,22 @@ sub info {
 
 #-----------------------------------------------------------------------------
 
+=head2 debug
+
+ Title   : debug
+ Usage   : $base->debug(message => $debug_message);
+ Function: Send a DEBUG message.
+ Returns : None
+ Args    : message => $debug_message
+
+=cut
+
+sub debug {
+	shift->handle_message('DEBUG', @_);
+      }
+
+#-----------------------------------------------------------------------------
+
 =head2 wrap_text
 
  Title   : wrap_text
@@ -323,6 +339,10 @@ sub prepare_args {
 	elsif (scalar @args % 2 == 0) {
 		%args_hash = @args;
 	}
+	elsif (! @args) {
+	  # If no args are passed, don't do anything just return an empty
+	  # hash(ref).
+	}
 	else {
 		my $class = ref($self);
 		my $err_code = 'invalid_arguments_to_prepare_args';
@@ -361,7 +381,7 @@ sub set_attributes {
 	my $package = __PACKAGE__;
 	my $caller = ref($self);
 
-	$args ||= {};
+	$args = $self->prepare_args($args);
 
 	for my $attribute (@valid_attributes) {
 		next unless exists $args->{$attribute};

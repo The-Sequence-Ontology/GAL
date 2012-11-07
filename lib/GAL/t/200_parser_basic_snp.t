@@ -5,10 +5,8 @@ use Test::More skip_all => 'GAL::Parser::basic_snp in developement';
 
 BEGIN {
 	use lib '../../';
-	#TEST 1
 	use_ok('GAL::Parser::basic_snp');
 }
-
 
 my $path = $0;
 $path =~ s/[^\/]+$//;
@@ -17,14 +15,17 @@ chdir($path);
 
 my $parser = GAL::Parser::basic_snp->new(file => 'data/basic_snp.txt');
 
-# TEST 2
 isa_ok($parser, 'GAL::Parser::basic_snp');
 
-# Test 3
 ok(my $record = $parser->next_record, '$parser->next_record');
 
-# TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');
+
+while (my $variant = $parser->next_feature_hash) {
+  ok($variant, 'variant parses');
+}
+
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################

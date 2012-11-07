@@ -148,11 +148,11 @@ to the altered copy of the feature.  All filters given are applied.
 		  alteration made to the feature by the code
 		  reference is kept in printing.
 
-  hash_ag|h
+  hash_ag
 
 		  The hash_ag function aggregates all the features in
 		  a file to a hash based on user specified code.  It
-		  then iterates over each key in that has and runs
+		  then iterates over each key in that hash and runs
 		  another block of user specified code on the value(s)
 		  that were stashed in that hash value. This could,
 		  for examples, be used to stash all data into a hash
@@ -340,7 +340,8 @@ my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
     $s_difference, $titv, $gvf_stats, $effect_stats, $gvf_sets,
     $fix_gvf,);
 
-my $opt_success = GetOptions('in_place|i'      => \$in_place,
+my $opt_success = GetOptions('help|h'          => \$help,
+                             'in_place|i'      => \$in_place,
 			     'out_ext|o=s'     => \$out_ext,
 			     'fasta|j=s'       => \$FASTA_FILE,
 			     'so_file=s'       => \$SO_FILE,
@@ -356,7 +357,7 @@ my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'blend|b'	       => \$blend,
 			     'sort|s'	       => \$sort,
 			     'alter|a'	       => \$alter,
-			     'hash_ag|h=s'     => \$hash_ag,
+			     'hash_ag=s'       => \$hash_ag,
 			     'validate|v'      => \$validate,
 			     'stats|u'	       => \$stats,
 			     'sequence|p'      => \$sequence,
@@ -382,7 +383,16 @@ my $opt_success = GetOptions('in_place|i'      => \$in_place,
 			     'fix_gvf'         => \$fix_gvf,
 			    );
 
-die $usage if $help || ! $opt_success;
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gff_tool --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
 
 die "FATAL : unreadable_file : $FASTA_FILE\n" if ($FASTA_FILE && ! -r $FASTA_FILE);
 die "FATAL : unreadable_file : $SO_FILE\n"    if ($SO_FILE    && ! -r $SO_FILE);

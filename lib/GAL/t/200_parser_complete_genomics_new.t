@@ -20,6 +20,10 @@ isa_ok($object, 'GAL::Parser::complete_genomics_new');
 # Select an empty line and then: C-u M-| grep -nP '^sub ' ../Class.pm
 # Select an empty line and then: C-u M-| grep -C2 -P '\>throw(' ../Class.pm
 
+while (my $variant = $parser->next_feature_hash) {
+  ok($variant, 'variant parses');
+}
+
 done_testing();
 
 ################################################################################

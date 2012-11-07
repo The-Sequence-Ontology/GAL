@@ -82,7 +82,16 @@ my $opt_success = GetOptions('help'      => \$help,
 			     'add_genes' => \$add_genes,
 			     );
 
-die $usage if $help || ! $opt_success;
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gff_tool --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
 
 my $file = shift;
 die $usage unless $file;

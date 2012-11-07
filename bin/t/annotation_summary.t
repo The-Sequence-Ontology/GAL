@@ -16,27 +16,27 @@ my $tool = GAL::Run->new(path => $path,
 			 command => 'gff_tool');
 
 ################################################################################
-# Testing that template_script compiles and returns usage statement
+# Testing that annotation_summary compiles and returns usage statement
 ################################################################################
 
-ok(! ->run(cl_args => '--help'), 'template_script complies');
-like(->get_stdout, qr/Synopsis/, 'template_script prints usage statement');
+ok(! ->run(cl_args => '--help'), 'annotation_summary complies');
+like(->get_stdout, qr/Synopsis/, 'annotation_summary prints usage statement');
 
 ################################################################################
-# Testing that template_script does something else
+# Testing that annotation_summary does something else
 ################################################################################
 
-my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
-
-my @cl_args = ('--arg1',
-	       '--arg2 value',
-	       $gff_file,
-	      );
-
-ok($tool->run(cl_args => \@cl_args), 'template_script does something');
-ok(->get_stdout =~ /match something/,
-   'template_script has the correct output');
-$tool->clean_up;
+#my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
+#
+#my @cl_args = ('--arg1',
+#	       '--arg2 value',
+#	       $gff_file,
+#	      );
+#
+#ok($tool->run(cl_args => \@cl_args), 'annotation_summary does something');
+#ok(->get_stdout =~ /match something/,
+#   'annotation_summary has the correct output');
+#$tool->clean_up;
 
 done_testing();
 

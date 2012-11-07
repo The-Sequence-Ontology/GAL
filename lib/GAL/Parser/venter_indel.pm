@@ -151,12 +151,13 @@ sub parse_record {
 		$reference_seq = $self->revcomp($reference_seq);
 	    }
 	    if ($ref_fasta ne $reference_seq) {
-		my $message = join '', ('The reference sequence given in the ' . 
-					'file does not match the reference '   . 
+		my $message = join '', ('The reference sequence given in the ' .
+					'file does not match the reference '   .
 					'fasta sequence'
 					);
-		my $code = "FATAL : reference_sequence_mismatch : $reference_seq";
-		$self->throw($code, $message);
+		my $code = 'reference_sequence_mismatch';
+		my $message = "$ref_fasta | $reference_seq";
+		$self->warn($code, $message);
 	    }
 	    $reference_seq = length($reference_seq) >= 50 ? '~' : $reference_seq;
 	}
@@ -183,8 +184,8 @@ sub parse_record {
 	$zygosity ||= 'homozygous';
 
 	$type = $type eq 'homozygous_indel' ? $indel_type : $type;
-	my %type_map = ('Deletion'  			=> 'deletion',
-			'Insertion' 			=> 'insertion',
+	my %type_map = ('Deletion'			=> 'deletion',
+			'Insertion'			=> 'insertion',
 			'assembly_comparison_inversion' => 'inversion',
 			);
 	$type = $type_map{$type};

@@ -1,11 +1,10 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 4;
+use Test::More;
 
 BEGIN {
 	use lib '../../';
-	#TEST 1
 	use_ok('GAL::Parser::hapmap_genotypes');
 }
 
@@ -17,14 +16,17 @@ chdir($path);
 my $parser = GAL::Parser::hapmap_genotypes->new(file  => 'data/hapmap_genotypes.txt',
 						fasta => 'data/fasta_hg18');
 
-# TEST 2
 isa_ok($parser, 'GAL::Parser::hapmap_genotypes');
 
-# Test 3
 ok(my $record = $parser->next_record, '$parser->next_record');
 
-# TEST 4
 ok(my $feature_hash = $parser->parse_record($record), '$parser->parse_record');
+
+while (my $variant = $parser->next_feature_hash) {
+  ok($variant, 'variant parses');
+}
+
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################
