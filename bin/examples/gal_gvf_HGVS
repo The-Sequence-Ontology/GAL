@@ -1,0 +1,170 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+use GAL::Parser::GFF3;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+gal_example_seq_features  --features feature.gff3
+
+Description:
+
+This script will add
+Alias=HGVS:NM_012345:c.76A>T;HGVS:NP_012345:p.Q>E; attributes to the
+SNVs in a GVF file.
+
+Options:
+
+  --fasta, -a sequence.fasta
+
+      The FASTA formatted sequence file associated with this genome
+      file.
+
+  --variants, -v variants.gvf
+
+      The GVF file of sequence alterations (Required).
+
+  --features, -f genes.gff3
+
+      The GFF3 file (or database) of sequence features (Required).
+
+";
+
+my ($help, $fasta_file, $gvf_file, $feature_db);
+
+my $opt_success = GetOptions('help|h'       => \$help,
+			     'fasta|a=s'    => \$fasta_file,
+			     'variants|v=s' => \$gvf_file,
+			     'features|f=s' => \$feature_db,
+			      );
+
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gff_tool --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
+
+# This will ultimately be moved inside the storage
+# code so it's all hidden
+my $text_file;
+if (-T $feature_db) {
+  $text_file = $feature_db;
+  $feature_db =~ s/\.(gff3?|gvf)$//;
+  $feature_db .= '.sqlite';
+  # If DB is newer than text file
+  if ((stat($feature_db))[9] > (stat($text_file))[9]) {
+    $text_file = undef;
+  }
+}
+
+# Making a hash of the arguments for the features
+my %feat_store_args = (class    => 'SQLite',
+		       database => $feature_db
+		      );
+
+# Lazy connect to the database for the features
+my $feat_store = GAL::Annotation->new(storage => \%feat_store_args,
+				      fasta   => $fasta_file
+				     );
+
+# Load files to DB if given as a text file.
+if ($text_file) {
+  $feat_store->parser(class => 'gff3');
+  $feat_store->load_files(files => $text_file);
+}
+
+# Get a resultset.
+my $features = $feat_store->schema->resultset('Feature');
+
+# Define the search
+my %feature_where = (type => 'mRNA');
+
+# Do the search and get an interator for all matching features
+my $mRNAs = $features->search(\%feature_where);
+
+my $gvf = GAL::Parser::gff3->new(file => $gvf_file);
+
+while (my $variant = $gvf->next_feature_hash) {
+
+  my $attrbs = $variant->{attributes};
+  my $var_seqs = $attrbs->{Variant_seq};
+  my $ref_seq = $attrbs->{Reference_seq}[0];
+  my $start = $variant->{start};
+
+  my $all_effects = get_variant_effects($attrbs);
+
+  my @hgvss;
+  for my $idx (keys %{$all_effects}) {
+    my $types = $all_effects->{$idx};
+    for my $type (keys %{$types}) {
+      next unless $type =~ /^(mRNA|polypeptide)$/;
+      my $effects = $types->{$type};
+      for my $effect (keys %{$effects}) {
+	for my $id (@{$effects->{$effect}}) {
+	  my ($mRNA) = $mRNAs->search({feature_id => $id});
+	  next unless scalar @{[$mRNA->CDSs]};
+	  my ($c_start) = $mRNA->map2CDS($start);
+	  my $var_seq = $var_seqs->[$idx];
+	  my $hgvs;
+	  if ($effect eq 'coding_sequence_variant') {
+	    if ($id && $c_start && $ref_seq && $var_seq) {
+	      $hgvs = "HGVS:$id:c.$c_start$ref_seq>$var_seq";
+	      push @hgvss, $hgvs;
+	    }
+	  }
+	  elsif ($effect eq 'amino_acid_substitution') {
+	    my ($p_start) = $mRNA->map2protein($start);
+	    my ($codon, $frame) = $mRNA->codon_at_location($start);
+	    my $m_codon = $codon;
+	    substr($m_codon, $frame, 1) = $var_seq;
+	    my $aa = $mRNA->annotation->translate($codon);
+	    my $aa3 = $gvf->amino_acid_data($aa, 'three_letter');
+	    my $m_aa = $mRNA->annotation->translate($m_codon);
+	    my $m_aa3 = $gvf->amino_acid_data($m_aa, 'three_letter');
+	    if ($id && $aa3 && $p_start && $m_aa3) {
+	      $hgvs = "HGVS:$id:p.$aa3$p_start$m_aa3";
+	      push @hgvss, $hgvs;
+	    }
+	  }
+	}
+      }
+    }
+  }
+  push @{$variant->{attributes}{Alias}}, @hgvss;
+  my $gvf_text = $gvf->to_gff3($variant);
+  print "$gvf_text\n";
+  print '';
+}
+
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub get_variant_effects {
+
+  my $attrbs = shift;
+
+  return unless exists $attrbs->{Variant_effect};
+
+  my %effects;
+  for my $effect_text (@{$attrbs->{Variant_effect}}) {
+    my ($effect, $idx, $type, @ids) = split /\s+/, $effect_text;
+    push @{$effects{$idx}{$type}{$effect}}, @ids;
+  }
+  return \%effects;
+}
