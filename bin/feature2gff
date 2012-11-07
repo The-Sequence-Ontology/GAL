@@ -4,6 +4,8 @@ use warnings;
 use Getopt::Long;
 use GAL::Parser;
 use Bio::DB::Fasta;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -62,10 +64,6 @@ my $opt_success = GetOptions('help'     => \$help,
 			     'pragma=s' => \$pragma,
 			    );
 
-die $usage if $help || ! $opt_success;
-
-my @files = @ARGV;
-
 if (! $opt_success) {
     print STDERR join ' : ', ('FATAL',
                               'command_line_parse_error',
@@ -75,6 +73,22 @@ if (! $opt_success) {
 if ($help) {
  print $usage;
  exit(0);
+}
+
+my @files = @ARGV;
+
+if (! $parser) {
+  my @parsers = glob "${FindBin::Bin}/../lib/GAL/Parser/*";
+  @parsers = grep {$_ !~ /[\#\~]/} @parsers;
+  map {s/^.*\///;s/\.pm$//;} @parsers;
+  my $list = join "\n", sort @parsers;
+  #$list =~ s/{(.{50,})\s/$1\n/;
+  print STDERR join ' : ', ('WARN',
+			    'parser_class_not_given',
+			    'Check the following list (or GAL/lib/GAL/Parser/).',
+			   );
+  print "\n$list\n";
+  die;
 }
 
 my $class = "GAL::Parser::$parser";

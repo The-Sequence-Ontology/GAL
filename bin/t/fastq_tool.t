@@ -13,31 +13,31 @@ my $command;
 my ($sto_text, $ste_text);
 
 my $tool = GAL::Run->new(path => $path,
-			 command => 'gff_tool');
+			 command => 'fastq_tool');
 
 ################################################################################
-# Testing that template_script compiles and returns usage statement
+# Testing that fastq_tool compiles and returns usage statement
 ################################################################################
 
-ok(! ->run(cl_args => '--help'), 'template_script complies');
-like(->get_stdout, qr/Synopsis/, 'template_script prints usage statement');
+ok(! $tool->run(cl_args => '--help'), 'fastq_tool complies');
+like($tool->get_stdout, qr/Synopsis/, 'fastq_tool prints usage statement');
 
 ################################################################################
-# Testing that template_script does something else
+# Testing that fastq_tool does something else
 ################################################################################
 
-my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
+#my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
+#
+#my @cl_args = ('--arg1',
+#	       '--arg2 value',
+#	       $gff_file,
+#	      );
+#
+#ok($tool->run(cl_args => \@cl_args), 'fastq_tool does something');
+#ok($tool->get_stdout =~ /match something/,
+#   'fastq_tool has the correct output');
 
-my @cl_args = ('--arg1',
-	       '--arg2 value',
-	       $gff_file,
-	      );
-
-ok($tool->run(cl_args => \@cl_args), 'template_script does something');
-ok(->get_stdout =~ /match something/,
-   'template_script has the correct output');
 $tool->clean_up;
-
 done_testing();
 
 ################################################################################

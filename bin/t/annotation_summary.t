@@ -13,14 +13,14 @@ my $command;
 my ($sto_text, $ste_text);
 
 my $tool = GAL::Run->new(path => $path,
-			 command => 'gff_tool');
+			 command => 'annotation_summary');
 
 ################################################################################
 # Testing that annotation_summary compiles and returns usage statement
 ################################################################################
 
-ok(! ->run(cl_args => '--help'), 'annotation_summary complies');
-like(->get_stdout, qr/Synopsis/, 'annotation_summary prints usage statement');
+ok(! $tool->run(cl_args => '--help'), 'annotation_summary complies');
+like($tool->get_stdout, qr/Synopsis/, 'annotation_summary prints usage statement');
 
 ################################################################################
 # Testing that annotation_summary does something else
@@ -34,9 +34,9 @@ like(->get_stdout, qr/Synopsis/, 'annotation_summary prints usage statement');
 #	      );
 #
 #ok($tool->run(cl_args => \@cl_args), 'annotation_summary does something');
-#ok(->get_stdout =~ /match something/,
+#ok($tool->get_stdout =~ /match something/,
 #   'annotation_summary has the correct output');
-#$tool->clean_up;
+$tool->clean_up;
 
 done_testing();
 
