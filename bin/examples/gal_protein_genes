@@ -1,0 +1,57 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+use IO::Prompt;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+protein_genes --clean path/to/fasta feature.sqlite
+
+Description:
+
+Options:
+
+  clean        Just clean up the file so that it only contains valid protein
+	       coding files.
+
+";
+
+my ($help, $clean);
+my $opt_success = GetOptions('help'          => \$help,
+			     'clean'         => \$clean,
+			      );
+
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gff_tool --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
+
+my ($gff3, $fasta) = @ARGV;
+
+die $usage unless $fasta && $gff3;
+
+my $annotation = GAL::Annotation->new($gff3,
+				      $fasta);
+
+my $features = $annotation->features;
+
+my $genes = $features->search({type => 'gene'});
+while (my $gene = $genes->next) {
+    next unless $gene->is_coding;
+    print $gene->print_with_children;
+}
