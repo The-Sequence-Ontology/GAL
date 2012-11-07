@@ -21,6 +21,10 @@ ok(my $record = $parser->next_record, '$parser->next_record');
 
 ok($parser->parse_record($record), '$parser->parse_record');
 
+while (my $variant = $parser->next_feature_hash) {
+  ok($variant, 'variant parses');
+}
+
 done_testing;
 
 ################################################################################

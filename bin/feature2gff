@@ -5,7 +5,6 @@ use Getopt::Long;
 use GAL::Parser;
 use Bio::DB::Fasta;
 
-
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
 #-----------------------------------------------------------------------------
@@ -23,17 +22,17 @@ Options:
 
   --parser   The format for the feature file - a subclass of GAL::Parser e.g.
   --fasta    Some parsers (such as those producing GVF from minimal input
-             data) need access to the reference sequence.  This argument
-             points to the path where the reference sequences are located.
+	     data) need access to the reference sequence.  This argument
+	     points to the path where the reference sequences are located.
   --pragma   A file that contains pragmas to include at the begining of the GFF
-             output.
+	     output.
 
 Notes:
 
 Following are some of the parsers that are a part of GAL, but please see
 GAL/lib/GAL/Parser for a complete list.
 
-		basic_snp                 
+		basic_snp
 		complete_genomics
 		cosmic
 		dbsnp_flat
@@ -66,7 +65,17 @@ my $opt_success = GetOptions('help'     => \$help,
 die $usage if $help || ! $opt_success;
 
 my @files = @ARGV;
-die $usage unless @files;
+
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gff_tool --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
 
 my $class = "GAL::Parser::$parser";
 eval "require $class";

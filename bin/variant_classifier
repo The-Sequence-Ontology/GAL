@@ -51,8 +51,16 @@ my $opt_success = GetOptions('help'          => \$help,
 			     'chr=s'         => \$limit_chr,
 			      );
 
-die $usage if $help || ! $opt_success;
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gff_tool --help to see correct usage');
+}
 
+if ($help) {
+ print $usage;
+ exit(0);
+}
 
 die "$usage\n\nFATAL : missing_fasta_file : Fasta file required\n" unless $fasta_file;
 die "$usage\n\nFATAL : missing_gff3_file : GFF3 file required\n"   unless $gff_file;

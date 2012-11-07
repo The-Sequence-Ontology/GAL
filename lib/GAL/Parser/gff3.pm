@@ -126,6 +126,7 @@ sub parse_record {
 	}
 	else {
 	  $feature_hash{feature_id} =  $self->create_unique_id(\%feature_hash);
+	  $attributes->{ID}[0] = $feature_hash{feature_id};
 	}
 
 	return wantarray ? %feature_hash : \%feature_hash;

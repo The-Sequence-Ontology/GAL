@@ -29,7 +29,16 @@ my $opt_success = GetOptions('help'    => \$help,
 			     'clobber' => \$clobber,
 			      );
 
-die $usage if $help || ! $opt_success;
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gff_tool --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
 
 my ($gvf_file, $fasta) = @ARGV;
 die $usage unless -r $gvf_file;

@@ -1,11 +1,10 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 4;
+use Test::More;
 
 BEGIN {
 	use lib '../../';
-	#TEST 1
 	use_ok('GAL::Parser::VCFv4_0');
 }
 
@@ -16,21 +15,17 @@ chdir($path);
 
 my $parser = GAL::Parser::VCFv4_0->new(file => 'data/SRR043167.indel.vcf');
 
-# TEST 2
 isa_ok($parser, 'GAL::Parser::VCFv4_0');
 
-# Test 3
 ok(my $record = $parser->next_record, '$parser->next_record');
 
-# TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');
 
-while (my $v = $parser->next_feature_hash) {
-  print $parser->to_gff3($v);
-  print "\n";
-  print '';
+while (my $variant = $parser->next_feature_hash) {
+  ok($variant, 'variant parses');
 }
 
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################

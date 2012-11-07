@@ -106,19 +106,19 @@ sub parse_record {
 	my ($self, $record) = @_;
 
 	# $record is a hash reference that contains the keys assigned
-	# in the $self->fields call in _initialize_args above
+	# in @field_names array in the reader method below.
 
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
-	my $id         = $record->{id};
-	my $seqid      = $record->{chromosome};
-	my $source     = 'Template';
-	my $type       = 'gene';
+	my $id         = 
+	my $seqid      = $record->{seqid};
+	my $source     = $record->{source};
+	my $type       = $record->{type};
 	my $start      = $record->{start};
 	my $end        = $record->{end};
-	my $score      = '.';
-	my $strand     = $record->{strand};
-	my $phase      = '.';
+	my $score      = $record->{score}  || '.';
+	my $strand     = $record->{strand} || '.';
+	my $phase      = $record->{phase}  || '.';;
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -131,12 +131,7 @@ sub parse_record {
 	# letter are reserved for later use. Attributes that begin
 	# with a lowercase letter can be used freely by applications.
 
-	my $name    = $record->{name};
-	my @parents = split /;/, $record->{parents};
-
 	my $attributes = {ID     => [$id],
-			  Name   => [$name],
-			  Parent => \@parents,
 			 };
 
 	my $feature_data = {feature_id => $id,
@@ -170,7 +165,7 @@ sub reader {
   my $self = shift;
 
   if (! $self->{reader}) {
-    my @field_names = qw(these are the header names for your record hash);
+    my @field_names = qw(seqid source type start end score strand phase attributes);
     my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
     $self->{reader} = $reader;
   }

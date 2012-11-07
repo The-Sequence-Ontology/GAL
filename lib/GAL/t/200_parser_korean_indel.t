@@ -1,11 +1,10 @@
 #!/usr/bin/perl -w
 use strict;
 
-use Test::More tests => 4;
+use Test::More;
 
 BEGIN {
 	use lib '../../';
-	#TEST 1
 	use_ok('GAL::Parser::korean_indel');
 }
 
@@ -16,14 +15,17 @@ chdir($path);
 
 my $parser = GAL::Parser::korean_indel->new(file => 'data/korean_indel.gff');
 
-# TEST 2
 isa_ok($parser, 'GAL::Parser::korean_indel');
 
-# Test 3
 ok(my $record = $parser->next_record, '$parser->next_record');
 
-# TEST 4
 ok($parser->parse_record($record), '$parser->parse_record');
+
+while (my $variant = $parser->next_feature_hash) {
+  ok($variant, 'variant parses');
+}
+
+done_testing();
 
 ################################################################################
 ################################# Ways to Test #################################

@@ -76,7 +76,16 @@ my $opt_success = GetOptions('help'    => \$help,
 			     'format'  => \$format,
 			     );
 
-die $usage if $help || ! $opt_success;
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gff_tool --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
 
 my %TYPE_MAP = ('del'              => 'deletion', 
 		'delins' 	   => 'MNP',        # Is this correct?
