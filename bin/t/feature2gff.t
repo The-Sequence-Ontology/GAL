@@ -13,31 +13,31 @@ my $command;
 my ($sto_text, $ste_text);
 
 my $tool = GAL::Run->new(path => $path,
-			 command => 'gff_tool');
+			 command => 'feature2gff');
 
 ################################################################################
-# Testing that template_script compiles and returns usage statement
+# Testing that feature2gff compiles and returns usage statement
 ################################################################################
 
-ok(! ->run(cl_args => '--help'), 'template_script complies');
-like(->get_stdout, qr/Synopsis/, 'template_script prints usage statement');
+ok(! $tool->run(cl_args => '--help'), 'feature2gff complies');
+like($tool->get_stdout, qr/Synopsis/, 'feature2gff prints usage statement');
 
 ################################################################################
-# Testing that template_script does something else
+# Testing that feature2gff does something else
 ################################################################################
 
-my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
+#my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
+#
+#my @cl_args = ('--arg1',
+#	       '--arg2 value',
+#	       $gff_file,
+#	      );
+#
+#ok($tool->run(cl_args => \@cl_args), 'feature2gff does something');
+#ok(->get_stdout =~ /match something/,
+#   'feature2gff has the correct output');
 
-my @cl_args = ('--arg1',
-	       '--arg2 value',
-	       $gff_file,
-	      );
-
-ok($tool->run(cl_args => \@cl_args), 'template_script does something');
-ok(->get_stdout =~ /match something/,
-   'template_script has the correct output');
 $tool->clean_up;
-
 done_testing();
 
 ################################################################################
