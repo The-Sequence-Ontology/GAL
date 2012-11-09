@@ -26,16 +26,12 @@ like($tool->get_stdout, qr/Synopsis/, 'annotation_summary prints usage statement
 # Testing that annotation_summary does something else
 ################################################################################
 
-#my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
-#
-#my @cl_args = ('--arg1',
-#	       '--arg2 value',
-#	       $gff_file,
-#	      );
-#
-#ok($tool->run(cl_args => \@cl_args), 'annotation_summary does something');
-#ok($tool->get_stdout =~ /match something/,
-#   'annotation_summary has the correct output');
+my @cl_args = ("$FindBin::Bin/data/dmel-4-r5.46.genes.partial.gff",
+	       "$FindBin::Bin/data/dmel-4-chromosome-r5.46.fasta");
+
+ok(! $tool->run(cl_args => \@cl_args), 'annotation_summary runs');
+ok($tool->get_stdout =~ /812\s+0\.406908774726387/,
+   'annotation_summary has the correct output');
 $tool->clean_up;
 
 done_testing();

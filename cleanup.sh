@@ -14,3 +14,9 @@ rm -f t/data/dmel-4-r5.46.genes.sqlite
 rm -f t/data/directory.index
 rm -f t/data/fasta_hg18/chr22_hg18.fasta.index
 rm -f bin/t/vaast_run_std*
+rm -f bin/t/37d6f729.sqlite
+rm -f bin/t/.sqlite
+rm -f t/data/hg18_chr22.fa.index
+rm -f t/data/dmel-4-r5.46.genes.partial.sqlite
+rm -f t/data/hg19_chr22.fa.index
+rm -f t/data/dmel-4-chromosome-r5.46.fasta.index

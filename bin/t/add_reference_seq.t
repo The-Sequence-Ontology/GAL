@@ -12,7 +12,7 @@ my $path = "$FindBin::Bin/../";
 my $command;
 my ($sto_text, $ste_text);
 
-my $tool = GAL::Run->new(path => $path,
+my $tool = GAL::Run->new(path    => $path,
 			 command => 'add_reference_seq');
 
 ################################################################################
@@ -26,16 +26,13 @@ like($tool->get_stdout, qr/Synopsis/, 'add_reference_seq prints usage statement'
 # Testing that add_reference_seq does something else
 ################################################################################
 
-#my $gvf_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
-#
-#my @cl_args = ('--arg1',
-#	       '--arg2 value',
-#	       $gvf_file,
-#	      );
-#
-#ok($tool->run(cl_args => \@cl_args), 'add_reference_seq does something');
-#ok($tool->get_stdout =~ /match something/,
-#   'add_reference_seq has the correct output');
+my @cl_args = ("$FindBin::Bin/data/snv_minimal_chr22.gvf",
+	       "$FindBin::Bin/data/hg18_chr22.fa"
+	      );
+
+ok(! $tool->run(cl_args => \@cl_args), 'add_reference_seq adds the reference seq');
+ok($tool->get_stdout =~ /Reference_seq=[ATGC]/,
+   'add_reference_seq has the correct output');
 $tool->clean_up;
 
 done_testing();

@@ -11,7 +11,7 @@ my $usage = "
 
 Synopsis:
 
-add_reference_seq variant_file.gvf /path/to/fasta/dir
+add_reference_seq variant_file.gvf /path/to/file.fasta
 
 Description:
 
@@ -65,7 +65,5 @@ while (my $feature = $parser->next_feature_hash) {
     print "\n";
 }
 
-#-----------------------------------------------------------------------------
-#-------------------------------- SUBROUTINES --------------------------------
-#-----------------------------------------------------------------------------
+exit(0);
 

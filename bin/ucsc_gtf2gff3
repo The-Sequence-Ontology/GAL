@@ -24,8 +24,6 @@ my ($help);
 my $opt_success = GetOptions('help'    => \$help,
 			      );
 
-die $usage if $help || ! $opt_success;
-
 my $file = shift;
 
 if (! $opt_success) {

@@ -1,0 +1,43 @@
+##gff-version 3
+##gvf-version 1.02
+##file-version 
+##file-date 1966-05-28
+
+#individual-description
+#Text description of individual
+
+##individual-id Dbxref=;Population=;
+##source-method Source=;Type=;Dbxref=;Comment=;
+##technology-platform Source=;Type=;Dbxref=;Platform_class=short read sequencing;Platform_name=;Read_type=;Read_length=;Read_pair_span=;Average_coverage=;
+##data-source Source=;Type=;Data_type=;Comment=;
+##phenotype-descriptions Ontology=http://obofoundry.org/wiki/index.php/PATO:Main_Page;Term=male
+##feature-ontology http://sourceforge.net/projects/song/files/SO_Feature_Annotation/sofa_2_4_1/sofa_2_4_1.obo/download
+##species http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=9606
+##genome-build NCBI B36
+
+##sequence-region chr1 	1 247249719
+##sequence-region chr2 	1 242951149
+##sequence-region chr3 	1 199501827
+##sequence-region chr4 	1 191273063
+##sequence-region chr5 	1 180857866
+##sequence-region chr6 	1 170899992
+##sequence-region chr7 	1 158821424
+##sequence-region chr8 	1 146274826
+##sequence-region chr9 	1 140273252
+##sequence-region chr10 1 135374737
+##sequence-region chr11 1 134452384
+##sequence-region chr12 1 132349534
+##sequence-region chr13 1 114142980
+##sequence-region chr14 1 106368585
+##sequence-region chr15 1 100338915
+##sequence-region chr16 1 88827254
+##sequence-region chr17 1 78774742
+##sequence-region chr18 1 76117153
+##sequence-region chr19 1 63811651
+##sequence-region chr20 1 62435964
+##sequence-region chr21 1 46944323
+##sequence-region chr22 1 49691432
+##sequence-region chrX  1 154913754
+##sequence-region chrY  1 57772954
+##sequence-region chrM  1 16571
+

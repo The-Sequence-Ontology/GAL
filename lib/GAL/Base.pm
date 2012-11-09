@@ -330,7 +330,11 @@ sub prepare_args {
 
 	my %args_hash;
 
-	if (scalar @args == 1 && ref $args[0] eq 'ARRAY') {
+	if (! $args[0]) {
+	  # If no args are passed, don't do anything just return an empty
+	  # hash(ref).
+	}
+	elsif (scalar @args == 1 && ref $args[0] eq 'ARRAY') {
 		%args_hash = @{$args[0]};
 	}
 	elsif (scalar @args == 1 && ref $args[0] eq 'HASH') {
@@ -338,10 +342,6 @@ sub prepare_args {
 	}
 	elsif (scalar @args % 2 == 0) {
 		%args_hash = @args;
-	}
-	elsif (! @args) {
-	  # If no args are passed, don't do anything just return an empty
-	  # hash(ref).
 	}
 	else {
 		my $class = ref($self);
