@@ -1,0 +1,44 @@
+##gff-version 3
+##gvf-version 1.0
+
+##individual-id Dbxref=;Gender=;Ethnicity=;Comment=;
+##source-method Source=;Type=SNV;Dbxref=;Comment=;
+##technology-platform Source=;Type=;Dbxref=;Platform_class=;Platform_name=;Read_type=;Read_length=;Read_pair_span=;Average_coverage=;
+##data-source Source=;Type=;Dbxref=;Data_type=sequence variants;Comment=;
+##date Date=;Comment=;
+
+##individual-description
+## 
+
+##phenotype-description
+## 
+
+##feature-ontology http://sourceforge.net/projects/song/files/SO_Feature_Annotation/sofa_2_4_1/sofa_2_4_1.obo/download
+##species http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=9606
+##genome-build GRCh37
+
+##sequence-region chr1 	1 249250621
+##sequence-region chr2 	1 243199373
+##sequence-region chr3 	1 198022430
+##sequence-region chr4 	1 191154276
+##sequence-region chr5 	1 180915260
+##sequence-region chr6 	1 171115067
+##sequence-region chr7 	1 159138663
+##sequence-region chr8 	1 146364022
+##sequence-region chr9 	1 141213431
+##sequence-region chr10 1 135534747
+##sequence-region chr11 1 135006516
+##sequence-region chr12 1 133851895
+##sequence-region chr13 1 115169878
+##sequence-region chr14 1 107349540
+##sequence-region chr15 1 102531392
+##sequence-region chr16 1 90354753
+##sequence-region chr17 1 81195210
+##sequence-region chr18 1 78077248
+##sequence-region chr19 1 59128983
+##sequence-region chr20 1 63025520
+##sequence-region chr21 1 48129895
+##sequence-region chr22 1 51304566
+##sequence-region chrX  1 155270560
+##sequence-region chrY  1 59373566
+##sequence-region chrM  1 16571

@@ -8,34 +8,35 @@ use Test::More;
 use FindBin;
 
 chdir $FindBin::Bin;
-my $path = "$FindBin::Bin/../";
+my $path = "$FindBin::Bin/../examples";
 my $command;
 my ($sto_text, $ste_text);
 
 my $tool = GAL::Run->new(path => $path,
-			 command => 'gff_tool');
+			 command => 'gal_dump_CDS_sequence');
 
 ################################################################################
-# Testing that template_script compiles and returns usage statement
+# Testing that gal_dump_CDS_sequence compiles and returns usage statement
 ################################################################################
 
-ok(! ->run(cl_args => '--help'), 'template_script complies');
-like(->get_stdout, qr/Synopsis/, 'template_script prints usage statement');
+ok(! $tool->run(cl_args => '--help'), 'gal_dump_CDS_sequence complies');
+like($tool->get_stdout, qr/Synopsis/, 'gal_dump_CDS_sequence prints usage statement');
 
 ################################################################################
-# Testing that template_script does something else
+# Testing that gal_dump_CDS_sequence does something else
 ################################################################################
 
-my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
+#my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
+#
+#my @cl_args = ('--arg1',
+#	       '--arg2 value',
+#	       $gff_file,
+#	      );
+#
+#ok($tool->run(cl_args => \@cl_args), 'gal_dump_CDS_sequence does something');
+#ok($tool->get_stdout =~ /match something/,
+#   'gal_dump_CDS_sequence has the correct output');
 
-my @cl_args = ('--arg1',
-	       '--arg2 value',
-	       $gff_file,
-	      );
-
-ok($tool->run(cl_args => \@cl_args), 'template_script does something');
-ok(->get_stdout =~ /match something/,
-   'template_script has the correct output');
 $tool->clean_up;
 
 done_testing();

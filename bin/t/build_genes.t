@@ -8,37 +8,50 @@ use Test::More;
 use FindBin;
 
 chdir $FindBin::Bin;
-my $path = "$FindBin::Bin/../";
-my $command;
-my ($sto_text, $ste_text);
+my $path = "$FindBin::Bin/..";
 
-my $tool = GAL::Run->new(path => $path,
-			 command => 'build_genes');
+my $build_gene = GAL::Run->new(path    => $path,
+			       command => 'build_genes');
 
 ################################################################################
 # Testing that build_genes compiles and returns usage statement
 ################################################################################
 
-ok(!$tool->run(cl_args => '--help'), 'build_genes complies');
-like($tool->get_stdout, qr/Synopsis/, 'build_genes prints usage statement');
+ok(! $build_gene->run(cl_args => '--help'), 'build_genes complies');
+like($build_gene->get_stdout, qr/Synopsis/, 'build_genes prints usage statement');
 
 ################################################################################
-# Testing that build_genes does something else
+# Testing that build_genes builds genes for refGene.txt
 ################################################################################
 
-#my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
-#
-#my @cl_args = ('--arg1',
-#	       '--arg2 value',
-#	       $gff_file,
-#	      );
-#
-#ok($tool->run(cl_args => \@cl_args), 'build_genes does something');
-#ok($tool->get_stdout =~ /match something/,
-#   'build_genes has the correct output');
+my $ucsc2gff = GAL::Run->new(path    => $path,
+			 command => 'ucsc2gff',
+			 stdout  => 'data/refGene_hg19_chr22.gff3');
 
-$tool->clean_up;
+my @cl_args = ('-table refGene',
+	       '--pragma data/gvf_pragma_template_hg19.txt',
+	       '--fasta  data/hg19_chr22.fa',
+	       'data/refGene_hg19_chr22.txt',
+	      );
+
+ok(! $ucsc2gff->run(cl_args => \@cl_args), 'ucsc2gff runs on refGene.txt');
+ok($ucsc2gff->get_stdout =~ /ID=NM_001135862:exon:14;Parent=NM_001135862;/,
+   'ucsc2gff has the correct output');
+ok($ucsc2gff->get_stderr =~ /stop_interupted_CDS/,
+   'ucsc2gff has the correct error output');
+
+ok(! $build_gene->run(cl_args => ['data/refGene_hg19_chr22.gff3']), 'build_genes runs');
+ok($build_gene->get_stdout =~ /gene\t51205920\t51222087\t\.\t\-\t\.\tID=RABL2B/,
+   'build_gene has the correct output');
+ok($build_gene->get_stderr =~ /WARN\s+:\s+duplicate_gene_id\s+:\s+PANX2/,
+   'ucsc2gff has the correct error output');
+ok($build_gene->get_stderr =~ /WARN\s+:\s+multiple_aliases_for_clustered_transcripts\s+:\s+TYMP,\s+SCO2/,
+   'ucsc2gff has the correct error output');
+
+$ucsc2gff->clean_up;
+$build_gene->clean_up;
 done_testing();
+
 
 ################################################################################
 ################################# Ways to Test #################################

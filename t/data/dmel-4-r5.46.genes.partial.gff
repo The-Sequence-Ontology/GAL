@@ -1,0 +1,105 @@
+##gff-version 3
+##sequence-region 4 1 1351857
+##species  http://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=7227
+##feature-ontology ftp://ftp.flybase.org/releases/FB2012_04/precomputed_files/ontologies/so.obo.zip
+##genome-build FlyBase r5.46
+4	FlyBase	chromosome_arm	1	1351857	.	.	.	ID=4;Name=4;Dbxref=REFSEQ:NC_004353,GB:AE014135
+4	FlyBase	gene	24053	25665	.	+	.	ID=FBgn0040037;Name=JYalpha;fullname=JYalpha;Alias=JYalpha,JYAlpha,CG17923,JY-alpha;Ontology_term=SO:0000010,SO:0000087,GO:0005391,GO:0005886,GO:0005890,GO:0005524,GO:0015662,GO:0006754,GO:0016020,GO:0006812;Dbxref=FlyBase:FBan0017923,FlyBase_Annotation_IDs:CG17923,GB:AF202632,GB_protein:AAF17586,GB:CL528249,UniProt/TrEMBL:Q8IMB4,INTERPRO:IPR001757,INTERPRO:IPR006068,INTERPRO:IPR006069,GB_protein:AAN06537,OrthoDB5_Drosophila:EOG5NVZD2,OrthoDB5_Metazoa:EOG5W3WBH,EntrezGene:49962,INTERPRO:IPR013200,INTERPRO:IPR023214,INTERPRO:IPR023298,InterologFinder:49962,FlyAtlas:CG17923-RA,GenomeRNAi:49962;gbunit=AE014135;derived_computed_cyto=101F1-101F1
+4	FlyBase	mRNA	24053	25665	.	+	.	ID=FBtr0299529;Name=JYalpha-RB;Parent=FBgn0040037;Dbxref=REFSEQ:NM_143896,FlyBase_Annotation_IDs:CG17923-RB;score_text=Moderately Supported;score=6
+4	FlyBase	CDS	24053	24477	.	+	0	ID=CDS_FBgn0040037:1_1558;Name=JYalpha-cds;Parent=FBtr0299529;parent_type=mRNA
+4	FlyBase	exon	24053	24477	.	+	.	ID=FBgn0040037:1;Name=JYalpha:1;Parent=FBtr0299529;parent_type=mRNA
+4	FlyBase	CDS	24979	25153	.	+	1	ID=CDS_FBgn0040037:2_1558;Name=JYalpha-cds;Parent=FBtr0299529;parent_type=mRNA
+4	FlyBase	exon	24979	25153	.	+	.	ID=FBgn0040037:2;Name=JYalpha:2;Parent=FBtr0299529;parent_type=mRNA
+4	FlyBase	CDS	25218	25450	.	+	0	ID=CDS_FBgn0040037:3_1558;Name=JYalpha-cds;Parent=FBtr0299529;parent_type=mRNA
+4	FlyBase	exon	25218	25450	.	+	.	ID=FBgn0040037:3;Name=JYalpha:3;Parent=FBtr0299529;parent_type=mRNA
+4	FlyBase	exon	25501	25665	.	+	.	ID=FBgn0040037:4;Name=JYalpha:4;Parent=FBtr0299529;parent_type=mRNA
+4	FlyBase	CDS	25501	25621	.	+	1	ID=CDS_FBgn0040037:4_1558;Name=JYalpha-cds;Parent=FBtr0299529;parent_type=mRNA
+4	FlyBase	three_prime_UTR	25622	25665	.	+	.	ID=three_prime_UTR_FBgn0040037:4_1558;Name=JYalpha-u3;Parent=FBtr0299529;parent_type=mRNA
+4	FlyBase	gene	26455	32391	.	-	.	ID=FBgn0052011;Name=CR32011;Alias=CG32011;Ontology_term=SO:0000087,SO:0000042;Dbxref=FlyBase:FBan0032011,FlyBase_Annotation_IDs:CR32011,GenomeRNAi:3772046;gbunit=AE014135;derived_computed_cyto=101F1-102A1
+4	FlyBase	pseudogene	26455	32391	.	-	.	ID=FBtr0333684;Name=CR32011-RB;Parent=FBgn0052011;Dbxref=FlyBase_Annotation_IDs:CR32011-RB;score_text=Weakly Supported;score=1
+4	FlyBase	exon	26455	26667	.	-	.	ID=FBgn0052011:1;Name=CR32011:1;Parent=FBtr0333684;parent_type=pseudogene
+4	FlyBase	pseudogene	27000	32391	.	-	.	ID=FBtr0089182;Name=CR32011-RA;Parent=FBgn0052011;Dbxref=FlyBase_Annotation_IDs:CR32011-RA,REFSEQ:NR_001596;score_text=Weakly Supported;score=1
+4	FlyBase	exon	27000	27101	.	-	.	ID=FBgn0052011:2;Name=CR32011:2;Parent=FBtr0089182;parent_type=pseudogene
+4	FlyBase	exon	27167	27349	.	-	.	ID=FBgn0052011:3;Name=CR32011:3;Parent=FBtr0089182,FBtr0333684;parent_type=pseudogene
+4	FlyBase	exon	28371	28907	.	-	.	ID=FBgn0052011:4;Name=CR32011:4;Parent=FBtr0089182,FBtr0333684;parent_type=pseudogene
+4	FlyBase	exon	28966	29301	.	-	.	ID=FBgn0052011:5;Name=CR32011:5;Parent=FBtr0089182,FBtr0333684;parent_type=pseudogene
+4	FlyBase	exon	29356	32391	.	-	.	ID=FBgn0052011:6;Name=CR32011:6;Parent=FBtr0089182,FBtr0333684;parent_type=pseudogene
+4	FlyBase	gene	33266	45680	.	-	.	ID=FBgn0052010;Name=CR32010;Alias=CG32010;Ontology_term=SO:0000087,SO:0000042;Dbxref=FlyBase:FBti0020403,FlyBase:FBan0032010,FlyBase_Annotation_IDs:CR32010,GenomeRNAi:3772244;gbunit=AE014135;derived_computed_cyto=102A1-102A1
+4	FlyBase	pseudogene	33266	45680	.	-	.	ID=FBtr0333683;Name=CR32010-RB;Parent=FBgn0052010;Dbxref=FlyBase_Annotation_IDs:CR32010-RB;score_text=Weakly Supported;score=1
+4	FlyBase	exon	33266	33451	.	-	.	ID=FBgn0052010:1;Name=CR32010:1;Parent=FBtr0333683;parent_type=pseudogene
+4	FlyBase	pseudogene	33779	45680	.	-	.	ID=FBtr0089181;Name=CR32010-RA;Parent=FBgn0052010;Alias=TE20403-RA;Dbxref=FlyBase_Annotation_IDs:CR32010-RA,REFSEQ:NR_001597;score_text=Weakly Supported;score=1
+4	FlyBase	exon	33779	33883	.	-	.	ID=FBgn0052010:2;Name=CR32010:2;Parent=FBtr0089181;parent_type=pseudogene
+4	FlyBase	exon	33949	34131	.	-	.	ID=FBgn0052010:3;Name=CR32010:3;Parent=FBtr0089181,FBtr0333683;parent_type=pseudogene
+4	FlyBase	exon	41596	42179	.	-	.	ID=FBgn0052010:4;Name=CR32010:4;Parent=FBtr0089181,FBtr0333683;parent_type=pseudogene
+4	FlyBase	exon	42238	42573	.	-	.	ID=FBgn0052010:5;Name=CR32010:5;Parent=FBtr0089181,FBtr0333683;parent_type=pseudogene
+4	FlyBase	exon	42628	45680	.	-	.	ID=FBgn0052010:6;Name=CR32010:6;Parent=FBtr0089181,FBtr0333683;parent_type=pseudogene
+4	FlyBase	gene	47646	52259	.	-	.	ID=FBgn0052009;Name=CR32009;Alias=CG32009;Ontology_term=SO:0000087,SO:0000042;Dbxref=FlyBase:FBan0032009,FlyBase_Annotation_IDs:CR32009,GenomeRNAi:3772156;gbunit=AE014135;derived_computed_cyto=102A1-102A1
+4	FlyBase	pseudogene	47646	52259	.	-	.	ID=FBtr0333682;Name=CR32009-RB;Parent=FBgn0052009;Dbxref=FlyBase_Annotation_IDs:CR32009-RB;score_text=Weakly Supported;score=1
+4	FlyBase	exon	47646	47831	.	-	.	ID=FBgn0052009:1;Name=CR32009:1;Parent=FBtr0333682;parent_type=pseudogene
+4	FlyBase	pseudogene	48156	52259	.	-	.	ID=FBtr0089180;Name=CR32009-RA;Parent=FBgn0052009;Dbxref=FlyBase_Annotation_IDs:CR32009-RA,REFSEQ:NR_001598;score_text=Weakly Supported;score=1
+4	FlyBase	exon	48156	48263	.	-	.	ID=FBgn0052009:2;Name=CR32009:2;Parent=FBtr0089180;parent_type=pseudogene
+4	FlyBase	exon	48329	48511	.	-	.	ID=FBgn0052009:3;Name=CR32009:3;Parent=FBtr0089180,FBtr0333682;parent_type=pseudogene
+4	FlyBase	exon	49533	50116	.	-	.	ID=FBgn0052009:4;Name=CR32009:4;Parent=FBtr0089180,FBtr0333682;parent_type=pseudogene
+4	FlyBase	exon	50175	52259	.	-	.	ID=FBgn0052009:5;Name=CR32009:5;Parent=FBtr0089180,FBtr0333682;parent_type=pseudogene
+4	FlyBase	gene	53104	64404	.	-	.	ID=FBgn0025740;Name=plexB;fullname=plexin B;Alias=FBgn0024198,Plexin-B,plexin-B,plexin,PlexB,plex,plexin and met-hepatocyte growth factor receptor-like,unnamed,CG17245,plexinB,PLEXB,plex B;Ontology_term=SO:0000010,SO:0000087,GO:0007411,GO:0017154,GO:0008045,GO:0035021,GO:0035025,GO:0005515,GO:0005622,GO:0016020,GO:0007165;Dbxref=FlyBase:FBan0017245,GB_protein:AFH06760,FlyBase_Annotation_IDs:CG17245,INTERPRO:IPR015943,GB_protein:AAF59374,GB:AA142091,GB:AF106933,GB_protein:AAD09426,GB:BI216074,GB:BT010009,GB_protein:AAQ22478,GB:CZ480000,UniProt/Swiss-Prot:Q9V4A7,INTERPRO:IPR001627,INTERPRO:IPR002165,INTERPRO:IPR002909,INTERPRO:IPR003659,INTERPRO:IPR008936,INTERPRO:IPR013548,INTERPRO:IPR014756,INTERPRO:IPR016201,OrthoDB5_Drosophila:EOG5320RR,OrthoDB5_Diptera:EOG5C2GW9,OrthoDB5_Insecta:EOG58671S,OrthoDB5_Arthropoda:EOG5N8PKK,OrthoDB5_Metazoa:EOG5NS61X,EntrezGene:43766,INTERPRO:IPR013783,InterologFinder:43766,BIOGRID:68604,FlyAtlas:CG32010-RA%3BCG17245-RA,GenomeRNAi:43766,INTERACTIVEFLY:/genebrief/plexinb.htm;gbunit=AE014135;derived_computed_cyto=102A1-102A1
+4	FlyBase	mRNA	53104	64404	.	-	.	ID=FBtr0308297;Name=plexB-RB;Parent=FBgn0025740;Dbxref=REFSEQ:NM_001258471,FlyBase_Annotation_IDs:CG17245-RB;score_text=Strongly Supported;score=11
+4	FlyBase	exon	53104	53751	.	-	.	ID=FBgn0025740:1;Name=plexB:1;Parent=FBtr0308297;parent_type=mRNA
+4	FlyBase	three_prime_UTR	53104	53643	.	-	.	ID=three_prime_UTR_FBgn0025740:1_1569;Name=plexB-u3;Parent=FBtr0308297;parent_type=mRNA
+4	FlyBase	mRNA	53438	64404	.	-	.	ID=FBtr0089179;Name=plexB-RA;Parent=FBgn0025740;Alias=CG17245-RA;Dbxref=FlyBase_Annotation_IDs:CG17245-RA,REFSEQ:NM_079877;score_text=Strongly Supported;score=11
+4	FlyBase	exon	53438	53751	.	-	.	ID=FBgn0025740:2;Name=plexB:2;Parent=FBtr0089179;parent_type=mRNA
+4	FlyBase	three_prime_UTR	53438	53643	.	-	.	ID=three_prime_UTR_FBgn0025740:2_1569;Name=plexB-u3;Parent=FBtr0089179;parent_type=mRNA
+4	FlyBase	CDS	53644	53751	.	-	0	ID=CDS_FBgn0025740:1_1569;Name=plexB-cds;Parent=FBtr0308297;parent_type=mRNA
+4	FlyBase	CDS	53644	53751	.	-	0	ID=CDS_FBgn0025740:2_1569;Name=plexB-cds;Parent=FBtr0089179;parent_type=mRNA
+4	FlyBase	CDS	53817	53999	.	-	0	ID=CDS_FBgn0025740:3_1569;Name=plexB-cds;Parent=FBtr0089179,FBtr0308297;parent_type=mRNA
+4	FlyBase	exon	53817	53999	.	-	.	ID=FBgn0025740:3;Name=plexB:3;Parent=FBtr0089179,FBtr0308297;parent_type=mRNA
+4	FlyBase	CDS	56500	57083	.	-	2	ID=CDS_FBgn0025740:4_1569;Name=plexB-cds;Parent=FBtr0089179,FBtr0308297;parent_type=mRNA
+4	FlyBase	exon	56500	57083	.	-	.	ID=FBgn0025740:4;Name=plexB:4;Parent=FBtr0089179,FBtr0308297;parent_type=mRNA
+4	FlyBase	CDS	57142	61911	.	-	2	ID=CDS_FBgn0025740:5_1569;Name=plexB-cds;Parent=FBtr0089179,FBtr0308297;parent_type=mRNA
+4	FlyBase	exon	57142	61911	.	-	.	ID=FBgn0025740:5;Name=plexB:5;Parent=FBtr0089179,FBtr0308297;parent_type=mRNA
+4	FlyBase	exon	63540	64404	.	-	.	ID=FBgn0025740:6;Name=plexB:6;Parent=FBtr0089179,FBtr0308297;parent_type=mRNA
+4	FlyBase	CDS	63540	64050	.	-	0	ID=CDS_FBgn0025740:6_1569;Name=plexB-cds;Parent=FBtr0089179,FBtr0308297;parent_type=mRNA
+4	FlyBase	five_prime_UTR	64051	64404	.	-	.	ID=five_prime_UTR_FBgn0025740:6_1569;Name=plexB-u5;Parent=FBtr0089179,FBtr0308297;parent_type=mRNA
+4	FlyBase	gene	68336	77667	.	-	.	ID=FBgn0004859;Name=ci;fullname=cubitus interruptus;Alias=FBgn0000314,FBgn0000315,FBgn0010154,FBgn0010155,FBgn0017411,FBgn0019831,Ci,Gli,Cubitus interruptus,cubitus-interruptus-Dominant,CI,CG2125,ci155,CID,CiD,ciD,l(4)17,ci[D],ci-D,Ci[D],Ce,l(4)13,cubitus-interruptus-dominant,Cell,l(4)102ABc,Ci/GLI,Cubitus interuptus,Siah,Ci/Gli,Ci155,cubitus-interruptus,Cubitus Interuptus,cubitus interuptus,cubitis interruptus,Cubitus-interruptus,Cubitis Interruptus,Ci-155;Ontology_term=SO:0000010,SO:0000087,GO:0007224,GO:0016020,GO:0048100,GO:0003700,GO:0035217,GO:0045944,GO:0000122,GO:0005634,GO:0030707,GO:0005737,GO:0035301,GO:0007346,GO:0007350,GO:0035277,GO:0035017,GO:0035224,GO:0048592,GO:0048813,GO:0048666,GO:0008544,GO:0005515,GO:0048477,GO:0045750,GO:0007367,GO:0043234,GO:0030858,GO:0060914,GO:0006355,GO:0044212,GO:0001077,GO:0000977,GO:0008270;Dbxref=FlyBase:FBan0002125,FlyBase_Annotation_IDs:CG2125,GB:AC010915,GB:AC011250,GB:AF242878,GB:AF433680,GB_protein:AAM17953,GB:AY573706,GB_protein:AAS87249,GB:BI352516,GB:BZ286250,GB:U21389,GB:U21390,GB_protein:AAG15271,GB:U66884,GB_protein:AAC47752,GB:X54360,GB_protein:CAA38244,UniProt/Swiss-Prot:P19538,INTERPRO:IPR007087,GB_protein:AAF59373,INTERPRO:IPR013087,INTERPRO:IPR015880,GB_protein:AFH06762,GB_protein:AFH06761,OrthoDB5_Drosophila:EOG52V88W,OrthoDB5_Diptera:EOG50K7JN,OrthoDB5_Insecta:EOG5H710X,OrthoDB5_Arthropoda:EOG58GTJ4,OrthoDB5_Metazoa:EOG547JHN,EntrezGene:43767,InterologFinder:43767,BIOGRID:68605,FlyAtlas:CG2125-RA,FlyReactome:87341,GenomeRNAi:43767,INTERACTIVEFLY:/segment/cubitus.htm;gbunit=AE014135;derived_computed_cyto=102A1-102A3
+4	FlyBase	mRNA	68336	77667	.	-	.	ID=FBtr0306168;Name=ci-RB;Parent=FBgn0004859;Dbxref=REFSEQ:NM_001258473,FlyBase_Annotation_IDs:CG2125-RB;score_text=Strongly Supported;score=11
+4	FlyBase	mRNA	68336	76957	.	-	.	ID=FBtr0089178;Name=ci-RA;Parent=FBgn0004859;Alias=CG2125-RA;Dbxref=FlyBase_Annotation_IDs:CG2125-RA,REFSEQ:NM_079878;score_text=Strongly Supported;score=11
+4	FlyBase	mRNA	68336	76957	.	-	.	ID=FBtr0308074;Name=ci-RC;Parent=FBgn0004859;Dbxref=REFSEQ:NM_001258472,FlyBase_Annotation_IDs:CG2125-RC;score_text=Strongly Supported;score=11
+4	FlyBase	exon	68336	71088	.	-	.	ID=FBgn0004859:1;Name=ci:1;Parent=FBtr0089178,FBtr0308074,FBtr0306168;parent_type=mRNA
+4	FlyBase	three_prime_UTR	68336	71027	.	-	.	ID=three_prime_UTR_FBgn0004859:1_1572;Name=ci-u3;Parent=FBtr0308074;parent_type=mRNA
+4	FlyBase	three_prime_UTR	68336	68619	.	-	.	ID=three_prime_UTR_FBgn0004859:1_1557;Name=ci-u3;Parent=FBtr0306168;parent_type=mRNA
+4	FlyBase	three_prime_UTR	68336	68619	.	-	.	ID=three_prime_UTR_FBgn0004859:1_1571;Name=ci-u3;Parent=FBtr0089178;parent_type=mRNA
+4	FlyBase	CDS	68620	71088	.	-	0	ID=CDS_FBgn0004859:1_1557;Name=ci-cds;Parent=FBtr0306168;parent_type=mRNA
+4	FlyBase	CDS	68620	71088	.	-	0	ID=CDS_FBgn0004859:1_1571;Name=ci-cds;Parent=FBtr0089178;parent_type=mRNA
+4	FlyBase	CDS	71028	71088	.	-	1	ID=CDS_FBgn0004859:1_1573;Name=ci-cds;Parent=FBtr0308074;parent_type=mRNA
+4	FlyBase	CDS	71142	71306	.	-	0	ID=CDS_FBgn0004859:3_1557;Name=ci-cds;Parent=FBtr0306168;parent_type=mRNA
+4	FlyBase	CDS	71142	71306	.	-	0	ID=CDS_FBgn0004859:3_1571;Name=ci-cds;Parent=FBtr0089178;parent_type=mRNA
+4	FlyBase	exon	71142	71306	.	-	.	ID=FBgn0004859:3;Name=ci:3;Parent=FBtr0089178,FBtr0306168;parent_type=mRNA
+4	FlyBase	CDS	71142	71239	.	-	0	ID=CDS_FBgn0004859:2_1571;Name=ci-cds;Parent=FBtr0308074;parent_type=mRNA
+4	FlyBase	exon	71142	71239	.	-	.	ID=FBgn0004859:2;Name=ci:2;Parent=FBtr0308074;parent_type=mRNA
+4	FlyBase	CDS	71371	71883	.	-	0	ID=CDS_FBgn0004859:4_1557;Name=ci-cds;Parent=FBtr0306168;parent_type=mRNA
+4	FlyBase	CDS	71371	71883	.	-	0	ID=CDS_FBgn0004859:4_1571;Name=ci-cds;Parent=FBtr0089178,FBtr0308074;parent_type=mRNA
+4	FlyBase	exon	71371	71883	.	-	.	ID=FBgn0004859:4;Name=ci:4;Parent=FBtr0089178,FBtr0308074,FBtr0306168;parent_type=mRNA
+4	FlyBase	CDS	71940	72580	.	-	2	ID=CDS_FBgn0004859:5_1557;Name=ci-cds;Parent=FBtr0306168;parent_type=mRNA
+4	FlyBase	CDS	71940	72580	.	-	2	ID=CDS_FBgn0004859:5_1571;Name=ci-cds;Parent=FBtr0089178,FBtr0308074;parent_type=mRNA
+4	FlyBase	exon	71940	72580	.	-	.	ID=FBgn0004859:5;Name=ci:5;Parent=FBtr0089178,FBtr0308074,FBtr0306168;parent_type=mRNA
+4	FlyBase	CDS	72643	73010	.	-	1	ID=CDS_FBgn0004859:6_1571;Name=ci-cds;Parent=FBtr0089178,FBtr0308074;parent_type=mRNA
+4	FlyBase	exon	72643	73010	.	-	.	ID=FBgn0004859:6;Name=ci:6;Parent=FBtr0089178,FBtr0308074,FBtr0306168;parent_type=mRNA
+4	FlyBase	CDS	72643	72694	.	-	0	ID=CDS_FBgn0004859:6_1557;Name=ci-cds;Parent=FBtr0306168;parent_type=mRNA
+4	FlyBase	five_prime_UTR	72695	73010	.	-	.	ID=five_prime_UTR_FBgn0004859:6_1557;Name=ci-u5;Parent=FBtr0306168;parent_type=mRNA
+4	FlyBase	exon	76457	76957	.	-	.	ID=FBgn0004859:7;Name=ci:7;Parent=FBtr0089178,FBtr0308074;parent_type=mRNA
+4	FlyBase	CDS	76457	76494	.	-	0	ID=CDS_FBgn0004859:7_1571;Name=ci-cds;Parent=FBtr0089178,FBtr0308074;parent_type=mRNA
+4	FlyBase	five_prime_UTR	76495	76957	.	-	.	ID=five_prime_UTR_FBgn0004859:7_1571;Name=ci-u5;Parent=FBtr0089178,FBtr0308074;parent_type=mRNA
+4	FlyBase	exon	76917	77667	.	-	.	ID=FBgn0004859:8;Name=ci:8;Parent=FBtr0306168;parent_type=mRNA
+4	FlyBase	five_prime_UTR	76917	77667	.	-	.	ID=five_prime_UTR_FBgn0004859:8_1557;Name=ci-u5;Parent=FBtr0306168;parent_type=mRNA
+4	FlyBase	gene	77123	83750	.	+	.	ID=FBgn0264617;Name=CR43957;Ontology_term=SO:0000011,SO:0000087,SO:0000077;Dbxref=FlyBase_Annotation_IDs:CR43957;derived_computed_cyto=101F1-101F1
+4	FlyBase	ncRNA	77123	83750	.	+	.	ID=FBtr0333705;Name=CR43957-RB;Parent=FBgn0264617;Dbxref=FlyBase_Annotation_IDs:CR43957-RB;score_text=Weakly Supported;score=1
+4	FlyBase	ncRNA	77123	81600	.	+	.	ID=FBtr0333704;Name=CR43957-RA;Parent=FBgn0264617;Dbxref=FlyBase_Annotation_IDs:CR43957-RA;score_text=Weakly Supported;score=1
+4	FlyBase	exon	77123	77175	.	+	.	ID=FBgn0264617:1;Name=CR43957:1;Parent=FBtr0333704,FBtr0333705;parent_type=ncRNA
+4	FlyBase	exon	77866	78037	.	+	.	ID=FBgn0264617:2;Name=CR43957:2;Parent=FBtr0333704,FBtr0333705;parent_type=ncRNA
+4	FlyBase	exon	80602	81041	.	+	.	ID=FBgn0264617:3;Name=CR43957:3;Parent=FBtr0333704,FBtr0333705;parent_type=ncRNA
+4	FlyBase	exon	81196	81600	.	+	.	ID=FBgn0264617:4;Name=CR43957:4;Parent=FBtr0333704;parent_type=ncRNA
+4	FlyBase	exon	83599	83750	.	+	.	ID=FBgn0264617:5;Name=CR43957:5;Parent=FBtr0333705;parent_type=ncRNA
+4	FlyBase	gene	85851	87833	.	-	.	ID=FBgn0017545;Name=RpS3A;fullname=Ribosomal protein S3A;Alias=FBgn0002630,FBgn0013757,CG2168,RPS3A,M(4)101,RpS3a,ribosomal protein S3a,RPS3a,ribosomal protein S3alpha,clone 2.29,M57g,C3,Clone 3,M[57g],M(4)57g,M(4)[57g],Minute(4)101,l(4)102ABa,anon-EST:Liang-2.29;Ontology_term=SO:0000010,SO:0000087,GO:0006412,GO:0003735,GO:0005811,GO:0048477,GO:0000022,GO:0007052,GO:0022626,GO:0022627;Dbxref=FlyBase:FBan0002168,FlyBase_Annotation_IDs:CG2168,INTERPRO:IPR018281,GB_protein:AAN06542,GB_protein:AAN06541,GB_protein:AAF59372,GB:AA540918,GB:AF034971,GB_protein:AAC62117,GB:AI124312,GB:AI945213,GB:AY070949,GB_protein:AAL48571,GB:BI164521,GB:Y10115,GB_protein:CAA71201,UniProt/Swiss-Prot:P55830,INTERPRO:IPR001593,OrthoDB5_Drosophila:EOG5C5CD3,OrthoDB5_Diptera:EOG52NHM5,OrthoDB5_Insecta:EOG5HQC7N,OrthoDB5_Arthropoda:EOG5XWDDP,OrthoDB5_Metazoa:EOG5BK7VS,GB_protein:AFH06764,EntrezGene:43768,InterologFinder:43768,BIOGRID:68606,FlyAtlas:CG2168-RA,GenomeRNAi:43768;gbunit=AE014135;derived_computed_cyto=101F1-101F1
+4	FlyBase	mRNA	85851	87833	.	-	.	ID=FBtr0308296;Name=RpS3A-RF;Parent=FBgn0017545;Dbxref=FlyBase_Annotation_IDs:CG2168-RF,REFSEQ:NM_001258475;score_text=Strongly Supported;score=11
+4	FlyBase	exon	85851	86147	.	-	.	ID=FBgn0017545:1;Name=RpS3A:1;Parent=FBtr0308296;parent_type=mRNA
+4	FlyBase	three_prime_UTR	85851	86147	.	-	.	ID=three_prime_UTR_FBgn0017545:1_1580;Name=RpS3A-u3;Parent=FBtr0308296;parent_type=mRNA
+4	FlyBase	exon	86203	86271	.	-	.	ID=FBgn0263851:1;Name=CR43712:1;Parent=FBtr0321323;parent_type=snoRNA

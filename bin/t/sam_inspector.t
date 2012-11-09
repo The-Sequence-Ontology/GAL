@@ -8,36 +8,34 @@ use Test::More;
 use FindBin;
 
 chdir $FindBin::Bin;
-my $path = "$FindBin::Bin/../";
-my $command;
-my ($sto_text, $ste_text);
+my $path = "$FindBin::Bin/..";
 
 my $tool = GAL::Run->new(path => $path,
-			 command => 'gff_tool');
+			 command => 'sam_inspector');
 
 ################################################################################
-# Testing that template_script compiles and returns usage statement
+# Testing that sam_inspector compiles and returns usage statement
 ################################################################################
 
-ok(! ->run(cl_args => '--help'), 'template_script complies');
-like(->get_stdout, qr/Synopsis/, 'template_script prints usage statement');
+ok(! $tool->run(cl_args => '--help'), 'sam_inspector complies');
+like($tool->get_stdout, qr/Synopsis/, 'sam_inspector prints usage statement');
 
 ################################################################################
-# Testing that template_script does something else
+# Testing that sam_inspector does something else
 ################################################################################
 
-my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
+# my $gff_file = "$FindBin::Bin/data/file.gff";
+#
+# my @cl_args = ('--arg1',
+#	         '--arg2 value',
+#	         $gff_file,
+#	        );
+#
+# ok($tool->run(cl_args => \@cl_args), 'sam_inspector does something');
+# ok($tool->get_stdout =~ /match something/,
+#    'sam_inspector has the correct output');
 
-my @cl_args = ('--arg1',
-	       '--arg2 value',
-	       $gff_file,
-	      );
-
-ok($tool->run(cl_args => \@cl_args), 'template_script does something');
-ok(->get_stdout =~ /match something/,
-   'template_script has the correct output');
 $tool->clean_up;
-
 done_testing();
 
 ################################################################################
