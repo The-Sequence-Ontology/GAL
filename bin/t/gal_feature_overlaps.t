@@ -24,16 +24,9 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_feature_overlaps prints usage stateme
 # Testing that gal_feature_overlaps does something else
 ################################################################################
 
-# my $gff_file = "$FindBin::Bin/data/file.gff";
-#
-# my @cl_args = ('--arg1',
-#	         '--arg2 value',
-#	         $gff_file,
-#	        );
-#
-# ok($tool->run(cl_args => \@cl_args), 'gal_feature_overlaps does something');
-# ok($tool->get_stdout =~ /match something/,
-#    'gal_feature_overlaps has the correct output');
+ok(! $tool->run(cl_args => ['data/interval_*.gff']), 'gal_feature_overlaps runs');
+ok($tool->get_stdout =~ /chr12:3000510:3000658\s+3\s+data\/interval_2.gff,data\/interval_1.gff,data\/interval_3.gff/,
+   'gal_feature_overlaps has the correct output');
 
 $tool->clean_up;
 done_testing();

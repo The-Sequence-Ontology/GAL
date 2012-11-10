@@ -53,5 +53,6 @@ my $features = $annotation->features;
 my $genes = $features->search({type => 'gene'});
 while (my $gene = $genes->next) {
     next unless $gene->is_coding;
-    print $gene->print_with_children;
+    print join "\n", $gene->to_gff3_recursive;
+    print "\n";
 }

@@ -24,16 +24,13 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_protein_genes prints usage statement'
 # Testing that gal_protein_genes does something else
 ################################################################################
 
-# my $gff_file = "$FindBin::Bin/data/file.gff";
-#
-# my @cl_args = ('--arg1',
-#	         '--arg2 value',
-#	         $gff_file,
-#	        );
-#
-# ok($tool->run(cl_args => \@cl_args), 'gal_protein_genes does something');
-# ok($tool->get_stdout =~ /match something/,
-#    'gal_protein_genes has the correct output');
+my @cl_args = ('data/dmel-4-r5.46.genes.partial.gff',
+	       'data/dmel-4-chromosome-r5.46.fasta',
+	      );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gal_protein_genes runs');
+ok($tool->get_stdout =~ /ID=three_prime_UTR_FBgn0017545:1_1580;Name=RpS3A\-u3;Parent=FBtr0308296;/,
+   'gal_protein_genes has the correct output');
 
 $tool->clean_up;
 done_testing();
