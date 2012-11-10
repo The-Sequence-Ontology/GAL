@@ -24,16 +24,13 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_example_seq_features prints usage sta
 # Testing that gal_example_seq_features does something else
 ################################################################################
 
-# my $gff_file = "$FindBin::Bin/data/file.gff";
-#
-# my @cl_args = ('--arg1',
-#	         '--arg2 value',
-#	         $gff_file,
-#	        );
-#
-# ok($tool->run(cl_args => \@cl_args), 'gal_example_seq_features does something');
-# ok($tool->get_stdout =~ /match something/,
-#    'gal_example_seq_features has the correct output');
+my @cl_args = ('data/dmel-4-r5.46.genes.partial.gff',
+	       'data/dmel-4-chromosome-r5.46.fasta',
+	        );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gal_example_seq_features runs');
+ok($tool->get_stdout =~ /297\s+0.28956228956229/,
+   'gal_example_seq_features has the correct output');
 
 $tool->clean_up;
 done_testing();
