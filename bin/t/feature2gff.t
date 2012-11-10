@@ -26,16 +26,15 @@ like($tool->get_stdout, qr/Synopsis/, 'feature2gff prints usage statement');
 # Testing that feature2gff does something else
 ################################################################################
 
-#my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
-#
-#my @cl_args = ('--arg1',
-#	       '--arg2 value',
-#	       $gff_file,
-#	      );
-#
-#ok($tool->run(cl_args => \@cl_args), 'feature2gff does something');
-#ok(->get_stdout =~ /match something/,
-#   'feature2gff has the correct output');
+#../feature2gff
+
+my @cl_args = ('--parser venter_snp data/celera_short.gff',
+	       '--fasta data/fasta_hg18/chr22_hg18.fasta',
+	      );
+
+ok(! $tool->run(cl_args => \@cl_args), 'feature2gff runs');
+ok($tool->get_stdout =~ /ID=1103675014765;Variant_seq=G;Reference_seq=;Zygosity=homozygous;/,
+   'feature2gff has the correct output');
 
 $tool->clean_up;
 done_testing();

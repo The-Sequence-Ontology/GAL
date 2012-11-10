@@ -70,22 +70,19 @@ sub CDSs {
 
   my $self = shift;
 
-  my $sort_order;
-  if ($self->strand eq '-') {
-    $sort_order = {'-desc' => 'end'};
+  if (wantarray) {
+      return grep {$_->type eq 'CDS'} $self->children->all;
   }
   else {
-    $sort_order = {'-asc' => 'start'};
+      my $sort_order = ($self->strand eq '-' ?
+			{'-desc' => 'end'}   :
+			{'-asc'  => 'start'});
+
+      my $CDSs = $self->children({type => 'CDS'},
+				  {order_by => $sort_order,
+				   distinct => 1});
+      return $CDSs;
   }
-
-  #  my $CDSs = $self->children(undef, {distinct => 1})->search({type => 'CDS'},
-  #				     {order_by => $sort_order});
-
-  my $CDSs = $self->children({type => 'CDS'},
-			     {order_by => $sort_order,
-			      distinct => 1});
-
-  return wantarray ? $CDSs->all : $CDSs;
 }
 
 #-----------------------------------------------------------------------------
@@ -95,7 +92,7 @@ sub CDSs {
  Title   : CDS_seq_genomic
  Usage   : $seq = $self->CDS_seq_genomic
  Function: Return the genomic sequence (on the plus strand of the genome) of
-           the full CDS for this mRNA.
+	   the full CDS for this mRNA.
  Returns : A DNA sequence
  Args    : None
 
@@ -164,10 +161,10 @@ sub protein_seq {
 
  Title   : map2CDS
  Usage   : @CDS_coordinates = $self->map2CDS(@genomic_coordinates);
-           ($CDS_coordinate) = $self->map2CDS($genomic_coordinate);
+	   ($CDS_coordinate) = $self->map2CDS($genomic_coordinate);
  Function: Transform genomic coordinates to CDS coordinates.
  Returns : An array(ref) of integers or an empty list if the genomic
-           coordinates given do not overlap the CDS of this mRNA.
+	   coordinates given do not overlap the CDS of this mRNA.
  Args    : An array of integers
 
 =cut
@@ -199,10 +196,10 @@ sub map2CDS {
  Title   : map2protein
  Usage   : @protein_coordinates = $self->map2protein(@genomic_coordinates);
  Function: Transform genomic coordinates to protein sequence coordinates.
-           Note that 3 genomic coordinates will return the same protein
-           coordinate if they fall in the same codon.
+	   Note that 3 genomic coordinates will return the same protein
+	   coordinate if they fall in the same codon.
  Returns : An array(ref) of integers or an empty list if the genomic
-           coordinates given do not overlap the protein (CDS) of this mRNA.
+	   coordinates given do not overlap the protein (CDS) of this mRNA.
  Args    : An array of integers
 
 =cut
@@ -286,8 +283,8 @@ sub CDS_length {
  Title   : protein_length
  Usage   : $length = $self->protein_length
  Function: Return the length of the protein for this mRNA.  If the CDS length
-           is not divisable by three this method will truncate the integral
-           portion of the protein length.
+	   is not divisable by three this method will truncate the integral
+	   portion of the protein length.
  Returns : An integer
  Args    : None
 
@@ -305,8 +302,8 @@ sub protein_length {
  Title   : phase_at_location
  Usage   : $phase = $self->phase_at_location($genomic_coordinate)
  Function: Return the phase (how many nts 3' does the next codon begin) for
-           a given genomic coordinate or undef if the coordinate does not overlap
-           the CDS of this mRNA.
+	   a given genomic coordinate or undef if the coordinate does not overlap
+	   the CDS of this mRNA.
  Returns : An integer
  Args    : An intger (genomic coordinate).
 
@@ -333,8 +330,8 @@ sub phase_at_location {
  Title   : frame_at_location
  Usage   : $frame = $self->frame_at_location($genomic_coordinate);
  Function: Return the reading frame (what position within a codon) for a given
-           genomic coordinate or undef if the coordinate does not overlap
-           the CDS of this mRNA.
+	   genomic coordinate or undef if the coordinate does not overlap
+	   the CDS of this mRNA.
  Returns : An integer
  Args    : An integer
 
@@ -360,10 +357,10 @@ sub frame_at_location {
 
  Title   : codon_at_location
  Usage   : $codon = $self->codon_at_location($genomic_coordinate);
-           ($codon, $frame) = $self->codon_at_location
+	   ($codon, $frame) = $self->codon_at_location
  Function: Return the codon (and frame in list context) that overlaps a given
-           genomic coordinate.  Returns undef in the genomic coordinate does
-           not overlap a complete codon.
+	   genomic coordinate.  Returns undef in the genomic coordinate does
+	   not overlap a complete codon.
  Returns : An scalar string and in list context also returns an integer.
  Args    : An integer
 
@@ -386,6 +383,54 @@ sub codon_at_location {
 
 #-----------------------------------------------------------------------------
 
+=head2 translation_start
+
+ Title   : translation_start
+ Usage   : $tans_start = $mrna->translation_start;
+ Function: Get the coordiante of the first nt of the start codon.
+ Returns : An integer
+ Args    : None
+
+=cut
+
+sub translation_start {
+  my $self = shift;
+
+  my $strand = $self->strand;
+  my $sort_sub = ($strand eq '-'            ?
+		  sub {$b->start <=> $a->start} :
+		  sub {$a->start <=> $b->start});
+
+  my ($first_CDS) = sort $sort_sub $self->CDSs;
+  return $first_CDS->my_start;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 translation_end
+
+ Title   : translation_end
+ Usage   : $tans_end = $mrna->translation_end;
+ Function: Get the coordiante of the last nt of the stop codon.
+ Returns : An integer
+ Args    : None
+
+=cut
+
+sub translation_end {
+  my $self = shift;
+
+  my $strand = $self->strand;
+  my $sort_sub = ($strand eq '-'            ?
+		  sub {$a->start <=> $b->start} :
+		  sub {$b->start <=> $a->start});
+
+  my ($last_CDS) = sort $sort_sub $self->CDSs;
+  return $last_CDS->my_end;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 three_prime_UTRs
 
  Title   : three_prime_UTRs
@@ -398,11 +443,20 @@ sub codon_at_location {
 
 sub three_prime_UTRs {
   my $self = shift;
-  my $three_prime_UTRs = $self->children({type => 'three_prime_UTR'},
-					 {order_by => { -asc => 'start' },
-					  distinct => 1});
 
-  return wantarray ? $three_prime_UTRs->all : $three_prime_UTRs;
+  if (wantarray) {
+      return grep {$_->type eq 'three_prime_UTR'} $self->children->all;
+  }
+  else {
+    my $sort_order = ($self->strand eq '-' ?
+		      {'-desc' => 'end'}   :
+		      {'-asc'  => 'start'});
+
+    my $three_prime_UTRs = $self->children({type => 'three_prime_UTR'},
+					   {order_by => $sort_order,
+					    distinct => 1});
+    return $three_prime_UTRs;
+  }
 }
 
 #-----------------------------------------------------------------------------
@@ -419,11 +473,103 @@ sub three_prime_UTRs {
 
 sub five_prime_UTRs {
   my $self = shift;
-  my $five_prime_UTRs = $self->children({type => 'five_prime_UTR'},
-					{order_by => { -asc => 'start' },
-					 distinct => 1});
 
-  return wantarray ? $five_prime_UTRs->all : $five_prime_UTRs;
+  if (wantarray) {
+      return grep {$_->type eq 'five_prime_UTR'} $self->children->all;
+  }
+  else {
+      my $sort_order = ($self->strand eq '-' ?
+			{'-desc' => 'end'}   :
+			{'-asc'  => 'start'});
+
+      my $five_prime_UTRs = $self->children({type => 'five_prime_UTR'},
+				  {order_by => $sort_order,
+				   distinct => 1});
+      return $five_prime_UTRs;
+  }
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 infer_five_prime_UTR
+
+ Title   : infer_five_prime_UTR
+ Usage   : $five_prime_UTR = $self->infer_five_prime_UTR
+ Function: Infer five_prime_UTR for the features
+ Returns : A DBIx::Class::Result object loaded up with five_prime_UTR
+ Args    : None
+
+=cut
+
+sub infer_five_prime_UTR {
+  my ($self, $five_prime_UTR) = @_;
+
+  $five_prime_UTR ||= $self->children({type => 'five_prime_UTR'},
+				      {order_by => { -asc => 'start' },
+				       distinct => 1});
+
+
+  my $strand = $self->strand;
+  my $sort_sub = ($strand eq '-'            ?
+		  sub {$b->start <=> $a->start} :
+		  sub {$a->start <=> $b->start});
+
+  my $translation_start = $self->translation_start;
+
+  my @coordinates;
+  for my $exon (sort $sort_sub $self->exons) {
+    if ($strand eq '-') {
+      last if $exon->end <= $translation_start;
+    }
+    else {
+      last if $exon->start >= $translation_start;
+    }
+    push @coordinates, [$exon->start, $exon->end];
+  }
+
+  my %template = (seqid  => $self->seqid,
+		  source => $self->source,
+		  type   => 'five_prime_UTR',
+		  score  => '.',
+		  strand => $strand,
+		  phase  => '.',
+ );
+
+  my $parent_id = $self->feature_id;
+
+  my $count = 1;
+  my @five_prime_UTR;
+  for my $coordinate_pair (@coordinates) {
+    my ($start, $end) = @{$coordinate_pair};
+    if ($strand eq '-') {
+      $start = $translation_start + 1
+	if $start <= $translation_start;
+    }
+    else {
+      $end = $translation_start - 1
+	if $end >= $translation_start;
+    }
+    my $feature_id = $parent_id . ':five_prime_UTR:';
+    $feature_id .= sprintf("%03d", $count++);
+    my @attrbs = ({feature_id => $feature_id,
+		   att_key    => 'ID',
+		   att_value  => $feature_id},
+		  {feature_id => $feature_id,
+		   att_key    => 'Parent',
+		   att_value  => $parent_id},
+		 );
+    my @rels = {parent => $parent_id,
+		child  => $feature_id};
+
+    my %five_prime_UTR = %template;
+    @five_prime_UTR{qw(feature_id start end attributes my_parents)} =
+      ($feature_id, $start, $end, \@attrbs, \@rels);
+    my $five_prime_UTR = $five_prime_UTR->find_or_create(\%five_prime_UTR);
+    bless $five_prime_UTR, 'GAL::Schema::Result::Feature::five_prime_UTR';
+    push @five_prime_UTR, $five_prime_UTR;
+  }
+  $five_prime_UTR->set_cache(\@five_prime_UTR);
+  print '';
 }
 
 #-----------------------------------------------------------------------------
@@ -442,68 +588,61 @@ sub infer_three_prime_UTR {
   my ($self, $three_prime_UTR) = @_;
 
   $three_prime_UTR ||= $self->children({type => 'three_prime_UTR'},
-				       {order_by => { -asc => 'start' },
-					distinct => 1});
+				      {order_by => { -asc => 'start' },
+				       distinct => 1});
 
-
-  my $exons = $self->children({type => 'exon'},
-			      {order_by => { -asc => 'start' },
-			       distinct => 1});
 
   my $strand = $self->strand;
+  my $sort_sub = ($strand eq '-'            ?
+		  sub {$b->start <=> $a->start} :
+		  sub {$a->start <=> $b->start});
 
-  my $start;
-
-  #### MOVE THIS TO cds.pm ###
-  if ($strand eq '+') {
-      my $CDSs = $self->children({type => 'CDS'},
-				  {order_by => { -asc => 'start' },
-				   distinct => 1});
-
-      $start = $CDSs->next->start;
-  }
-  else {
-      my $CDSs = $self->children({type => 'CDS'},
-				 {order_by => { -desc => 'end' },
-				  distinct => 1});
-
-      $start = $CDSs->next->end;
-  }
+  my $translation_start = $self->translation_start;
 
   my @coordinates;
-  while(my $exon = $exons->next) {
-    push @coordinates, ($exon->start, $exon->end);
+  for my $exon (sort $sort_sub $self->exons) {
+    if ($strand eq '-') {
+      last if $exon->end <= $translation_start;
+    }
+    else {
+      last if $exon->start >= $translation_start;
+    }
+    push @coordinates, [$exon->start, $exon->end];
   }
 
-  shift @coordinates;
-  pop   @coordinates;
-
   my %template = (seqid  => $self->seqid,
-  source => $self->source,
-  type   => 'three_prime_UTR',
-  score  => '.',
-  strand => $self->strand,
-  phase  => '.',
+		  source => $self->source,
+		  type   => 'three_prime_UTR',
+		  score  => '.',
+		  strand => $strand,
+		  phase  => '.',
  );
 
   my $parent_id = $self->feature_id;
 
   my $count = 1;
   my @three_prime_UTR;
-  while (@coordinates) {
-    my ($start, $end) = (shift @coordinates,
- shift @coordinates);
+  for my $coordinate_pair (@coordinates) {
+    my ($start, $end) = @{$coordinate_pair};
+    if ($strand eq '-') {
+      $start = $translation_start + 1
+	if $start <= $translation_start;
+    }
+    else {
+      $end = $translation_start - 1
+	if $end >= $translation_start;
+    }
     my $feature_id = $parent_id . ':three_prime_UTR:';
     $feature_id .= sprintf("%03d", $count++);
     my @attrbs = ({feature_id => $feature_id,
-   att_key    => 'ID',
-   att_value  => $feature_id},
-  {feature_id => $feature_id,
-   att_key    => 'Parent',
-   att_value  => $parent_id},
- );
+		   att_key    => 'ID',
+		   att_value  => $feature_id},
+		  {feature_id => $feature_id,
+		   att_key    => 'Parent',
+		   att_value  => $parent_id},
+		 );
     my @rels = {parent => $parent_id,
-child  => $feature_id};
+		child  => $feature_id};
 
     my %three_prime_UTR = %template;
     @three_prime_UTR{qw(feature_id start end attributes my_parents)} =
@@ -511,7 +650,6 @@ child  => $feature_id};
     my $three_prime_UTR = $three_prime_UTR->find_or_create(\%three_prime_UTR);
     bless $three_prime_UTR, 'GAL::Schema::Result::Feature::three_prime_UTR';
     push @three_prime_UTR, $three_prime_UTR;
-    print '';
   }
   $three_prime_UTR->set_cache(\@three_prime_UTR);
   print '';

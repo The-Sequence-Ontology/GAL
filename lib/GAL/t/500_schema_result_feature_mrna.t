@@ -23,7 +23,7 @@ isa_ok($object, 'GAL::Schema::Result::Feature::mrna');
 #				     '/data/ucsc/hg19/fasta/chrAll.fa'));
 
 ok(my $schema = GAL::Annotation->new('data/dmel-4-r5.46.genes.gff',
-				     'data/'),
+				     'data/dmel-4-chromosome-r5.46.fasta'),
    '$schema = GAL::Annotation->new("dmel.gff", "dmel.fasta"');
 
 ok(my $features = $schema->features, '$features = $schema->features');
@@ -41,13 +41,25 @@ ok(my $first_CDS = $CDSs->first, '$first_CDS = $CDSs->first');
 ok($first_CDS->type eq 'CDS', '$first_CDSs->type');
 ok(substr($first_CDS->seq, 0, 3) eq 'ATG', 'substr($first_CDS->seq, 0, 3) eq "ATG"');
 
-ok(my $last_CDS = ($mRNA_plus->CDSs)[-1], '$first_CDS = $CDSs->last');
+ok(my ($last_CDS) = sort({$b->start <=> $a->start} $mRNA_plus->CDSs), '$last_CDS');
 ok(substr($last_CDS->seq, -3, 3) =~ /^(TAG|TGA|TAA)$/, 'substr($last_CDS->seq, -3, 3) =~ /^(TAG|TGA|TAA)$/');
 
 ok(my $gseq = $mRNA_plus->CDS_seq_genomic, '$mRNA_plus->CDS_seq_genomic');
 ok($gseq =~ /^[ATGCN]+$/i, '$gseq =~ /^[ATGCN]+$/i');
 
 ok($mRNA_plus->protein_seq =~ /^[A-Z]+$/, '$mRNA_plus->protein_seq =~ /^[A-Z]+$/');
+
+ok(my $translation_start = $mRNA_plus->translation_start,'$mRNA_plus->translation_start');
+ok(my $fp_UTRs = $mRNA_plus->five_prime_UTRs, '$mRNA_plus->five_prime_UTRs');
+while (my $fp_UTR = $fp_UTRs->next) {
+  ok($fp_UTR->my_end < $translation_start, '$fp_UTR->end < $translation_start');
+}
+
+ok(my $translation_end  = $mRNA_plus->translation_end, '$mRNA_plus->translation_end');
+ok(my $tp_UTRs = $mRNA_plus->three_prime_UTRs, '$mRNA_plus->three_prime_UTRs');
+while (my $tp_UTR = $tp_UTRs->next) {
+  ok($tp_UTR->my_start > $translation_end, '$tp_UTR->start < $translation_end');
+}
 
 ok(! ($mRNA_plus->map2CDS(93055))[0],        '! ($mRNA_plus->map2CDS(93055))[0]');
 ok(($mRNA_plus->map2CDS(93056))[0] == 1,     '($mRNA_plus->map2CDS(93056))[0] == 1');
@@ -100,12 +112,24 @@ ok(my $first_CDS = $CDSs->first, '$first_CDS = $CDSs->first');
 ok($first_CDS->type eq 'CDS', '$first_CDSs->type');
 ok(substr($first_CDS->seq, 0, 3) eq 'ATG', 'substr($first_CDS->seq, 0, 3) eq "ATG"');
 
-ok(my $last_CDS = ($mRNA_minus->CDSs)[-1], '$first_CDS = $CDSs->last');
+ok(my ($last_CDS) = sort({$a->start <=> $b->start} $mRNA_minus->CDSs), '$first_CDS = $CDSs->last');
 ok(substr($last_CDS->seq, -3, 3) =~ /^(TAG|TGA|TAA)$/, 'substr($last_CDS->seq, -3, 3) =~ /^(TAG|TGA|TAA)$/');
 
 ok(my $gseq = $mRNA_minus->CDS_seq_genomic, '$mRNA_minus->CDS_seq_genomic');
 ok($gseq =~ /^[ATGCN]+$/i, '$gseq =~ /^[ATGCN]+$/i');
 ok($mRNA_minus->protein_seq =~ /^[A-Z]+$/, '$mRNA_minus->protein_seq =~ /^[A-Z]+$/');
+
+ok(my $translation_start = $mRNA_minus->translation_start,'$mRNA_minus->translation_start');
+ok(my $fp_UTRs = $mRNA_minus->five_prime_UTRs, '$mRNA_minus->five_prime_UTRs');
+while (my $fp_UTR = $fp_UTRs->next) {
+  ok($fp_UTR->my_end > $translation_start, '$fp_UTR->my_end > $translation_start');
+}
+
+ok(my $translation_end  = $mRNA_minus->translation_end, '$mRNA_minus->translation_end');
+ok(my $tp_UTRs = $mRNA_minus->three_prime_UTRs, '$mRNA_minus->three_prime_UTRs');
+while (my $tp_UTR = $tp_UTRs->next) {
+  ok($tp_UTR->my_start < $translation_end, '$tp_UTR->my_start < $translation_end');
+}
 
 #ok(! ($mRNA_minus->map2CDS(93055))[0],        '! ($mRNA_minus->map2CDS(93055))[0]');
 #ok(($mRNA_minus->map2CDS(93056))[0] == 1,     '($mRNA_minus->map2CDS(93056))[0] == 1');

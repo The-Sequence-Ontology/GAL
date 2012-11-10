@@ -26,6 +26,23 @@ like($tool->get_stdout, qr/Synopsis/, 'fastq_tool prints usage statement');
 # Testing that fastq_tool does something else
 ################################################################################
 
+# Test these options:
+#  count
+#  lengths
+#  seq
+#  fasta
+#  extract_ids
+#  quals
+#  summary
+#  total
+#  ill2sanger
+#  sol2sanger
+#  fastq2fasta
+#  trim_qual
+#  guess_format
+#  grep_seq
+#  verbose
+
 #my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
 #
 #my @cl_args = ('--arg1',

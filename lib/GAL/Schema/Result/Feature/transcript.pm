@@ -56,10 +56,10 @@ subclass for transcript specific behavior.
  Usage   : $exons = $self->exons
  Function: Get the transcript's exons.
  Returns : In list context returns an unsorted array of exon objects.
- 	   In scalar context returns an iterator (DBIC::ResultSet)
- 	   with exons sorted in 5'->3' on the transcript's strand.
-           Calling in list context is much faster but loads all exons
-           immediately into memory.
+	   In scalar context returns an iterator (DBIC::ResultSet)
+	   with exons sorted in 5'->3' on the transcript's strand.
+	   Calling in list context is much faster but loads all exons
+	   immediately into memory.
  Args    : None
 
 =cut
@@ -74,7 +74,7 @@ sub exons {
       my $sort_order = ($self->strand eq '-' ?
 			{'-desc' => 'end'}   :
 			{'-asc'  => 'start'});
-      
+
       my $exons = $self->children({type => 'exon'},
 				  {order_by => $sort_order,
 				   distinct => 1});
@@ -84,39 +84,16 @@ sub exons {
 
 #-----------------------------------------------------------------------------
 
-=head2 introns_genomic
-
- Title   : introns_genomic
- Usage   : $introns = $self->introns_genomic
- Function: Get the transcript's introns sorted in genomic order
- Returns : A DBIx::Class::Result object loaded up with introns
- Args    : None
-
-=cut
-
-sub introns_genomic {
-  my $self = shift;
-
-  my $introns = $self->children({type => 'intron'},
-				 {order_by => {'-asc' => 'start'},
-				  distinct => 1});
-
-  if (! $introns->count) {
-    $self->infer_introns($introns);
-  }
-
-  return wantarray ? $introns->all : $introns;
-}
-
-#-----------------------------------------------------------------------------
-
 =head2 introns
 
  Title   : introns
  Usage   : $introns = $self->introns
- Function: Get the transcripts introns sorted in the order of the transcripts
-	   strand.
- Returns : A DBIx::Class::Result object loaded up with introns
+ Function: Get the transcript's introns.
+ Returns : In list context returns an unsorted array of intron objects.
+	   In scalar context returns an iterator (DBIC::ResultSet)
+	   with introns sorted in 5'->3' on the transcript's strand.
+	   Calling in list context is much faster but loads all exons
+	   immediately into memory.
  Args    : None
 
 =cut
@@ -124,23 +101,25 @@ sub introns_genomic {
 sub introns {
   my $self = shift;
 
-  my $sort_order;
-  if ($self->strand eq '-') {
-    $sort_order = {'-desc' => 'end'};
+  if (wantarray) {
+      my @introns = grep {$_->type eq 'intron'} $self->children->all;
+      $self->infer_introns() unless ref $introns[0];
+      return grep {$_->type eq 'intron'} $self->children->all;
   }
   else {
-    $sort_order = {'-asc' => 'start'};
+      my $sort_order = ($self->strand eq '-' ?
+			{'-desc' => 'end'}   :
+			{'-asc'  => 'start'});
+
+      my $introns = $self->children({type => 'intron'},
+				  {order_by => $sort_order,
+				   distinct => 1});
+      if (! $introns->count) {
+	$self->infer_introns($introns);
+      }
+
+      return $introns;
   }
-
-  my $introns = $self->children({type => 'intron'},
-				{order_by => $sort_order,
-				 distinct => 1});
-
-  if (! $introns->count) {
-    $self->infer_introns($introns);
-  }
-
-  return wantarray ? $introns->all : $introns;
 }
 
 #-----------------------------------------------------------------------------
@@ -264,94 +243,6 @@ sub mature_seq {
   $mature_seq = $self->annotation->revcomp($mature_seq)
     if ($self->strand eq '-');
   return $mature_seq;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 five_prime_UTR_seq_genomic
-
- Title   : five_prime_UTR_seq_genomic
- Usage   : $seq = $self->five_prime_UTR_seq_genomic
- Function: Get the transcripts spliced five_prime_UTR genomic sequence (not
-	   reverse complimented for minus strand features.
- Returns : A text string of the five_prime_UTR spliced genomic sequence.
- Args    : None
-
-=cut
-
-sub five_prime_UTR_seq_genomic {
-  my $self = shift;
-  my $five_prime_UTR_seq_genomic;
-  map {$five_prime_UTR_seq_genomic .= $_->genomic_seq}
-    $self->five_prime_UTRs_genomic->all;
-  return $five_prime_UTR_seq_genomic;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 five_prime_UTR_seq
-
- Title   : five_prime_UTR_seq
- Usage   : $seq = $self->five_prime_UTR_seq
- Function: Get the transcripts spliced five_prime_UTR sequence reverse
-	   complimented for minus strand features.
- Returns : A text string of the five_prime_UTR spliced sequence.
- Args    : None
-
-=cut
-
-sub five_prime_UTR_seq {
-  my $self = shift;
-  my $five_prime_UTR_seq = $self->five_prime_UTR_seq_genomic;
-  if ($self->strand eq '-') {
-    $five_prime_UTR_seq =
-      $self->annotation->revcomp($five_prime_UTR_seq);
-  }
-  return $five_prime_UTR_seq;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 three_prime_UTR_seq_genomic
-
- Title   : three_prime_UTR_seq_genomic
- Usage   : $seq = $self->three_prime_UTR_seq_genomic
- Function: Get the transcripts spliced three_prime_UTR genomic sequence (not
-	   reverse complimented for minus strand features.
- Returns : A text string of the three_prime_UTR spliced genomic sequence.
- Args    : None
-
-=cut
-
-sub three_prime_UTR_seq_genomic {
-  my $self = shift;
-  my $three_prime_UTR_seq_genomic;
-  map {$three_prime_UTR_seq_genomic .= $_->genomic_seq}
-    $self->three_prime_UTRs_genomic->all;
-  return $three_prime_UTR_seq_genomic;
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 three_prime_UTR_seq
-
- Title   : three_prime_UTR_seq
- Usage   : $seq = $self->three_prime_UTR_seq
- Function: Get the transcripts spliced three_prime_UTR sequence reverse
-	   complimented for minus strand features.
- Returns : A text string of the three_prime_UTR spliced sequence.
- Args    : None
-
-=cut
-
-sub three_prime_UTR_seq {
-  my $self = shift;
-  my $three_prime_UTR_seq = $self->three_prime_UTR_seq_genomic;
-  if ($self->strand eq '-') {
-    $three_prime_UTR_seq =
-      $self->annotation->revcomp($three_prime_UTR_seq);
-  }
-  return $three_prime_UTR_seq;
 }
 
 #-----------------------------------------------------------------------------

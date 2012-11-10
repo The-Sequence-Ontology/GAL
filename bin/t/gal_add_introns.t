@@ -26,16 +26,12 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_add_introns prints usage statement');
 # Testing that gal_add_introns does something else
 ################################################################################
 
-#my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
-#
-#my @cl_args = ('--arg1',
-#	       '--arg2 value',
-#	       $gff_file,
-#	      );
-#
-#ok($tool->run(cl_args => \@cl_args), 'gal_add_introns does something');
-#ok($tool->get_stdout =~ /match something/,
-#   'gal_add_introns has the correct output');
+my @cl_args = ('data/dmel-4-r5.46.genes.partial.gff',
+	      );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gal_add_introns runs');
+ok($tool->get_stdout =~ /ID=FBtr0333704:intron:003;Parent=FBtr0333704/,
+   'gal_add_introns has the correct output');
 
 $tool->clean_up;
 done_testing();
