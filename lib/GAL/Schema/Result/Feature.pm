@@ -375,6 +375,44 @@ sub length {
 
 #-----------------------------------------------------------------------------
 
+=head2 my_start
+
+ Title   : my_start
+ Usage   : $self->my_start
+ Function: Returns the begin 5' coordinate on the feature's strand
+	    (i.e. this is the same as calling start for a + strand
+	    feature and end for a - strand feature.
+ Returns : An integer.
+ Args    : None
+
+=cut
+
+sub my_start {
+  my $self = shift;
+  return $self->strand eq '-' ? $self->end : $self->start;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 my_end
+
+ Title   : my_end
+ Usage   : $self->my_end
+ Function: Returns the begin 5' coordinate on the feature's strand
+	    (i.e. this is the same as calling end for a + strand
+	    feature and start for a - strand feature.
+ Returns : An integer.
+ Args    : None
+
+=cut
+
+sub my_end {
+  my $self = shift;
+  return $self->strand eq '-' ? $self->end : $self->start;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 genomic_length
 
  Title   : genomic_length

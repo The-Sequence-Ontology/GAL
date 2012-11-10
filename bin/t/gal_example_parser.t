@@ -24,16 +24,12 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_example_parser prints usage statement
 # Testing that gal_example_parser does something else
 ################################################################################
 
-# my $gff_file = "$FindBin::Bin/data/file.gff";
-#
-# my @cl_args = ('--arg1',
-#	         '--arg2 value',
-#	         $gff_file,
-#	        );
-#
-# ok($tool->run(cl_args => \@cl_args), 'gal_example_parser does something');
-# ok($tool->get_stdout =~ /match something/,
-#    'gal_example_parser has the correct output');
+my @cl_args = ('data/dmel-4-r5.46.genes.gff'
+	      );
+
+ ok(! $tool->run(cl_args => \@cl_args), 'gal_example_parser runs');
+ ok($tool->get_stdout =~ /4\s+three_prime_UTR\s+three_prime_UTR_FBgn0053653:29_1571/,
+    'gal_example_parser has the correct output');
 
 $tool->clean_up;
 done_testing();

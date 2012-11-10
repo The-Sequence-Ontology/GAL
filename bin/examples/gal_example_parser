@@ -13,7 +13,7 @@ my $usage = "
 
 Synopsis:
 
-gal_example_script feature_file.txt
+gal_example_script --parser gff3 file.gff3
 
 Description:
 
@@ -23,14 +23,17 @@ features.
 ";
 
 
-my ($help);
-my $opt_success = GetOptions('help'    => \$help,
-			      );
+my ($help, $class);
+my $opt_success = GetOptions('help|h'     => \$help,
+			     'parser|p=s' => \$class,
+			    );
 
 if (! $opt_success) {
     print STDERR join ' : ', ('FATAL',
                               'command_line_parse_error',
                               'Use gff_tool --help to see correct usage');
+    print STDERR "\n";
+    die;
 }
 
 if ($help) {
@@ -41,24 +44,25 @@ if ($help) {
 my $file = shift;
 die $usage unless -e $file;
 
-my $parser = GAL::Parser->new(file => $file);
+$class ||= 'gff3';
+$class = "GAL::Parser::$class";
+eval "require $class";
+if ($@) {
+  print STDERR "FATAL : parser_class_error : $@\n";
+  die;
+}
 
-while (my $feature = $parser->parse_next_feature) {
+my $parser = $class->new(file => $file);
 
-	my $seqid = $feature->seqid;
-	my $type  = $feature->type;
-	my @keys  = $feature->get_attribute_keys;
-	my @variant_reads = $feature->get_attribute_values('variant_allele');
+while (my $feature = $parser->next_feature_hash) {
+
+	my $seqid = $feature->{seqid};
+	my $type  = $feature->{type};
+	my $attributes  = $feature->{attributes};
+	my $id = $attributes->{ID}[0];
 
 	# Do something
+	#$feature->{attributes}{Parent} = [$parent];
 
-	# I haven't written the Feature.pm setter methods for
-	# attributes yet (like add_attribute) Just manipulate the
-	# attributes hash directly.
-
-	$feature->{attributes}{genotype} = ['homozygous'];
-
-	print "$seqid\t$type\t";
-	print join ', ', @keys;
-	print "\n";
+	print "$seqid\t$type\t$id\n";
 }

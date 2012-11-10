@@ -1,1 +1,0 @@
-feature2gff --format celera data/celera_short.gff

@@ -26,16 +26,13 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_dump_CDS_sequence prints usage statem
 # Testing that gal_dump_CDS_sequence does something else
 ################################################################################
 
-#my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
-#
-#my @cl_args = ('--arg1',
-#	       '--arg2 value',
-#	       $gff_file,
-#	      );
-#
-#ok($tool->run(cl_args => \@cl_args), 'gal_dump_CDS_sequence does something');
-#ok($tool->get_stdout =~ /match something/,
-#   'gal_dump_CDS_sequence has the correct output');
+my @cl_args = ('data/dmel-4-r5.46.genes.partial.gff',
+	       'data/dmel-4-chromosome-r5.46.fasta',
+	      );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gal_dump_CDS_sequence does something');
+ok($tool->get_stdout =~ />FBtr0308074 CDS sequence\nATGGACGCCTACGCGTTACCTACATATTTTCCTCTTGCGTATTCTGAATTGCAGTTTTTAGCGTCCAGGAGAGCAGCTGCCGTCGCTGCAGCGGCTACTGTTTTACCAGGATCACCATGCATAAACCAACATCACCCAACTGA/,
+   'gal_dump_CDS_sequence has the correct output');
 
 $tool->clean_up;
 

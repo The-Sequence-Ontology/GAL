@@ -26,16 +26,12 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_coding_gene_count prints usage statem
 # Testing that gal_coding_gene_count does something else
 ################################################################################
 
-#my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
-#
-#my @cl_args = ('--arg1',
-#	       '--arg2 value',
-#	       $gff_file,
-#	      );
-#
-#ok($tool->run(cl_args => \@cl_args), 'gal_coding_gene_count does something');
-#ok($tool->get_stdout =~ /match something/,
-#   'gal_coding_gene_count has the correct output');
+my @cl_args = ('data/dmel-4-r5.46.genes.gff',
+	      );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gal_coding_gene_count runs');
+ok($tool->get_stdout =~ /Coding gene count: 80/,
+   'gal_coding_gene_count has the correct output');
 
 $tool->clean_up;
 done_testing();
