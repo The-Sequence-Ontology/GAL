@@ -24,16 +24,12 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_splice_complexity prints usage statem
 # Testing that gal_splice_complexity does something else
 ################################################################################
 
-# my $gff_file = "$FindBin::Bin/data/file.gff";
-#
-# my @cl_args = ('--arg1',
-#	         '--arg2 value',
-#	         $gff_file,
-#	        );
-#
-# ok($tool->run(cl_args => \@cl_args), 'gal_splice_complexity does something');
-# ok($tool->get_stdout =~ /match something/,
-#    'gal_splice_complexity has the correct output');
+my @cl_args = ('data/dmel-4-r5.46.genes.partial.gff',
+	        );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gal_splice_complexity runs');
+ok($tool->get_stdout =~ /FBgn0264617\s+0.282275592262552/,
+   'gal_splice_complexity has the correct output');
 
 $tool->clean_up;
 done_testing();

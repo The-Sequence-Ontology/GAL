@@ -49,19 +49,19 @@ for inhereted methods.
 
 #-----------------------------------------------------------------------------
 
-=head2 test
-
-  Title   : exons
-  Usage   : $exons = $self->exons
-  Function: Get the features exons
-  Returns : A DBIx::Class::Result object loaded up with exons
-  Args    : None
-
-=cut
-
-sub test {
-  print "hello world\n";
-}
+# =head2 test
+# 
+#   Title   : exons
+#   Usage   : $exons = $self->exons
+#   Function: Get the features exons
+#   Returns : A DBIx::Class::Result object loaded up with exons
+#   Args    : None
+# 
+# =cut
+# 
+# sub test {
+#   print "hello world\n";
+# }
 
 
 

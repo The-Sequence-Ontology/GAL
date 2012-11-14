@@ -484,7 +484,7 @@ sub filter {
 #                  overlap those given as an argument to this command.
 #                  Coordinates are give as seqid:start-end where start
 #                  defaults to 1 and end defaults start or 100,000,000,000
-#                  if start is also not defined.
+#                  if start was also not defined.
 #
 #  Examples:
 #  gff_tool --overlaps chr1:5000-1000

@@ -22,7 +22,9 @@ Options:
 
   --so_file, s so.obo
 
-    A Sequence Ontology file in OBO format to use for validating SO Terms.
+    A Sequence Ontology file in OBO format to use for validating SO
+    Terms.  The script will try to download the current SO OBO file
+    over the network if one is not provided.
 
 ';
 
@@ -43,9 +45,11 @@ if ($help) {
  exit(0);
 }
 
-my $file = shift;
+my $gff3_file = shift;
 
-validate_gff3($file, $so_file);
+die "$usage\n\nFATAL : missing_gff3_file : GFF3 file required\n" unless $gff3_file;
+
+validate_gff3($gff3_file, $so_file);
 
 #-----------------------------------------------------------------------------
 #-------------------------------- SUBROUTINES --------------------------------
@@ -98,9 +102,9 @@ sub validate_gff3 {
    # map {$valid_so_terms{$_}++;$valid_so_terms{$so_data->{map}{$_}}++}
    #   keys %{$so_data->{terms}};
 
-  handle_message('INFO', 'validating_GFF3_file', $file);
-  open(my $IN, '<', $file) or
-    handle_message('FATAL', 'cant_open_file_for_reading', $file);
+  handle_message('INFO', 'validating_GFF3_file', $gff3_file);
+  open(my $IN, '<', $gff3_file) or
+    handle_message('FATAL', 'cant_open_file_for_reading', $gff3_file);
 
   my $line_count;
   my %pragmas;
@@ -489,7 +493,7 @@ sub validate_gff3 {
 
   close $IN;
   print "\n\n";
-  print "Error Summary for $file\n";
+  print "Error Summary for $gff3_file\n";
   print '#' x 80;
   print "\n";
   if (scalar keys %errors) {

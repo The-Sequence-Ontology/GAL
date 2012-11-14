@@ -6,7 +6,8 @@ use base qw(GAL::Schema::Result::Feature::transcript);
 
 =head1 NAME
 
-GAL::Schema::Result::Feature::mrna - <One line description of module's purpose here>
+GAL::Schema::Result::Feature::mrna - <One line description of module's
+purpose here>
 
 =head1 VERSION
 
@@ -30,29 +31,6 @@ This document describes GAL::Schema::Result::Feature::mrna version 0.01
 =head1 METHODS
 
 =cut
-
-#-----------------------------------------------------------------------------
-
-=head2 CDSs_genomic
-
- Title   : CDSs_genomic
- Usage   : $CDSs = $self->CDSs_genomic
- Function: Get the mRNA's CDSs sorted in genomic order
- Returns : A DBIx::Class::Result object loaded up with exons
- Args    : None
-
-=cut
-
-sub CDSs_genomic {
-
-  my $self = shift;
-
-  my $CDSs = $self->children({type => 'CDS'},
-			     {order_by => {'-asc' => 'start'},
-			      distinct => 1});
-
-  return wantarray ? $CDSs->all : $CDSs;
-}
 
 #-----------------------------------------------------------------------------
 
@@ -103,7 +81,7 @@ sub CDS_seq_genomic {
   my $self = shift;
 
   my $CDS_seq_genomic;
-  for my $CDS ($self->CDSs_genomic->all) {
+  for my $CDS (sort {$a->start <=> $b->start} $self->CDSs) {
     my $this_seq = $CDS->genomic_seq;
     $CDS_seq_genomic .= $this_seq if $this_seq;
   }
@@ -230,7 +208,7 @@ sub CDS_start {
 
   my $self = shift;
   my $strand = $self->strand;
-  my @CDSs = $self->CDSs_genomic;
+  my @CDSs = sort {$a->start <=> $b->start} $self->CDSs;
   my $CDS_start = $strand eq '-' ? $CDSs[-1]->end : $CDSs[0]->start;
   return $CDS_start;
 }
@@ -251,7 +229,7 @@ sub CDS_end {
 
   my $self = shift;
   my $strand = $self->strand;
-  my @CDSs = $self->CDSs_genomic;
+  my @CDSs = sort {$a->start <=> $b->start} $self->CDSs;
   my $CDS_end = $strand eq '-' ? $CDSs[0]->start : $CDSs[-1]->end;
   return $CDS_end;
 }
@@ -272,7 +250,7 @@ sub CDS_length {
 
   my $self = shift;
   my $CDS_length;
-  map {$CDS_length += $_->genomic_length} $self->CDSs_genomic->all;
+  map {$CDS_length += $_->genomic_length} $self->CDSs;
   return $CDS_length;
 }
 
@@ -431,6 +409,36 @@ sub translation_end {
 
 #-----------------------------------------------------------------------------
 
+=head2 five_prime_UTRs
+
+ Title   : five_prime_UTRs
+ Usage   : $five_prime_UTRs = $self->five_prime_UTRs
+ Function: Get the features five_prime_UTRs
+ Returns : A DBIx::Class::Result object loaded up with five_prime_UTRs
+ Args    : None
+
+=cut
+
+sub five_prime_UTRs {
+  my $self = shift;
+
+  if (wantarray) {
+      return grep {$_->type eq 'five_prime_UTR'} $self->children->all;
+  }
+  else {
+      my $sort_order = ($self->strand eq '-' ?
+			{'-desc' => 'end'}   :
+			{'-asc'  => 'start'});
+
+      my $five_prime_UTRs = $self->children({type => 'five_prime_UTR'},
+					    {order_by => $sort_order,
+					     distinct => 1});
+      return $five_prime_UTRs;
+  }
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 three_prime_UTRs
 
  Title   : three_prime_UTRs
@@ -456,36 +464,6 @@ sub three_prime_UTRs {
 					   {order_by => $sort_order,
 					    distinct => 1});
     return $three_prime_UTRs;
-  }
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 five_prime_UTRs
-
- Title   : five_prime_UTRs
- Usage   : $five_prime_UTRs = $self->five_prime_UTRs
- Function: Get the features five_prime_UTRs
- Returns : A DBIx::Class::Result object loaded up with five_prime_UTRs
- Args    : None
-
-=cut
-
-sub five_prime_UTRs {
-  my $self = shift;
-
-  if (wantarray) {
-      return grep {$_->type eq 'five_prime_UTR'} $self->children->all;
-  }
-  else {
-      my $sort_order = ($self->strand eq '-' ?
-			{'-desc' => 'end'}   :
-			{'-asc'  => 'start'});
-
-      my $five_prime_UTRs = $self->children({type => 'five_prime_UTR'},
-				  {order_by => $sort_order,
-				   distinct => 1});
-      return $five_prime_UTRs;
   }
 }
 
@@ -520,11 +498,12 @@ sub infer_five_prime_UTR {
   for my $exon (sort $sort_sub $self->exons) {
     if ($strand eq '-') {
       last if $exon->end <= $translation_start;
+      unshift @coordinates, [$exon->start, $exon->end];
     }
     else {
       last if $exon->start >= $translation_start;
+      push @coordinates, [$exon->start, $exon->end];
     }
-    push @coordinates, [$exon->start, $exon->end];
   }
 
   my %template = (seqid  => $self->seqid,
@@ -585,29 +564,30 @@ sub infer_five_prime_UTR {
 =cut
 
 sub infer_three_prime_UTR {
-  my ($self, $three_prime_UTR) = @_;
+  my ($self, $three_prime_UTRs) = @_;
 
-  $three_prime_UTR ||= $self->children({type => 'three_prime_UTR'},
-				      {order_by => { -asc => 'start' },
-				       distinct => 1});
+  $three_prime_UTRs ||= $self->children({type => 'three_prime_UTR'},
+				       {order_by => { -asc => 'start' },
+					distinct => 1});
 
 
   my $strand = $self->strand;
   my $sort_sub = ($strand eq '-'            ?
-		  sub {$b->start <=> $a->start} :
-		  sub {$a->start <=> $b->start});
+		  sub {$a->start <=> $b->start} :
+		  sub {$b->start <=> $a->start});
 
-  my $translation_start = $self->translation_start;
+  my $translation_end = $self->translation_end;
 
   my @coordinates;
   for my $exon (sort $sort_sub $self->exons) {
     if ($strand eq '-') {
-      last if $exon->end <= $translation_start;
+      last if $exon->start >= $translation_end;
+      push @coordinates, [$exon->start, $exon->end];
     }
     else {
-      last if $exon->start >= $translation_start;
+      last if $exon->end <= $translation_end;
+      unshift @coordinates, [$exon->start, $exon->end];
     }
-    push @coordinates, [$exon->start, $exon->end];
   }
 
   my %template = (seqid  => $self->seqid,
@@ -621,16 +601,16 @@ sub infer_three_prime_UTR {
   my $parent_id = $self->feature_id;
 
   my $count = 1;
-  my @three_prime_UTR;
+  my @three_prime_UTRs;
   for my $coordinate_pair (@coordinates) {
     my ($start, $end) = @{$coordinate_pair};
     if ($strand eq '-') {
-      $start = $translation_start + 1
-	if $start <= $translation_start;
+      $end = $translation_end - 1
+	if $end >= $translation_end;
     }
     else {
-      $end = $translation_start - 1
-	if $end >= $translation_start;
+      $start = $translation_end + 1
+	if $start <= $translation_end;
     }
     my $feature_id = $parent_id . ':three_prime_UTR:';
     $feature_id .= sprintf("%03d", $count++);
@@ -647,11 +627,11 @@ sub infer_three_prime_UTR {
     my %three_prime_UTR = %template;
     @three_prime_UTR{qw(feature_id start end attributes my_parents)} =
       ($feature_id, $start, $end, \@attrbs, \@rels);
-    my $three_prime_UTR = $three_prime_UTR->find_or_create(\%three_prime_UTR);
+    my $three_prime_UTR = $three_prime_UTRs->find_or_create(\%three_prime_UTR);
     bless $three_prime_UTR, 'GAL::Schema::Result::Feature::three_prime_UTR';
-    push @three_prime_UTR, $three_prime_UTR;
+    push @three_prime_UTRs, $three_prime_UTR;
   }
-  $three_prime_UTR->set_cache(\@three_prime_UTR);
+  $three_prime_UTRs->set_cache(\@three_prime_UTRs) if @three_prime_UTRs;
   print '';
 }
 

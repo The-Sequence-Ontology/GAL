@@ -24,16 +24,15 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_validate_proteins prints usage statem
 # Testing that gal_validate_proteins does something else
 ################################################################################
 
-# my $gff_file = "$FindBin::Bin/data/file.gff";
-#
-# my @cl_args = ('--arg1',
-#	         '--arg2 value',
-#	         $gff_file,
-#	        );
-#
-# ok($tool->run(cl_args => \@cl_args), 'gal_validate_proteins does something');
-# ok($tool->get_stdout =~ /match something/,
-#    'gal_validate_proteins has the correct output');
+my @cl_args = ('data/refseq_chr22.trim.gff3',
+	       'data/hg18_chr22.fa',
+	        );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gal_validate_proteins runs');
+ok($tool->get_stdout =~ /NM_138338:mRNA\s+VALID/,
+   'gal_validate_proteins has the correct output');
+ok($tool->get_stdout =~ /NM_012324:mRNA\s+INVALID\s+MADRAEMFSLSTFHSLSPPGCRPPQDISLEE/,
+   'gal_validate_proteins has the correct output');
 
 $tool->clean_up;
 done_testing();
