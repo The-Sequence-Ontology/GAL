@@ -20,3 +20,9 @@ rm -f t/data/hg18_chr22.fa.index
 rm -f t/data/dmel-4-r5.46.genes.partial.sqlite
 rm -f t/data/hg19_chr22.fa.index
 rm -f t/data/dmel-4-chromosome-r5.46.fasta.index
+rm -f t/data/10Gen_Chinese_SNV_chr22.sqlite
+rm -f t/data/urt_new.txt
+rm -f t/data/10Gen_Chinese_SNV_partial.sqlite
+rm -f t/data/dmel-4-r5.46.infer_UTR.gff
+rm -f t/data/dmel-4-r5.46.no_UTR.sqlite
+rm -f t/data/urt_original.txt

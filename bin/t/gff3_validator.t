@@ -24,16 +24,14 @@ like($tool->get_stdout, qr/Synopsis/, 'gff3_validator prints usage statement');
 # Testing that gff3_validator does something else
 ################################################################################
 
-# my $gff_file = "$FindBin::Bin/data/file.gff";
-#
-# my @cl_args = ('--arg1',
-#	         '--arg2 value',
-#	         $gff_file,
-#	        );
-#
-# ok($tool->run(cl_args => \@cl_args), 'gff3_validator does something');
-# ok($tool->get_stdout =~ /match something/,
-#    'gff3_validator has the correct output');
+my @cl_args = ('data/dmel-4-r5.46.gff',
+	        );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gff3_validator does something');
+ok($tool->get_stdout =~ /invalid_end_not_contained_within_sequence_region/,
+   'gff3_validator has the correct output');
+ok($tool->get_stderr =~ /invalid_end_not_contained_within_sequence_region/,
+   'gff3_validator has the correct error output');
 
 $tool->clean_up;
 done_testing();

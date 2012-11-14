@@ -19,9 +19,6 @@ chdir($path);
 my $object = GAL::Schema::Result::Feature::mrna->new();
 isa_ok($object, 'GAL::Schema::Result::Feature::mrna');
 
-#ok(my $schema = GAL::Annotation->new('/data/ucsc/hg19/gff/11-05-16/refGene/refGene_hg19.gff3',
-#				     '/data/ucsc/hg19/fasta/chrAll.fa'));
-
 ok(my $schema = GAL::Annotation->new('data/dmel-4-r5.46.genes.gff',
 				     'data/dmel-4-chromosome-r5.46.fasta'),
    '$schema = GAL::Annotation->new("dmel.gff", "dmel.fasta"');
@@ -164,6 +161,72 @@ while (my $tp_UTR = $tp_UTRs->next) {
 #ok($mRNA_minus->codon_at_location(93057), '$mRNA_minus->codon_at_location');
 #ok($mRNA_minus->codon_at_location(93058), '$mRNA_minus->codon_at_location');
 #ok($mRNA_minus->codon_at_location(93059), '$mRNA_minus->codon_at_location');
+
+#--------------------------------------------------------------------------------
+# Infer UTRs
+#--------------------------------------------------------------------------------
+
+system('rm data/dmel-4-r5.46.genes.sqlite') if
+  -e 'data/dmel-4-r5.46.genes.sqlite';
+
+ok(my $schema_genes = GAL::Annotation->new('data/dmel-4-r5.46.genes.gff',
+					    'data/dmel-4-chromosome-r5.46.fasta'),
+   '$schema = GAL::Annotation->new("dmel.gff", "dmel.fasta"');
+
+ok(my $features_genes = $schema_genes->features,
+   '$features = $schema->features');
+
+ok(my $mrnas1 = $features_genes->search({type => 'mRNA'}),
+   '$features_genes->search({type => \'mRNA\'});');
+
+my %annotated_UTRs;
+while (my $mrna = $mrnas1->next) {
+  $mrna->infer_five_prime_UTR();
+  $mrna->infer_three_prime_UTR();
+
+  for my $fpUTR ($mrna->five_prime_UTRs) {
+    my $key = join ':', $fpUTR->get_values(qw(seqid type start end));
+    $annotated_UTRs{$key}++;
+  }
+  for my $tpUTR ($mrna->three_prime_UTRs) {
+    my $key = join ':', $tpUTR->get_values(qw(seqid type start end));
+    $annotated_UTRs{$key}++;
+  }
+}
+my $UTRs_annotated = join "\n", sort keys %annotated_UTRs;
+
+system('rm data/dmel-4-r5.46.no_UTR.sqlite') if
+  -e 'data/dmel-4-r5.46.no_UTR.sqlite';
+
+ok(my $schema_no_UTR = GAL::Annotation->new('data/dmel-4-r5.46.no_UTR.gff',
+					    'data/dmel-4-chromosome-r5.46.fasta'),
+   '$schema = GAL::Annotation->new("dmel.gff", "dmel.fasta"');
+
+ok(my $features_no_UTR = $schema_no_UTR->features,
+   '$features = $schema->features');
+
+ok(my $mrnas2 = $features_no_UTR->search({type => 'mRNA'}),
+   '$features_no_UTR->search({type => \'mRNA\'});');
+
+my %infered_UTRs;
+while (my $mrna = $mrnas2->next) {
+  $mrna->infer_five_prime_UTR();
+  $mrna->infer_three_prime_UTR();
+
+  for my $fpUTR ($mrna->five_prime_UTRs) {
+    my $key = join ':', $fpUTR->get_values(qw(seqid type start end));
+    $infered_UTRs{$key}++;
+  }
+  for my $tpUTR ($mrna->three_prime_UTRs) {
+    my $key = join ':', $tpUTR->get_values(qw(seqid type start end));
+    $infered_UTRs{$key}++;
+  }
+}
+my $UTRs_infered = join "\n", sort keys %infered_UTRs;
+
+ok($UTRs_annotated eq $UTRs_infered,
+   'Inferred UTRs equal to annoated UTRs');
+#compare to above
 
 done_testing();
 

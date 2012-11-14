@@ -101,7 +101,9 @@ sub transcripts {
 sub infer_introns {
 
   my $self = shift;
-  $_->infer_introns for $self->transcripts;
+  for my $transcript ($self->transcripts) {
+    $transcript->infer_introns;
+  }
 }
 
 #-----------------------------------------------------------------------------

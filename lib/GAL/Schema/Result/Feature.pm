@@ -408,7 +408,7 @@ sub my_start {
 
 sub my_end {
   my $self = shift;
-  return $self->strand eq '-' ? $self->end : $self->start;
+  return $self->strand eq '-' ? $self->start : $self->end;
 }
 
 #-----------------------------------------------------------------------------
@@ -640,6 +640,51 @@ sub get_recursive_children {
     $child->get_recursive_children($list);
   }
   return;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 locus
+
+ Title   : locus
+ Usage   : $locus = $feature->locus;
+ Function: Get the locus of a feature formatted as seqid:start-end
+ Returns : A string formatted as seqid:start-end.
+ Args    : None
+
+=cut
+
+sub locus {
+  return sprintf('%s:%u-%u', shift->get_values(qw(seqid start end)));
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 get_values
+
+ Title   : get_values
+ Usage   : @values = $self->get_values(qw(seqid start end)
+ Function: Get a list of values as an array(ref).
+ Returns : An array or ref
+ Args : A list of fields to retrieve (seqid source type start end
+        score strand phase).
+
+=cut
+
+sub get_values {
+
+  my ($self, @fields) = @_;
+
+  my %allowed = map {$_ => 1}
+    qw(seqid source type start end score strand phase);
+
+  my @values;
+  for my $field (@fields) {
+    $self->throw('invalid_field_requested', $field)
+      unless $allowed{$field};
+    push @values, $self->$field;
+  }
+  return wantarray ? @values : \@values;
 }
 
 #-----------------------------------------------------------------------------

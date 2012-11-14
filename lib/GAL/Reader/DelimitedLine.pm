@@ -235,7 +235,7 @@ sub comment_pattern {
       unless ref $comment_pattern eq 'Regexp';
   }
   $self->{comment_pattern} = $comment_pattern if $comment_pattern;
-  $self->{comment_pattern} ||= qr/^\s*#\[^#]/;
+  $self->{comment_pattern} ||= qr/^\s*\#[^\#]/;
   return $self->{comment_pattern};
 }
 
@@ -261,7 +261,7 @@ sub metadata_pattern {
       unless ref $metadata_pattern eq 'Regexp';
   }
   $self->{metadata_pattern} = $metadata_pattern if $metadata_pattern;
-  $self->{metadata_pattern} ||= qr/^\s*##/;
+  $self->{metadata_pattern} ||= qr/^\s*\#\#/;
   return $self->{metadata_pattern};
 }
 

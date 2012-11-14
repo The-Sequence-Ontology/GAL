@@ -219,7 +219,8 @@ sub mature_seq_genomic {
   my $self = shift;
 
   my $mature_seq_genomic;
-  map {$mature_seq_genomic .= $_->genomic_seq} $self->exons_genomic->all;
+  map {$mature_seq_genomic .= $_->genomic_seq}
+    sort {$a->start <=> $b->start }$self->exons;
   return $mature_seq_genomic;
 }
 
