@@ -347,7 +347,6 @@ sub _load_schema {
     $dbh->do("DROP TABLE IF EXISTS attribute");
     $dbh->do("DROP TABLE IF EXISTS relationship");
     $dbh->do("CREATE TABLE feature ("    .
-            "subject_id VARCHAR(255), " .
             "feature_id VARCHAR(255), " .
             "seqid      VARCHAR(255), " .
             "source     VARCHAR(255), " .
@@ -361,14 +360,12 @@ sub _load_schema {
            );
     $dbh->do("CREATE TABLE attribute ("  .
             "attribute_id INT NOT NULL AUTO_INCREMENT, " .
-            "subject_id VARCHAR(255), " .
             "feature_id VARCHAR(255), " .
             "att_key    VARCHAR(255), "    .
             "att_value  TEXT, "  .
             "PRIMARY KEY (attribute_id))"
            );
     $dbh->do("CREATE TABLE relationship ("  .
-            "subject_id   VARCHAR(255), " .
             "parent       VARCHAR(255), " .
             "child        VARCHAR(255), "    .
             "relationship VARCHAR(255)) "
@@ -519,16 +516,16 @@ sub _load_temp_files {
 
   print STDERR "\nLoading tempfiles\n";
   $dbh->do("LOAD DATA INFILE '$feat_filename' INTO TABLE feature " .
-	   "(subject_id, feature_id, seqid, source, type, start, " .
+	   "(feature_id, seqid, source, type, start, " .
 	   "end, score, strand, phase, bin)");
   my $e = tv_interval($t0);
   print STDERR "$e\n";
   $dbh->do("LOAD DATA INFILE '$att_filename'  INTO TABLE attribute " .
-	   "(attribute_id, subject_id, feature_id, att_key, att_value)");
+	   "(attribute_id, feature_id, att_key, att_value)");
   $e = tv_interval($t0);
   print STDERR "$e\n";
   $dbh->do("LOAD DATA INFILE '$rel_filename'  INTO TABLE relationship " .
-	   "(subject_id, parent, child)");
+	   "(parent, child)");
   $e = tv_interval($t0);
   print STDERR "$e\n";
   $self->index_database;
