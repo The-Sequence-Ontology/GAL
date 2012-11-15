@@ -334,25 +334,25 @@ sub index_database {
   my $dbh  = $self->dbh;
 
   $self->info('indexing_database', $self->database);
-  $self->info('indexing_features', $self->database);
   # Create feature indeces
-  $dbh->do("CREATE INDEX feat_feature_id_index ON feature (feature_id)");
-  # $dbh->do("CREATE INDEX feat_seqid_start_end_index ON feature (seqid, start, end)");
-  $self->info('indexing_feature_bins', $self->database);
-  $dbh->do("CREATE INDEX feat_bin_index ON feature (bin)");
+  $self->info('indexing_feature_id', $self->database);
+  $dbh->do("CREATE INDEX feat_id_index ON feature (feature_id)");
+  $self->info('indexing_locus', $self->database);
+  $dbh->do("CREATE INDEX feat_locus_index ON feature (bin, seqid, start, end)");
+  $self->info('indexing_feature_type', $self->database);
   $dbh->do("CREATE INDEX feat_type_index ON feature (type)");
 
   # Create attribute indeces
   $self->info('indexing_feature_attributes', $self->database);
-  $dbh->do("CREATE INDEX att_feature_id_index ON attribute (feature_id)");
-  # $dbh->do("CREATE INDEX att_key_value_index ON attribute (att_key, att_value)");
+  $dbh->do("CREATE INDEX att_feature_id_index ON attribute (feature_id, att_key, att_value)");
 
   # Create relationship indeces
-  $self->info('indexing_parent_relationships', $self->database);
-  $dbh->do("CREATE INDEX rel_parent_index ON relationship (parent)");
-  $self->info('indexing_child_relationships', $self->database);
-  $dbh->do("CREATE INDEX rel_child_index ON relationship (child)");
+  $self->info('indexing_relationships', $self->database);
+  $dbh->do("CREATE INDEX rel_parent_child_index ON relationship (parent, child)");
 
+  # Analyze
+  $self->info('analyzing_database', $self->database);
+  $dbh->do("ANALYZE");
 }
 
 #-----------------------------------------------------------------------------
