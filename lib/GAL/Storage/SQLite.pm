@@ -233,7 +233,6 @@ sub _load_schema {
   $dbh->do("DROP TABLE IF EXISTS attribute");
   $dbh->do("DROP TABLE IF EXISTS relationship");
   $dbh->do("CREATE TABLE feature ("    .
-	   "subject_id TEXT, "    .
 	   "feature_id TEXT NOT NULL, "    .
 	   "seqid      TEXT, "    .
 	   "source     TEXT, "    .
@@ -247,13 +246,11 @@ sub _load_schema {
 	  );
   $dbh->do("CREATE TABLE attribute ("  .
 	   "attribute_id INTEGER PRIMARY KEY AUTOINCREMENT, " .
-	   "subject_id TEXT, " .
 	   "feature_id TEXT, " .
 	   "att_key    TEXT, " .
 	   "att_value  TEXT)"
 	  );
   $dbh->do("CREATE TABLE relationship ("  .
-	   "subject_id   TEXT, " .
 	   "parent       TEXT, " .
 	   "child        TEXT, " .
 	   "relationship TEXT) "
@@ -411,7 +408,6 @@ sub add_features {
   my ($feat_rows, $att_rows, $rel_rows) = $self->prepare_features($features);
   my $dbh = $self->dbh;
 
-  # "subject_id VARCHAR(255), " .
   # "feature_id VARCHAR(255), " .
   # "seqid      VARCHAR(255), " .
   # "source     VARCHAR(255), " .
@@ -423,7 +419,7 @@ sub add_features {
   # "phase      VARCHAR(1),"    .
   # "bin        VARCHAR(15))"
 
-  my $feat_stmt = "INSERT INTO feature VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  my $feat_stmt = "INSERT INTO feature VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
   my $feat_sth = $dbh->prepare($feat_stmt);
 
   # http://search.cpan.org/~adamk/DBD-SQLite-1.29/lib/DBD/SQLite.pm#Transactions
@@ -442,12 +438,11 @@ sub add_features {
   }
 
   # "attribute_id INT NOT NULL AUTO_INCREMENT, " .
-  # "subject_id VARCHAR(255), " .
   # "feature_id VARCHAR(255), " .
   # "att_key    VARCHAR(255), "    .
   # "att_value  TEXT, "  .
 
-  my $att_stmt = "INSERT INTO attribute VALUES (?, ?, ?, ?, ?)";
+  my $att_stmt = "INSERT INTO attribute VALUES (?, ?, ?, ?)";
   my $att_sth = $dbh->prepare($att_stmt);
 
   for my $att_row (@{$att_rows}) {
@@ -464,12 +459,11 @@ sub add_features {
     }
   }
 
-  # "subject_id   VARCHAR(255), " .
   # "parent       VARCHAR(255), " .
   # "child        VARCHAR(255), "    .
   # "relationship VARCHAR(255)) "
 
-  my $rel_stmt = "INSERT INTO relationship VALUES (?, ?, ?, ?)";
+  my $rel_stmt = "INSERT INTO relationship VALUES (?, ?, ?)";
   my $rel_sth = $dbh->prepare($rel_stmt);
 
   for my $rel_row (@{$rel_rows}) {

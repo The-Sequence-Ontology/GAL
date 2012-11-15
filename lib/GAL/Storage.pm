@@ -426,24 +426,22 @@ sub prepare_features {
     my $feature_id = $feature_hash->{feature_id};
     my ($bin) = $self->get_feature_bins($feature_hash);
     my $attributes = $feature_hash->{attributes};
-    my $subject_id = $attributes->{Subject_ID} || '';
     my @parents = ref $attributes->{Parent} eq 'ARRAY' ? @{$attributes->{Parent}} : ();
-    my @feature_data = ($subject_id,
-			@{$feature_hash}{qw(feature_id seqid source
-				       type start end score strand
-				       phase)},
+    my @feature_data = (@{$feature_hash}{qw(feature_id seqid source
+					    type start end score strand
+					    phase)},
 			$bin);
     push @features, \@feature_data;
 
     for my $key (keys %{$attributes}) {
       my @values = @{$attributes->{$key}};
       for my $value (@values) {
-	push @attributes, [undef, $subject_id, $feature_id, $key, $value];
+	push @attributes, [undef, $feature_id, $key, $value];
       }
     }
 
     for my $parent (@parents) {
-      my @relationship_data = ($subject_id, $parent, $feature_id, undef);
+      my @relationship_data = ($parent, $feature_id, undef);
       push @relationships, \@relationship_data;
     }
   }

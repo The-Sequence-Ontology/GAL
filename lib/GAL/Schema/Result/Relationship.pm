@@ -26,22 +26,14 @@ features.
 
 __PACKAGE__->load_components(qw/ Core /);
 __PACKAGE__->table('relationship');
-__PACKAGE__->add_columns(qw/ subject_id parent child relationship /);
-__PACKAGE__->set_primary_key(qw /subject_id parent child /);
+__PACKAGE__->add_columns(qw/ parent child relationship /);
+__PACKAGE__->set_primary_key(qw /parent child /);
 __PACKAGE__->belongs_to('your_parents'  => 'GAL::Schema::Result::Feature', {'foreign.feature_id' => 'self.parent'});
 __PACKAGE__->belongs_to('your_children' => 'GAL::Schema::Result::Feature', {'foreign.feature_id' => 'self.child'});
 
 #-----------------------------------------------------------------------------
 
 =head1 METHODS
-
-=head2 subject_id
-
- Title   : subject_id
- Usage   : $subject_id = $self->subject_id
- Function: Get the features subject_id.
- Returns : The value of the subject_id as text.
- Args    : None
 
 =head2 parent
 

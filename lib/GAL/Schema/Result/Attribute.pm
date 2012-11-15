@@ -45,21 +45,13 @@ are no methods except those provided by DBIx::Class.
 
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('attribute');
-__PACKAGE__->add_columns(qw/ subject_id attribute_id feature_id att_key att_value /);
+__PACKAGE__->add_columns(qw/ attribute_id feature_id att_key att_value /);
 __PACKAGE__->set_primary_key('attribute_id');
 __PACKAGE__->belongs_to(features => 'GAL::Schema::Result::Feature', 'feature_id');
 
 #-----------------------------------------------------------------------------
 
 =head1 METHODS
-
-=head2 subject_id
-
- Title   : subject_id
- Usage   : $seqid = $self->subject_id;
- Function: Get the attributes subject_id.
- Returns : A text string for the subject_id.
- Args    : None
 
 =head2 attribute_id
 

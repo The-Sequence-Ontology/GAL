@@ -112,7 +112,7 @@ my %ATT_ORDER = (ID              => '!01',
 
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('feature');
-__PACKAGE__->add_columns(qw/ subject_id feature_id seqid source type start end score strand phase bin/);
+__PACKAGE__->add_columns(qw/ feature_id seqid source type start end score strand phase bin/);
 __PACKAGE__->set_primary_key('feature_id');
 __PACKAGE__->has_many(attributes   => 'GAL::Schema::Result::Attribute', 'feature_id');
 __PACKAGE__->has_many(my_parents  => 'GAL::Schema::Result::Relationship', {'foreign.child' => 'self.feature_id'});
