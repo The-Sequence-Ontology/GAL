@@ -6,8 +6,9 @@ my $class = Module::Build->subclass
     (
      class => 'My::Builder',
      code => q{
-       sub ACTION_install {
+       sub ACTION_build {
          my $self = shift;
+         $self->SUPER::build;
          $self->dispatch('install_deps');
        }
      },
