@@ -349,6 +349,7 @@ sub index_database {
   # Create relationship indeces
   $self->info('indexing_relationships', $self->database);
   $dbh->do("CREATE INDEX rel_parent_child_index ON relationship (parent, child)");
+  $dbh->do("CREATE INDEX rel_child_parent_index ON relationship (child, parent)");
 
   # Analyze
   $self->info('analyzing_database', $self->database);

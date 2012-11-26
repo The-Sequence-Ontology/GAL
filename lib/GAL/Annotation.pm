@@ -525,9 +525,7 @@ Modules in GAL/lib use the following modules:
 Bio::DB::Fasta
 Carp
 DBD::SQLite
-DBD::mysql
 DBI
-File::Temp
 List::Util
 Scalar::Util
 Set::IntSpan::Fast
@@ -539,7 +537,6 @@ Some script in GAL/bin and/or GAL/lib/GAL/t use the following modules:
 Data::Dumper
 FileHandle
 Getopt::Long
-Getopt::Std
 IO::Prompt
 List::MoreUtils
 TAP::Harness

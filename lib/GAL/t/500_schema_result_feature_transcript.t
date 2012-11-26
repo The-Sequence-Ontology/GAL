@@ -54,20 +54,22 @@ my %seen_intron_coords;
 my %inf_intron_coords;
 while (my $transcript = $transcripts->next) {
   my @these_exons;
-  for my $exon ($transcript->exons) {
+  for my $exon (sort {$a->start <=> $b->start} $transcript->exons) {
     push @these_exons, $exon->get_values(qw(start end));
   }
   shift @these_exons;
   pop   @these_exons;
   map {$seen_intron_coords{$_}++} @these_exons;
   ok($transcript->infer_introns, '$transcript->infer_introns');
+  my $icount;
   for my $intron ($transcript->introns) {
     ok(my($start, $end) = $intron->get_values(qw(start end)),
        '$intron->get_values(qw(start end))');
     $inf_intron_coords{$start}++;
     $inf_intron_coords{$end}++;
+    $icount++;
   }
-  last if $count++ > 20;
+  #last if $count++ > 100;
 }
 my $seen_introns    = join ',', sort keys %seen_intron_coords;
 my $infered_introns = join ',', sort keys %inf_intron_coords;
