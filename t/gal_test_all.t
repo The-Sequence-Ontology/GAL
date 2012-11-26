@@ -1,7 +1,9 @@
 #!/usr/bin/perl
 
-use FindBin;
 use TAP::Harness;
+use FindBin;
+
+chdir $FindBin::Bin;
 
 my %args = (verbosity => -1,
 	    lib       => ["$FindBin::Bin/../lib"],

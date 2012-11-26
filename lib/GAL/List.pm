@@ -287,7 +287,7 @@ sub _hash_list {
 
 sub count {
   my @list = shift->list;
-    return scalar @list;
+  return scalar @list;
 }
 
 #-----------------------------------------------------------------------------
