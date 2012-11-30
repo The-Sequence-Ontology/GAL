@@ -327,10 +327,10 @@ sub median {
 =head2 percentile
 
  Title   : percentile
- Usage   : $a = $self->percentile()
+ Usage   : $a = $self->percentile(10)
  Function: Returns the percentile of the list of elements
  Returns :
- Args    :
+ Args    : The percentile to return
 
 =cut
 
