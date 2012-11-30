@@ -599,7 +599,18 @@ sub to_gff3 {
   my $phase      = $self->phase;
   my $attributes = $self->attributes_hash;
 
-  map {$_ = join ',', uniq @{$_}} values %{$attributes};
+  # This is a bad hack to keep CDSs from having their IDs (and other
+  # attributes duplicated).  This really needs to be changed in the
+  # SQL schema so that feature_ID is not the primary key and is not
+  # required to be unique!!!
+
+  if ($type eq 'CDS') {
+    map {$_ = join ',', uniq @{$_}} values %{$attributes};
+  }
+  else {
+    map {$_ = join ',', @{$_}} values %{$attributes};
+  }
+
   my $attrb_text;
 
   for my $key (sort {($ATT_ORDER{$a} || $a) cmp ($ATT_ORDER{b} || $b)} keys %{$attributes}) {
