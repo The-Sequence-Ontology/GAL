@@ -100,7 +100,7 @@ my %ATT_ORDER = (ID              => '!01',
 		 Variant_aa	 => '!08',
 		 Reference_aa	 => '!09',
 		 Name		 => '!10',
-		 Alias	   	 => '!11',  
+		 Alias	   	 => '!11',
 		 Parent	   	 => '!12',
 		 Target	   	 => '!13',
 		 Gap		 => '!14',
@@ -112,10 +112,10 @@ my %ATT_ORDER = (ID              => '!01',
 
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('feature');
-__PACKAGE__->add_columns(qw/ feature_id seqid source type start end score strand phase bin/);
-__PACKAGE__->set_primary_key('feature_id');
-__PACKAGE__->has_many(attributes   => 'GAL::Schema::Result::Attribute', 'feature_id');
-__PACKAGE__->has_many(my_parents  => 'GAL::Schema::Result::Relationship', {'foreign.child' => 'self.feature_id'});
+__PACKAGE__->add_columns(qw/ feature_idx feature_id seqid source type start end score strand phase bin/);
+__PACKAGE__->set_primary_key('feature_idx');
+__PACKAGE__->has_many(attributes   => 'GAL::Schema::Result::Attribute', 'feature_idx');
+__PACKAGE__->has_many(my_parents  => 'GAL::Schema::Result::Relationship', {'foreign.child'   => 'self.feature_id'});
 __PACKAGE__->has_many(my_children => 'GAL::Schema::Result::Relationship', {'foreign.parent'  => 'self.feature_id'});
 __PACKAGE__->many_to_many(parents  => 'my_parents', 'your_parents');
 __PACKAGE__->many_to_many(children => 'my_children', 'your_children');
