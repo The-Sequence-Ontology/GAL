@@ -233,27 +233,26 @@ sub _load_schema {
   $dbh->do("DROP TABLE IF EXISTS attribute");
   $dbh->do("DROP TABLE IF EXISTS relationship");
   $dbh->do("CREATE TABLE feature ("    .
-	   "feature_id TEXT NOT NULL, "    .
-	   "seqid      TEXT, "    .
-	   "source     TEXT, "    .
-	   "type       TEXT, "    .
-	   "start      INTEGER, " .
-	   "end        INTEGER, " .
-	   "score      TEXT, "    .
-	   "strand     TEXT, "    .
-	   "phase      TEXT,"     .
-	   "bin        TEXT)"
+	   "feature_idx INTEGER PRIMARY KEY AUTOINCREMENT, " .
+	   "feature_id 	TEXT, "    .
+	   "seqid      	TEXT, "    .
+	   "source     	TEXT, "    .
+	   "type       	TEXT, "    .
+	   "start      	INTEGER, " .
+	   "end        	INTEGER, " .
+	   "score      	TEXT, "    .
+	   "strand     	TEXT, "    .
+	   "phase      	TEXT,"     .
+	   "bin        	TEXT)"
 	  );
   $dbh->do("CREATE TABLE attribute ("  .
-	   "attribute_id INTEGER PRIMARY KEY AUTOINCREMENT, " .
-	   "feature_id TEXT, " .
-	   "att_key    TEXT, " .
-	   "att_value  TEXT)"
+	   "feature_idx  TEXT, " .
+	   "att_key      TEXT, " .
+	   "att_value    TEXT)"
 	  );
   $dbh->do("CREATE TABLE relationship ("  .
-	   "parent       TEXT, " .
-	   "child        TEXT, " .
-	   "relationship TEXT) "
+	   "parent TEXT, " .
+	   "child  TEXT) "
 	  );
 }
 
@@ -344,7 +343,7 @@ sub index_database {
 
   # Create attribute indeces
   $self->info('indexing_feature_attributes', $self->database);
-  $dbh->do("CREATE INDEX att_feature_id_index ON attribute (feature_id, att_key, att_value)");
+  $dbh->do("CREATE INDEX att_feature_idx_index ON attribute (feature_idx, att_key, att_value)");
 
   # Create relationship indeces
   $self->info('indexing_relationships', $self->database);
@@ -413,25 +412,34 @@ sub add_features {
   my ($feat_rows, $att_rows, $rel_rows) = $self->prepare_features($features);
   my $dbh = $self->dbh;
 
-  # "feature_id VARCHAR(255), " .
-  # "seqid      VARCHAR(255), " .
-  # "source     VARCHAR(255), " .
-  # "type       VARCHAR(255), " .
-  # "start      INT, "          .
-  # "end        INT, "          .
-  # "score      VARCHAR(255), " .
-  # "strand     VARCHAR(1), "   .
-  # "phase      VARCHAR(1),"    .
-  # "bin        VARCHAR(15))"
+  # "feature_idx INT, " .
+  # "feature_id  VARCHAR(255), " .
+  # "seqid       VARCHAR(255), " .
+  # "source      VARCHAR(255), " .
+  # "type        VARCHAR(255), " .
+  # "start       INT, "          .
+  # "end         INT, "          .
+  # "score       VARCHAR(255), " .
+  # "strand      VARCHAR(1), "   .
+  # "phase       VARCHAR(1),"    .
+  # "bin         VARCHAR(15))"
 
-  my $feat_stmt = "INSERT INTO feature VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-  my $feat_sth = $dbh->prepare($feat_stmt);
+  my $feat_stmt = "INSERT INTO feature VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  my $feat_sth  = $dbh->prepare($feat_stmt);
+
+  my %feat_idx_map;
 
   # http://search.cpan.org/~adamk/DBD-SQLite-1.29/lib/DBD/SQLite.pm#Transactions
   $dbh->begin_work;
   for my $feat_row (@{$feat_rows}) {
+    my $old_feat_idx = $feat_row->[0];
+    $feat_row->[0] = undef;
     my $rv = $feat_sth->execute(@{$feat_row});
-    unless ($rv) {
+    if ($rv) {
+      my ($auto_inc) = $dbh->selectrow_array('SELECT last_insert_rowid()');
+      $feat_idx_map{$old_feat_idx} = $auto_inc;
+    }
+    else {
       my $warn_message = ('The following data failed to insert into the ' .
 			  'feature table : ');
       my $warn_code = 'bad_feature_table_insert :';
@@ -442,15 +450,18 @@ sub add_features {
     }
   }
 
-  # "attribute_id INT NOT NULL AUTO_INCREMENT, " .
-  # "feature_id VARCHAR(255), " .
-  # "att_key    VARCHAR(255), "    .
-  # "att_value  TEXT, "  .
+  # Removed # "attribute_id INT NOT NULL AUTO_INCREMENT, " .
+  # "feature_idx VARCHAR(255), " .
+  # "att_key     VARCHAR(255), "    .
+  # "att_value   TEXT, "  .
 
-  my $att_stmt = "INSERT INTO attribute VALUES (?, ?, ?, ?)";
+  #my $att_stmt = "INSERT INTO attribute VALUES (?, ?, ?, ?)";
+  my $att_stmt = "INSERT INTO attribute VALUES (?, ?, ?)";
   my $att_sth = $dbh->prepare($att_stmt);
 
   for my $att_row (@{$att_rows}) {
+    next unless exists $feat_idx_map{$att_row->[0]};
+    $att_row->[0] = $feat_idx_map{$att_row->[0]};
     my $rv = $att_sth->execute(@{$att_row});
     unless ($rv) {
       my $warn_message = ('The following data failed to insert into the ' .
@@ -464,11 +475,11 @@ sub add_features {
     }
   }
 
-  # "parent       VARCHAR(255), " .
-  # "child        VARCHAR(255), "    .
-  # "relationship VARCHAR(255)) "
+  # "parent   VARCHAR(255), " .
+  # "child    VARCHAR(255), "    .
+  # REMOVED # "relationship VARCHAR(255)) "
 
-  my $rel_stmt = "INSERT INTO relationship VALUES (?, ?, ?)";
+  my $rel_stmt = "INSERT INTO relationship VALUES (?, ?)";
   my $rel_sth = $dbh->prepare($rel_stmt);
 
   for my $rel_row (@{$rel_rows}) {

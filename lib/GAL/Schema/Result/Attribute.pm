@@ -45,42 +45,34 @@ are no methods except those provided by DBIx::Class.
 
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('attribute');
-__PACKAGE__->add_columns(qw/ attribute_id feature_id att_key att_value /);
-__PACKAGE__->set_primary_key('attribute_id');
-__PACKAGE__->belongs_to(features => 'GAL::Schema::Result::Feature', 'feature_id');
+__PACKAGE__->add_columns(qw/ feature_idx att_key att_value /);
+#__PACKAGE__->set_primary_key('attribute_id');
+__PACKAGE__->belongs_to(features => 'GAL::Schema::Result::Feature', 'feature_idx');
 
 #-----------------------------------------------------------------------------
 
 =head1 METHODS
 
-=head2 attribute_id
+=head2 feature_idx
 
- Title   : attribute_id
- Usage   : $seqid = $self->attribute_id;
- Function: Get the attributes attribute_id.
- Returns : A text string for the attribute_id.
- Args    : None
-
-=head2 feature_id
-
- Title   : feature_id
- Usage   : $seqid = $self->feature_id;
- Function: Get the attributes feature_id.
- Returns : A text string for the feature_id.
+ Title   : feature_idx
+ Usage   : $idx = $self->feature_idx;
+ Function: Get the attributes feature_idx.
+ Returns : A text string for the feature_idx.
  Args    : None
 
 =head2 att_key
 
  Title   : att_key
- Usage   : $seqid = $self->att_key;
+ Usage   : $key = $self->att_key;
  Function: Get the attributes key.
  Returns : A text string for the key.
  Args    : None
 
-=head2 subject
+=head2 att_value
 
  Title   : att_value
- Usage   : $seqid = $self->att_value;
+ Usage   : $value = $self->att_value;
  Function: Get the attributes value(s)
  Returns : A text string for the value(s) as a comma seperated list.
  Args    : None

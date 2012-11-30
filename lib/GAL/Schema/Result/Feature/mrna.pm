@@ -530,11 +530,9 @@ sub infer_five_prime_UTR {
     }
     my $feature_id = $parent_id . ':five_prime_UTR:';
     $feature_id .= sprintf("%03d", $count++);
-    my @attrbs = ({feature_id => $feature_id,
-		   att_key    => 'ID',
+    my @attrbs = ({att_key    => 'ID',
 		   att_value  => $feature_id},
-		  {feature_id => $feature_id,
-		   att_key    => 'Parent',
+		  {att_key    => 'Parent',
 		   att_value  => $parent_id},
 		 );
     my @rels = {parent => $parent_id,
@@ -614,11 +612,9 @@ sub infer_three_prime_UTR {
     }
     my $feature_id = $parent_id . ':three_prime_UTR:';
     $feature_id .= sprintf("%03d", $count++);
-    my @attrbs = ({feature_id => $feature_id,
-		   att_key    => 'ID',
+    my @attrbs = ({att_key    => 'ID',
 		   att_value  => $feature_id},
-		  {feature_id => $feature_id,
-		   att_key    => 'Parent',
+		  {att_key    => 'Parent',
 		   att_value  => $parent_id},
 		 );
     my @rels = {parent => $parent_id,

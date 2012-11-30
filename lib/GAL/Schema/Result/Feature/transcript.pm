@@ -182,11 +182,9 @@ sub infer_introns {
 			 shift @coordinates);
     my $feature_id = $parent_id . ':intron:';
     $feature_id .= sprintf("%03d", $count++);
-    my @attrbs = ({feature_id => $feature_id,
-		   att_key    => 'ID',
+    my @attrbs = ({att_key    => 'ID',
 		   att_value  => $feature_id},
-		  {feature_id => $feature_id,
-		   att_key    => 'Parent',
+		  {att_key    => 'Parent',
 		   att_value  => $parent_id},
 		 );
     my @rels = {parent => $parent_id,
