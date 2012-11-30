@@ -2,73 +2,42 @@ package GAL::Schema::ResultSet::Feature;
 use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
-use List::Util;
+use GAL::List::Numeric;
+use GAL::List::Categorical;
 
 sub seqids {
-  my $self = shift;
-  my %seen;
-  my @seqids = grep {! $seen{$_}++} $self->get_column('seqid')->all;
-  return wantarray ? @seqids : \@seqids;
+  return GAL::List::Categorical->new(list => [shift->get_column('seqid')->all]);
 }
 
-sub seqid_counts {
-  my $self = shift;
-  my %seqids;
-  map {$seqids{$_}++} $self->get_column('seqid')->all;
-  return wantarray ? %seqids : \%seqids;
+sub sources {
+  return GAL::List::Categorical->new(list => [shift->get_column('source')->all]);
 }
 
-# sub sources {
-# 
-# }
-# 
-# sub types {
-# 
-# }
-# 
-# sub type_counts {
-# 
-# }
-# 
-# sub min_start {
-# 
-# }
-# 
-# sub max_start {
-# 
-# }
-# 
-# sub min_end {
-# 
-# }
-# 
-# sub max_end {
-# 
-# }
-# 
-# sub min_length {
-# 
-# }
-# 
-# sub max_length {
-# 
-# }
-# 
-# sub footprint {
-# 
-# }
-# sub min_score {
-# 
-# }
-# 
-# sub max_score {
-# 
-# }
-# 
-# sub stats {
-# 
-# }
-# Attribute aggreation
+sub types {
+  return GAL::List::Categorical->new(list => [shift->get_column('type')->all]);
+}
+
+sub starts {
+  return GAL::List::Numeric->new(list => [shift->get_column('start')->all]);
+}
+
+sub ends {
+  return GAL::List::Numeric->new(list => [shift->get_column('end')->all]);
+}
+
+sub spans {
+  my $self = shift;
+
+  return $self->{_gal_spans} if exists $self->{_gal_spans};
+  my $spans = GAL::Interval::Span->new();
+  while (my $feature = $self->next) {
+    $spans->add_feature($feature);
+  }
+  $self->{_gal_spans} = $spans;
+  return $self->{_gal_spans};
+}
+
+## Attribute aggregation
 
 
 
