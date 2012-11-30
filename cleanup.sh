@@ -26,3 +26,6 @@ rm -f t/data/10Gen_Chinese_SNV_partial.sqlite
 rm -f t/data/dmel-4-r5.46.infer_UTR.gff
 rm -f t/data/dmel-4-r5.46.no_UTR.sqlite
 rm -f t/data/urt_original.txt
+rm -f t/data/dmel-4-r5.46.sqlite
+rm -rf bin/examples/nytprof
+rm -f bin/examples/nytprof.out
