@@ -354,6 +354,9 @@ sub index_database {
   # Analyze
   $self->info('analyzing_database', $self->database);
   $dbh->do("ANALYZE");
+
+  $self->info('finished_indexing_database', $self->database);
+  return 1;
 }
 
 #-----------------------------------------------------------------------------
@@ -387,6 +390,7 @@ sub load_files {
       $self->add_features_to_buffer($feature);
     }
     $self->flush_buffer;
+    $self->info('finished_loading_database', $file);
   }
   $self->index_database;
 }
