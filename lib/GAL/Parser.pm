@@ -561,35 +561,35 @@ sub validate_feature {
    my ($self, $feature) = @_;
 
    $self->throw('missing_feature_id', $self->to_gff3($feature))
-     unless $feature->{feature_id};
+     unless exists $feature->{feature_id} && $feature->{feature_id};;
    $self->throw('missing_seqid', $self->to_gff3($feature))
-     unless $feature->{seqid};
+     unless exists $feature->{seqid} || $feature->{seqid};
    $self->throw('missing_source', $self->to_gff3($feature))
-     unless $feature->{source};
+     unless exists $feature->{source} && $feature->{source};
    $self->throw('missing_type', $self->to_gff3($feature))
-     unless $feature->{type};
+     unless exists $feature->{type} && $feature->{type};
    $self->throw('missing_start', $self->to_gff3($feature))
-     unless $feature->{start};
+     unless exists $feature->{start};
    $self->throw('invalid_start', $self->to_gff3($feature))
      unless $feature->{start} =~ /^\d+$/;
    $self->throw('missing_end', $self->to_gff3($feature))
-     unless $feature->{end};
+     unless exists $feature->{end};
    $self->throw('invalid_end', $self->to_gff3($feature))
      unless $feature->{end} =~ /^\d+$/;
    $self->throw('missing_score', $self->to_gff3($feature))
-     unless $feature->{score};
+     unless exists $feature->{score} && defined $feature->{score};
    $self->throw('missing_strand', $self->to_gff3($feature))
-     unless $feature->{strand};
+     unless exists $feature->{strand};
    $self->throw('invalid_strand', $self->to_gff3($feature))
      unless $feature->{strand} =~ /^[\.\+\-]$/;
    $self->throw('missing_phase', $self->to_gff3($feature))
-     unless defined $feature->{phase};
+     unless exists $feature->{phase} && defined $feature->{phase};
    $self->throw('invalid_phase', $self->to_gff3($feature))
      unless $feature->{phase} =~ /^[\.012]/;
    $self->throw('missing_attributes', $self->to_gff3($feature))
-     unless $feature->{attributes};
+     unless exists $feature->{attributes} && $feature->{attributes};
    $self->throw('missing_attribute_ID', $self->to_gff3($feature))
-     unless $feature->{attributes}{ID};
+     unless exists $feature->{attributes}{ID};
    $self->throw('invalid_attribute_ID', $self->to_gff3($feature))
      unless ref $feature->{attributes}{ID} eq 'ARRAY';
    $self->throw('missing_attribute_ID', $self->to_gff3($feature))
