@@ -60,7 +60,8 @@ data as defined by the first 8 columns of GFF3
 
 my %FEATURE_MAP;
 
-map {$FEATURE_MAP{$_} = 'transcript'} GAL::Schema::Result::Feature::get_transcript_types();
+map {$FEATURE_MAP{$_} = 'transcript'}
+  GAL::Schema::Result::Feature::get_transcript_types();
 
 map {$FEATURE_MAP{$_} = lc $_}  qw(gene
 				     transcript
@@ -112,11 +113,16 @@ my %ATT_ORDER = (ID              => '!01',
 
 __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('feature');
-__PACKAGE__->add_columns(qw/ feature_idx feature_id seqid source type start end score strand phase bin/);
+__PACKAGE__->add_columns(qw(feature_idx feature_id seqid source type
+                            start end score strand phase bin));
+
 __PACKAGE__->set_primary_key('feature_idx');
-__PACKAGE__->has_many(attributes   => 'GAL::Schema::Result::Attribute', 'feature_idx');
-__PACKAGE__->has_many(my_parents  => 'GAL::Schema::Result::Relationship', {'foreign.child'   => 'self.feature_id'});
-__PACKAGE__->has_many(my_children => 'GAL::Schema::Result::Relationship', {'foreign.parent'  => 'self.feature_id'});
+__PACKAGE__->has_many(attributes   => 'GAL::Schema::Result::Attribute',
+                      'feature_idx');
+__PACKAGE__->has_many(my_parents  => 'GAL::Schema::Result::Relationship',
+                      {'foreign.child'   => 'self.feature_id'});
+__PACKAGE__->has_many(my_children => 'GAL::Schema::Result::Relationship',
+                      {'foreign.parent'  => 'self.feature_id'});
 __PACKAGE__->many_to_many(parents  => 'my_parents', 'your_parents');
 __PACKAGE__->many_to_many(children => 'my_children', 'your_children');
 
@@ -239,7 +245,8 @@ sub attributes_hash {
     map {push @{$self->{my_attributes}{$_->att_key}}, $_->att_value}
 	   $self->attributes->all;
   }
-  return wantarray ? %{$self->{my_attributes}} : dclone($self->{my_attributes});
+  return wantarray ? %{$self->{my_attributes}} :
+      dclone($self->{my_attributes});
 }
 
 #-----------------------------------------------------------------------------
@@ -512,31 +519,6 @@ sub inflate_result {
 sub get_feature_bins {
   my $self = shift;
   return $self->annotation->get_feature_bins($self);
-  #my $self = shift;
-  #
-  #$self->warn('depracated_method', ('GAL::Schema::Result::Feature::feature_bins is ' .
-  #			    'deprecated.  We should be using the method in ' .
-  #			    'GAL::Base instead.  Please update your code '   .
-  #			    'and stop using it.')
-  #	       );
-  #
-  #my ($seqid, $start, $end) = ($self->seqid, $self->start, $self->end);
-  #my @feature_bins;
-  #my $count;
-  #my $single_bin;
-  #for my $bin_size (128_000, 1_000_000, 8_000_000, 64_000_000,
-  #		      512_000_000) {
-  #  $count++;
-  #  my $start_bin = int($start/$bin_size);
-  #  my $end_bin   = int($end/$bin_size);
-  #  my @these_bins = map {$_ = join ':', ($seqid, $count, $_)} ($start_bin .. $end_bin);
-  #	if (! $single_bin && scalar @these_bins == 1) {
-  #	    $single_bin = shift @these_bins;
-  #	}
-  #	unshift @feature_bins, @these_bins;
-  #}
-  #unshift @feature_bins, $single_bin;
-  #return wantarray ? @feature_bins : \@feature_bins;
 }
 
 #-----------------------------------------------------------------------------
@@ -599,21 +581,15 @@ sub to_gff3 {
   my $phase      = $self->phase;
   my $attributes = $self->attributes_hash;
 
-  # This is a bad hack to keep CDSs from having their IDs (and other
-  # attributes duplicated).  This really needs to be changed in the
-  # SQL schema so that feature_ID is not the primary key and is not
-  # required to be unique!!!
-
-  if ($type eq 'CDS') {
-    map {$_ = join ',', uniq @{$_}} values %{$attributes};
-  }
-  else {
-    map {$_ = join ',', @{$_}} values %{$attributes};
-  }
+  # Convert attribute values to comma sep list
+  # ->attributes_hash uses dclone to prevent
+  # mapping the actual attributes hash.
+  map {$_ = join ',', @{$_}} values %{$attributes};
 
   my $attrb_text;
 
-  for my $key (sort {($ATT_ORDER{$a} || $a) cmp ($ATT_ORDER{b} || $b)} keys %{$attributes}) {
+  for my $key (sort {($ATT_ORDER{$a} || $a) cmp ($ATT_ORDER{b} || $b)}
+	       keys %{$attributes}) {
     $attrb_text .= "$key=" . $attributes->{$key} . ';';
   }
 
@@ -817,7 +793,8 @@ at this time.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Schema::Result::Feature> requires no configuration files or environment variables.
+<GAL::Schema::Result::Feature> requires no configuration files or
+environment variables.
 
 =head1 DEPENDENCIES
 
@@ -840,7 +817,8 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010, Barry Moore <barry.moore@genetics.utah.edu>.  All
+rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself.
