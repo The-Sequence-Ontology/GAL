@@ -48,17 +48,18 @@ print "Loading time: $elapsed\n\n";
 
 my $features = $annotation->features->search({type => 'gene'});
 
-$t0 = [gettimeofday];
-
 my $count;
 # Iterate over the features
+my $total_time;
 while (my $feature = $features->next) {
-  #my @cols = $feature->to_gff3_recursive;
+  my $t0 = [gettimeofday];
   my @feats = $feature->to_gff3_recursive;
-  #print join "\t", @cols;
+  #print join "\n", @feats;
   #print "\n";
   my $elapsed = tv_interval ( $t0, [gettimeofday]);
-  my $relative = $elapsed/++$count;
+  $total_time += $elapsed;
+  my $relative = $total_time/++$count;
   print "$count\t$elapsed\t$relative\n";
-  print '';
+  print '-' x 80;
+  print "\n";
 }
