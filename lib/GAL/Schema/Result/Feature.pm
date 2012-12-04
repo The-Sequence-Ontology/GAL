@@ -517,8 +517,7 @@ sub inflate_result {
 #-----------------------------------------------------------------------------
 
 sub get_feature_bins {
-  my $self = shift;
-  return $self->annotation->get_feature_bins($self);
+  return shift->annotation->get_feature_bins($self);
 }
 
 #-----------------------------------------------------------------------------
@@ -540,6 +539,7 @@ sub to_gff3_recursive {
 
   my @gff_lines;
   my @features;
+
   $self->get_recursive_children(\@features);
 
   unshift @features, $self;
@@ -618,9 +618,7 @@ sub get_recursive_children {
 
   my ($self, $list) = @_;
 
-  my $children = $self->children(undef, {distinct => 1});
-
-  return unless $children->count > 0;
+  my $children = $self->children();
 
   while (my $child = $children->next) {
     push @{$list}, $child;
