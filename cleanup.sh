@@ -29,3 +29,5 @@ rm -f t/data/urt_original.txt
 rm -f t/data/dmel-4-r5.46.sqlite
 rm -rf bin/examples/nytprof
 rm -f bin/examples/nytprof.out
+rm -rf docs/html/*
+pods2html lib/ docs/html/
