@@ -1,6 +1,49 @@
-10-02-26 (Revision: 111)
+12-12-11_Version_0.2.0 (Revision: 364)
+Tue Dec 11 14:11:56 MST 2012
 
-Minor changes to snp2gene interface.  Changed the parameter passwd to password
+-First major public release.
+-Significant updates and additions library wide.
+-Updates to SQLite schema and indexing to improve performance.
+-Extensive updates and additions to testing throught bin and lib.
+-Extensive updates and additions to Schema::Result::Feature
+ subclasses.
+-Addition of Schema::ResultSet::Feature.pm.
+-Extensive updates and additions to parser subclasses.
+-Addition of Interval.pm.
+-Adding HTML docs
+-Reworking the schema to link attributes via feature_idx rather than
+ feature_id
+-Adding GAL::List and GAL::Interval functionality to
+ lib/GAL/Schema/ResultSet/Feature.pm
+-Updates to error handling in lib/GAL/Parser.pm validate_feature
+-Adding bin/examples/gal_benchmark_recursion
+-Adding lib/GAL/Interval/Span and associated changes
+-Adding stuff for Module::Build deployment/building
+-Optimizations to indexes and adding analyze to SQLite for significant
+ speedup
+-Removing subject_id from the schema
+-Adding a ton of tests mostly in the
+ 500_schema_result_feature_gene/transcript/mrna classes
+-Adding/fixing translation_start/end methods, UTR methods several more
+ bin/t tests and their scripts
+-Adding a whole lotta tests to bin/t along with test data
+-Lots of updates in lib/GAL/t/200_parser_* and additions in bin/t/*.t
+ as well as associated file shuffling
+-Adding bin/examples for gal_*scripts
+-A whole sh*t-load of testing updates!
+-Many updates to bin/fastq_tool including adding sub seq_only and
+ adjustments to Illumin 1.5+ handling
+-Adding t/gal_test_all.t
+-Minor (but fatal) bug fix on
+ lib/GAL/Schema/Result/Feature/transcript.pm
+-sort order to gene::mRNAs
+-Adding dclone to Feature.pm attributes_hash
+-Switching to Statistics::Descriptive::Discrete for significant
+ speed/memory improvements for sam_inspector
+-Adding error messages to gff3_validator for the case when Parent tag
+ refers to the ID of a missing feature
+-Adding strand based sorting for feature retrival methods
+ (i.e. $transcript->exons)
 
 --------------------------------------------------------------------------------
 
