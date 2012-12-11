@@ -57,7 +57,7 @@ my $builder = Module::Build->new(
 
 				 # Testing
 				 use_tap_harness     => 1,
-				 tap_harness_args    => {verbosity => -1}
+				 tap_harness_args    => {verbosity => -1},
 				 test_files => [qw(
 						   lib/GAL/t/001_annotation.t
 						   lib/GAL/t/001_base.t
