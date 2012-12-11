@@ -4,7 +4,7 @@ use strict;
 use vars qw($VERSION);
 
 
-$VERSION = '1.0.4';
+$VERSION = 0.2.0;
 use base qw(GAL::Base);
 
 =head1 NAME
@@ -408,7 +408,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 

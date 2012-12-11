@@ -4,7 +4,7 @@ use strict;
 use vars qw($VERSION);
 use Statistics::Descriptive;
 
-$VERSION = '0.01';
+$VERSION = 0.2.0;
 use base qw(GAL::Interval);
 
 =head1 NAME
@@ -13,7 +13,7 @@ GAL::Interval::Span - Provide functions for intervals on sequence
 
 =head1 VERSION
 
-This document describes GAL::Interval::Span version 0.01
+This document describes GAL::Interval::Span version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -403,7 +403,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
