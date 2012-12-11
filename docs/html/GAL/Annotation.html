@@ -1,0 +1,344 @@
+<HTML>
+<HEAD>
+<TITLE>GAL::Annotation</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000">
+<UL>
+<LI><A HREF="#NAME">NAME
+
+</A><LI><A HREF="#VERSION">VERSION
+
+</A><LI><A HREF="#SYNOPSIS">SYNOPSIS
+
+</A><LI><A HREF="#DESCRIPTION">DESCRIPTION
+
+</A><LI><A HREF="#CONSTRUCTOR">CONSTRUCTOR
+
+</A></UL>
+<HR>
+<H1><A NAME="NAME">NAME
+
+</A></H1>
+
+<P>GAL::Annotation - Genome Annotation Library
+
+</P><H1><A NAME="VERSION">VERSION
+
+</A></H1>
+
+<P>This document describes GAL::Annotation version 0.01
+
+</P><H1><A NAME="SYNOPSIS">SYNOPSIS
+
+</A></H1>
+
+<PRE>    use GAL::Annotation;
+
+    # Assuming defaults (GFF3 parser and SQLite storage)
+    my $annot = GAL::Annotation-&gt;new(qw(file.gff file.fasta);
+    my $features = $annot-&gt;features;
+
+
+    # Otherwise be explicit about everything.
+    my %feat_store_args = (class    =&gt; 'SQLite',
+			   database =&gt; '/path/to/file.gff'
+			  );
+    my $feat_store = GAL::Annotation-&gt;new(storage =&gt; \%feat_store_args,
+					  fasta   =&gt; '/path/to/file.fa');
+    $feat_store-&gt;load_files($feature_file);
+    my $features = $feat_store-&gt;schema-&gt;resultset('Feature');
+
+    # Either way, once you have features - get to work.
+    my $mrnas = $features-&gt;search({type =&gt; 'mRNA'});
+    while (my $mrna = $mrnas-&gt;next) {
+      print $mrna-&gt;feature_id . &quot;\n&quot;;
+      my $CDSs = $mrna-&gt;CDSs;
+      while (my $CDS = $CDSs-&gt;next) {
+	print join &quot;\n&quot;, ($CDS-&gt;start,
+			  $CDS-&gt;end,
+			  $CDS-&gt;seq,
+			 );
+      }
+    }</PRE>
+<H1><A NAME="DESCRIPTION">DESCRIPTION
+
+</A></H1>
+
+<P>The Genome Annotation Library (GAL) is a collection of modules that
+strive to make working with genome annotations simple, intuitive and
+fast.  Users of GAL first create an annotation object which in turn
+will contain Parser, Storage and Schema objects.  The parser allows
+features to be loaded into GAL's storage from a variety of formats.
+The storage object specifies how the features should be stored, and
+the schema object provides flexible query and iterator functions over
+the features.  In addtion, Index objects (not yet implimented) provide
+additional key/value mapped look up tables, and List objects provide
+aggregation and analysis functionality for lists of feature
+attributes.
+
+</P>
+<P>A wide variety of parsers are available to convert sequence features
+from various formats, and new parsers are easy to write.  See
+GAL::Parser for more details.  Currently SQLite and MySQL storage
+options are available (a fast RAM storage engine is on the TODO list).
+Schema objects are provided by DBIx::Class and a familiarity with that
+package is necessary to fully understand how to query and iterate over
+feature objects.
+
+</P><H1><A NAME="CONSTRUCTOR">CONSTRUCTOR
+
+</A></H1>
+
+<P>New Annotation objects are created by the class method new.  Arguments
+should be passed to the constructor as a list (or reference) of key
+value pairs.  All attributes of the Annotation object can be set in
+the call to new, but reasonable defaults will be used where ever
+possilbe to keep object creation simple.  An simple example of object
+creation would look like this:
+
+</P>
+<PRE>    my $feat_store = GAL::Annotation-&gt;new($gff_file);
+    my $feat_store = GAL::Annotation-&gt;new($gff_file, $fasta_file);</PRE>
+
+<P>The resulting object would use a GFF3 parser and SQLite storage by
+default The first example would not have access to feature sequence,
+the second one would.
+
+</P>
+<P>A more complex object creation might look like this:
+
+</P>
+<PRE>    my $feat_store = GAL::Annotation-&gt;new(parser  =&gt; {class =&gt; gff3},
+					  storage =&gt; {class =&gt; mysql,
+						      dsn   =&gt; 'dbi:mysql:database'
+						      user  =&gt; 'me',
+						      password =&gt; 'secret'
+					  fasta   =&gt;  '/path/to/fasta/files/'
+					  );</PRE>
+
+<P>The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+</P><DL><DT><A NAME="*%20parser%20%3d%3e%20parser_subclass%20%5bgff3%5d">* <CODE>parser =&gt; parser_subclass [gff3]</CODE>
+
+</A></DT>
+<DD>
+This optional parameter defines which parser subclass to instantiate.
+This parameter will default to gff3 if not provided.  See GAL::Parser
+for a complete list of available parser classes.
+
+</DD>
+<DT><A NAME="*%20storage%20%3d%3e%20storage_subclass%20%5bSQLite%5d">* <CODE>storage =&gt; storage_subclass [SQLite]</CODE>
+
+</A></DT>
+<DD>
+This optional parameter defines which storage subclass to instantiate.
+Currently available storage classes are SQLite (the default) and
+mysql.
+
+</DD>
+<DT><A NAME="*%20fasta%20%3d%3e%20'%2fpath%2fto%2ffasta%2ffiles%2f">* <CODE>fasta =&gt; '/path/to/fasta/files/</CODE>
+
+</A></DT>
+<DD>
+
+<P>This optional parameter defines a path to a fasta file or a collection
+of fasta files that correspond the annotated features.  The IDs (first
+contiguous non-whitespace charachters) of the fasta headers must
+correspond to the sequence IDs (seqids) in the annotated features.
+The fasta parameter is optional, but if the fasta attribute is not set
+then the features will not have access to their sequence.  Access to
+the sequence in provided by Bio::DB::Fasta.
+
+</P><H2><A NAME="new">new
+
+</A></H2>
+
+<PRE>     Title   : new
+     Usage   : GAL::Annotation-&gt;new();
+     Function: Creates a GAL::Annotation object;
+     Returns : A GAL::Annotation object
+     Args    : A list of key value pairs for the attributes specified above.</PRE>
+<H1><A NAME="ATTRIBUTES">ATTRIBUTES
+
+</A></H1>
+
+<P>All attributes can be supplied as parameters to the GAL::Annotation
+constructor as a list (or referenece) of key value pairs.
+
+</P><H2><A NAME="parser">parser
+
+</A></H2>
+
+<PRE> Title   : parser
+ Usage   : $parser = $self-&gt;parser();
+ Function: Create or return a parser object.
+ Returns : A GAL::Parser::subclass object.
+ Args    : (class =&gt; gal_parser_subclass)
+	   See GAL::Parser and its subclasses for more arguments.
+ Notes   : The parser object is created as a singleton, but it
+	   can be changed by passing new arguments to a call to
+	   parser.</PRE>
+<H2><A NAME="storage">storage
+
+</A></H2>
+
+<PRE>  Title   : storage
+  Usage   : $storage = $self-&gt;storage();
+  Function: Create or return a storage object.
+  Returns : A GAL::Storage::subclass object.
+  Args    : (class =&gt; gal_storage_subclass)
+	    See GAL::Storage and its subclasses for more arguments.
+  Notes   : The storage object is created as a singleton and can not be
+	    destroyed or recreated after being created.</PRE>
+<H2><A NAME="fasta">fasta
+
+</A></H2>
+
+<P>The fasta attribute is provided by GAL::Base, see that module for more
+details.
+
+</P><H1><A NAME="Methods">Methods
+
+</A></H1>
+<H2><A NAME="features">features
+
+</A></H2>
+
+<PRE>  Title   : features
+  Usage   : $self-&gt;features();
+  Function: Return a GAL::Schema::Result::Feature object (a
+	    DBIx::Class::ResultSet for all features).
+  Returns : A GAL::Schema::Result::Feature object
+  Args    : N/A</PRE>
+<H2><A NAME="schema">schema
+
+</A></H2>
+
+<PRE>  Title   : schema
+  Usage   : $self-&gt;schema();
+  Function: Create and/or return the DBIx::Class::Schema object
+  Returns : DBIx::Class::Schema object.
+  Args    : N/A - Arguments are provided by the GAL::Storage object.</PRE>
+<H2><A NAME="load_files">load_files
+
+</A></H2>
+
+<PRE> Title   : load_files
+ Usage   : $a = $self-&gt;load_files();
+ Function: Parse and store all of the features in a file. If a single
+	   file is given as an argument and if there are gff[3] and
+	   sqlite versions of that files base name then time stamps
+	   are compared and the database is only (re)loaded if the
+	   GFF3 file is newer.
+ Returns : N/A
+ Args    : A list of files.
+ Notes   : Default</PRE>
+<H1><A NAME="DIAGNOSTICS">DIAGNOSTICS
+
+</A></H1>
+
+<P>&lt;GAL::Annotation&gt; currently does not throw any warnings or errors, but
+most other modules in the library do, and details of those errors can
+be found in those modules.
+
+</P><H1><A NAME="CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A></H1>
+
+<P>&lt;GAL::Annotation&gt; requires no configuration files or environment variables.
+
+</P><H1><A NAME="DEPENDENCIES">DEPENDENCIES
+
+</A></H1>
+
+<P>Modules in GAL/lib use the following modules:
+
+</P>
+<P>Bio::DB::Fasta
+Carp
+DBD::SQLite
+DBI
+List::Util
+Scalar::Util
+Set::IntSpan::Fast
+Statistics::Descriptive
+Text::RecordParser
+
+</P>
+<P>Some script in GAL/bin and/or GAL/lib/GAL/t use the following modules:
+
+</P>
+<P>Data::Dumper
+FileHandle
+Getopt::Long
+IO::Prompt
+List::MoreUtils
+TAP::Harness
+Test::More
+Test::Pod::Coverage
+URI::Escape
+XML::LibXML::Reader
+
+</P><H1><A NAME="INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A></H1>
+
+<P>None reported.
+
+</P><H1><A NAME="BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A></H1>
+
+<P>I'm sure there are plenty of bugs right now - please let me know if you find one.
+
+</P>
+<P>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu
+
+</P><H1><A NAME="AUTHOR">AUTHOR
+
+</A></H1>
+
+<P>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;
+
+</P><H1><A NAME="LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A></H1>
+
+<P>Copyright (c) 2010, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.
+
+</P>
+<PRE>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself.</PRE>
+<H1><A NAME="DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
+
+</A></H1>
+
+<P>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+</P>
+<P>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+</P></DD>
+</DL>
+
+</BODY>
+</HTML>

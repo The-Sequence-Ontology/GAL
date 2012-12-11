@@ -1,0 +1,194 @@
+<HTML>
+<HEAD>
+<TITLE>GAL::Schema::Result::Attribute</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000">
+<UL>
+<LI><A HREF="#NAME">NAME
+
+</A><LI><A HREF="#VERSION">VERSION
+
+</A><LI><A HREF="#SYNOPSIS">SYNOPSIS
+
+</A><LI><A HREF="#DESCRIPTION">DESCRIPTION
+
+</A><LI><A HREF="#METHODS">METHODS
+
+</A><UL>
+<LI><A HREF="#feature_idx">feature_idx
+
+</A><LI><A HREF="#att_key">att_key
+
+</A><LI><A HREF="#att_value">att_value
+
+</A></UL>
+<LI><A HREF="#DIAGNOSTICS">DIAGNOSTICS
+
+</A><LI><A HREF="#CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A><LI><A HREF="#DEPENDENCIES">DEPENDENCIES
+
+</A><LI><A HREF="#INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A><LI><A HREF="#BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A><LI><A HREF="#AUTHOR">AUTHOR
+
+</A><LI><A HREF="#LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A><LI><A HREF="#DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
+
+</A></UL>
+<HR>
+<H1><A NAME="NAME">NAME
+
+</A></H1>
+
+<P>GAL::Schema::Result::Attribute - Access to feature attributes for GAL::Schema::Result::Features
+
+</P><H1><A NAME="VERSION">VERSION
+
+</A></H1>
+
+<P>This document describes GAL::Schema::Result::Attribute version 0.01
+
+</P><H1><A NAME="SYNOPSIS">SYNOPSIS
+
+</A></H1>
+
+<PRE>    use GAL::Annotation;
+    my $feat_store = GAL::Annotation-&gt;new(storage =&gt; $feat_store_args,
+					  parser  =&gt; $parser_args,
+					  fasta   =&gt; $fasta_args,
+					 );
+
+    $feat_store-&gt;load_files(files =&gt; $feature_file,
+			    mode  =&gt; 'overwrite',
+			    );
+
+    my $features = $feat_store-&gt;schema-&gt;resultset('Feature');
+
+    my $mrnas = $features-&gt;search({type =&gt; 'mRNA'});
+    while (my $mrna = $mrnas-&gt;next) {
+	my $attributes = $mrnas-&gt;attributes-&gt;all;
+      }
+    }
+</PRE>
+<H1><A NAME="DESCRIPTION">DESCRIPTION
+
+</A></H1>
+
+<P>&lt;GAL::Schema::Result::Attribute&gt; provides access to a
+&lt;GAL::Schema::Result::Feature&gt;'s attributes.  You don't instantiate
+objects for it yourself, &lt;DBIx::Class&gt; does that for you, hence there
+is no constructor and there are no attributes available and currently there
+are no methods except those provided by DBIx::Class.
+
+</P><H1><A NAME="METHODS">METHODS
+
+</A></H1>
+<H2><A NAME="feature_idx">feature_idx
+
+</A></H2>
+
+<PRE> Title   : feature_idx
+ Usage   : $idx = $self-&gt;feature_idx;
+ Function: Get the attributes feature_idx.
+ Returns : A text string for the feature_idx.
+ Args    : None</PRE>
+<H2><A NAME="att_key">att_key
+
+</A></H2>
+
+<PRE> Title   : att_key
+ Usage   : $key = $self-&gt;att_key;
+ Function: Get the attributes key.
+ Returns : A text string for the key.
+ Args    : None</PRE>
+<H2><A NAME="att_value">att_value
+
+</A></H2>
+
+<PRE> Title   : att_value
+ Usage   : $value = $self-&gt;att_value;
+ Function: Get the attributes value(s)
+ Returns : A text string for the value(s) as a comma seperated list.
+ Args    : None</PRE>
+<H1><A NAME="DIAGNOSTICS">DIAGNOSTICS
+
+</A></H1>
+
+<P>This module currently throws no errors or warnings.
+
+</P><H1><A NAME="CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A></H1>
+
+<P>&lt;GAL::Schema::Result::Attribute&gt; requires no configuration files or environment variables.
+
+</P><H1><A NAME="DEPENDENCIES">DEPENDENCIES
+
+</A></H1>
+
+<P>&lt;DBIx::Class&gt;
+
+</P><H1><A NAME="INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A></H1>
+
+<P>None reported.
+
+</P><H1><A NAME="BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A></H1>
+
+<P>No bugs have been reported.
+
+</P>
+<P>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu
+
+</P><H1><A NAME="AUTHOR">AUTHOR
+
+</A></H1>
+
+<P>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;
+
+</P><H1><A NAME="LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A></H1>
+
+<P>Copyright (c) 2010, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.
+
+</P>
+<PRE>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself.</PRE>
+<H1><A NAME="DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
+
+</A></H1>
+
+<P>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+</P>
+<P>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+</P>
+</BODY>
+</HTML>

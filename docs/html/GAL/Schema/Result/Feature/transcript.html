@@ -1,0 +1,291 @@
+<HTML>
+<HEAD>
+<TITLE>GAL::Schema::Result::Feature::transcript</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000">
+<UL>
+<LI><A HREF="#NAME">NAME
+
+</A><LI><A HREF="#VERSION">VERSION
+
+</A><LI><A HREF="#SYNOPSIS">SYNOPSIS
+
+</A><LI><A HREF="#DESCRIPTION">DESCRIPTION
+
+</A><LI><A HREF="#METHODS">METHODS
+
+</A><UL>
+<LI><A HREF="#exons">exons
+
+</A><LI><A HREF="#introns">introns
+
+</A><LI><A HREF="#infer_introns">infer_introns
+
+</A><LI><A HREF="#mature_seq_genomic">mature_seq_genomic
+
+</A><LI><A HREF="#mature_seq">mature_seq
+
+</A><LI><A HREF="#length">length
+
+</A><LI><A HREF="#coordinate_map">coordinate_map
+
+</A><LI><A HREF="#genome2me">genome2me
+
+</A><LI><A HREF="#me2genome">me2genome
+
+</A><LI><A HREF="#AED">AED
+
+</A></UL>
+<LI><A HREF="#DIAGNOSTICS">DIAGNOSTICS
+
+</A><LI><A HREF="#CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A><LI><A HREF="#DEPENDENCIES">DEPENDENCIES
+
+</A><LI><A HREF="#INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A><LI><A HREF="#BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A><LI><A HREF="#AUTHOR">AUTHOR
+
+</A><LI><A HREF="#LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A><LI><A HREF="#DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
+
+</A></UL>
+<HR>
+<H1><A NAME="NAME">NAME
+
+</A></H1>
+
+<P>GAL::Schema::Result::Feature::transcript - A transcript object for the GAL
+Library
+
+</P><H1><A NAME="VERSION">VERSION
+
+</A></H1>
+
+<P>This document describes GAL::Schema::Result::Feature::transcript
+version 0.01
+
+</P><H1><A NAME="SYNOPSIS">SYNOPSIS
+
+</A></H1>
+
+<PRE>    use GAL::Annotation;
+    my $feat_store = GAL::Annotation-&gt;new(storage =&gt; $feat_store_args,
+					  parser  =&gt; $parser_args,
+					  fasta   =&gt; $fasta_args,
+					 );
+
+    $feat_store-&gt;load_files(files =&gt; $feature_file,
+			    mode  =&gt; 'overwrite',
+			    );
+
+    my $features = $feat_store-&gt;schema-&gt;resultset('Feature');
+
+    my $genes = $features-&gt;search({type =&gt; 'gene'});
+    while (my $gene = $genes-&gt;next) {
+      my $transcripts = $gene-&gt;transcripts;
+      while (my $transcript = $transcripts-&gt;next) {
+	my $id    = $transcript-&gt;feature_id;
+	my $start = $transcript-&gt;start;
+	my $end   = $transcript-&gt;end;
+      }
+
+    }</PRE>
+<H1><A NAME="DESCRIPTION">DESCRIPTION
+
+</A></H1>
+
+<P>&lt;GAL::Schema::Result::Feature::transcript&gt; provides a &lt;GAL::Schema::Result::Feature&gt;
+subclass for transcript specific behavior.
+
+</P><H1><A NAME="METHODS">METHODS
+
+</A></H1>
+<H2><A NAME="exons">exons
+
+</A></H2>
+
+<PRE> Title   : exons
+ Usage   : $exons = $self-&gt;exons
+ Function: Get the transcript's exons.
+ Returns : In list context returns an unsorted array of exon objects.
+	   In scalar context returns an iterator (DBIC::ResultSet)
+	   with exons sorted in 5'-&gt;3' on the transcript's strand.
+	   Calling in list context is much faster but loads all exons
+	   immediately into memory.
+ Args    : None</PRE>
+<H2><A NAME="introns">introns
+
+</A></H2>
+
+<PRE> Title   : introns
+ Usage   : $introns = $self-&gt;introns
+ Function: Get the transcript's introns.
+ Returns : In list context returns an unsorted array of intron objects.
+	   In scalar context returns an iterator (DBIC::ResultSet)
+	   with introns sorted in 5'-&gt;3' on the transcript's strand.
+	   Calling in list context is much faster but loads all exons
+	   immediately into memory.
+ Args    : None</PRE>
+<H2><A NAME="infer_introns">infer_introns
+
+</A></H2>
+
+<PRE> Title   : infer_introns
+ Usage   : $introns = $self-&gt;infer_introns
+ Function: Infer introns for the transcript.
+ Returns : A DBIx::Class::Result object loaded up with introns
+ Args    : None</PRE>
+<H2><A NAME="mature_seq_genomic">mature_seq_genomic
+
+</A></H2>
+
+<PRE> Title   : mature_seq_genomic
+ Usage   : $seq = $self-&gt;mature_seq_genomic
+ Function: Get the transcripts spliced genomic sequence (not reverse
+	   complimented for minus strand features).
+ Returns : A text string of the transcripts splice genomic sequence.
+ Args    : None</PRE>
+<H2><A NAME="mature_seq">mature_seq
+
+</A></H2>
+
+<PRE> Title   : mature_seq
+ Usage   : $seq = $self-&gt;mature_seq
+ Function: Get the transcripts spliced sequence reverse complimented for minus
+	   strand features.
+ Returns : A text string of the transcripts splice genomic sequence.
+ Args    : None</PRE>
+<H2><A NAME="length">length
+
+</A></H2>
+
+<PRE> Title   : length
+ Usage   : $length = $self-&gt;length
+ Function: Get the length of the mature transcript - the sum of all of its
+	   exon lengths.
+ Returns : An integer
+ Args    : None</PRE>
+<H2><A NAME="coordinate_map">coordinate_map
+
+</A></H2>
+
+<PRE> Title   : coordinate_map
+ Usage   : $map = $self-&gt;coordinate_map
+ Function: Get the coordinate map the which has the structure:
+	   $coordinate_map{genome2me}{$genomic_position}    = $transcript_position;
+	   $coordinate_map{me2genome}{$transcript_position} = $genomic_position;
+	   And thus can be used to map feature to genomic coordinates and vice versa.
+ Returns : A hash or reference of the above map.
+ Args    : None</PRE>
+<H2><A NAME="genome2me">genome2me
+
+</A></H2>
+
+<PRE> Title   : genome2me
+ Usage   : $my_coordinates = $self-&gt;genome2me(@genome_coordinates);
+ Function: Transform genomic coordinates to mature transcript coordinates.
+ Returns : An array or reference of mature transcript coordinates.
+ Args    : An array reference of genomic coordinates.</PRE>
+<H2><A NAME="me2genome">me2genome
+
+</A></H2>
+
+<PRE> Title   : me2genome
+ Usage   : $genomic_coordinates = $self-&gt;me2genome(@my_coordinates);
+ Function: Transform mature transcript coordinates to genomic coordinates.
+ Returns : An array or reference of genomic coordinates.
+ Args    : An array reference of mature transcript coordinates.</PRE>
+<H2><A NAME="AED">AED
+
+</A></H2>
+
+<PRE> Title   : AED
+ Usage   : $aed = $self-&gt;AED($transcript);
+ Function: Calculate the annotation edit distance (AED) between two
+	   transcripts. (PMID:19236712)
+ Returns : An array or reference of genomic coordinates.
+ Args    : A GAL::Schema::Result::Feature::transcript (or is_a) object</PRE>
+<H1><A NAME="DIAGNOSTICS">DIAGNOSTICS
+
+</A></H1>
+
+<P>&lt;GAL::Schema::Result::Feature::transcript&gt; does not throw any warnings
+or error messages.
+
+</P><H1><A NAME="CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A></H1>
+
+<P>&lt;GAL::Schema::Result::Feature::transcript&gt; requires no configuration
+files or environment variables.
+
+</P><H1><A NAME="DEPENDENCIES">DEPENDENCIES
+
+</A></H1>
+
+<P>&lt;GAL::Schema::Result::Feature::sequence_feature&gt;
+
+</P><H1><A NAME="INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A></H1>
+
+<P>None reported.
+
+</P><H1><A NAME="BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A></H1>
+
+<P>No bugs have been reported.
+
+</P>
+<P>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu
+
+</P><H1><A NAME="AUTHOR">AUTHOR
+
+</A></H1>
+
+<P>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;
+
+</P><H1><A NAME="LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A></H1>
+
+<P>Copyright (c) 2010, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.
+
+</P>
+<PRE>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself.</PRE>
+<H1><A NAME="DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
+
+</A></H1>
+
+<P>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+</P>
+<P>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+</P>
+</BODY>
+</HTML>

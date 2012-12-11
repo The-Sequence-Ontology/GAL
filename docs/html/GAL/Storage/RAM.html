@@ -1,0 +1,368 @@
+<HTML>
+<HEAD>
+<TITLE>GAL::Storage::RAM</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000">
+<UL>
+<LI><A HREF="#NAME">NAME
+
+</A><LI><A HREF="#VERSION">VERSION
+
+</A><LI><A HREF="#SYNOPSIS">SYNOPSIS
+
+</A><LI><A HREF="#DESCRIPTION">DESCRIPTION
+
+</A><LI><A HREF="#CONSTRUCTOR">CONSTRUCTOR
+
+</A><LI><A HREF="#METHODS">METHODS
+
+</A><UL>
+<LI><A HREF="#new">new
+
+</A><LI><A HREF="#load_files">load_files
+
+</A><LI><A HREF="#add_features">add_features
+
+</A><LI><A HREF="#search">search
+
+</A><LI><A HREF="#select_features">select_features
+
+</A><LI><A HREF="#constrain">constrain
+
+</A><LI><A HREF="#next_feature">next_feature
+
+</A><LI><A HREF="#get_children">get_children
+
+</A><LI><A HREF="#get_parents">get_parents
+
+</A></UL>
+<LI><A HREF="#DIAGNOSTICS">DIAGNOSTICS
+
+</A><LI><A HREF="#CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A><LI><A HREF="#DEPENDENCIES">DEPENDENCIES
+
+</A><LI><A HREF="#INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A><LI><A HREF="#BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A><LI><A HREF="#AUTHOR">AUTHOR
+
+</A><LI><A HREF="#LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A><LI><A HREF="#DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
+
+</A></UL>
+<HR>
+<H1><A NAME="NAME">NAME
+
+</A></H1>
+
+<P>GAL::Storage::RAM - RAM feature storage for GAL
+
+</P><H1><A NAME="VERSION">VERSION
+
+</A></H1>
+
+<P>This document describes GAL::Storage::RAM version 0.01
+
+</P><H1><A NAME="SYNOPSIS">SYNOPSIS
+
+</A></H1>
+
+<PRE>    use GAL::Storage::RAM;
+    my $storage = GAL::Storage::RAM-&gt;new(dsn =&gt; 'dbi:RAM:db_name');</PRE>
+<H1><A NAME="DESCRIPTION">DESCRIPTION
+
+</A></H1>
+
+<P>The <A HREF="../../GAL/Storage/RAM.html">GAL::Storage::RAM</A> class provides RAM based storage to
+GAL.
+
+</P><H1><A NAME="CONSTRUCTOR">CONSTRUCTOR
+
+</A></H1>
+
+<P>New GAL::Storage::RAM objects are created by the class method new.
+Arguments should be passed to the constructor as a list (or reference)
+of key value pairs.  All attributes of the Storage object can be set
+in the call to new. An simple example of object creation would look
+like this:
+
+</P>
+<PRE>    my $storage = GAL::Storage::RAM-&gt;new(dsn =&gt; 'dbi:RAM:db_name);</PRE>
+
+<P>The constructor recognizes the following parameters which will set the
+appropriate attributes:
+
+</P><DL><DT><A NAME="*%20scheme">* <CODE>scheme</CODE>
+
+</A></DT>
+<DD>
+This is a read only parameter that is set to 'DBI';
+
+</DD>
+<DT><A NAME="*%20driver">* <CODE>driver </CODE>
+
+</A></DT>
+<DD>
+This is a read only parameter that is set to 'RAM';
+
+</DD>
+<DT><A NAME="*%20database">* <CODE>database</CODE>
+
+</A></DT>
+<DD>
+
+<P>database =&gt; 'db_name'
+
+</P>
+<P>This optional parameter defines the database name.  You don't need to
+specify both the database name and the dsn as they both contain the
+database name. Since the driver and the scheme are set by the class
+you could give either the dsn or the database name and it will work.
+
+</P>
+<P><B>The following attributes are inherited from</B> <A HREF="../../GAL/Storage.html">GAL::Storage</A>
+
+</P></DD>
+<DT><A NAME="*%20annotation">* <CODE>annotation</CODE>
+
+</A></DT>
+<DD>
+This is a read only attribute that provides access to a weakened
+version of the <A HREF="../../GAL/Annotation.html">GAL::Annotation</A> object that created this storage
+
+</DD>
+<DT><A NAME="*%20dsn%20%3d%20'dbi%3aRAM%3adb_name'%3e">* <CODE>dsn =</CODE> 'dbi:RAM:db_name'&gt;
+
+</A></DT>
+<DD>
+
+<P>dsn =&gt; 'dbi:RAM:db_name
+
+</P>
+<P>This optional parameter defines the data source name of the database
+to open.  By default Storage will use and RAM database with a
+random filename, but see the comment for the database attribute below.
+
+</P></DD>
+<DT><A NAME="*%20user%20%3d%20'user_name'%3e">* <CODE>user =</CODE> 'user_name'&gt;
+
+</A></DT>
+<DD>
+This optional parameter defines the user name for connecting to the
+database.
+
+</DD>
+<DT><A NAME="*%20password%20%3d%20'password'%3e">* <CODE>password =</CODE> 'password'&gt;
+
+</A></DT>
+<DD>
+This optional parameter defines the password for connecting to the
+database.
+
+</DD>
+</DL>
+<H1><A NAME="METHODS">METHODS
+
+</A></H1>
+<H2><A NAME="new">new
+
+</A></H2>
+
+<PRE>     Title   : new
+     Usage   : GAL::Storage::RAM-&gt;new();
+     Function: Creates a Storage object;
+     Returns : A L&lt;GAL::Storage::RAM&gt; object
+     Args    : See the attributes described above.</PRE>
+<H2><A NAME="load_files">load_files
+
+</A></H2>
+
+<PRE> Title   : load_files
+ Usage   : $self-&gt;load_files();
+ Function: Load a file(s) into the database
+ Returns : Nothing
+ Args    : An scalar string or array reference containing the name(s) of
+	   files to load.</PRE>
+<H2><A NAME="add_features">add_features
+
+</A></H2>
+
+<PRE> Title   : add_features
+ Usage   : $self-&gt;add_features();
+ Function: Add features to the database.
+ Returns : Nothing
+ Args    : An array reference of feature hashes.</PRE>
+<H2><A NAME="search">search
+
+</A></H2>
+
+<PRE> Title   : search
+ Usage   : $self-&gt;search();
+ Function: Get/Set value of search.
+ Returns : Value of search.
+ Args    : Value to set search to.</PRE>
+<H2><A NAME="select_features">select_features
+
+</A></H2>
+
+<PRE> Title   : select_features
+ Usage   : $self-&gt;select_features();
+ Function: Get/Set value of select_features.
+ Returns : Value of select_features.
+ Args    : Value to set select_features to.</PRE>
+<H2><A NAME="constrain">constrain
+
+</A></H2>
+
+<PRE> Title   : constrain
+ Usage   : $self-&gt;constrain();
+ Function: Get/Set value of constrain.
+ Returns : Value of constrain.
+ Args    : Value to set constrain to.</PRE>
+<H2><A NAME="next_feature">next_feature
+
+</A></H2>
+
+<PRE> Title   : next_feature
+ Usage   : $self-&gt;next_feature();
+ Function: Get/Set value of next_feature.
+ Returns : Value of next_feature.
+ Args    : Value to set next_feature to.</PRE>
+<H2><A NAME="get_children">get_children
+
+</A></H2>
+
+<PRE> Title   : get_children
+ Usage   : $self-&gt;get_children();
+ Function: Get/Set value of get_children.
+ Returns : Value of get_children.
+ Args    : Value to set get_children to.</PRE>
+<H2><A NAME="get_parents">get_parents
+
+</A></H2>
+
+<PRE> Title   : get_parents
+ Usage   : $self-&gt;get_parents();
+ Function: Get/Set value of get_parents.
+ Returns : Value of get_parents.
+ Args    : Value to set get_parents to.</PRE>
+<H1><A NAME="DIAGNOSTICS">DIAGNOSTICS
+
+</A></H1>
+<DL><DT><A NAME="using_existing_database"><CODE>using_existing_database</CODE>
+
+</A></DT>
+<DD>
+A database by the same name specified already existed and you haven't
+asked for it to be overwritten, so it will be used and possible
+appended to.  If you want to overwrite this database you should use
+the attribute <CODE>mode =</CODE> overwrite&gt; when you create the storage object.
+
+</DD>
+<DT><A NAME="bad_feature_table_insert"><CODE>bad_feature_table_insert</CODE>
+
+</A></DT>
+<DD>
+An error occured while trying to insert data into the feature table.
+The offending data is given as a comma separated list.  Make sure that
+all of the data is compatible with the database schema.  This may be a
+problem in the parser you are using, or more likely the incoming data
+is not in the correct format.
+
+</DD>
+<DT><A NAME="bad_attribute_table_insert"><CODE>bad_attribute_table_insert</CODE>
+
+</A></DT>
+<DD>
+Same problem as <CODE>bad_feature_table_insert</CODE> above, but for the
+attribute table.
+
+</DD>
+<DT><A NAME="bad_relationship_table_insert"><CODE>bad_relationship_table_insert</CODE>
+
+</A></DT>
+<DD>
+Same problem as <CODE>bad_feature_table_insert</CODE> above, but for the
+attribute table.
+
+</DD>
+</DL>
+<H1><A NAME="CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A></H1>
+
+<P>&lt;GAL::Storage::RAM&gt; requires no configuration files or environment
+variables.
+
+</P><H1><A NAME="DEPENDENCIES">DEPENDENCIES
+
+</A></H1>
+
+<P><A HREF="../../GAL/Storage.html">GAL::Storage</A>
+<A HREF="../../DBI.html">DBI</A>
+<A HREF="../../DBD/RAM.html">DBD::RAM</A>
+
+</P><H1><A NAME="INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A></H1>
+
+<P>None reported.
+
+</P><H1><A NAME="BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A></H1>
+
+<P>No bugs have been reported.
+
+</P>
+<P>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu
+
+</P><H1><A NAME="AUTHOR">AUTHOR
+
+</A></H1>
+
+<P>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;
+
+</P><H1><A NAME="LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A></H1>
+
+<P>Copyright (c) 2010, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All
+rights reserved.
+
+</P>
+<PRE>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself.</PRE>
+<H1><A NAME="DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
+
+</A></H1>
+
+<P>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+</P>
+<P>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.
+
+</P>
+</BODY>
+</HTML>
