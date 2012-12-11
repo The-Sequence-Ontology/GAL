@@ -1,0 +1,306 @@
+<HTML>
+<HEAD>
+<TITLE>GAL::Interval::Span</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000">
+<UL>
+<LI><A HREF="#NAME">NAME
+
+</A><LI><A HREF="#VERSION">VERSION
+
+</A><LI><A HREF="#SYNOPSIS">SYNOPSIS
+
+</A><LI><A HREF="#DESCRIPTION">DESCRIPTION
+
+</A><LI><A HREF="#METHODS">METHODS
+
+</A><UL>
+<LI><A HREF="#new">new
+
+</A><LI><A HREF="#sets">sets
+
+</A><LI><A HREF="#add_feature">add_feature
+
+</A><LI><A HREF="#seqids">seqids
+
+</A><LI><A HREF="#stats">stats
+
+</A><LI><A HREF="#span_count">span_count
+
+</A><LI><A HREF="#length_min">length_min
+
+</A><LI><A HREF="#length_max">length_max
+
+</A><LI><A HREF="#length_sum">length_sum
+
+</A><LI><A HREF="#footprint">footprint
+
+</A><LI><A HREF="#length_stdev">length_stdev
+
+</A><LI><A HREF="#length_mean">length_mean
+
+</A><LI><A HREF="#length_median">length_median
+
+</A><LI><A HREF="#method">method
+
+</A></UL>
+<LI><A HREF="#DIAGNOSTICS">DIAGNOSTICS
+
+</A><LI><A HREF="#CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A><LI><A HREF="#DEPENDENCIES">DEPENDENCIES
+
+</A><LI><A HREF="#INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A><LI><A HREF="#BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A><LI><A HREF="#AUTHOR">AUTHOR
+
+</A><LI><A HREF="#LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A><LI><A HREF="#DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
+
+</A></UL>
+<HR>
+<H1><A NAME="NAME">NAME
+
+</A></H1>
+
+<P>GAL::Interval::Span - Provide functions for intervals on sequence
+
+</P><H1><A NAME="VERSION">VERSION
+
+</A></H1>
+
+<P>This document describes GAL::Interval::Span version 0.01
+
+</P><H1><A NAME="SYNOPSIS">SYNOPSIS
+
+</A></H1>
+
+<PRE>    use GAL::Interval::Span;</PRE>
+<H1><A NAME="DESCRIPTION">DESCRIPTION
+
+</A></H1>
+
+<PRE>    GAL::Interval::Span provides a collection of methods for intervals
+    on sequence.  It uses Set::IntSpan::Fast under the hood to provide
+    the functionality.</PRE>
+<H1><A NAME="METHODS">METHODS
+
+</A></H1>
+<H2><A NAME="new">new
+
+</A></H2>
+
+<PRE>     Title   : new
+     Usage   : GAL::Interval::Span-&gt;new()
+     Function: Creates a GAL::Interval::Span object;
+     Returns : A GAL::Interval::Span object
+     Args    : list =&gt; \@list</PRE>
+<H2><A NAME="sets">sets
+
+</A></H2>
+
+<PRE> Title   : sets
+ Usage   : $sets = $self-&gt;set('chr1');
+ Function: Get the underlying Set::IntSpan::Fast object.
+
+ Returns : A Set::IntSpan::Fast object(s) as array(ref) or scalar if
+	   only one seqid is requrested.
+ Args    : One or more valid seqids.</PRE>
+<H2><A NAME="add_feature">add_feature
+
+</A></H2>
+
+<PRE> Title   : add_feature
+ Usage   : $a = $self-&gt;add_feature($feature)
+ Function: Add a feature to the set.
+ Returns : N/A
+ Args    :  A feature either as a hash reference (with keys seqid,
+	    start and end) or an object (with methods seqid, start and
+	    end).</PRE>
+<H2><A NAME="seqids">seqids
+
+</A></H2>
+
+<PRE> Title   : seqids
+ Usage   : @seqids = $self-&gt;seqids();
+ Function: Return a list of all seqids represented in the sets.
+ Returns : An array(ref) of seqids.
+ Args    : N/A</PRE>
+<H2><A NAME="stats">stats
+
+</A></H2>
+
+<PRE> Title   : stats
+ Usage   : $a = $self-&gt;stats
+ Function: Calculate simple summary stats on spans
+ Returns : N/A
+ Args    : N/A</PRE>
+<H2><A NAME="span_count">span_count
+
+</A></H2>
+
+<PRE> Title   : span_count
+ Usage   : $a = $self-&gt;span_count()
+ Function: Return the count of spans
+ Returns : An integer - count of spans
+ Args    : N/A</PRE>
+<H2><A NAME="length_min">length_min
+
+</A></H2>
+
+<PRE> Title   : length_min
+ Usage   : $a = $self-&gt;length_min()
+ Function:
+ Returns :
+ Args    : N/A</PRE>
+<H2><A NAME="length_max">length_max
+
+</A></H2>
+
+<PRE> Title   : length_max
+ Usage   : $a = $self-&gt;length_max()
+ Function:
+ Returns :
+ Args    : N/A</PRE>
+<H2><A NAME="length_sum">length_sum
+
+</A></H2>
+
+<PRE> Title   : length_sum
+ Usage   : $a = $self-&gt;length_sum()
+ Function:
+ Returns :
+ Args    : N/A</PRE>
+<H2><A NAME="footprint">footprint
+
+</A></H2>
+
+<PRE> Title   : footprint
+ Usage   : $a = $self-&gt;footprint()
+ Function: An alias for length_sum
+ Returns : Integer - length of all spans
+ Args    : N/A</PRE>
+<H2><A NAME="length_stdev">length_stdev
+
+</A></H2>
+
+<PRE> Title   : length_stdev
+ Usage   : $a = $self-&gt;length_stdev()
+ Function:
+ Returns :
+ Args    : N/A</PRE>
+<H2><A NAME="length_mean">length_mean
+
+</A></H2>
+
+<PRE> Title   : length_mean
+ Usage   : $a = $self-&gt;length_mean()
+ Function:
+ Returns :
+ Args    : N/A</PRE>
+<H2><A NAME="length_median">length_median
+
+</A></H2>
+
+<PRE> Title   : length_median
+ Usage   : $a = $self-&gt;length_median()
+ Function:
+ Returns :
+ Args    : N/A</PRE>
+<H2><A NAME="method">method
+
+</A></H2>
+
+<PRE> Title   : method
+ Usage   : $a = $self-&gt;method()
+ Function:
+ Returns :
+ Args    :</PRE>
+<H1><A NAME="DIAGNOSTICS">DIAGNOSTICS
+
+</A></H1>
+<DL><DT><A NAME="Metohd%20histogram%20not%20implimented%20yet"><CODE>Metohd histogram not implimented yet</CODE>
+
+</A></DT>
+<DD>
+There is a place holder for the histogram method, but the method has
+not been written yet.
+
+</DD>
+</DL>
+<H1><A NAME="CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A></H1>
+
+<P>&lt;GAL::Interval::Span&gt; requires no configuration files or environment variables.
+
+</P><H1><A NAME="DEPENDENCIES">DEPENDENCIES
+
+</A></H1>
+
+<P>&lt;GAL::Interval&gt;
+&lt;Statistics::Descriptive::Discreet&gt;
+
+</P><H1><A NAME="INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A></H1>
+
+<P>None reported.
+
+</P><H1><A NAME="BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A></H1>
+
+<P>No bugs have been reported.
+
+</P>
+<P>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu
+
+</P><H1><A NAME="AUTHOR">AUTHOR
+
+</A></H1>
+
+<P>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;
+
+</P><H1><A NAME="LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A></H1>
+
+<P>Copyright (c) 2009, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.
+
+</P>
+<PRE>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself.</PRE>
+<H1><A NAME="DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
+
+</A></H1>
+
+<P>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+</P>
+<P>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+</P>
+</BODY>
+</HTML>

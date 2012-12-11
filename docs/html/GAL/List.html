@@ -1,0 +1,357 @@
+<HTML>
+<HEAD>
+<TITLE>GAL::List</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000">
+<UL>
+<LI><A HREF="#NAME">NAME
+
+</A><LI><A HREF="#VERSION">VERSION
+
+</A><LI><A HREF="#SYNOPSIS">SYNOPSIS
+
+</A><LI><A HREF="#DESCRIPTION">DESCRIPTION
+
+</A><LI><A HREF="#CONSTRUCTOR">CONSTRUCTOR
+
+</A><UL>
+<LI><A HREF="#new">new
+
+</A></UL>
+<LI><A HREF="#ATTRIBUTES">ATTRIBUTES
+
+</A><UL>
+<LI><A HREF="#list">list
+
+</A><LI><A HREF="#method">method
+
+</A><LI><A HREF="#key">key
+
+</A><LI><A HREF="#iterator">iterator
+
+</A></UL>
+<LI><A HREF="#METHODS">METHODS
+
+</A><UL>
+<LI><A HREF="#_parse_list">_parse_list
+
+</A><LI><A HREF="#_hash_list">_hash_list
+
+</A><LI><A HREF="#count">count
+
+</A><LI><A HREF="#cardinality">cardinality
+
+</A><LI><A HREF="#count_uniq">count_uniq
+
+</A><LI><A HREF="#category_counts">category_counts
+
+</A><LI><A HREF="#shuffle">shuffle
+
+</A><LI><A HREF="#uniq">uniq
+
+</A><LI><A HREF="#random_pick">random_pick
+
+</A></UL>
+<LI><A HREF="#DIAGNOSTICS">DIAGNOSTICS
+
+</A><LI><A HREF="#CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A><LI><A HREF="#DEPENDENCIES">DEPENDENCIES
+
+</A><LI><A HREF="#INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A><LI><A HREF="#BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A><LI><A HREF="#AUTHOR">AUTHOR
+
+</A><LI><A HREF="#LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A><LI><A HREF="#DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
+
+</A></UL>
+<HR>
+<H1><A NAME="NAME">NAME
+
+</A></H1>
+
+<P>GAL::List - List aggregation and analysis functions for GAL
+
+</P><H1><A NAME="VERSION">VERSION
+
+</A></H1>
+
+<P>This document describes GAL::List version 0.01
+
+</P><H1><A NAME="SYNOPSIS">SYNOPSIS
+
+</A></H1>
+
+<PRE>    use GAL::List::Categorical;
+    my $list_catg = GAL::List::Categorical-&gt;new(list =&gt; [qw(red red red blue blue
+							       green yellow orange orange
+							       purple purple purple purple)]);
+    my $count    = $list_catg-&gt;count;
+    $list_ref    = $list_catg-&gt;list;
+    @list_ary    = $list_catg-&gt;list;
+    $catg_counts = $list_catg-&gt;cardinality;
+    $count_uniq  = $list_catg-&gt;count_uniq;
+    $max_str     = $list_catg-&gt;maxstr;
+    $min_str     = $list_catg-&gt;minstr;
+    @shff_list   = $list_catg_shuffle;
+    @uniq_list   = $list_catg_uniq;
+    $item        = $list_catg-&gt;random_pick;
+
+    use GAL::List::Numric;
+    $list_numeric = GAL::List::Numeric-&gt;new(list =&gt; [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    $max = $list_numeric-&gt;max;
+    $min = $list_numeric-&gt;min;
+    $sum = $list_numeric-&gt;sum;</PRE>
+<H1><A NAME="DESCRIPTION">DESCRIPTION
+
+</A></H1>
+
+<P>&lt;GAL::List&gt; serves as a base class for the modules below it and
+provides basic list summarization details.  It is not intended to be
+used on it's own.  You should use it's subclasses instead.
+
+</P><H1><A NAME="CONSTRUCTOR">CONSTRUCTOR
+
+</A></H1>
+
+<P>To construct a GAL::List subclass simply pass it an appropriate list.
+
+</P>
+<PRE>    my $list_catg = GAL::List::Categorical-&gt;new(list =&gt; [qw(red red red blue blue
+							       green yellow orange orange
+							       purple purple purple purple)]);
+    $list_numeric = GAL::List::Numeric-&gt;new(list =&gt; [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+</PRE>
+<H2><A NAME="new">new
+
+</A></H2>
+
+<PRE>     Title   : new
+     Usage   : GAL::List-&gt;new()
+     Function: Creates a GAL::List object;
+     Returns : A GAL::List object
+     Args    :</PRE>
+<H1><A NAME="ATTRIBUTES">ATTRIBUTES
+
+</A></H1>
+
+<P>All attributes can be supplied as parameters to the constructor as a
+list (or referenece) of key value pairs.
+
+</P><H2><A NAME="list">list
+
+</A></H2>
+
+<PRE> Title   : list
+ Usage   : $a = $self-&gt;list()
+ Function: Get/Set the value of list.
+ Returns : The value of list.
+ Args    : A value to set list to.</PRE>
+<H2><A NAME="method">method
+
+</A></H2>
+
+<PRE> Title   : method
+ Usage   : $a = $self-&gt;method()
+ Function: Get/Set the value of method.
+ Returns : The value of method.
+ Args    : A value to set method to.</PRE>
+<H2><A NAME="key">key
+
+</A></H2>
+
+<PRE> Title   : key
+ Usage   : $a = $self-&gt;key()
+ Function: Get/Set the value of key.
+ Returns : The value of key.
+ Args    : A value to set key to.</PRE>
+<H2><A NAME="iterator">iterator
+
+</A></H2>
+
+<PRE> Title   : iterator
+ Usage   : $a = $self-&gt;iterator()
+ Function: Get/Set the value of iterator.
+ Returns : The value of iterator.
+ Args    : A value to set iterator to.</PRE>
+<H1><A NAME="METHODS">METHODS
+
+</A></H1>
+<H2><A NAME="_parse_list">_parse_list
+
+</A></H2>
+
+<PRE> Title   : _parse_list
+ Usage   : $self-&gt;_parse_list()
+ Function: Parse the contents of the list and create an array of data if the
+	   data isn't already an array.
+ Returns : N/A
+ Args    : N/A</PRE>
+<H2><A NAME="_hash_list">_hash_list
+
+</A></H2>
+
+<PRE> Title   : _hash_list
+ Usage   : $hash = $self-&gt;_hash_list()
+ Function:
+	   data isn't already an array.
+ Returns : N/A
+ Args    : N/A</PRE>
+<H2><A NAME="count">count
+
+</A></H2>
+
+<PRE> Title   : count
+ Usage   : $a = $self-&gt;count
+ Function: Return the number of elements in the list
+ Returns : Integer
+ Args    : N/A</PRE>
+<H2><A NAME="cardinality">cardinality
+
+</A></H2>
+
+<PRE> Title   : cardinality
+ Usage   : $a = $self-&gt;cardinality
+ Function: Return the number of uniq elements in the list
+ Returns : Integer
+ Args    : N/A</PRE>
+<H2><A NAME="count_uniq">count_uniq
+
+</A></H2>
+
+<PRE> Title   : count_uniq
+ Usage   : $a = $self-&gt;count_uniq()
+ Function: An alias for cardinality
+ Returns : Integer
+ Args    : N/A</PRE>
+<H2><A NAME="category_counts">category_counts
+
+</A></H2>
+
+<PRE> Title   : category_counts
+ Usage   : $a = $self-&gt;category_counts()
+ Function: Return a hash(reference) with uniq elements as keys and element
+	   counts as values.
+ Returns : A hash(reference)
+ Args    : N/A</PRE>
+<H2><A NAME="shuffle">shuffle
+
+</A></H2>
+
+<PRE> Title   : shuffle
+ Usage   : $a = $self-&gt;shuffle()
+ Function: Returns the elements of the list in random order
+ Returns : An array/array reference
+ Args    : N/A</PRE>
+<H2><A NAME="uniq">uniq
+
+</A></H2>
+
+<PRE> Title   : uniq
+ Usage   : $a = $self-&gt;uniq()
+ Function:
+ Returns :
+ Args    :</PRE>
+<H2><A NAME="random_pick">random_pick
+
+</A></H2>
+
+<PRE> Title   : random_pick
+ Usage   : $a = $self-&gt;random_pick()
+ Function:
+ Returns :
+ Args    :</PRE>
+<H1><A NAME="DIAGNOSTICS">DIAGNOSTICS
+
+</A></H1>
+<DL><DT><A NAME="list_or_reference_required"><CODE>list_or_reference_required</CODE>
+
+</A></DT>
+<DD>
+
+<P>GAL::List::list require an array or a reference to any array be passed
+as an argument, but you have passed something else.
+
+</P>
+<P>Keep in mind that several of GAL::List's methods are provided by
+List::Util, and errors not found here may be thrown by that module.
+
+</P></DD>
+</DL>
+<H1><A NAME="CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A></H1>
+
+<P>&lt;GAL::List&gt; requires no configuration files or environment variables.
+
+</P><H1><A NAME="DEPENDENCIES">DEPENDENCIES
+
+</A></H1>
+
+<P>&lt;GAL::Base&gt;
+&lt;List::Util&gt;
+
+</P><H1><A NAME="INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A></H1>
+
+<P>None reported.
+
+</P><H1><A NAME="BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A></H1>
+
+<P>No bugs have been reported.
+
+</P>
+<P>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu
+
+</P><H1><A NAME="AUTHOR">AUTHOR
+
+</A></H1>
+
+<P>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;
+
+</P><H1><A NAME="LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A></H1>
+
+<P>Copyright (c) 2010, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.
+
+</P>
+<PRE>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself.</PRE>
+<H1><A NAME="DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
+
+</A></H1>
+
+<P>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+</P>
+<P>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+</P>
+</BODY>
+</HTML>

@@ -1,0 +1,426 @@
+<HTML>
+<HEAD>
+<TITLE>GAL::Schema::Result::Feature::mrna</TITLE>
+</HEAD>
+<BODY BGCOLOR="#ffffff" TEXT="#000000">
+<UL>
+<LI><A HREF="#NAME">NAME
+
+</A><LI><A HREF="#VERSION">VERSION
+
+</A><LI><A HREF="#SYNOPSIS">SYNOPSIS
+
+</A><LI><A HREF="#DESCRIPTION">DESCRIPTION
+
+</A><LI><A HREF="#METHODS">METHODS
+
+</A><UL>
+<LI><A HREF="#CDSs">CDSs
+
+</A><LI><A HREF="#CDS_seq_genomic">CDS_seq_genomic
+
+</A><LI><A HREF="#CDS_seq">CDS_seq
+
+</A><LI><A HREF="#protein_seq">protein_seq
+
+</A><LI><A HREF="#map2CDS">map2CDS
+
+</A><LI><A HREF="#map2protein">map2protein
+
+</A><LI><A HREF="#CDS_start">CDS_start
+
+</A><LI><A HREF="#CDS_end">CDS_end
+
+</A><LI><A HREF="#CDS_length">CDS_length
+
+</A><LI><A HREF="#protein_length">protein_length
+
+</A><LI><A HREF="#phase_at_location">phase_at_location
+
+</A><LI><A HREF="#frame_at_location">frame_at_location
+
+</A><LI><A HREF="#codon_at_location">codon_at_location
+
+</A><LI><A HREF="#translation_start">translation_start
+
+</A><LI><A HREF="#translation_end">translation_end
+
+</A><LI><A HREF="#five_prime_UTRs">five_prime_UTRs
+
+</A><LI><A HREF="#three_prime_UTRs">three_prime_UTRs
+
+</A><LI><A HREF="#infer_five_prime_UTR">infer_five_prime_UTR
+
+</A><LI><A HREF="#infer_three_prime_UTR">infer_three_prime_UTR
+
+</A><LI><A HREF="#five_prime_UTR_seq_genomic">five_prime_UTR_seq_genomic
+
+</A><LI><A HREF="#five_prime_UTR_seq">five_prime_UTR_seq
+
+</A><LI><A HREF="#three_prime_UTR_seq_genomic">three_prime_UTR_seq_genomic
+
+</A><LI><A HREF="#three_prime_UTR_seq">three_prime_UTR_seq
+
+</A></UL>
+<LI><A HREF="#DIAGNOSTICS">DIAGNOSTICS
+
+</A><LI><A HREF="#CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A><LI><A HREF="#DEPENDENCIES">DEPENDENCIES
+
+</A><LI><A HREF="#INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A><LI><A HREF="#BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A><LI><A HREF="#AUTHOR">AUTHOR
+
+</A><LI><A HREF="#LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A><LI><A HREF="#DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
+
+</A></UL>
+<HR>
+<H1><A NAME="NAME">NAME
+
+</A></H1>
+
+<P>GAL::Schema::Result::Feature::mrna - &lt;One line description of module's
+purpose here&gt;
+
+</P><H1><A NAME="VERSION">VERSION
+
+</A></H1>
+
+<P>This document describes GAL::Schema::Result::Feature::mrna version 0.01
+
+</P><H1><A NAME="SYNOPSIS">SYNOPSIS
+
+</A></H1>
+
+<PRE>     use GAL::Schema::Result::Feature::mrna;</PRE>
+<H1><A NAME="DESCRIPTION">DESCRIPTION
+
+</A></H1>
+<H1><A NAME="METHODS">METHODS
+
+</A></H1>
+<H2><A NAME="CDSs">CDSs
+
+</A></H2>
+
+<PRE> Title   : CDSs
+ Usage   : $CDSs = $self-&gt;CDSs
+ Function: Get the mRNA's CDSs sorted in the order of the mRNA's strand.
+ Returns : A DBIx::Class::Result object loaded up with exons
+ Args    : None</PRE>
+<H2><A NAME="CDS_seq_genomic">CDS_seq_genomic
+
+</A></H2>
+
+<PRE> Title   : CDS_seq_genomic
+ Usage   : $seq = $self-&gt;CDS_seq_genomic
+ Function: Return the genomic sequence (on the plus strand of the genome) of
+	   the full CDS for this mRNA.
+ Returns : A DNA sequence
+ Args    : None</PRE>
+<H2><A NAME="CDS_seq">CDS_seq
+
+</A></H2>
+
+<PRE> Title   : CDS_seq
+ Usage   : $seq = $self-&gt;CDS_seq
+ Function: Return the sequence of the full CDS for this mRNA.
+ Returns : A DNA sequence
+ Args    : None</PRE>
+<H2><A NAME="protein_seq">protein_seq
+
+</A></H2>
+
+<PRE> Title   : protein_seq
+ Usage   : $seq = $self-&gt;protein_seq
+ Function: Return the protein sequence for this mRNA.
+ Returns : Protein sequence
+ Args    : None</PRE>
+<H2><A NAME="map2CDS">map2CDS
+
+</A></H2>
+
+<PRE> Title   : map2CDS
+ Usage   : @CDS_coordinates = $self-&gt;map2CDS(@genomic_coordinates);
+	   ($CDS_coordinate) = $self-&gt;map2CDS($genomic_coordinate);
+ Function: Transform genomic coordinates to CDS coordinates.
+ Returns : An array(ref) of integers or an empty list if the genomic
+	   coordinates given do not overlap the CDS of this mRNA.
+ Args    : An array of integers</PRE>
+<H2><A NAME="map2protein">map2protein
+
+</A></H2>
+
+<PRE> Title   : map2protein
+ Usage   : @protein_coordinates = $self-&gt;map2protein(@genomic_coordinates);
+ Function: Transform genomic coordinates to protein sequence coordinates.
+	   Note that 3 genomic coordinates will return the same protein
+	   coordinate if they fall in the same codon.
+ Returns : An array(ref) of integers or an empty list if the genomic
+	   coordinates given do not overlap the protein (CDS) of this mRNA.
+ Args    : An array of integers</PRE>
+<H2><A NAME="CDS_start">CDS_start
+
+</A></H2>
+
+<PRE> Title   : CDS_start
+ Usage   : $start = $self-&gt;CDS_start
+ Function: Returns the genomic coordinate of the start of this CDS.
+ Returns : An integer
+ Args    : None</PRE>
+<H2><A NAME="CDS_end">CDS_end
+
+</A></H2>
+
+<PRE> Title   : CDS_end
+ Usage   : $end = $self-&gt;CDS_end
+ Function: Returns the genomic coordinate of the end of this CDS.
+ Returns : An integer
+ Args    : None</PRE>
+<H2><A NAME="CDS_length">CDS_length
+
+</A></H2>
+
+<PRE> Title   : CDS_length
+ Usage   : $length = $self-&gt;CDS_length
+ Function: Return the length of the CDS for this mRNA.
+ Returns : An integer
+ Args    : None</PRE>
+<H2><A NAME="protein_length">protein_length
+
+</A></H2>
+
+<PRE> Title   : protein_length
+ Usage   : $length = $self-&gt;protein_length
+ Function: Return the length of the protein for this mRNA.  If the CDS length
+	   is not divisable by three this method will truncate the integral
+	   portion of the protein length.
+ Returns : An integer
+ Args    : None</PRE>
+<H2><A NAME="phase_at_location">phase_at_location
+
+</A></H2>
+
+<PRE> Title   : phase_at_location
+ Usage   : $phase = $self-&gt;phase_at_location($genomic_coordinate)
+ Function: Return the phase (how many nts 3' does the next codon begin) for
+	   a given genomic coordinate or undef if the coordinate does not overlap
+	   the CDS of this mRNA.
+ Returns : An integer
+ Args    : An intger (genomic coordinate).</PRE>
+<H2><A NAME="frame_at_location">frame_at_location
+
+</A></H2>
+
+<PRE> Title   : frame_at_location
+ Usage   : $frame = $self-&gt;frame_at_location($genomic_coordinate);
+ Function: Return the reading frame (what position within a codon) for a given
+	   genomic coordinate or undef if the coordinate does not overlap
+	   the CDS of this mRNA.
+ Returns : An integer
+ Args    : An integer</PRE>
+<H2><A NAME="codon_at_location">codon_at_location
+
+</A></H2>
+
+<PRE> Title   : codon_at_location
+ Usage   : $codon = $self-&gt;codon_at_location($genomic_coordinate);
+	   ($codon, $frame) = $self-&gt;codon_at_location
+ Function: Return the codon (and frame in list context) that overlaps a given
+	   genomic coordinate.  Returns undef in the genomic coordinate does
+	   not overlap a complete codon.
+ Returns : An scalar string and in list context also returns an integer.
+ Args    : An integer</PRE>
+<H2><A NAME="translation_start">translation_start
+
+</A></H2>
+
+<PRE> Title   : translation_start
+ Usage   : $tans_start = $mrna-&gt;translation_start;
+ Function: Get the coordiante of the first nt of the start codon.
+ Returns : An integer
+ Args    : None</PRE>
+<H2><A NAME="translation_end">translation_end
+
+</A></H2>
+
+<PRE> Title   : translation_end
+ Usage   : $tans_end = $mrna-&gt;translation_end;
+ Function: Get the coordiante of the last nt of the stop codon.
+ Returns : An integer
+ Args    : None</PRE>
+<H2><A NAME="five_prime_UTRs">five_prime_UTRs
+
+</A></H2>
+
+<PRE> Title   : five_prime_UTRs
+ Usage   : $five_prime_UTRs = $self-&gt;five_prime_UTRs
+ Function: Get the features five_prime_UTRs
+ Returns : A DBIx::Class::Result object loaded up with five_prime_UTRs
+ Args    : None</PRE>
+<H2><A NAME="three_prime_UTRs">three_prime_UTRs
+
+</A></H2>
+
+<PRE> Title   : three_prime_UTRs
+ Usage   : $three_prime_UTRs = $self-&gt;three_prime_UTRs
+ Function: Get the features three_prime_UTRs
+ Returns : A DBIx::Class::Result object loaded up with three_prime_UTRs
+ Args    : None</PRE>
+<H2><A NAME="infer_five_prime_UTR">infer_five_prime_UTR
+
+</A></H2>
+
+<PRE> Title   : infer_five_prime_UTR
+ Usage   : $five_prime_UTR = $self-&gt;infer_five_prime_UTR
+ Function: Infer five_prime_UTR for the features
+ Returns : A DBIx::Class::Result object loaded up with five_prime_UTR
+ Args    : None</PRE>
+<H2><A NAME="infer_three_prime_UTR">infer_three_prime_UTR
+
+</A></H2>
+
+<PRE> Title   : infer_three_prime_UTR
+ Usage   : $three_prime_UTR = $self-&gt;infer_three_prime_UTR
+ Function: Infer three_prime_UTR for the features
+ Returns : A DBIx::Class::Result object loaded up with three_prime_UTR
+ Args    : None</PRE>
+<H2><A NAME="five_prime_UTR_seq_genomic">five_prime_UTR_seq_genomic
+
+</A></H2>
+
+<PRE> Title   : five_prime_UTR_seq_genomic
+ Usage   : $seq = $self-&gt;five_prime_UTR_seq_genomic
+ Function: Get the transcripts spliced five_prime_UTR genomic sequence (not
+   reverse complimented for minus strand features.
+ Returns : A text string of the five_prime_UTR spliced genomic sequence.
+ Args    : None</PRE>
+<H2><A NAME="five_prime_UTR_seq">five_prime_UTR_seq
+
+</A></H2>
+
+<PRE> Title   : five_prime_UTR_seq
+ Usage   : $seq = $self-&gt;five_prime_UTR_seq
+ Function: Get the transcripts spliced five_prime_UTR sequence reverse
+   complimented for minus strand features.
+ Returns : A text string of the five_prime_UTR spliced sequence.
+ Args    : None</PRE>
+<H2><A NAME="three_prime_UTR_seq_genomic">three_prime_UTR_seq_genomic
+
+</A></H2>
+
+<PRE> Title   : three_prime_UTR_seq_genomic
+ Usage   : $seq = $self-&gt;three_prime_UTR_seq_genomic
+ Function: Get the transcripts spliced three_prime_UTR genomic sequence (not
+   reverse complimented for minus strand features.
+ Returns : A text string of the three_prime_UTR spliced genomic sequence.
+ Args    : None</PRE>
+<H2><A NAME="three_prime_UTR_seq">three_prime_UTR_seq
+
+</A></H2>
+
+<PRE> Title   : three_prime_UTR_seq
+ Usage   : $seq = $self-&gt;three_prime_UTR_seq
+ Function: Get the transcripts spliced three_prime_UTR sequence reverse
+   complimented for minus strand features.
+ Returns : A text string of the three_prime_UTR spliced sequence.
+ Args    : None</PRE>
+<H1><A NAME="DIAGNOSTICS">DIAGNOSTICS
+
+</A></H1>
+<DL><DT><A NAME="Error%20message%20here%2c%20perhaps%20with%20%25s%20placeholders"><CODE>Error message here, perhaps with %s placeholders</CODE>
+
+</A></DT>
+<DD>
+[Description of error here]
+
+</DD>
+<DT><A NAME="Another%20error%20message%20here"><CODE>Another error message here</CODE>
+
+</A></DT>
+<DD>
+
+<P>[Description of error here]
+
+</P>
+<P>[Et cetera, et cetera]
+
+</P></DD>
+</DL>
+<H1><A NAME="CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A></H1>
+
+<P>&lt;GAL::Schema::Result::Feature::mrna&gt; requires no configuration files or environment variables.
+
+</P><H1><A NAME="DEPENDENCIES">DEPENDENCIES
+
+</A></H1>
+
+<P>None.
+
+</P><H1><A NAME="INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A></H1>
+
+<P>None reported.
+
+</P><H1><A NAME="BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A></H1>
+
+<P>No bugs have been reported.
+
+</P>
+<P>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu
+
+</P><H1><A NAME="AUTHOR">AUTHOR
+
+</A></H1>
+
+<P>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;
+
+</P><H1><A NAME="LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A></H1>
+
+<P>Copyright (c) 2009, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.
+
+</P>
+<PRE>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself.</PRE>
+<H1><A NAME="DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
+
+</A></H1>
+
+<P>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.
+
+</P>
+<P>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.
+
+</P>
+</BODY>
+</HTML>
