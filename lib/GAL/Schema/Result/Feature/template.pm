@@ -10,7 +10,7 @@ GAL::Schema::Result::Feature::template - A template object for the GAL Library
 
 =head1 VERSION
 
-This document describes GAL::Schema::Result::Feature::template version 0.01
+This document describes GAL::Schema::Result::Feature::template version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -101,7 +101,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 

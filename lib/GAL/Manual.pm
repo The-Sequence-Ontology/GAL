@@ -57,7 +57,7 @@ GAL::Annotation - Genome Annotation Library
 
 =head1 VERSION
 
-This document describes GAL::Annotation version 0.01
+This document describes GAL::Annotation version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -287,7 +287,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -318,7 +318,7 @@ GAL::Base - Base class for the Genome Annotation Library
 
 =head1 VERSION
 
-This document describes GAL::Base version 0.01
+This document describes GAL::Base version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -590,7 +590,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -621,7 +621,7 @@ GAL::Parser - Parser objects for the Genome Annotation Library
 
 =head1 VERSION
 
-This document describes GAL::Parser version 0.01
+This document describes GAL::Parser version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -840,7 +840,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -871,7 +871,7 @@ GAL::Reader - Reader objects for the Genome Annotation Library
 
 =head1 VERSION
 
-This document describes GAL::Reader version 0.01
+This document describes GAL::Reader version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -1033,7 +1033,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -1064,7 +1064,7 @@ GAL::Storage - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Storage version 0.01
+This document describes GAL::Storage version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -1361,7 +1361,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -1392,7 +1392,7 @@ GAL::Schema - DBIx::Class functionality for the Genome Annotation Library
 
 =head1 VERSION
 
-This document describes GAL::Schema version 0.01
+This document describes GAL::Schema version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -1450,7 +1450,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -1481,7 +1481,7 @@ GAL::List - List aggregation and analysis functions for GAL
 
 =head1 VERSION
 
-This document describes GAL::List version 0.01
+This document describes GAL::List version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -1691,7 +1691,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -1722,7 +1722,7 @@ GAL::Feature - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Feature version 0.01
+This document describes GAL::Feature version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -2038,7 +2038,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -2069,7 +2069,7 @@ GAL::Index - <One line description of module's purpose here>
 
 =head1 VERSION
 
-This document describes GAL::Index version 0.01
+This document describes GAL::Index version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -2166,7 +2166,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -2197,7 +2197,7 @@ GAL::Parser::gff3 - Parse GFF3 files
 
 =head1 VERSION
 
-This document describes GAL::Parser::gff3 version 0.01
+This document describes GAL::Parser::gff3 version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -2308,7 +2308,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -2339,7 +2339,7 @@ GAL::Reader::DelimitedLine -  Delimited file parsing for GAL
 
 =head1 VERSION
 
-This document describes GAL::Reader::DelimitedLine version 0.01
+This document describes GAL::Reader::DelimitedLine version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -2471,7 +2471,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -2502,7 +2502,7 @@ GAL::Reader::RecordParser - Record Parsing using Text::RecordParser
 
 =head1 VERSION
 
-This document describes GAL::Reader::RecordParser version 0.01
+This document describes GAL::Reader::RecordParser version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -2675,7 +2675,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -2706,7 +2706,7 @@ GAL::Schema::Result::Feature - Base class for all sequence features
 
 =head1 VERSION
 
-This document describes GAL::Schema::Result::Feature version 0.01
+This document describes GAL::Schema::Result::Feature version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -2943,7 +2943,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -2974,7 +2974,7 @@ GAL::Schema::Result::Attribute - Access to feature attributes for GAL::Schema::R
 
 =head1 VERSION
 
-This document describes GAL::Schema::Result::Attribute version 0.01
+This document describes GAL::Schema::Result::Attribute version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -3080,7 +3080,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -3111,7 +3111,7 @@ GAL::Schema::Result::Relationship - Access to relationships for <GAL::Schema::Re
 
 =head1 VERSION
 
-This document describes GAL::Schema::Result::Relationship version 0.01
+This document describes GAL::Schema::Result::Relationship version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -3194,7 +3194,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -3225,7 +3225,7 @@ GAL::Schema::Result::Feature::gene -  A gene object for the GAL Library
 
 =head1 VERSION
 
-This document describes GAL::Schema::Result::Feature::gene version 0.01
+This document describes GAL::Schema::Result::Feature::gene version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -3309,7 +3309,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -3342,7 +3342,7 @@ Library
 =head1 VERSION
 
 This document describes GAL::Schema::Result::Feature::transcript
-version 0.01
+version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -3547,7 +3547,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -3578,7 +3578,7 @@ GAL::Schema::Result::Feature::exon -  A exon object for the GAL Library
 
 =head1 VERSION
 
-This document describes GAL::Schema::Result::Feature::exon version 0.01
+This document describes GAL::Schema::Result::Feature::exon version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -3651,7 +3651,7 @@ Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All
 rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
@@ -3682,7 +3682,7 @@ GAL::Schema::Result::Feature::cds - A CDS object for the GAL Library
 
 =head1 VERSION
 
-This document describes GAL::Schema::Result::Feature::cds version 0.01
+This document describes GAL::Schema::Result::Feature::cds version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -3752,7 +3752,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 

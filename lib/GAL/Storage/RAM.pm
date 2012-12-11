@@ -3,7 +3,7 @@ package GAL::Storage::RAM;
 use strict;
 use vars qw($VERSION);
 
-$VERSION = '0.01';
+$VERSION = 0.2.0;
 use base qw(GAL::Storage);
 
 use GAL::Feature;
@@ -16,7 +16,7 @@ GAL::Storage::RAM - RAM feature storage for GAL
 
 =head1 VERSION
 
-This document describes GAL::Storage::RAM version 0.01
+This document describes GAL::Storage::RAM version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -797,7 +797,7 @@ Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All
 rights reserved.
 
     This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself.
+    modify it under the same terms as Perl itself (See LICENSE).
 
 =head1 DISCLAIMER OF WARRANTY
 
