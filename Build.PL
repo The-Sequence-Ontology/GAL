@@ -25,23 +25,24 @@ my $builder = Module::Build->new(
 
 				 # Prerequisites
 				 requires => {
-					      'perl'		  => '5.6.1',
-					      'Bio::DB::Fasta'		  => 0,
+					      'perl'		                  => '5.6.1',
+					      'Bio::DB::Fasta'		          => 0,
 					      'Carp'				  => 0,
 					      'Cwd'				  => 0,
 					      'DBI'				  => 0,
-					      'DBIx::Class'	  => 0,
-					      'Getopt::Long'		  => 0,
-					      'List::MoreUtils'		  => 0,
-					      'List::Util'		  => 0,
-					      'Module::Build'		  => 0,
-					      'Number::Format'		  => 0,
+					      'DBIx::Class'	          	  => 0,
+					      'Getopt::Long'		  	  => 0,
+					      'List::MoreUtils'		  	  => 0,
+					      'List::Util'		  	  => 0,
+					      'Module::Build'		  	  => 0,
+					      'Number::Format'		  	  => 0,
 					      'Set::IntSpan::Fast'                => 0,
 					      'Statistics::Descriptive'           => 0,
 					      'Statistics::Descriptive::Discrete' => 0,
 					      'Text::Graph'			  => 0,
 					      'Text::Graph::DataSet'		  => 0,
-					      'URI::Escape'		  => 0,
+					      'URI::Escape'		  	  => 0,
+					      'Text::RecordParser'        	  => 0,
 					     },
 				 build_requires => {
 						    'TAP::Harness' => 0,
@@ -56,6 +57,7 @@ my $builder = Module::Build->new(
 
 				 # Testing
 				 use_tap_harness     => 1,
+				 tap_harness_args    => {verbosity => -1}
 				 test_files => [qw(
 						   lib/GAL/t/001_annotation.t
 						   lib/GAL/t/001_base.t
@@ -115,7 +117,6 @@ my $builder = Module::Build->new(
 						   lib/GAL/t/600_list.t
 						   lib/GAL/t/600_list_categorical.t
 						   lib/GAL/t/600_list_numeric.t
-						   lib/GAL/t/600_list_span.t
 						   bin/t/add_reference_seq.t
 						   bin/t/annotation_summary.t
 						   bin/t/build_genes.t
