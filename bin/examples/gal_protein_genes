@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Getopt::Long;
 use GAL::Annotation;
-use IO::Prompt;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -14,7 +13,7 @@ my $usage = "
 
 Synopsis:
 
-protein_genes --clean path/to/fasta feature.sqlite
+protein_genes --clean path/to/fasta feature.gff3
 
 Description:
 
