@@ -4,17 +4,30 @@ use Module::Build;
 
 my $class = Module::Build->subclass
     (
-     class => 'My::Builder',
+     class => 'Module::Build::Custom',
      code => q{
        sub ACTION_build {
          my $self = shift;
-         $self->SUPER::build;
-         $self->dispatch('install_deps');
+         $self->SUPER::ACTION_build;
+         $self->dispatch('installdeps');
+       }
+       sub ACTION_install {
+	   my $self = shift;
+	   print "\n\nGAL does not do a system wide install\n\n";
+	   print "To make the libraries and scripts accessible\n";
+	   print "modify the paths to fit your system and run the following:\n\n";
+	   print "export PERL5LIB=\$PERL5LIB:/path/to/GAL/lib\n";
+	   print "export PATH=\$PATH:/path/to/GAL/bin\n\n";
+	   print "Add those lines to ~/.bash_profile or /etc/profile to\n";
+	   print "make those changes permanent.\n\n";
+	   print "If you want a system wide install, edit the Build.PL script and\n";
+	   print "remove the entire subroutine (ACTION_install) where this message\n";
+	   print "is printed run Build realclean and re-install.\n\n";
        }
      },
     );
 
-my $builder = Module::Build->new(
+my $builder = $class->new(
 				 # General
 				 module_name         => 'GAL',
 				 dist_author         => 'Barry Moore <barry.moore@genetics.utah.edu',
@@ -57,7 +70,10 @@ my $builder = Module::Build->new(
 
 				 # Testing
 				 use_tap_harness     => 1,
-				 tap_harness_args    => {verbosity => -1},
+				 tap_harness_args    => {verbosity  => -1,
+							 timer      => 1,
+							 show_count => 1,
+							 merge      => 1},
 				 test_files => [qw(
 						   lib/GAL/t/001_annotation.t
 						   lib/GAL/t/001_base.t
