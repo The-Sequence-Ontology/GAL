@@ -10,11 +10,11 @@ $VERSION = 0.2.0;
 
 =head1 NAME
 
-GAL::Base - Base class for the Genome Annotation Library
+L<GAL::Base> - Base class for the Genome Annotation Library
 
 =head1 VERSION
 
-This document describes GAL::Base version 0.2.0
+This document describes L<GAL::Base> version 0.2.0
 
 =head1 SYNOPSIS
 
@@ -30,9 +30,29 @@ for other classes during object construction.  In addition it provides
 a wide range of utility functions that are expected to be widly
 applicable throughout the library.
 
+=head1 INHERITS FROM
+
+None
+
+=head1 INHERITED BY
+
+
+
+=head1 USES
+
+=over
+
+=item * L<Carp>
+
+=item * L<Bio::DB::Fasta>
+
+=item * L<Scalar::Util>
+
+=back
+
 =head1 CONSTRUCTOR
 
-GAL::Base is not intended to by instantiated on it's own.  It does
+L<GAL::Base> is not intended to by instantiated on it's own.  It does
 however, handle object creation for the rest of the library.  Each
 class in GAL calls:
 
@@ -42,14 +62,14 @@ This means that GAL::Base - at the bottom of the inheritance chain
 does the actual object creation.  It creates the new object based on
 the calling class, and then checks to see if there is a 'class'
 argument provided.  If there is it calls the class attribute, which
-GAL::Base provides, and reblesses the object using the value to the
+L<GAL::Base> provides, and reblesses the object using the value to the
 class argument as a subclass of the current calling class.  This
 allows this kind of an idiom for any class that has subclasses:
 
     my $parser = GAL::Parser->(class => 'gff3');
 
-That invocation would return a GAL::Parser::gff3 object instead of a
-GAL::Parser object.
+That invocation would return a L<GAL::Parser::gff3> object instead of a
+L<GAL::Parser> object.
 
 L<GAL::Base> provides the following attributes to all other classes in
 the GAL.
@@ -2546,15 +2566,15 @@ you some idea of what arguments were passed.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::Base> requires no configuration files or environment variables.
+L<GAL::Base> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
 =over
 
-=item C<< Carp qw(croak cluck) >>
+=item L<Carp> qw(croak cluck)
 
-=item C<< Bio::DB::Fasta >>
+=item L<Bio::DB::Fasta>
 
 =back
 
