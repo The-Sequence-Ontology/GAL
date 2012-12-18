@@ -12,7 +12,7 @@ $VERSION = 0.2.0;
 
 =head1 NAME
 
-GAL::Annotation - Genome Annotation Library
+L<GAL::Annotation> - The Genome Annotation Library
 
 =head1 VERSION
 
@@ -22,54 +22,68 @@ This document describes GAL::Annotation version 0.2.0
 
     use GAL::Annotation;
 
-    # Assuming defaults (GFF3 parser and SQLite storage)
-    my $annot = GAL::Annotation->new(qw(file.gff file.fasta);
-    my $features = $annot->features;
+    my $annotation = GAL::Annotation->new('annotations.gff3',
+					  'genome.fa');
 
+    # Get a smart iterator object.
+    my $features = $annotation->features;
+    my $feature_count = $features->count;
+    my @types = $features->types->uniq;
 
-    # Otherwise be explicit about everything.
-    my %feat_store_args = (class    => 'SQLite',
-			   database => '/path/to/file.gff'
-			  );
-    my $feat_store = GAL::Annotation->new(storage => \%feat_store_args,
-					  fasta   => '/path/to/file.fa');
-    $feat_store->load_files($feature_file);
-    my $features = $feat_store->schema->resultset('Feature');
-
-    # Either way, once you have features - get to work.
+    # Do a search and get another smart iterator of matching features.
     my $mrnas = $features->search({type => 'mRNA'});
+
+    # Iterate over the features.
     while (my $mrna = $mrnas->next) {
-      print $mrna->feature_id . "\n";
-      my $CDSs = $mrna->CDSs;
-      while (my $CDS = $CDSs->next) {
-	print join "\n", ($CDS->start,
-			  $CDS->end,
-			  $CDS->seq,
-			 );
+      # Get the feature ID
+      my $mrna_id = $mrna->feature_id;
+      my $protein_seq = $mrna->protein_seq;
+      # Get all the exons for this mRNA
+      my $exons = $mrna->exons;
+      while (my $exon = $exons->next) {
+	my $length = $exon->length;
+	my $gc_content = $exon->gc_content;
+      }
+      # Introns don't exist in the dataset, so GAL
+      # will infer them on the fly.
+      my $introns = $mrna->introns;
+      while (my $intron = $introns->next) {
+        my $seq = $intron->seq;
       }
     }
 
 =head1 DESCRIPTION
 
-The Genome Annotation Library (GAL) is a collection of modules that
-strive to make working with genome annotations simple, intuitive and
-fast.  Users of GAL first create an annotation object which in turn
-will contain Parser, Storage and Schema objects.  The parser allows
-features to be loaded into GAL's storage from a variety of formats.
-The storage object specifies how the features should be stored, and
-the schema object provides flexible query and iterator functions over
-the features.  In addtion, Index objects (not yet implimented) provide
-additional key/value mapped look up tables, and List objects provide
-aggregation and analysis functionality for lists of feature
-attributes.
+L<The Genome Annotation Library
+(GAL)|http://www.sequenceontology.org/software/GAL.html> is a
+collection of object oriented L<Perl|http://www.perl.org> modules
+developed by the L<Sequence Ontology|http://www.sequenceontology.org>
+that make working with genome annotations simple and intuitive.
 
-A wide variety of parsers are available to convert sequence features
-from various formats, and new parsers are easy to write.  See
-GAL::Parser for more details.  Currently SQLite and MySQL storage
-options are available (a fast RAM storage engine is on the TODO list).
-Schema objects are provided by DBIx::Class and a familiarity with that
-package is necessary to fully understand how to query and iterate over
-feature objects.
+GAL was designed to work with sequence features stored in GFF3 files
+(or sequence alterations stored in GVF files) and GAL provids many
+parsers for converting sequence features in other formats to GFF3 and
+GVF.
+
+Sequence features are represented as objects in GAL based on the
+structure of the L<Sequence
+Ontology|http://www.sequenceontology.org/browser/obob.cgi>.  This
+allows the objects to inherit the appropriate behavior from their
+parent types based on the is_a relationships within the ontology and
+it also allows the programer to easily traverse the part_of
+relationships within while writing code.
+
+=head1 INHERITS FROM
+
+L<GAL::Base>
+
+=head1 INHERITED BY
+
+None
+
+=head1 USES
+
+L<GAL::Schema>
 
 =head1 CONSTRUCTOR
 
@@ -123,6 +137,8 @@ correspond to the sequence IDs (seqids) in the annotated features.
 The fasta parameter is optional, but if the fasta attribute is not set
 then the features will not have access to their sequence.  Access to
 the sequence in provided by Bio::DB::Fasta.
+
+=back
 
 =cut
 
@@ -379,134 +395,7 @@ sub load_files {
   $self->storage->load_files($files);
 }
 
-# #-----------------------------------------------------------------------------
-#
-# =head2 add_feature
-#
-#  Title   : add_feature
-#  Usage   : $self->add_feature();
-#  Function: Get/Set value of add_feature.
-#  Returns : Value of add_feature.
-#  Args    : Value to set add_feature to.
-#
-# =cut
-#
-# sub add_feature {
-#	my ($self, $feature_hash) = @_;
-#	my $feature = $self->storage->add_feature($feature_hash);
-#	return $feature;
-# }
-#
-# #-----------------------------------------------------------------------------
-#
-# =head2 get_all_features
-#
-#  Title   : get_all_features
-#  Usage   : $self->get_all_features();
-#  Function: Get/Set value of get_all_features.
-#  Returns : Value of get_all_features.
-#  Args    : Value to set get_all_features to.
-#
-# =cut
-#
-# sub get_all_features {
-#	my $self = shift;
-#	my $features = $self->storage->get_all_features;
-#	return wantarray ? @{$features} : $features;
-# }
-#
-# #-----------------------------------------------------------------------------
-#
-# =head2 get_features_by_type
-#
-#  Title   : get_features_by_type
-#  Usage   : $self->get_features_by_type();
-#  Function: Get/Set value of get_features_by_type.
-#  Returns : Value of get_features_by_type.
-#  Args    : Value to set get_features_by_type to.
-#
-# =cut
-#
-# sub get_features_by_type {
-#	my ($self, $type) = @_;
-#	my $features = $self->storage->get_features_by_type($type);
-#	return wantarray ? @{$features} : $features;
-# }
-#
-# #-----------------------------------------------------------------------------
-#
-# =head2 get_recursive_features_by_type
-#
-#  Title   : get_recursive_features_by_type
-#  Usage   : $self->get_recursive_features_by_type();
-#  Function: Get/Set value of get_recursive_features_by_type.
-#  Returns : Value of get_recursive_features_by_type.
-#  Args    : Value to set get_recursive_features_by_type to.
-#
-# =cut
-#
-# sub get_recursive_features_by_type {
-#	my ($self, $type) = @_;
-#	my $features = $self->storage->get_features_by_type_recursive;
-#	return wantarray ? @{$features} : $features;
-# }
-#
-# #-----------------------------------------------------------------------------
-#
-# =head2 get_feature_by_id
-#
-#  Title   : get_feature_by_id
-#  Usage   : $self->get_feature_by_id();
-#  Function: Get/Set value of get_feature_by_id.
-#  Returns : Value of get_feature_by_id.
-#  Args    : Value to set get_feature_by_id to.
-#
-# =cut
-#
-# sub get_feature_by_id {
-#	my ($self, $id) = @_;
-#	my $feature = $self->storage->get_feature_by_id($id);
-#	return $feature;
-# }
-#
-# #-----------------------------------------------------------------------------
-#
-# =head2 filter_features
-#
-#  Title   : filter_features
-#  Usage   : $self->filter_features();
-#  Function: Get/Set value of filter_features.
-#  Returns : Value of filter_features.
-#  Args    : Value to set filter_features to.
-#
-# =cut
-#
-# sub filter_features {
-#	my ($self, $filter) = @_;
-#	my $features = $self->storage->filter_features($filter);
-#	return wantarray ? @{$features} : $features;
-# }
-#
-#
-# #-----------------------------------------------------------------------------
-#
-# =head2 foo
-#
-#  Title   : foo
-#  Usage   : $a = $self->foo();
-#  Function: Get/Set the value of foo.
-#  Returns : The value of foo.
-#  Args    : A value to set foo to.
-#
-# =cut
-#
-# sub foo {
-#	my ($self, $value) = @_;
-#	$self->{foo} = $value if defined $value;
-#	return $self->{foo};
-# }
-#
-# #-----------------------------------------------------------------------------
+#-----------------------------------------------------------------------------
 
 =head1 DIAGNOSTICS
 

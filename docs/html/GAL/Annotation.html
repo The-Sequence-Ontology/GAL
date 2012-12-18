@@ -12,7 +12,53 @@
 
 </A><LI><A HREF="#DESCRIPTION">DESCRIPTION
 
+</A><LI><A HREF="#INHERITS%20FROM">INHERITS FROM
+
+</A><LI><A HREF="#INHERITED%20BY">INHERITED BY
+
+</A><LI><A HREF="#USES">USES
+
 </A><LI><A HREF="#CONSTRUCTOR">CONSTRUCTOR
+
+</A><UL>
+<LI><A HREF="#new">new
+
+</A></UL>
+<LI><A HREF="#ATTRIBUTES">ATTRIBUTES
+
+</A><UL>
+<LI><A HREF="#parser">parser
+
+</A><LI><A HREF="#storage">storage
+
+</A><LI><A HREF="#fasta">fasta
+
+</A></UL>
+<LI><A HREF="#Methods">Methods
+
+</A><UL>
+<LI><A HREF="#features">features
+
+</A><LI><A HREF="#schema">schema
+
+</A><LI><A HREF="#load_files">load_files
+
+</A></UL>
+<LI><A HREF="#DIAGNOSTICS">DIAGNOSTICS
+
+</A><LI><A HREF="#CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
+
+</A><LI><A HREF="#DEPENDENCIES">DEPENDENCIES
+
+</A><LI><A HREF="#INCOMPATIBILITIES">INCOMPATIBILITIES
+
+</A><LI><A HREF="#BUGS%20AND%20LIMITATIONS">BUGS AND LIMITATIONS
+
+</A><LI><A HREF="#AUTHOR">AUTHOR
+
+</A><LI><A HREF="#LICENCE%20AND%20COPYRIGHT">LICENCE AND COPYRIGHT
+
+</A><LI><A HREF="#DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
 
 </A></UL>
 <HR>
@@ -20,7 +66,7 @@
 
 </A></H1>
 
-<P>GAL::Annotation - Genome Annotation Library
+<P><A HREF="../GAL/Annotation.html">GAL::Annotation</A> - The Genome Annotation Library
 
 </P><H1><A NAME="VERSION">VERSION
 
@@ -34,56 +80,77 @@
 
 <PRE>    use GAL::Annotation;
 
-    # Assuming defaults (GFF3 parser and SQLite storage)
-    my $annot = GAL::Annotation-&gt;new(qw(file.gff file.fasta);
-    my $features = $annot-&gt;features;
+    my $annotation = GAL::Annotation-&gt;new('annotations.gff3',
+					  'genome.fa');
 
+    # Get a smart iterator object.
+    my $features = $annotation-&gt;features;
+    my $feature_count = $features-&gt;count;
+    my @types = $features-&gt;types-&gt;uniq;
 
-    # Otherwise be explicit about everything.
-    my %feat_store_args = (class    =&gt; 'SQLite',
-			   database =&gt; '/path/to/file.gff'
-			  );
-    my $feat_store = GAL::Annotation-&gt;new(storage =&gt; \%feat_store_args,
-					  fasta   =&gt; '/path/to/file.fa');
-    $feat_store-&gt;load_files($feature_file);
-    my $features = $feat_store-&gt;schema-&gt;resultset('Feature');
-
-    # Either way, once you have features - get to work.
+    # Do a search and get another smart iterator of matching features.
     my $mrnas = $features-&gt;search({type =&gt; 'mRNA'});
+
+    # Iterate over the features.
     while (my $mrna = $mrnas-&gt;next) {
-      print $mrna-&gt;feature_id . &quot;\n&quot;;
-      my $CDSs = $mrna-&gt;CDSs;
-      while (my $CDS = $CDSs-&gt;next) {
-	print join &quot;\n&quot;, ($CDS-&gt;start,
-			  $CDS-&gt;end,
-			  $CDS-&gt;seq,
-			 );
+      # Get the feature ID
+      my $mrna_id = $mrna-&gt;feature_id;
+      my $protein_seq = $mrna-&gt;protein_seq;
+      # Get all the exons for this mRNA
+      my $exons = $mrna-&gt;exons;
+      while (my $exon = $exons-&gt;next) {
+	my $length = $exon-&gt;length;
+	my $gc_content = $exon-&gt;gc_content;
+      }
+      # Introns don't exist in the dataset, so GAL
+      # will infer them on the fly.
+      my $introns = $mrna-&gt;introns;
+      while (my $intron = $introns-&gt;next) {
+        my $seq = $intron-&gt;seq;
       }
     }</PRE>
 <H1><A NAME="DESCRIPTION">DESCRIPTION
 
 </A></H1>
 
-<P>The Genome Annotation Library (GAL) is a collection of modules that
-strive to make working with genome annotations simple, intuitive and
-fast.  Users of GAL first create an annotation object which in turn
-will contain Parser, Storage and Schema objects.  The parser allows
-features to be loaded into GAL's storage from a variety of formats.
-The storage object specifies how the features should be stored, and
-the schema object provides flexible query and iterator functions over
-the features.  In addtion, Index objects (not yet implimented) provide
-additional key/value mapped look up tables, and List objects provide
-aggregation and analysis functionality for lists of feature
-attributes.
+<P><A HREF="http://www.sequenceontology.org/software/GAL.html">The Genome Annotation Library
+(GAL)</A> is a
+collection of object oriented <A HREF="http://www.perl.org">Perl</A> modules
+developed by the <A HREF="http://www.sequenceontology.org">Sequence Ontology</A>
+that make working with genome annotations simple and intuitive.
 
 </P>
-<P>A wide variety of parsers are available to convert sequence features
-from various formats, and new parsers are easy to write.  See
-GAL::Parser for more details.  Currently SQLite and MySQL storage
-options are available (a fast RAM storage engine is on the TODO list).
-Schema objects are provided by DBIx::Class and a familiarity with that
-package is necessary to fully understand how to query and iterate over
-feature objects.
+<P>GAL was designed to work with sequence features stored in GFF3 files
+(or sequence alterations stored in GVF files) and GAL provids many
+parsers for converting sequence features in other formats to GFF3 and
+GVF.
+
+</P>
+<P>Sequence features are represented as objects in GAL based on the
+structure of the <A HREF="http://www.sequenceontology.org/browser/obob.cgi">Sequence
+Ontology</A>.  This
+allows the objects to inherit the appropriate behavior from their
+parent types based on the is_a relationships within the ontology and
+it also allows the programer to easily traverse the part_of
+relationships within while writing code.
+
+</P><H1><A NAME="INHERITS%20FROM">INHERITS FROM
+
+</A></H1>
+
+<P><A HREF="../GAL/Base.html">GAL::Base</A>
+
+</P><H1><A NAME="INHERITED%20BY">INHERITED BY
+
+</A></H1>
+
+<P>None
+
+</P><H1><A NAME="USES">USES
+
+</A></H1>
+
+<P><A HREF="../GAL/Schema.html">GAL::Schema</A>
 
 </P><H1><A NAME="CONSTRUCTOR">CONSTRUCTOR
 
@@ -141,8 +208,7 @@ mysql.
 
 </A></DT>
 <DD>
-
-<P>This optional parameter defines a path to a fasta file or a collection
+This optional parameter defines a path to a fasta file or a collection
 of fasta files that correspond the annotated features.  The IDs (first
 contiguous non-whitespace charachters) of the fasta headers must
 correspond to the sequence IDs (seqids) in the annotated features.
@@ -150,7 +216,9 @@ The fasta parameter is optional, but if the fasta attribute is not set
 then the features will not have access to their sequence.  Access to
 the sequence in provided by Bio::DB::Fasta.
 
-</P><H2><A NAME="new">new
+</DD>
+</DL>
+<H2><A NAME="new">new
 
 </A></H2>
 
@@ -337,8 +405,6 @@ FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
 SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.
 
-</P></DD>
-</DL>
-
+</P>
 </BODY>
 </HTML>

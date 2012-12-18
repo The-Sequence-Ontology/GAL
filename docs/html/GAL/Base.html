@@ -12,6 +12,14 @@
 
 </A><LI><A HREF="#DESCRIPTION">DESCRIPTION
 
+</A><LI><A HREF="#INHERITS%20FROM">INHERITS FROM
+
+</A><LI><A HREF="#INHERITED%20BY">INHERITED BY
+
+
+
+</A><LI><A HREF="#USES">USES
+
 </A><LI><A HREF="#CONSTRUCTOR">CONSTRUCTOR
 
 </A></UL>
@@ -20,13 +28,13 @@
 
 </A></H1>
 
-<P>GAL::Base - Base class for the Genome Annotation Library
+<P><A HREF="../GAL/Base.html">GAL::Base</A> - Base class for the Genome Annotation Library
 
 </P><H1><A NAME="VERSION">VERSION
 
 </A></H1>
 
-<P>This document describes GAL::Base version 0.2.0
+<P>This document describes <A HREF="../GAL/Base.html">GAL::Base</A> version 0.2.0
 
 </P><H1><A NAME="SYNOPSIS">SYNOPSIS
 
@@ -45,11 +53,41 @@ for other classes during object construction.  In addition it provides
 a wide range of utility functions that are expected to be widly
 applicable throughout the library.
 
-</P><H1><A NAME="CONSTRUCTOR">CONSTRUCTOR
+</P><H1><A NAME="INHERITS%20FROM">INHERITS FROM
 
 </A></H1>
 
-<P>GAL::Base is not intended to by instantiated on it's own.  It does
+<P>None
+
+</P><H1><A NAME="INHERITED%20BY">INHERITED BY
+
+
+
+</A></H1>
+<H1><A NAME="USES">USES
+
+</A></H1>
+<DL><DT><A NAME="*%20Carp">* <A HREF="../Carp.html">Carp</A>
+
+</A></DT>
+<DD>
+</DD>
+<DT><A NAME="*%20Bio%3a%3aDB%3a%3aFasta">* <A HREF="../Bio/DB/Fasta.html">Bio::DB::Fasta</A>
+
+</A></DT>
+<DD>
+</DD>
+<DT><A NAME="*%20Scalar%3a%3aUtil">* <A HREF="../Scalar/Util.html">Scalar::Util</A>
+
+</A></DT>
+<DD>
+</DD>
+</DL>
+<H1><A NAME="CONSTRUCTOR">CONSTRUCTOR
+
+</A></H1>
+
+<P><A HREF="../GAL/Base.html">GAL::Base</A> is not intended to by instantiated on it's own.  It does
 however, handle object creation for the rest of the library.  Each
 class in GAL calls:
 
@@ -60,15 +98,15 @@ class in GAL calls:
 does the actual object creation.  It creates the new object based on
 the calling class, and then checks to see if there is a 'class'
 argument provided.  If there is it calls the class attribute, which
-GAL::Base provides, and reblesses the object using the value to the
+<A HREF="../GAL/Base.html">GAL::Base</A> provides, and reblesses the object using the value to the
 class argument as a subclass of the current calling class.  This
 allows this kind of an idiom for any class that has subclasses:
 
 </P>
 <PRE>    my $parser = GAL::Parser-&gt;(class =&gt; 'gff3');</PRE>
 
-<P>That invocation would return a GAL::Parser::gff3 object instead of a
-GAL::Parser object.
+<P>That invocation would return a <A HREF="../GAL/Parser/gff3.html">GAL::Parser::gff3</A> object instead of a
+<A HREF="../GAL/Parser.html">GAL::Parser</A> object.
 
 </P>
 <P><A HREF="../GAL/Base.html">GAL::Base</A> provides the following attributes to all other classes in
@@ -402,17 +440,17 @@ you some idea of what arguments were passed.
 
 </A></H1>
 
-<P>&lt;GAL::Base&gt; requires no configuration files or environment variables.
+<P><A HREF="../GAL/Base.html">GAL::Base</A> requires no configuration files or environment variables.
 
 </P><H1><A NAME="DEPENDENCIES">DEPENDENCIES
 
 </A></H1>
-<DL><DT><A NAME="Carp%20qw(croak%20cluck)"><CODE>Carp qw(croak cluck)</CODE>
+<DL><DT><A NAME="Carp%20qw(croak%20cluck)"><A HREF="../Carp.html">Carp</A> qw(croak cluck)
 
 </A></DT>
 <DD>
 </DD>
-<DT><A NAME="Bio%3a%3aDB%3a%3aFasta"><CODE>Bio::DB::Fasta</CODE>
+<DT><A NAME="Bio%3a%3aDB%3a%3aFasta"><A HREF="../Bio/DB/Fasta.html">Bio::DB::Fasta</A>
 
 </A></DT>
 <DD>
