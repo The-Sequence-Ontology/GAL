@@ -2,6 +2,7 @@
 use strict;
 
 use Test::More;
+use List::MoreUtils qw(uniq);
 
 BEGIN {
 	use lib '../../';
@@ -153,8 +154,9 @@ ok(my $genes = $schema->features->search({type => 'gene'}),
    '$features = $schema->features->search({type => "gene"})');
 
 $count = 0;
+my @lines;
 while (my $gene = $genes->next) {
-  ok(my @lines = $gene->to_gff3_recursive,      '$gene->to_gff3_recursive');
+  ok(push @lines, $gene->to_gff3_recursive,      '$gene->to_gff3_recursive');
   my @children;
   ok(! $gene->get_recursive_children(\@children), '$gene->get_recursive_children');
   for my $child (@children) {
@@ -162,6 +164,10 @@ while (my $gene = $genes->next) {
   }
   last if $count++ > 10;
 }
+
+my $count = scalar grep {$_ !~ /recursive/} @lines;
+my $uniq_count = scalar grep {$_ !~ /recursive/} uniq(@lines);
+ok($count == $uniq_count, 'to_gff3_recursive lines are uniq');
 
 #--------------------------------------------------------------------------------
 # Test $feature->get_transcript_types
