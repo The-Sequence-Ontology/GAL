@@ -252,7 +252,9 @@ sub _load_schema {
 	  );
   $dbh->do("CREATE TABLE relationship ("  .
 	   "parent TEXT, " .
-	   "child  TEXT) "
+	   "child  TEXT, " .
+	   "UNIQUE(parent, child) " .
+	   "ON CONFLICT REPLACE)"
 	  );
 }
 
