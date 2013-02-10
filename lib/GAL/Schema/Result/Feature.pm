@@ -553,6 +553,7 @@ sub to_gff3_recursive {
   for my $feature (@features) {
     push @gff_lines, $feature->to_gff3;
   }
+  @gff_lines = uniq @gff_lines;
   return wantarray ? @gff_lines : \@gff_lines;
 }
 
