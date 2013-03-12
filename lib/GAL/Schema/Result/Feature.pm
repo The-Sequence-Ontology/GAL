@@ -517,8 +517,8 @@ sub inflate_result {
 #-----------------------------------------------------------------------------
 
 sub get_feature_bins {
-  my $self = shift;
-  return $self->annotation->get_feature_bins($self);
+    my $self = shift;
+    $self->annotation->get_feature_bins($self);
 }
 
 #-----------------------------------------------------------------------------
