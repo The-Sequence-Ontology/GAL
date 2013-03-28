@@ -342,7 +342,7 @@ sub validate_gvf {
 	      }
 	      # A nt string or .!^*
 	      elsif ($type eq 'insertion') {
-		if ($value !~ /^([A-DGHKMNR-WY]+|~\d*|[.!^\*])$/i) {
+		if ($value !~ /^([A-DGHKMNR-WY]+|~\d*|[.!^\*-])$/i) {
 		  my $error_code = 'invalid_Variant_seq_attribute_value_for_insertion';
 		  $ERRORS{$error_code}++;
 		  handle_message('WARN', $error_code, "($value) $line");
@@ -350,7 +350,7 @@ sub validate_gvf {
 	      }
 	      # Any of .!^-
 	      elsif ($type eq 'deletion') {
-		if ($value !~ /^[\.\^!-]$/i) {
+		if ($value !~ /^([A-DGHKMNR-WY]+|~\d*|[\.\^!-])$/i) {
 		  my $error_code = 'invalid_Variant_seq_attribute_value_for_deletion';
 		  $ERRORS{$error_code}++;
 		  handle_message('WARN', $error_code, "($value) $line");
