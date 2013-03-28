@@ -4,6 +4,7 @@ use warnings;
 use Getopt::Long;
 use List::Util;
 use List::MoreUtils;
+use Statistics::Descriptive;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -436,7 +437,7 @@ l_compliment(\@files)             if $l_compliment;
 s_difference(\@files)             if $s_difference;
 calc_titv(\@files)                if $titv;
 gvf_stats(\@files)                if $gvf_stats;
-effect_stats(\@files)              if $effect_stats;
+effect_stats(\@files)             if $effect_stats;
 gvf_sets(\@files)                 if $gvf_sets;
 #pragma($pragma)	                  if $pragma;
 
@@ -2172,22 +2173,28 @@ sub calc_titv {
 sub gvf_stats {
 
     my $files = shift;
-    my ($count, $ti, $tv, $het, $hom);
+    my ($count, $score, $score_count, $score30p, $ti, $tv, $het, $hom);
 
     $meta_no = 1;
     $| = 1;
 
-    print join "\t", qw(File Count Het Hom Het/Hom Pct_Het Ti Tv Ti/Tv);
+    print join "\t", qw(File Count 1stQrt_Score Median_Score 3rdQrt_Score %Q>30 Het/Hom Ti/Tv);
     print "\n";
     for my $file (@files) {
 	my $IN = fh_in($file);
-	($count, $ti, $tv, $het, $hom) = ();
+	my $stat = Statistics::Descriptive::Full->new();
+	($count, $score, $score_count, $score30p, $ti, $tv, $het, $hom) = ();
 	while (my $f = next_feature_hash($IN)) {
 	    next unless $f->{type} eq 'SNV';
 	    my $a = $f->{attributes};
 	    next unless ref $a->{Variant_seq} eq 'ARRAY';
 	    next unless ref $a->{Reference_seq} eq 'ARRAY';
 	    $count++;
+	    if ($f->{score} =~ /\d+/) {
+		$stat->add_data($f->{score});
+		$score_count++;
+		$score30p++ if $f->{score} >= 30;
+	    }
 	    if (scalar @{$a->{Variant_seq}} > 1) {
 		$het++;
 	    }
@@ -2206,6 +2213,9 @@ sub gvf_stats {
 		elsif ($var_seq eq 'T') {
 		    $tv++;
 		}
+		elsif ($var_seq =~ /[\^.~!]/) {
+		    # Skip these for now.
+		}
 		else {
 		    my $line = to_gff3($f);
 		    warn "WARNING : variant_seq_not_handled: $line";
@@ -2220,6 +2230,9 @@ sub gvf_stats {
 		}
 		elsif ($var_seq eq 'T') {
 		    $ti++;
+		}
+		elsif ($var_seq =~ /[\^.~!]/) {
+		    # Skip these for now.
 		}
 		else {
 		    my $line = to_gff3($f);
@@ -2236,6 +2249,9 @@ sub gvf_stats {
 		elsif ($var_seq eq 'T') {
 		    $tv++;
 		}
+		elsif ($var_seq =~ /[\^.~!]/) {
+		    # Skip these for now.
+		}
 		else {
 		    my $line = to_gff3($f);
 		    warn "WARNING : variant_seq_not_handled: $line";
@@ -2251,6 +2267,9 @@ sub gvf_stats {
 		elsif ($var_seq eq 'G') {
 		    $tv++;
 		}
+		elsif ($var_seq =~ /[\^.~!]/) {
+		    # Skip these for now.
+		}
 		else {
 		    my $line = to_gff3($f);
 		    warn "WARNING : variant_seq_not_handled: $line";
@@ -2261,11 +2280,31 @@ sub gvf_stats {
 		warn "WARNING : reference_seq_not_handled: $line";
 	    }
 	}
+
+	my $scoreQ1;
+	my $scoreQ2;
+	my $scoreQ3;
+	if ($score_count/$count >= 0.3333333) {
+	    $scoreQ1 = $stat->percentile(25);
+	    $scoreQ2 = $stat->percentile(50);
+	    $scoreQ3 = $stat->percentile(75);	
+	    $score30p = sprintf("%.3f", $score30p / $score_count * 100);
+	}
+	else {
+	    warn ("WARN : too_few_variants_have_quality : " . 
+		  "Only $score_count variants had quality " .
+		  "values.  Not calculating average QUAL.\n");
+	}
 	$hom = 0 if ! defined $hom;
 	$het = 0 if ! defined $het;
-	my $het_hom_ratio = $hom ? $het/$hom : 'NaN';
-	my $ti_tv_ratio   = $tv  ? $ti/$tv   : 'NaN';
-	print join "\t", ($file, $count, $het, $hom, $het_hom_ratio, $het/($het + $hom)*100, $ti, $tv, $ti_tv_ratio);
+	$scoreQ1 ||= '.';
+	$scoreQ2 ||= '.';
+	$scoreQ3 ||= '.';
+	$score30p ||= '.';
+	my $het_hom_ratio = $hom ? sprintf("%.3f",$het/$hom)              : '.';
+	my $pct_het       = $hom ? sprintf("%.3f",$het/($het + $hom)*100) : '.';
+	my $ti_tv_ratio   = $tv  ? sprintf("%.3f",$ti/$tv)                : '.';
+	print join "\t", ($file, $count, $scoreQ1, $scoreQ2, $scoreQ3, $score30p, $het_hom_ratio, $ti_tv_ratio);
 	print "\n";
     }
     exit;
@@ -2278,28 +2317,31 @@ sub gvf_stats {
 sub effect_stats {
 
     my $files = shift;
-    my ($count, $ti, $tv, $het, $hom);
 
-    print join "\t", ('Term', @{$files});
-    print "\n";
+    $meta_no = 1;
+    $| = 1;
+
     my (%files, %terms, %term_total);
     for my $file (@files) {
 	$files{$file}++;
 	my $IN = fh_in($file);
-	($count, $ti, $tv, $het, $hom) = ();
 	while (my $f = next_feature_hash($IN)) {
 	    my $effects = $f->{attributes}{Variant_effect} || [];
 	    for my $term (@{$effects}) {
 		$term =~ s/(\S+).*/$1/;
-		$terms{$term}{$file}++;
+		$terms{$file}{$term}++;
 		$term_total{$term}++;
 	    }
 	}
     }
-    for my $term (sort {$term_total{$b} <=> $term_total{$a}} keys %terms) {
-	print "$term";
-	for my $file (sort keys %files) {
-	    my $count = $terms{$term}{$file} || 0;
+
+    print "File\t";
+    print join "\t", keys %term_total;
+    print "\n";
+    for my $file (sort {$terms{$b} <=> $terms{$a}} keys %terms) {
+	print "$file";
+	for my $term (sort keys %term_total) {
+	    my $count = $terms{$file}{$term} || 0;
 	    print "\t$count";
 	}
 	print "\n";
