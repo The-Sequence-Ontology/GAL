@@ -17,7 +17,7 @@ my $tool = GAL::Run->new(path    => $path,
 # Testing that gff_tool compiles and returns usage statement
 ################################################################################
 
-ok(! $tool->run(cl_args => '--help'), 'gff_tool complies');
+ok(! $tool->run(cl_args => '--help'), 'gff_tool --help runs');
 like($tool->get_stdout, qr/Synopsis/, 'gff_tool prints usage statement');
 
 ################################################################################
@@ -25,10 +25,10 @@ like($tool->get_stdout, qr/Synopsis/, 'gff_tool prints usage statement');
 ################################################################################
 
 my @cl_args = ('--filter --code \'$f->{type} eq "gene"\'',
-	       'data/dmel-4-r5.46.genes.gff',
+	       "$FindBin::RealBin/data/dmel-4-r5.46.genes.gff",
 	      );
 
-ok(! $tool->run(cl_args => \@cl_args), 'gff_tool runs ');
+ok(! $tool->run(cl_args => \@cl_args), 'gff_tool --filter runs ');
 ok($tool->get_stdout =~ /ID=FBgn0053653;Name=Caps;Alias=CG18026,FBgn0027577,FBgn0040042/,
    'gff_tool has the correct output');
 
@@ -40,10 +40,10 @@ $tool->clean_up;
 
 @cl_args = ('--alter',
 	    '--code \'$f->{seqid} =~ s/^chr//\',',
-	    'data/dmel-4-r5.46.genes.gff',
+	    "$FindBin::RealBin/data/dmel-4-r5.46.genes.gff",
 	   );
 
-ok(! $tool->run(cl_args => \@cl_args), 'gff_tool runs ');
+ok(! $tool->run(cl_args => \@cl_args), 'gff_tool --alter runs ');
 ok($tool->get_stdout =~ /4\s+FlyBase\s+three_prime_UTR\s+1274856/,
    'gff_tool has the correct output');
 
@@ -55,14 +55,31 @@ $tool->clean_up;
 
 @cl_args = ('--hash_ag \'push @{$h{$f->{type}}}, $f\'',
 	    '--code \'my @x = sort {($a->{end} - $a->{start}) <=> ($b->{end} - $b->{start})} @$v;shift @x\'',
-	    'data/dmel-4-r5.46.genes.gff',
+	    "$FindBin::RealBin/data/dmel-4-r5.46.genes.gff",
 	   );
 
-ok(! $tool->run(cl_args => \@cl_args), 'gff_tool runs ');
+ok(! $tool->run(cl_args => \@cl_args), 'gff_tool --hash_ag runs ');
 ok($tool->get_stdout =~ /4\s+FlyBase\s+exon\s+906080\s+906088/,
    'gff_tool has the correct output');
 
 $tool->clean_up;
+
+################################################################################
+# Testing that gff_tool runs --fasta_only
+################################################################################
+
+@cl_args = ('--fasta_only',
+	    "$FindBin::RealBin/data/dmel-4-r5.46.gff",
+	   );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gff_tool --fasta_only runs');
+ok($tool->get_stdout =~ /^>4\n[ATGC]+\n/,
+   'gff_tool has the correct output');
+
+$tool->clean_up;
+
+
+
 
 done_testing();
 
