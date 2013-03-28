@@ -223,15 +223,21 @@ sub parse_record {
 
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/gff3.html for details.
-	my $feature_id = join ':', @{$record}{qw(seqid source type start end)};
-	my $seqid      = $record->{seqid};
-	my $source     = $record->{source};
-	my $type       = $record->{type};
-	my $start      = $record->{start};
+
+	return undef unless $record->{calledCNVType} =~ /^[+-]$/;
+
+	#chr begin end avgNormalizedCvg relativeCvg calledPloidy calledCNVType ploidy Score CNV Type Score overlappingGene knownCNV repeats
+	my $seqid      = $record->{chr};
+	my $source     = 'cgiCNV';
+	my $type       = ($record->{calledCNVType} eq '+' ? 'copy_number_gain' :
+			  $record->{calledCNVType} eq '-' ? 'copy_number_loss' :
+			  'copy_number_variation');
+	my $start      = $record->{begin};
 	my $end        = $record->{end};
-	my $score      = $record->{score};
-	my $strand     = $record->{strand};
-	my $phase      = $record->{phase};
+	my $score      = $record->{Score};
+	my $strand     = '+';
+	my $phase      = '.';
+	my $feature_id = "cgiCNV_$seqid:$start-$end";
 
 	# Create the attributes hash
 	# See http://www.sequenceontology.org/gvf.html
@@ -241,51 +247,32 @@ sub parse_record {
 	# The order of the Variant_seqs matters for indexing Variant_effect
 	# - see below
 	# Variant_seq=G,A
-	my ($reference_seq, @variant_seqs) = split m|/|, $record->{variant_seq};
+	my $variant_seqs = '~';
 
 	# If you need to look up the reference sequence
 	# Then be sure that you pass (fasta => '/path/to/fasta') as an
 	# argument when instantiating the class.
-	# $reference_seq ||= uc $self->fasta->seq($seqid, $start, $end);
+	my $reference_seq = uc $self->fasta->seq($seqid, $start, $end);
+	$reference_seq = '~' if length $reference_seq > 25;
 
-	# If you need to disambiguate IUPAC codes
-	# my @variant_seqs  = $self->expand_iupac_nt_codes($iupac_codes);
+	my $attributes = {Reference_seq       => [$reference_seq],
+			  Variant_seq         => [$variant_seqs],
+			  ID                  => [$feature_id],
+			  cgi_relativeCvg     => [$record->{relativeCvg}],
+			  cgi_calledPloidy    => [$record->{calledPloidy}],
+			  cgi_calledCNVType   => [$record->{calledCNVType}],
+			  avgNormalizedCvg    => [$record->{avgNormalizedCvg}],
+			  cgi_ploidyScore     => [$record->{ploidyScore}],
+			  cgi_CNVTypeScore    => [$record->{CNVTypeScore}],
+			  cgi_overlappingGene => [$record->{overlappingGene}],
+			  cgi_knownCNV        => [$record->{knownCNV}],
+			  cgi_repeats         => [$record->{repeats}],
+	};
 
-	# If you need to reverse compliment sequence
-	# $reference_seq = $self->revcomp($reference_seq) if $strand eq '-';
-
-	# Assign the variant seq read counts if available:
-	# Variant_reads=8,6
-
-	# Assign the total number of reads covering this position:
-	# Total_reads=16
-
-	# Assign the zygosity and probability if available:
-	# Zygosity=homozygous
-
-	my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
-
-	# Create the attribute hash reference.  Note that all values
-	# are array references - even those that could only ever have
-	# one value.  This is for consistency in the interface to
-	# Features.pm and it's subclasses.  Suggested keys include
-	# (from the GFF3 spec), but are not limited to: ID, Name,
-	# Alias, Parent, Target, Gap, Derives_from, Note, Dbxref and
-	# Ontology_term. Note that attribute names are case
-	# sensitive. "Parent" is not the same as "parent". All
-	# attributes that begin with an uppercase letter are reserved
-	# for later use. Attributes that begin with a lowercase letter
-	# can be used freely by applications.
-
-	# For sequence_alteration features the suggested keys include:
-	# ID, Reference_seq, Variant_seq, Variant_reads Total_reads,
-	# Zygosity, Intersected_feature, Variant_effect, Copy_number
-
-	my $attributes = {Reference_seq => [$reference_seq],
-			  Variant_seq   => \@variant_seqs,
-			  Zygosity      => [$zygosity],
-			  ID            => [$feature_id],
-			 };
+	map {delete $attributes->{$_} unless length $attributes->{$_}[0]} keys %{$attributes};
+        for my $values (values %{$attributes}) {
+            map {s/;/,/g} @{$values};
+	    }
 
 	my $feature_data = {feature_id => $feature_id,
 			    seqid      => $seqid,
@@ -391,7 +378,9 @@ sub reader {
     			 overlappingGene knownCNV repeat);
 
     my $reader = GAL::Reader::DelimitedLine->new(field_names     => \@field_names,
-						 field_separator => "\t");
+						 field_separator => "\t",
+						 comment_pattern => qr/^(\#|>)/,
+	);
     $self->{reader} = $reader;
   }
   return $self->{reader};
