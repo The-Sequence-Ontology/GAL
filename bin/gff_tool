@@ -2321,6 +2321,9 @@ sub effect_stats {
     $meta_no = 1;
     $| = 1;
 
+    print join "\t", ('Term', @{$files});
+    print "\n";
+
     my (%files, %terms, %term_total);
     for my $file (@files) {
 	$files{$file}++;
