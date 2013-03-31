@@ -5,6 +5,7 @@ use Getopt::Long;
 use List::Util;
 use List::MoreUtils;
 use Statistics::Descriptive;
+use Set::IntSpan::Fast;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -245,13 +246,16 @@ to the altered copy of the feature.  All filters given are applied.
 		  exist. (Not yet implimented)
 
 
---Set Operations--
+--Set Operations (Coordinate matching) --
 
-		  All set operations are based on seqid:start:end
-		  unless the set_seq option is set in which case it
-		  becomes seqid:start:end:Reference_seq:Variant_seq.
-		  The Reference_seq is removed from the Variant_seq
-		  list.
+		  All coordinate matching set operations are based on
+		  seqid:start:end unless the set_seq option is set in
+		  which case it becomes
+		  seqid:start:end:Reference_seq:Variant_seq.  The
+		  Reference_seq is removed from the Variant_seq list.
+		  These set operations are useful, for example, for
+		  operating on sets of SNVs from a family or
+		  population.
 
   union           The union of all files.  The members that are
 		  present in any file.
@@ -259,11 +263,11 @@ to the altered copy of the feature.  All filters given are applied.
   intersection    The intersection of all files.  The members that
 		  are present in all files.
 
-  l_compliment    The left compliment of the files.  The members
-		  found exclusively in the first file but not in any
-		  subsequent files.
+  lcomplement     The left releative complement of the files.  The
+                  members found exclusively in the first file but not
+		  in any subsequent files.
 
-  s_difference    The symetric difference of the files.  The members
+  sdifference     The symetric difference of the files.  The members
 		  found in exactly one file.  Note that the symetric
 		  difference should technically give you the members
 		  that are present in an odd number of files, but on
@@ -273,12 +277,35 @@ to the altered copy of the feature.  All filters given are applied.
 		  one file
 
 
+--Set Operations (Interval Overlap) --
+
+		  All interval overlap set operations are based on
+		  intersecting the genomic intervals occupied by a
+		  feature and creating new features based on the set
+		  operation.  These operations are useful, for
+		  example, in finding the similar or dissimilar
+		  regions between two sets of exons.
+
+  i_union         Create a new set of features that is the union of
+                  regions between all supplied features.
+
+  i_intersection  Create a new set of features that contain only the
+                  regions of intersection between all supplied features.
+
+  i_lcomplement   Create a new set of features that contain the
+                  regions found only in the first set of features.
+
+  i_sdifference   Create a new set of features that contain the regions
+                  that are found in one and only one file. - Not yet
+                  implimented.
+
+
 --GVF Options--
 
   titv           Calculate transition/transversion ratio.
   gvf_stats      Simple SNV stats on a GVF file.
   effect_stats   Category counts for Variant_effect terms.
-  gvf_sets       Calculate counts the pairwise intersection and compliment
+  gvf_sets       Calculate counts the pairwise intersection and complement
 		 for all files and the symetric difference for each
 		 file. (Not yet implimented)
   fix_gvf        Fix up some common errors in GVF files.  Currently it
@@ -337,8 +364,9 @@ my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
     $genes, $merge, $blend, $sort, $alter, $hash_ag, $validate,
     $stats, $print_gff, $sequence, $splice_sequence, $fasta_only,
     $fasta_no, $fasta_add, $meta_only, $meta_no, $meta_add, $add_ID,
-    $pragmas, $features, $union, $intersection, $l_compliment,
-    $s_difference, $titv, $gvf_stats, $effect_stats, $gvf_sets,
+    $pragmas, $features, $union, $intersection, $lcomplement,
+    $sdifference, $i_union, $i_intersection, $i_lcomplement,
+    $i_sdifference, $titv, $gvf_stats, $effect_stats, $gvf_sets,
     $fix_gvf,);
 
 my $opt_success = GetOptions('help|h'          => \$help,
@@ -375,8 +403,12 @@ my $opt_success = GetOptions('help|h'          => \$help,
 			     'add_ID|v'	       => \$add_ID,
 			     'union'           => \$union,
 			     'intersection'    => \$intersection,
-			     'l_compliment'    => \$l_compliment,
-			     's_difference'    => \$s_difference,
+			     'lcomplement'    => \$lcomplement,
+			     'sdifference'    => \$sdifference,
+			     'i_union'         => \$i_union,
+			     'i_intersection'  => \$i_intersection,
+			     'i_lcomplement'   => \$i_lcomplement,
+			     'i_sdifference'   => \$i_sdifference,
 			     'titv'            => \$titv,
 			     'gvf_stats'       => \$gvf_stats,
 			     'effect_stats'    => \$effect_stats,
@@ -433,8 +465,12 @@ add_ID(\@files)		          if $add_ID;
 print_gff(\@files)                if $print_gff;
 union(\@files)                    if $union;
 intersection(\@files)             if $intersection;
-l_compliment(\@files)             if $l_compliment;
-s_difference(\@files)             if $s_difference;
+lcomplement(\@files)              if $lcomplement;
+sdifference(\@files)              if $sdifference;
+i_union(\@files)                  if $i_union;
+i_intersection(\@files)           if $i_intersection;
+i_lcomplement(\@files)            if $i_lcomplement;
+i_sdifference(\@files)            if $i_sdifference;
 calc_titv(\@files)                if $titv;
 gvf_stats(\@files)                if $gvf_stats;
 effect_stats(\@files)             if $effect_stats;
@@ -1888,6 +1924,17 @@ sub features {
 }
 
 #-----------------------------------------------------------------------------
+# All coordinate matching set operations are based on
+# seqid:start:end unless the set_seq option is set in
+# which case it becomes
+# seqid:start:end:Reference_seq:Variant_seq.  The
+# Reference_seq is removed from the Variant_seq list.
+# These set operations are useful, for example, for
+# operating on sets of SNVs from a family or
+# population.
+#-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
 #  union           The union of all files.
 #-----------------------------------------------------------------------------
 
@@ -1963,11 +2010,11 @@ sub intersection {
 }
 
 #-----------------------------------------------------------------------------
-#  l_compliment    The members found exclusively in the first file
+#  lcomplement    The members found exclusively in the first file
 #                  but not in any subsequent files.
 #-----------------------------------------------------------------------------
 
-sub l_compliment {
+sub lcomplement {
     my $files = shift;
     my (%comp_stash, %comp_count);
     my %others;
@@ -2009,10 +2056,10 @@ sub l_compliment {
 }
 
 #-----------------------------------------------------------------------------
-#  s_difference    The members found in exactly one file.
+#  sdifference    The members found in exactly one file.
 #-----------------------------------------------------------------------------
 
-sub s_difference {
+sub sdifference {
     my $files = shift;
     my (%diff_count, %diff_stash);
     for my $file (@files) {
@@ -2040,7 +2087,226 @@ sub s_difference {
 }
 
 #-----------------------------------------------------------------------------
-#  gvf_sets       Calculate the pairwise intersection and compliment
+# All interval overlap set operations are based on
+# intersecting the genomic intervals occupied by a
+# feature and creating new features based on the set
+# operation.  These operations are useful, for
+# example, in finding the similar or dissimilar
+# regions between two sets of exons.
+#-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+#  i_union         Create a new set of features that is the union of
+#                  regions between all supplied features.
+#-----------------------------------------------------------------------------
+
+sub i_union {
+
+    my $files = shift;
+
+    $meta_no = 1;
+    $| = 1;
+
+    my %sets;
+    my %order;
+    my $counter = 0;
+    for my $file (@{$files}) {
+	my $IN = fh_in($file);
+	while (my $f = next_feature_hash($IN)) {
+	    my ($seqid, $start, $end) = @{$f}{qw(seqid start end)};
+	    $order{$seqid} ||= $counter++;
+	    $sets{$seqid} ||= Set::IntSpan::Fast->new();
+	    $sets{$seqid}->add_range($start, $end);
+	}
+    }
+    my $OUT = fh_out();
+    $counter = 1;
+    for my $seqid (sort {$order{$a} <=> $order{$b}} keys %sets) {
+	my $iter = $sets{$seqid}->iterate_runs();
+	while (my ( $start, $end ) = $iter->()) {
+	    my $feature_id = sprintf('ID_%03d', $counter++);
+	    my $region = {feature_id => $feature_id,
+			  seqid      => $seqid,
+			  source     => '.',
+			  type       => 'region',
+			  start      => $start,
+			  end        => $end,
+			  score      => '.',
+			  strand     => '.',
+			  phase      => '.',
+			  attributes => {ID => [$feature_id]}};
+	    print $OUT to_gff3($region);
+	}
+    }
+    exit;
+}
+
+#-----------------------------------------------------------------------------
+#  i_intersection  Create a new set of features that contain only the
+#                  regions of intersection between all supplied features.
+#-----------------------------------------------------------------------------
+
+sub i_intersection {
+
+    my $files = shift;
+
+    $meta_no = 1;
+    $| = 1;
+
+    my %intrsc;
+    my %order;
+    my $counter = 0;
+    my $file = shift @{$files};
+    my $IN = fh_in($file);
+    while (my $f = next_feature_hash($IN)) {
+	my ($seqid, $start, $end) = @{$f}{qw(seqid start end)};
+	$order{$seqid} ||= $counter++;
+	$intrsc{$seqid} ||= Set::IntSpan::Fast->new();
+	$intrsc{$seqid}->add_range($start, $end);
+    }
+
+    for my $file (@{$files}) {
+	my %set;
+	my $IN = fh_in($file);
+	while (my $f = next_feature_hash($IN)) {
+	    my ($seqid, $start, $end) = @{$f}{qw(seqid start end)};
+	    $order{$seqid} ||= $counter++;
+	    $set{$seqid} ||= Set::IntSpan::Fast->new();
+	    $set{$seqid}->add_range($start, $end);
+	}
+	for my $seqid (keys %intrsc) {
+	    if(! exists $set{$seqid}) {
+		delete $intrsc{$seqid};
+		next;
+	    }
+	    $intrsc{$seqid} = $intrsc{$seqid}->intersection($set{$seqid});
+	}
+    }
+
+    my $OUT = fh_out();
+    $counter = 1;
+    for my $seqid (sort {$order{$a} <=> $order{$b}} keys %intrsc) {
+	my $iter = $intrsc{$seqid}->iterate_runs();
+	while (my ( $start, $end ) = $iter->()) {
+	    my $feature_id = sprintf('ID_%03d', $counter++);
+	    my $region = {feature_id => $feature_id,
+			  seqid      => $seqid,
+			  source     => '.',
+			  type       => 'region',
+			  start      => $start,
+			  end        => $end,
+			  score      => '.',
+			  strand     => '.',
+			  phase      => '.',
+			  attributes => {ID => [$feature_id]}};
+	    print $OUT to_gff3($region);
+	}
+    }
+    exit;
+}
+
+#-----------------------------------------------------------------------------
+#  i_lcomplement   Create a new set of features that contain the
+#                  regions found only in the first set of features.
+#-----------------------------------------------------------------------------
+
+sub i_lcomplement {
+
+    my $files = shift;
+
+    $meta_no = 1;
+    $| = 1;
+
+    my %ldiff;
+    my %order;
+    my $counter = 0;
+    my $file = shift @{$files};
+    my $IN = fh_in($file);
+    while (my $f = next_feature_hash($IN)) {
+	my ($seqid, $start, $end) = @{$f}{qw(seqid start end)};
+	$order{$seqid} ||= $counter++;
+	$ldiff{$seqid} ||= Set::IntSpan::Fast->new();
+	$ldiff{$seqid}->add_range($start, $end);
+    }
+
+    for my $file (@{$files}) {
+	my %set;
+	my $IN = fh_in($file);
+	while (my $f = next_feature_hash($IN)) {
+	    my ($seqid, $start, $end) = @{$f}{qw(seqid start end)};
+	    $order{$seqid} ||= $counter++;
+	    $set{$seqid} ||= Set::IntSpan::Fast->new();
+	    $set{$seqid}->add_range($start, $end);
+	}
+	for my $seqid (keys %ldiff) {
+	    if(! exists $set{$seqid}) {
+		delete $ldiff{$seqid};
+		next;
+	    }
+	    $ldiff{$seqid} = $ldiff{$seqid}->diff($set{$seqid});
+	}
+    }
+
+    my $OUT = fh_out();
+    $counter = 1;
+    for my $seqid (sort {$order{$a} <=> $order{$b}} keys %ldiff) {
+	my $iter = $ldiff{$seqid}->iterate_runs();
+	while (my ( $start, $end ) = $iter->()) {
+	    my $feature_id = sprintf('ID_%03d', $counter++);
+	    my $region = {feature_id => $feature_id,
+			  seqid      => $seqid,
+			  source     => '.',
+			  type       => 'region',
+			  start      => $start,
+			  end        => $end,
+			  score      => '.',
+			  strand     => '.',
+			  phase      => '.',
+			  attributes => {ID => [$feature_id]}};
+	    print $OUT to_gff3($region);
+	}
+    }
+    exit;
+}
+
+#-----------------------------------------------------------------------------
+#  i_sdifference    Create a new set of features that contain the regions
+#                  that are found in one and only one file.
+#-----------------------------------------------------------------------------
+
+sub i_sdifference {
+
+    die "gff_tool (gff_pragmas) not yet implimented!\n";
+    exit;
+
+#     my $files = shift;
+#     my (%diff_count, %diff_stash);
+#     for my $file (@files) {
+# 	my $IN = fh_in($file);
+# 	while (my $f = next_feature_hash($IN)) {
+# 	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
+# 	    # if ($set_seq) {
+# 	    #	my $a = $f->{attributes};
+# 	    #	my $ref_seq = $a->{Reference_seq}[0];
+# 	    #	my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
+# 	    #	$loc_id = join ':', ($loc_id, $ref_seq, $var_seq);
+# 	    # }
+# 	    $diff_stash{$loc_id} ||= $f;
+# 	    $diff_count{$loc_id}++;
+# 	}
+#     }
+#     my $OUT = fh_out();
+#     for my $loc_id (sort keys %diff_stash) {
+# 	if ($diff_count{$loc_id} == 1) {
+# 	    my $f = $diff_stash{$loc_id};
+# 	    print $OUT to_gff3($f);
+# 	}
+#     }
+#     exit;
+}
+
+#-----------------------------------------------------------------------------
+#  gvf_sets       Calculate the pairwise intersection and complement
 #                 for all files and the symetric difference for each
 #                 file.
 #-----------------------------------------------------------------------------
