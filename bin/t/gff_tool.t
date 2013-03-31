@@ -78,6 +78,63 @@ ok($tool->get_stdout =~ /^>4\n[ATGC]+\n/,
 
 $tool->clean_up;
 
+################################################################################
+# Testing that gff_tool runs --i_union
+################################################################################
+
+@cl_args = ('--i_union',
+	    "$FindBin::RealBin/data/set_ops_01.gff",
+	    "$FindBin::RealBin/data/set_ops_02.gff",
+	    "$FindBin::RealBin/data/set_ops_03.gff",
+	   );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gff_tool --i_union runs');
+ok($tool->get_stdout =~ /\t1\t80\t/,
+   'gff_tool --i_union has the correct output');
+ok($tool->get_stdout =~ /\t401\t480\t/,
+   'gff_tool --i_union has the correct output');
+
+$tool->clean_up;
+
+################################################################################
+# Testing that gff_tool runs --i_intersection
+################################################################################
+
+@cl_args = ('--i_intersection',
+	    "$FindBin::RealBin/data/set_ops_01.gff",
+	    "$FindBin::RealBin/data/set_ops_03.gff",
+	   );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gff_tool --i_intersection runs');
+ok($tool->get_stdout =~ /\t40\t50\t/,
+   'gff_tool --i_intersection has the correct output');
+ok($tool->get_stdout =~ /\t440\t450\t/,
+   'gff_tool --i_intersection has the correct output');
+
+
+
+$tool->clean_up;
+
+
+################################################################################
+# Testing that gff_tool runs --i_lcomplement
+################################################################################
+
+@cl_args = ('--i_lcomplement',
+	    "$FindBin::RealBin/data/set_ops_01.gff",
+	    "$FindBin::RealBin/data/set_ops_03.gff",
+	   );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gff_tool --i_lcomplement runs');
+ok($tool->get_stdout =~ /\t1\t39\t/,
+   'gff_tool --i_lcomplement has the correct output');
+ok($tool->get_stdout =~ /\t401\t439\t/,
+   'gff_tool --i_lcomplement has the correct output');
+
+
+
+$tool->clean_up;
+
 
 
 

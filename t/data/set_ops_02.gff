@@ -1,0 +1,7 @@
+##gff-version 3
+##sequence-region chr1 1 1000
+chr1	.	region	70	80	.	.	.	ID=ID_01;
+chr1	.	region	170	180	.	.	.	ID=ID_02;
+chr1	.	region	270	280	.	.	.	ID=ID_03;
+chr1	.	region	370	380	.	.	.	ID=ID_04;
+chr1	.	region	470	480	.	.	.	ID=ID_05;
