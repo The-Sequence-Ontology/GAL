@@ -6,7 +6,7 @@ use warnings;
 use Test::More;
 #use Test::Pod::Coverage;
 
-plan(skip_all => 'vaast_big.t under developement');
+plan(skip_all => '001_pod_coverage.t under developement');
 
 # Select an empty line and use C-u M-| to update the list of tests;
 # find ../../ -name '*.pm' | sort | perl -ane 'chomp;s/^[\.|\/]*//;s/\.pm$//;s/\//::/g;print "pod_coverage_ok(\"$_\", \"$_ POD is covered.\");\n"' | wc
