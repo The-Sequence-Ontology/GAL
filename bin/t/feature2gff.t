@@ -28,8 +28,9 @@ like($tool->get_stdout, qr/Synopsis/, 'feature2gff prints usage statement');
 
 #../feature2gff
 
-my @cl_args = ('--parser venter_snp data/celera_short.gff',
+my @cl_args = ('--parser venter_snp',
 	       '--fasta data/fasta_hg18/chr22_hg18.fasta',
+	       'data/celera_short.gff',
 	      );
 
 ok(! $tool->run(cl_args => \@cl_args), 'feature2gff runs');
@@ -37,6 +38,24 @@ ok($tool->get_stdout =~ /ID=1103675014765;Variant_seq=G;Reference_seq=;Zygosity=
    'feature2gff has the correct output');
 
 $tool->clean_up;
+
+################################################################################
+# Testing feature2gff --parser VCFv4_0
+################################################################################
+
+#../feature2gff
+
+my @cl_args = ('--parser VCFv4_0',
+	       '--fasta data/hg19_chr22.fa',
+	       'data/test.vcf',
+	      );
+
+ok(! $tool->run(cl_args => \@cl_args), 'feature2gff runs');
+ok($tool->get_stdout =~ /ID=22:HG00096:16052513;Variant_seq=C,G;Reference_seq=G;/,
+   'feature2gff has the correct output');
+
+$tool->clean_up;
+
 done_testing();
 
 ################################################################################
