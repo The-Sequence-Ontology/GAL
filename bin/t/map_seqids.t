@@ -11,29 +11,29 @@ chdir $FindBin::Bin;
 my $path = "$FindBin::Bin/..";
 
 my $tool = GAL::Run->new(path => $path,
-			 command => 'foo');
+			 command => 'map_seqids');
 
 ################################################################################
-# Testing that foo compiles and returns usage statement
+# Testing that map_seqids compiles and returns usage statement
 ################################################################################
 
-ok(! $tool->run(cl_args => '--help'), 'foo complies');
-like($tool->get_stdout, qr/Synopsis/, 'foo prints usage statement');
+ok(! $tool->run(cl_args => '--help'), 'map_seqids complies');
+like($tool->get_stdout, qr/Synopsis/, 'map_seqids prints usage statement');
 
 ################################################################################
-# Testing that foo does something else
+# Testing that map_seqids does something else
 ################################################################################
 
-# my $gff_file = "$FindBin::Bin/data/file.gff";
-#
-# my @cl_args = ('--arg1',
-#	         '--arg2 value',
-#	         $gff_file,
-#	        );
-#
-# ok(! $tool->run(cl_args => \@cl_args), 'foo does something');
-# ok($tool->get_stdout =~ /match something/,
-#    'foo has the correct output');
+my $map_file = "$FindBin::Bin/data/map_seqids.txt";
+my $gff_file = "$FindBin::Bin/data/map_seqids.gff";
+
+my @cl_args = ($map_file,
+	       $gff_file,
+	      );
+
+ok(! $tool->run(cl_args => \@cl_args), 'map_seqids does something');
+ok($tool->get_stdout =~ /^chr22/,
+   'map_seqids has the correct output');
 
 $tool->clean_up;
 done_testing();

@@ -129,7 +129,7 @@ sub stdout {
     my ($self, $value) = @_;
 
     $self->{stdout} = $value if defined $value;
-    $self->{stdout} ||= 'vaast_run_stdout_' . $self->random_string(8);
+    $self->{stdout} ||= 'gal_run_stdout_' . $self->random_string(8);
 
     return $self->{stdout};
 }
@@ -150,7 +150,7 @@ sub stderr {
     my ($self, $value) = @_;
 
     $self->{stderr} = $value if defined $value;
-    $self->{stderr} ||= 'vaast_run_stderr_' . $self->random_string(8);
+    $self->{stderr} ||= 'gal_run_stderr_' . $self->random_string(8);
     return $self->{stderr};
 }
 
