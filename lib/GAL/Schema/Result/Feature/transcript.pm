@@ -217,8 +217,17 @@ sub mature_seq_genomic {
   my $self = shift;
 
   my $mature_seq_genomic;
-  map {$mature_seq_genomic .= $_->genomic_seq}
-    sort {$a->start <=> $b->start }$self->exons;
+  my $exons = $self->exons;
+ EXON:
+  while (my $exon = $exons->next) {
+      my $seq = $exon->seq;
+      if (! $seq) {
+	  $self->warn('no_sequence_available_for_feature',
+		      $exon->feature_id);
+	  next EXON;
+      }
+      $mature_seq_genomic .= $seq;
+  }
   return $mature_seq_genomic;
 }
 
