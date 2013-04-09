@@ -1810,7 +1810,7 @@ sub fasta_only {
 
 sub fasta_no {
 
-    #die "\n\ngff_tool (fasta_no) function is written, but untested\n\n";
+    warn "\n\ngff_tool (fasta_no) function is written, but untested\n\n";
 
     for my $file (@files) {
 	#unlink $file or die "Can't unlink $file\n$!\n";
