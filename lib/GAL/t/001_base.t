@@ -118,6 +118,8 @@ ok($base->float_gt(0.000124, 0.000123), '$base->float_gt');
 ok($base->float_ge(0.000123, 0.000123), '$base->float_ge');
 ok(! $base->float_gt(0.000123, 0.000124), '$base->float_gt');
 
+ok(my @transcripts = $base->get_transcript_types(), 'my @transcripts = $base->get_transcript_types()');
+ok(grep {m/transcript/} @transcripts, 'grep {m/transcript//} @transcripts');
 done_testing;
 
 ################################################################################

@@ -1105,6 +1105,118 @@ sub float_ge {
 
 #-----------------------------------------------------------------------------
 
+##############################################################################
+## Consolidate three copies of this method 1) Here 2) Feature/gene.pm and
+## 3) Base.pm
+##############################################################################
+
+=head2 get_transcript_types
+
+ Title   : get_transcript_types
+ Usage   : $transcript_types = $self->get_transcript_types
+  Function: Get a list of all features that are types of transcripts.
+ Returns : An array or ref
+ Args    : None
+
+=cut
+
+sub get_transcript_types {
+
+    my $self = shift;
+
+    my @transcripts = qw(EST
+			 RNase_MRP_RNA
+			 RNase_P_RNA
+			 SRP_RNA
+			 SRP_RNA_primary_transcript
+			 Y_RNA
+			 aberrant_processed_transcript
+			 alternatively_spliced_transcript
+			 antisense_RNA
+			 antisense_primary_transcript
+			 capped_mRNA
+			 capped_primary_transcript
+			 class_II_RNA
+			 class_I_RNA
+			 consensus_mRNA
+			 dicistronic_mRNA
+			 dicistronic_primary_transcript
+			 dicistronic_transcript
+			 edited_mRNA
+			 edited_transcript
+			 edited_transcript_by_A_to_I_substitution
+			 enhancerRNA
+			 enzymatic_RNA
+			 exemplar_mRNA
+			 guide_RNA
+       			 lnc_RNA
+       			 mRNA
+       			 mRNA_recoded_by_codon_redefinition
+       			 mRNA_recoded_by_translational_bypass
+       			 mRNA_region
+       			 mRNA_with_frameshift
+       			 mRNA_with_minus_1_frameshift
+       			 mRNA_with_minus_2_frameshift
+       			 mRNA_with_plus_1_frameshift
+       			 mRNA_with_plus_2_frameshift
+       			 mature_transcript
+       			 mature_transcript_region
+       			 miRNA_primary_transcript
+       			 mini_exon_donor_RNA
+       			 monocistronic_mRNA
+       			 monocistronic_primary_transcript
+       			 monocistronic_transcript
+       			 ncRNA
+       			 nc_primary_transcript
+       			 piRNA
+       			 polyadenylated_mRNA
+       			 polycistronic_mRNA
+       			 polycistronic_primary_transcript
+       			 polycistronic_transcript
+       			 pre_edited_mRNA
+       			 primary_transcript
+       			 primary_transcript_region
+       			 processed_transcript
+       			 protein_coding_primary_transcript
+       			 pseudogenic_transcript
+       			 rRNA
+       			 rRNA_cleavage_RNA
+       			 rRNA_primary_transcript
+       			 rasiRNA
+       			 recoded_mRNA
+       			 regional_centromere_outer_repeat_transcript
+       			 riboswitch
+       			 ribozyme
+       			 scRNA
+       			 scRNA_primary_transcript
+       			 siRNA
+       			 small_regulatory_ncRNA
+       			 snRNA
+       			 snRNA_primary_transcript
+       			 snoRNA
+       			 snoRNA_primary_transcript
+       			 spliced_leader_RNA
+       			 stRNA
+       			 tRNA
+       			 tRNA_primary_transcript
+       			 tasiRNA
+       			 tasiRNA_primary_transcript
+       			 telomerase_RNA
+       			 tmRNA_primary_transcript
+       			 trans_spliced_mRNA
+       			 trans_spliced_transcript
+       			 transcript
+       			 transcript_bound_by_nucleic_acid
+       			 transcript_bound_by_protein
+       			 transcript_region
+       			 transcript_with_translational_frameshift
+       			 vault_RNA
+  );
+  return wantarray ? @transcripts : \@transcripts;
+}
+
+#-----------------------------------------------------------------------------
+
 #=head2  validate_feature
 #
 # Title   : validate_feature
