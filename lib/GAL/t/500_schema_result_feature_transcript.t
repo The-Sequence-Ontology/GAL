@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+
 use strict;
 
 use Test::More;
@@ -69,7 +69,7 @@ while (my $transcript = $transcripts->next) {
     $inf_intron_coords{$end}++;
     $icount++;
   }
-  #last if $count++ > 100;
+  last if $count++ > 50;
 }
 my $seen_introns    = join ',', sort keys %seen_intron_coords;
 my $infered_introns = join ',', sort keys %inf_intron_coords;
