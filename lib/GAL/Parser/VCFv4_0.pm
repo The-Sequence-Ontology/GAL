@@ -132,7 +132,6 @@ sub parse_record {
 
     my @all_seqs = ($reference_seq, @variant_seqs);
 
-
     # INFO Column Keys
     # VFC 4.0
     # AA ancestral allele
@@ -202,13 +201,13 @@ sub parse_record {
 	  @variant_seqs = @these_all_seqs;
 
 	  if ($this_ref eq '-') {
-	    $type = 'nucleotide_insertion';
+	    $type = 'insertion';
 	  }
 	  elsif (grep {$_ eq '-'} @variant_seqs) {
-	    $type = 'nucleotide_deletion';
+	    $type = 'deletion';
 	  }
 	  else {
-	    $type = 'substitution';
+	    $type = 'complex_substitution';
 	  }
 	}
 
@@ -217,8 +216,6 @@ sub parse_record {
 	# Make sure that at least one variant sequence differs from
 	# the reference sequence.
 	next unless grep {$_ ne $this_ref} @variant_seqs;
-
-	my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
 
 	# Format Column Keys
 	# GT : genotype, encoded as alleles values separated by either of
@@ -256,10 +253,9 @@ sub parse_record {
 
 	my $attributes = {Reference_seq => [$this_ref],
 			  Variant_seq   => \@variant_seqs,
-			  Zygosity      => [$zygosity],
 			  ID            => [$feature_id],
-                          Total_reads   => [$read_count],
 		      };
+	$attributes->{Total_reads} = [$read_count] if $read_count;
 
 	my $feature = {feature_id => $feature_id,
 		       seqid      => $seqid,
