@@ -46,7 +46,6 @@ $tool->clean_up;
 #../feature2gff
 
 my @cl_args = ('--parser VCFv4_0',
-	       '--fasta data/hg19_chr22.fa',
 	       'data/test.vcf',
 	      );
 
