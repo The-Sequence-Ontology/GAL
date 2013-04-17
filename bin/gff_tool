@@ -29,17 +29,23 @@ parsed and operated on.
 
 --Input/Output Options--
 
-  in_place|i      Do an in-place edit of the file. Be careful - no
+  in_place|i      
+
+                  Do an in-place edit of the file. Be careful - no
 		  backup copy of your original file will be created!
 
-  out_ext|o       If input is coming from a file(s) and you want
+  out_ext|o       
+
+                  If input is coming from a file(s) and you want
 		  output to be written to a file(s) of the same name
 		  with an added extension, then give the extension
 		  here and gff_tool will do the right thing by using
 		  the same file name with the given argument as an
 		  additional extenstion.
 
-  fasta|j         Provide the path to a fasta file or a directory
+  fasta|j         
+
+                  Provide the path to a fasta file or a directory
 		  containing the fasta file(s) associated with a given
 		  feature file.  This argument is required by some
 		  (but not all) of the other commands.  Bio::DB::Fasta
@@ -48,7 +54,9 @@ parsed and operated on.
 		  given via the code argument.  See below for details
 		  of code references.  Not yet implimented.
 
-  so_file         The location of a Sequence Ontology OBO format file.
+  so_file         
+
+                  The location of a Sequence Ontology OBO format file.
 		  The location of the file may also be given with the
 		  environment variable SO_OBO.  If no file is
 		  available an attempt will be made to retrieve the
@@ -61,25 +69,35 @@ manipulations just before a feature (or it\'s sequence) is printed,
 and so if a feature is altered by other commands the filter will apply
 to the altered copy of the feature.  All filters given are applied.
 
-  ids|d           Provide a file that contains a list of IDs (or other
+  ids|d           
+
+                  Provide a file that contains a list of IDs (or other
 		  values).  The values loaded be used by the
 		  include/exclude commands described below and will
 		  also be made available as a hash reference ($i) to
 		  the any code reference given.
 
-  seqids          Provide a file that contains a list of seqids.  The
+  seqids          
+
+                  Provide a file that contains a list of seqids.  The
 		  values loaded be used by the include/exclude
 		  commands described below and will also be made
 		  available as a hash reference ($si) to the any code
 		  reference given.
 
-  include|n       Include only those features whos IDs match the
+  include|n       
+
+                  Include only those features whos IDs match the
 		  values provided by the ids argument above.
 
-  exclude|e       Exclude those features whos IDs match the the values
+  exclude|e       
+
+                  Exclude those features whos IDs match the the values
 		  provided by ids argument above.
 
-  code|c          A code reference that will be used by some of the
+  code|c          
+
+                  A code reference that will be used by some of the
 		  following commands below and applied in turn to each
 		  feature as described.  All code references will have
 		  available to the the following variables:
@@ -102,22 +120,30 @@ to the altered copy of the feature.  All filters given are applied.
 		      $d -  A Bio::DB::Fasta object for the fasta sequences
 			    given by the fasta argument described above.
 
-  filter|t        Use the code reference provided with the code
+  filter|t        
+
+                  Use the code reference provided with the code
 		  argument described above to filter the features.
 		  Print only those features that return true from the
 		  given code ref.
 
-  overlaps        Print only those features whose start and end coordinates
+  overlaps        
+
+                  Print only those features whose start and end coordinates
 		  overlap those given as an argument to this command.
 		  Coordinates are give as seqid:start-end where start
 		  defaults to 1 and end defaults start or 100,000,000,000
 		  if start is also not defined.
 
-  genes           Keep only the gene models from a complex GFF file.
+  genes           
+
+                  Keep only the gene models from a complex GFF file.
 
 --Modify Options--
 
-  merge|m         Merge takes a feature file(s) and combines the
+  merge|m         
+
+                  Merge takes a feature file(s) and combines the
 		  features.  If gff_tool encounters a second feature
 		  that shares an ID with a previously encountered
 		  feature then both of those features are passed to
@@ -126,7 +152,9 @@ to the altered copy of the feature.  All filters given are applied.
 		  code reference is given, then the first feature
 		  encountered will be saved and a warning issued.
 
-  blend|b	  Blend takes a feature file(s) and uniquely blends
+  blend|b	  
+
+                  Blend takes a feature file(s) and uniquely blends
 		  the attributes for features that share the same ID.
 		  If two features have the same ID, but conflict in
 		  ways other than the attributes (i.e. seqid, source,
@@ -138,21 +166,25 @@ to the altered copy of the feature.  All filters given are applied.
 		  values from the first feature encountered, then
 		  blend the attributes and issue a warning.
 
-  sort|s          Sort the feature file using the code reference given
+  sort|s          
+
+                  Sort the feature file using the code reference given
 		  by the code argument described above.  If no code
 		  argument is given the sort will sort lexigraphically
 		  on seqid and numerically on start and reverse
 		  numerically on end.(Not yet implimented)
 
-  alter|a         Apply the code reference given by the code argument
+  alter|a         
+
+                  Apply the code reference given by the code argument
 		  described above to each feature.  This is identical
 		  to the filter command described above, but any
 		  alteration made to the feature by the code
 		  reference is kept in printing.
 
-  hash_ag
+  hash_ag         
 
-		  The hash_ag function aggregates all the features in
+                  The hash_ag function aggregates all the features in
 		  a file to a hash based on user specified code.  It
 		  then iterates over each key in that hash and runs
 		  another block of user specified code on the value(s)
@@ -179,6 +211,15 @@ to the altered copy of the feature.  All filters given are applied.
 
 		  See the Examples section below.
 
+  map_seqids      
+
+                  Map the seqid values forward using the given mapping
+                  file.  The argument to this option is a
+                  tab-delimited text file with two columns, the first
+                  column being the current seqid as found in the GFF3
+                  file, and the second value being associated the new
+                  seqid that will replace the old one.
+
 --Reporting Options--
 
   validate|v
@@ -202,7 +243,9 @@ to the altered copy of the feature.  All filters given are applied.
 		  will be done.  An error report will be printed to
 		  STDOUT.
 
-  stats|u	  Return simple summary statistics for the given file.
+  stats|u	  
+
+                  Return simple summary statistics for the given file.
 		  (Not yet implimented)
 
 --Add/Extract Options--
@@ -361,13 +404,13 @@ gff_tool --hash_ag "push @{$h{$f->{type}}}, $f"          \
 
 my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
     $SEQIDS_FILE, $include, $exclude, $code, $filter, $overlaps,
-    $genes, $merge, $blend, $sort, $alter, $hash_ag, $validate,
-    $stats, $print_gff, $sequence, $splice_sequence, $fasta_only,
-    $fasta_no, $fasta_add, $meta_only, $meta_no, $meta_add, $add_ID,
-    $pragmas, $features, $union, $intersection, $lcomplement,
-    $sdifference, $i_union, $i_intersection, $i_lcomplement,
-    $i_sdifference, $titv, $gvf_stats, $effect_stats, $gvf_sets,
-    $fix_gvf,);
+    $genes, $merge, $blend, $sort, $alter, $hash_ag, $map_seqids,
+    $validate, $stats, $print_gff, $sequence, $splice_sequence,
+    $fasta_only, $fasta_no, $fasta_add, $meta_only, $meta_no,
+    $meta_add, $add_ID, $pragmas, $features, $union, $intersection,
+    $lcomplement, $sdifference, $i_union, $i_intersection,
+    $i_lcomplement, $i_sdifference, $titv, $gvf_stats, $effect_stats,
+    $gvf_sets, $fix_gvf,);
 
 my $opt_success = GetOptions('help|h'          => \$help,
 			     'in_place|i'      => \$in_place,
@@ -387,6 +430,7 @@ my $opt_success = GetOptions('help|h'          => \$help,
 			     'sort|s'	       => \$sort,
 			     'alter|a'	       => \$alter,
 			     'hash_ag=s'       => \$hash_ag,
+                             'map_seqids=s'    => \$map_seqids,
 			     'validate|v'      => \$validate,
 			     'stats|u'	       => \$stats,
 			     'sequence|p'      => \$sequence,
@@ -403,8 +447,8 @@ my $opt_success = GetOptions('help|h'          => \$help,
 			     'add_ID|v'	       => \$add_ID,
 			     'union'           => \$union,
 			     'intersection'    => \$intersection,
-			     'lcomplement'    => \$lcomplement,
-			     'sdifference'    => \$sdifference,
+			     'lcomplement'     => \$lcomplement,
+			     'sdifference'     => \$sdifference,
 			     'i_union'         => \$i_union,
 			     'i_intersection'  => \$i_intersection,
 			     'i_lcomplement'   => \$i_lcomplement,
@@ -431,7 +475,7 @@ die "FATAL : unreadable_file : $FASTA_FILE\n" if ($FASTA_FILE && ! -r $FASTA_FIL
 die "FATAL : unreadable_file : $SO_FILE\n"    if ($SO_FILE    && ! -r $SO_FILE);
 
 my @files = @ARGV;
-die "$usage\n\nMust give one or more feature files\n\n" unless (scalar @files || ! -t STDIN);
+die "$usage\n\nFATAL : no_file_given : Must give one or more feature files\n\n" unless (scalar @files || ! -t STDIN);
 for my $file (@files) {
  next if $file eq '-';
  die "FATAL : unable_to_open_file : $file\n" if ! -r $file;
@@ -449,8 +493,9 @@ merge(\@files)		          if $merge;
 blend_gff(\@files)		  if $blend;
 sort_gff(\@files)		  if $sort;
 alter_gff(\@files, $code)         if $alter;
-validate(\@files)		  if $validate;
 hash_ag(\@files, $hash_ag, $code) if $hash_ag;
+map_seqids(\@files, $map_seqids)  if $map_seqids;
+validate(\@files)		  if $validate;
 stats(\@files)		          if $stats;
 sequence(\@files)		  if $sequence;
 splice_sequence(\@files)	  if $splice_sequence;
@@ -507,7 +552,7 @@ sub filter {
 	    my $d  = $FASTA_DB;
 
 	    my $return_value = eval $code;
-	    die "Fatal Error in code ref: $code\n$@\n" if $@;
+	    die "FATAL : fatal_error_in_code_ref : $code\n$@\n" if $@;
 	    next unless $return_value;
 
 	    print $OUT to_gff3($f_original);
@@ -623,7 +668,7 @@ sub merge_gff {
 
     my $files = shift;
 
-    die "gff_tool (merge) not yet implimented!\n";
+    die "FATAL : feature_not_implimented : gff_tool --merge\n";
     exit;
 }
 
@@ -722,7 +767,7 @@ sub sort_gff {
 
     my ($file, $code) = @_;
 
-    die "gff_tool (sort) not yet implimented!\n";
+    die "FATAL : feature_not_implimented : gff_tool --sort\n";
 
     $code ||= '{$a->{seqid}';
 
@@ -764,7 +809,7 @@ sub alter_gff {
 	    my $d = $FASTA_DB;
 
 	    my $return_value = eval $code;
-	    die "Fatal Error in code ref: $code\n$@\n" if $@;
+	    die "FATAL : fatal_error_in_code_ref : $code\n$@\n" if $@;
 
 	    $f->{attributes} = $t;
 
@@ -812,7 +857,7 @@ sub hash_ag {
 	    my $d = $FASTA_DB;
 
 	    my $return_value = eval $ag_code;
-	    die "Fatal Error in code ref: $ag_code\n$@\n" if $@;
+	    die "FATAL : fatal_error_in_code_ref : $ag_code\n$@\n" if $@;
 	}
     }
 
@@ -822,12 +867,87 @@ sub hash_ag {
 	my $v = $h{$k};
 
 	my @f = eval $code;
-	die "Fatal Error in code ref: $code\n$@\n" if $@;
+	die "FATAL : fatal_error_in_code_ref : $code\n$@\n" if $@;
 	next unless @f;
 
 	print $OUT to_gff3(\@f);
     }
     exit;
+}
+
+#-----------------------------------------------------------------------------
+#  map_seqids      
+#
+#                  Map the seqid values forward using the given mapping
+#                  file.  The argument to this option is a
+#                  tab-delimited text file with two columns, the first
+#                  column being the current seqid as found in the GFF3
+#                  file, and the second value being associated the new
+#                  seqid that will replace the old one.
+#
+#-----------------------------------------------------------------------------
+
+sub map_seqids {
+
+    my ($files, $map_file) = @_;
+
+    die "FATAL : file_does_not_exist : $map_file\n" unless -e $map_file;
+    die "FATAL : file_not_readable : $map_file\n"   unless -r $map_file;
+
+    open(my $MAP, '<', $map_file) or
+	die "FATAL : cant_open_file_for_reading : $map_file\n";
+
+    my %map;
+  LINE:
+    while (my $line = <$MAP>) {
+	next LINE if $line =~ /^\#/;
+	chomp $line;
+	if ($line =~ /^\s/) {
+	    warn("WARN : skipping_line_in_mapping_file : " .
+		 "(Line begins with whitespace) '$line'\n");
+	    next LINE;
+	}
+	if ($line !~ /\t/) {
+	    warn("WARN : skipping_line_in_mapping_file : " .
+		 "(Line has no tab) '$line'\n");
+	    next LINE;
+	}
+	my ($old, $new) = split /\t/, $line;
+	if (! defined $old) {
+	    warn("WARN : skipping_line_in_mapping_file : " .
+		 "(Line has no seqids) '$line'\n");
+	    next LINE;
+	}
+	if (! defined $new) {
+	    warn("WARN : skipping_line_in_mapping_file : " .
+		 "(Line has no new seqid) '$line'\n");
+	    next LINE;
+	}
+	if (exists $map{$old}) {
+	    my $current_map = $map{$old};
+	    warn("WARN : overwriting_existing_seqid_map_value : " .
+		 "($old => $current_map) is being replaced by ($old => $new)\n");
+	}
+	$map{$old} = $new;
+    }
+
+    for my $file (@{$files}) {
+	my $OUT = fh_out();
+	my $IN = fh_in($file);
+	while (my $f = next_feature_hash($IN)) {
+	    my $seqid = $f->{seqid};
+	    my $new_seqid;
+	    if (exists $map{$seqid}) {
+		$new_seqid = $map{$seqid};
+	    }
+	    else {
+		warn("WARN : no_value_in_seqid_map : $seqid\n");
+		$new_seqid = $seqid;
+	    }
+	    $f->{seqid} = $new_seqid;
+	    print $OUT to_gff3($f);
+	}
+    }
 }
 
 #-----------------------------------------------------------------------------
@@ -1668,7 +1788,7 @@ sub validate {
 
 sub stats {
 
-    die "gff_tool (stats) not yet implimented!\n";
+    die "FATAL : feature_not_implimented : gff_tool --stats\n";
     exit;
 }
 
@@ -1771,10 +1891,11 @@ sub fasta_add {
 		  'fasta_add) function is written, but untested'
 		  );
 
-    die "Can't open $fasta_add for reading\n" unless -r $fasta_add;
+    die "FATAL : cant_open_file_for_reading : $fasta_add\n" unless -r $fasta_add;
     for my $file (@{$files}) {
 	my ($fasta_section) = `grep -P '^##FASTA' $file`;
-	open(my $OUT, '<<', $file) or die "Can't open $file for appending\n";
+	open(my $OUT, '<<', $file) or
+	    die "FATAL : cant_open_file_for_reading : $file\n";
 	print $OUT "\n## FASTA\n"  unless $fasta_section;
 	print $OUT `cat $fasta_add`;
 	close $OUT;
@@ -1958,7 +2079,6 @@ sub union {
     my $OUT = fh_out();
     for my $loc_id (sort keys %union) {
 	my $f = $union{$loc_id};
-	print $OUT to_gff3($f);
     }
     exit;
 }
