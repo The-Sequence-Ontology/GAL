@@ -65,6 +65,28 @@ ok($tool->get_stdout =~ /4\s+FlyBase\s+exon\s+906080\s+906088/,
 $tool->clean_up;
 
 ################################################################################
+# Testing that gff_tool runs --map_seqids
+################################################################################
+# gff_tool --map_seqids t/data/gff_tool_map_seqids.txt t/data/refseq_chr22.trim.gff3
+
+
+@cl_args = ("--map_seqids $FindBin::RealBin/data/gff_tool_map_seqids.txt",
+	    "$FindBin::RealBin/data/refseq_chr22.trim.gff3",
+	   );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gff_tool --maps runs ');
+ok($tool->get_stderr =~ /WARN : skipping_line_in_mapping_file : \(Line begins with whitespace\)/,
+   'gff_tool has the correct error output');
+ok($tool->get_stderr =~ /WARN : skipping_line_in_mapping_file : \(Line has no tab\)/,
+   'gff_tool has the correct error output');
+ok($tool->get_stdout =~ /^22/,
+   'gff_tool has the correct output');
+ok($tool->get_stdout !~ /^chr22/,
+   'gff_tool has the correct output');
+
+$tool->clean_up;
+
+################################################################################
 # Testing that gff_tool runs --fasta_only
 ################################################################################
 
