@@ -130,6 +130,11 @@ Options:
       Use the given directory as the location for temporary files.
       Used by --ill_rg.
 
+  --print_flags
+
+      Print a comma separated list of bit flag values (as words) for
+      each alignment.
+
 Code:
 
 The --filter option takes a block of perl code and the read is SKIPPED
@@ -199,20 +204,21 @@ opt    variable OPTional fields in the format TAG:VTYPE:VALUE
 Bitwise Flags
 See http://picard.sourceforge.net/explain-flags.html
     http://bio-bwa.sourceforge.net/bwa.shtml
+
 --------------------------------------------------------------------------------
-Flag	Dec	Description
+Flag	Dec	Name            Description
 ================================================================================
-0x0001	1	the read is paired in sequencing
-0x0002	2	the read is mapped in a proper pair
-0x0004	4	the query sequence itself is unmapped
-0x0008	8	the mate is unmapped
-0x0010	16	strand of the query (1 for reverse)
-0x0020	32	strand of the mate
-0x0040	64	the read is the first read in a pair
-0x0080	128	the read is the second read in a pair
-0x0100	256	the alignment is not primary
-0x0200	512	the read fails platform/vendor quality checks
-0x0400	1024	the read is either a PCR or an optical duplicate
+0x0001	1	PAIRED		the read is paired in sequencing
+0x0002	2	PAIR_MAPPED	the read is mapped in a proper pair
+0x0004	4	UNMAPPED	the query sequence itself is unmapped
+0x0008	8	MATE_UNMAPPED	the mate is unmapped
+0x0010	16	REVERSE		strand of the query (1 for reverse)
+0x0020	32	MATE_REVERSE	strand of the mate
+0x0040	64	FIRST_READ	the read is the first read in a pair
+0x0080	128	SECOND_READ	the read is the second read in a pair
+0x0100	256	NOT_PRIMARY	the alignment is not primary
+0x0200	512	FAILS		the read fails platform/vendor quality checks
+0x0400	1024	DUPLICATE	the read is either a PCR or an optical duplicate
 
 BWA Opt fields
 See http://bio-bwa.sourceforge.net/bwa.shtml
@@ -241,7 +247,7 @@ XE	Number of supporting seeds
 
 my ($help, $summary, $FILTER, $bflag, $BFLAG, $clean, $vaast_clean,
     $region, $ill_rg, $sample_name, $bam_format, $fastq, $headers,
-    $intervals, $OPTIONS, $TMPDIR);
+    $intervals, $OPTIONS, $TMPDIR, $print_flags);
 
 my $opt_success = GetOptions('help|h'        => \$help,
 			     'summary|s'     => \$summary,
@@ -259,12 +265,13 @@ my $opt_success = GetOptions('help|h'        => \$help,
 			     'intervals|v'   => \$intervals,
 			     'options|o'     => \$OPTIONS,
 			     'tmpdir|t=s'    => \$TMPDIR,
+			     'print_flags'   => \$print_flags,
 			     );
 
 if (! $opt_success) {
     print STDERR join ' : ', ('FATAL',
-                              'command_line_parse_error',
-                              'Use gff_tool --help to see correct usage');
+			      'command_line_parse_error',
+			      'Use gff_tool --help to see correct usage');
 }
 
 if ($help) {
@@ -325,6 +332,9 @@ elsif ($intervals) {
 }
 elsif ($fastq) {
     print_fastq(\@files);
+}
+elsif ($print_flags) {
+    print_flags(\@files);
 }
 else {
     print_file(\@files);
@@ -595,6 +605,50 @@ sub vaast_clean {
 	my $fh = get_fh_out();
 	while (my $a = &{$iterator}) {
 	    print_alignment($a, $fh);
+	}
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_flags {
+
+    my $files = shift;
+
+    # --------------------------------------------------------------------------------
+    # Flag	Dec	Name            Description
+    # ================================================================================
+    # 0x0001	1	PAIRED		the read is paired in sequencing
+    # 0x0002	2	PAIR_MAPPED	the read is mapped in a proper pair
+    # 0x0004	4	UNMAPPED	the query sequence itself is unmapped
+    # 0x0008	8	MATE_UNMAPPED	the mate is unmapped
+    # 0x0010	16	REVERSE		strand of the query (1 for reverse)
+    # 0x0020	32	MATE_REVERSE	strand of the mate
+    # 0x0040	64	FIRST_READ	the read is the first read in a pair
+    # 0x0080	128	SECOND_READ	the read is the second read in a pair
+    # 0x0100	256	NOT_PRIMARY	the alignment is not primary
+    # 0x0200	512	FAILS		the read fails platform/vendor quality checks
+    # 0x0400	1024	DUPLICATE	the read is either a PCR or an optical duplicate
+
+
+    for my $file (@{$files}) {
+	my $iterator = make_iterator($file, $region, 'options');
+	while (my $a = &{$iterator}) {
+	    my %flags = (PAIRED		=> $a->{flag} & $PAIRED,
+			 PAIR_MAPPED	=> $a->{flag} & $PAIR_MAPPED,
+			 UNMAPPED	=> $a->{flag} & $UNMAPPED,
+			 MATE_UNMAPPED	=> $a->{flag} & $MATE_UNMAPPED,
+			 REVERSE	=> $a->{flag} & $REVERSE,
+			 MATE_REVERSE	=> $a->{flag} & $MATE_REVERSE,
+			 FIRST_READ	=> $a->{flag} & $FIRST_READ,
+			 SECOND_READ	=> $a->{flag} & $SECOND_READ,
+			 NOT_PRIMARY	=> $a->{flag} & $NOT_PRIMARY,
+			 FAILS		=> $a->{flag} & $FAILS,
+			 DUPLICATE	=> $a->{flag} & $DUPLICATE,
+		);
+	    my @names = grep {$flags{$_}} keys %flags;
+	    print join ',', @names;
+	    print "\n";
 	}
     }
 }
