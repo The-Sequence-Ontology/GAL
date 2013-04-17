@@ -79,9 +79,13 @@ ok($tool->get_stderr =~ /WARN : skipping_line_in_mapping_file : \(Line begins wi
    'gff_tool has the correct error output');
 ok($tool->get_stderr =~ /WARN : skipping_line_in_mapping_file : \(Line has no tab\)/,
    'gff_tool has the correct error output');
-ok($tool->get_stdout =~ /^22/,
+ok($tool->get_stdout =~ /^\#\#gff-version\s+3/m,
    'gff_tool has the correct output');
-ok($tool->get_stdout !~ /^chr22/,
+ok($tool->get_stdout =~ /^\#\#sequence-region\s+22/m,
+   'gff_tool has the correct output');
+ok($tool->get_stdout =~ /22\t/m,
+   'gff_tool has the correct output');
+ok($tool->get_stdout !~ /chr22\t/m,
    'gff_tool has the correct output');
 
 $tool->clean_up;

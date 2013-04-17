@@ -934,6 +934,28 @@ sub map_seqids {
     for my $file (@{$files}) {
 	my $OUT = fh_out();
 	my $IN = fh_in($file);
+
+	# Map pragmas
+	my @pragmas = read_pragmas($IN);
+	for my $pragma_text (@pragmas) {
+	    if ($pragma_text =~ /^\#\#sequence-region/) {
+		my ($pragma, $space1, $seqid, $space2, $start,
+		    $space3, $end) = split /(\s+)/, $pragma_text;
+		my $new_seqid;
+		if (exists $map{$seqid}) {
+		    $new_seqid = $map{$seqid};
+		}
+		else {
+		    warn("WARN : no_value_in_seqid_map : $seqid\n");
+		    $new_seqid = $seqid;
+		}
+		$pragma_text = join '', ($pragma, $space1, $new_seqid,
+					 $space2, $start, $space3, $end);
+	    }
+	    print $OUT "$pragma_text\n";
+	}	
+
+	# Map features
 	while (my $f = next_feature_hash($IN)) {
 	    my $seqid = $f->{seqid};
 	    my $new_seqid;
@@ -2863,6 +2885,59 @@ sub fh_out {
 	open ($OUT, ">&=STDOUT") or die "Can't open STDOUT for writing:\n$!\n";
     }
     return $OUT;
+}
+
+#-----------------------------------------------------------------------------
+
+sub read_pragmas {
+
+    my $fh = shift;
+
+    my @pragmas;
+    my $line = <$fh>;
+    my $last_offset = tell($fh) - length($line);
+    if (! defined $line) {
+	return wantarray ? @pragmas : \@pragmas;
+    }
+
+  PRAGMA:
+    until ($line !~ /^(\#.*|\s+)$/) {
+	next PRAGMA unless $line =~ /^\#/;
+	chomp $line;
+	if ($line =~ /^\#\#FASTA/) {
+	    handle_fasta($fh);
+	    return undef;
+	}
+	next PRAGMA if $line =~ /^\#\#\#\s*$/;
+
+	if ($line =~ /^\#\#sequence-region\s(\S+)/) {
+	    if ($include && %{$SEQIDS} ) {
+		return unless $SEQIDS->{$1};
+	    }
+	    elsif ($exclude && %{$SEQIDS}) {
+		return if $SEQIDS->{$1};
+	    }
+	}
+	push @pragmas, $line;
+	$line = <$fh>;
+	$last_offset = tell($fh) - length($line);
+	last PRAGMA unless defined $line;
+    }
+    seek($fh, $last_offset, 0);
+    return wantarray ? @pragmas : \@pragmas;
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_pragmas {
+
+    my ($IN, $OUT) = @_;
+
+    my @pragmas = read_pragmas($IN);
+    for my $pragma (@pragmas) {
+	print $OUT "$pragma\n";
+    }
+    print '';
 }
 
 #-----------------------------------------------------------------------------
