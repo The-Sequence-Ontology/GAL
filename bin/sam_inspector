@@ -508,7 +508,6 @@ sub build_summary {
     print $bar_graph->to_string($mismatches->frequency_distribution_ref([(0..20)]), sort => sub {sort {$a <=> $b} @_});
     print "\n\n";
 
-
     print "FLAGS:\n";
     print $bar_graph->to_string(\%flags, [qw(paired pair_mapped
 					     unmapped mate_unmapped
