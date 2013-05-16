@@ -639,6 +639,7 @@ sub genes {
   for my $file (@files) {
     my $IN  = fh_in($file);
     my $OUT = fh_out($file);
+    print_pragmas($IN, $OUT);
     while (my $f = next_feature_hash($IN)) {
       next unless defined $accept{$f->{type}};
       print $OUT to_gff3($f);
@@ -2729,9 +2730,6 @@ sub effect_stats {
     $meta_no = 1;
     $| = 1;
 
-    print join "\t", ('Term', @{$files});
-    print "\n";
-
     my (%files, %terms, %term_total);
     for my $file (@files) {
 	$files{$file}++;
@@ -2747,7 +2745,7 @@ sub effect_stats {
     }
 
     print "File\t";
-    print join "\t", keys %term_total;
+    print join "\t", sort keys %term_total;
     print "\n";
     for my $file (sort {$terms{$b} <=> $terms{$a}} keys %terms) {
 	print "$file";
