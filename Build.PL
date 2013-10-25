@@ -25,7 +25,6 @@ my $class = Module::Build->subclass
 	   print "remove the entire subroutine (ACTION_install) where this message\n";
 	   print "is printed run Build realclean and re-install.\n\n";
        }
-       sub ACTION_clean
      },
   );
 

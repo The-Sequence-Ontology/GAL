@@ -1,3 +1,12 @@
+13-10-25_Version_0.2.1 (Revision: 399)
+Fri Oct 25 14:30:53 MDT 2013
+
+-Addition of HTML documentation pages GAL/docs/html/GAL.html
+-Many updates to docs filewide
+-Many additions, updates and bug fixes library wide.
+
+--------------------------------------------------------------------------------
+
 12-12-11_Version_0.2.0 (Revision: 364)
 Tue Dec 11 14:11:56 MST 2012
 
@@ -46,4 +55,3 @@ Tue Dec 11 14:11:56 MST 2012
  (i.e. $transcript->exons)
 
 --------------------------------------------------------------------------------
-
