@@ -1,6 +1,6 @@
 <HTML>
 <HEAD>
-<TITLE>GAL::Parser::ncbi_blast_tab</TITLE>
+<TITLE>GAL::Parser::cgi_allSvEventsBeta</TITLE>
 </HEAD>
 <BODY BGCOLOR="#ffffff" TEXT="#000000">
 <UL>
@@ -20,19 +20,20 @@
 
 </A></H1>
 
-<P>GAL::Parser::ncbi_blast_tab - Parse NCBI_BLAST_TAB files
+<P>GAL::Parser::cgi_allSvEventsBeta - Parse Complete Genomics
+cnvSegmentsDiploidBeta files
 
 </P><H1><A NAME="VERSION">VERSION
 
 </A></H1>
 
-<P>This document describes GAL::Parser::ncbi_blast_tab version 0.2.0
+<P>This document describes GAL::Parser::cgi_allSvEventsBeta version 0.01
 
 </P><H1><A NAME="SYNOPSIS">SYNOPSIS
 
 </A></H1>
 
-<PRE>    my $parser = GAL::Parser::ncbi_blast_tab-&gt;new(file =&gt; 'ncbi_blast_tab.txt');
+<PRE>    my $parser = GAL::Parser::cgi_allSvEventsBeta-&gt;new(file =&gt; 'cgi_allSvEventsBeta.tsv');
 
     while (my $feature_hash = $parser-&gt;next_feature_hash) {
 	print $parser-&gt;to_gff3($feature_hash) . &quot;\n&quot;;
@@ -41,22 +42,21 @@
 
 </A></H1>
 
-<P><A HREF="../../GAL/Parser/ncbi_blast_tab.html">GAL::Parser::ncbi_blast_tab</A> provides a parser for tab-delimited
-NCBI Blast+ output created with using the ?? command line option to
-Blast.
+<P><A HREF="../../GAL/Parser/cgi_allSvEventsBeta.html">GAL::Parser::cgi_allSvEventsBeta</A> provides a parser for
+cnvSegmentsDiploidBeta.tsv files.
 
 </P><H1><A NAME="Constructor">Constructor
 
 </A></H1>
 
-<P>New <A HREF="../../GAL/Parser/ncbi_blast_tab.html">GAL::Parser::ncbi_blast_tab</A> objects are created by the class method
+<P>New <A HREF="../../GAL/Parser/cgi_allSvEventsBeta.html">GAL::Parser::cgi_allSvEventsBeta</A> objects are created by the class method
 new.  Arguments should be passed to the constructor as a list (or
 reference) of key value pairs.  All attributes of the
-<A HREF="../../GAL/Parser/ncbi_blast_tab.html">GAL::Parser::ncbi_blast_tab</A> object can be set in the call to new. An
+<A HREF="../../GAL/Parser/cgi_allSvEventsBeta.html">GAL::Parser::cgi_allSvEventsBeta</A> object can be set in the call to new. An
 simple example of object creation would look like this:
 
 </P>
-<PRE>    my $parser = GAL::Parser::ncbi_blast_tab-&gt;new(file =&gt; 'ncbi_blast_tab.txt');</PRE>
+<PRE>    my $parser = GAL::Parser::cgi_allSvEventsBeta-&gt;new(file =&gt; 'cgi_allSvEventsBeta.txt');</PRE>
 
 <P>The constructor recognizes the following parameters which will set the
 appropriate attributes:
@@ -84,9 +84,9 @@ must be set.
 </A></H2>
 
 <PRE>     Title   : new
-     Usage   : GAL::Parser::ncbi_blast_tab-&gt;new();
-     Function: Creates a GAL::Parser::ncbi_blast_tab object;
-     Returns : A GAL::Parser::ncbi_blast_tab object
+     Usage   : GAL::Parser::cgi_allSvEventsBeta-&gt;new();
+     Function: Creates a GAL::Parser::cgi_allSvEventsBeta object;
+     Returns : A GAL::Parser::cgi_allSvEventsBeta object
      Args    : See the attributes described above.</PRE>
 <H2><A NAME="parse_record">parse_record
 
@@ -97,6 +97,15 @@ must be set.
  Function: Parse the data from a record.
  Returns : A hash ref needed by Feature.pm to create a Feature object
  Args    : A hash ref of fields that this sub can understand (In this case GFF3).</PRE>
+<H2><A NAME="parse_metadata">parse_metadata
+
+</A></H2>
+
+<PRE> Title   : parse_metadata
+ Usage   : $a = $self-&gt;parse_metadata
+ Function: Call the reader to return metadata and then parse and store it.
+ Returns : N/A
+ Args    : A hash reference of parse_metadata</PRE>
 <H2><A NAME="reader">reader
 
 </A></H2>
@@ -110,13 +119,14 @@ must be set.
 
 </A></H1>
 
-<P><A HREF="../../GAL/Parser/ncbi_blast_tab.html">GAL::Parser::ncbi_blast_tab</A> does not throw any warnings or errors.
+<P><A HREF="../../GAL/Parser/cgi_allSvEventsBeta.html">GAL::Parser::cgi_allSvEventsBeta</A> does not throw any warnings or errors.
 
 </P><H1><A NAME="CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
 
 </A></H1>
 
-<P><A HREF="../../GAL/Parser/ncbi_blast_tab.html">GAL::Parser::ncbi_blast_tab</A> requires no configuration files or environment variables.
+<P><A HREF="../../GAL/Parser/cgi_allSvEventsBeta.html">GAL::Parser::cgi_allSvEventsBeta</A> requires no configuration files or
+environment variables.
 
 </P><H1><A NAME="DEPENDENCIES">DEPENDENCIES
 
@@ -151,12 +161,12 @@ barry.moore@genetics.utah.edu
 
 </A></H1>
 
-<P>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All
+<P>Copyright (c) 2010, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All
 rights reserved.
 
 </P>
 <PRE>    This module is free software; you can redistribute it and/or
-    modify it under the same terms as Perl itself (See LICENSE).</PRE>
+    modify it under the same terms as Perl itself.</PRE>
 <H1><A NAME="DISCLAIMER%20OF%20WARRANTY">DISCLAIMER OF WARRANTY
 
 </A></H1>
