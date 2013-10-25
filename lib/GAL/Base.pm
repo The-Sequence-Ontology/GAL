@@ -6,7 +6,7 @@ use Carp qw(croak cluck);
 use Bio::DB::Fasta;
 use Scalar::Util qw(blessed);
 
-$VERSION = 0.2.0;
+$VERSION = 0.2.1;
 
 =head1 NAME
 
