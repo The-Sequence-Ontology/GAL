@@ -40,5 +40,4 @@ sub spans {
 ## Attribute aggregation
 
 
-
 1;

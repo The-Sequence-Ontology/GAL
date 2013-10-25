@@ -6,7 +6,7 @@ use Getopt::Long;
 use GAL::Annotation;
 
 my $gff = shift;
-$gff || print "Usage:\ngal_example file.gff3\n";
+$gff || print "Usage:\nGAL_script file.gff3\n";
 
 my $features = GAL::Annotation->new($gff)->features;
 

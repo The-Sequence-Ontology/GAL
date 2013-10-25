@@ -160,6 +160,9 @@ sub parse_record {
       push @{$info{$key}}, @values;
     }
 
+
+
+
     my @format_order = split /:/, $record{format};
 
     my %individual_data;

@@ -62,13 +62,6 @@ used on it's own.  You should use it's subclasses instead.
 
 =head1 CONSTRUCTOR
 
-To construct a GAL::Interval subclass simply pass it an appropriate list.
-
-    my $list_catg = GAL::Interval->new(list => [qw(red red red blue blue
-							       green yellow orange orange
-							       purple purple purple purple)]);
-    $list_numeric = GAL::Interval->new(list => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
-
 
 =cut
 

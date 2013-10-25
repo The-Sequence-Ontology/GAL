@@ -1,2 +1,2 @@
-find docs/html/ -name '*.html' | xargs rm -f
+find docs/html/GAL -name '*.html' | xargs rm -f
 pods2html lib/ docs/html/
