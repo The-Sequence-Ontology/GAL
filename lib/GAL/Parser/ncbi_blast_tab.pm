@@ -26,7 +26,9 @@ This document describes GAL::Parser::ncbi_blast_tab version 0.2.0
 
 =head1 DESCRIPTION
 
-L<GAL::Parser::ncbi_blast_tab> provides a parser for NCBI_BLAST_TAB data.
+L<GAL::Parser::ncbi_blast_tab> provides a parser for tab-delimited
+NCBI Blast+ output created with using the ?? command line option to
+Blast.
 
 =head1 Constructor
 

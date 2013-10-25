@@ -30,6 +30,10 @@ Options:
 
       Print a summary of the SAM file
 
+  --qc
+
+      Print QC metrics on the SAM file.
+
   --filter, i 'perl code'
 
       Filter the SAM file based on some criteria.  This option takes a
@@ -245,12 +249,13 @@ XE	Number of supporting seeds
 ";
 
 
-my ($help, $summary, $FILTER, $bflag, $BFLAG, $clean, $vaast_clean,
+my ($help, $summary, $qc, $FILTER, $bflag, $BFLAG, $clean, $vaast_clean,
     $region, $ill_rg, $sample_name, $bam_format, $fastq, $headers,
     $intervals, $OPTIONS, $TMPDIR, $print_flags);
 
 my $opt_success = GetOptions('help|h'        => \$help,
 			     'summary|s'     => \$summary,
+			     'qc'            => \$qc,
 			     'filter|i=s'    => \$FILTER,
 			     'FLAG|F=i'      => \$BFLAG,
 			     'flag|f=i'      => \$bflag,
@@ -323,6 +328,9 @@ if ($vaast_clean) {                                             # Filters Fail I
 # Run appropriate functions
 if ($summary) {
     build_summary(\@files);
+}
+if ($qc) {
+    build_qc(\@files);
 }
 elsif ($ill_rg) {
     add_illumina_readgroup(\@files);
@@ -521,6 +529,57 @@ sub build_summary {
     print $bar_graph->to_string(\%mapqs, sort => sub {sort {$a <=> $b} @_});
     print "\n\n";
     print '';
+}
+
+#-----------------------------------------------------------------------------
+
+sub build_qc {
+
+    my $files = shift;
+
+    my %sets;
+    my $isizes  = Statistics::Descriptive::Discrete->new();
+    my $best_hits  = Statistics::Descriptive::Discrete->new();
+
+    my $count;
+    my %raw_flags;
+    my %flags;
+    my %qnames;
+    my %rnames;
+    my %mapqs;
+
+    for my $file (@{$files}) {
+	my $iterator = make_iterator($file, $region, 'options');
+
+	while (my $a = &{$iterator}) {
+	    $count++;
+	    my ($qname, $flag, $rname, $pos, $mapq, $cigar, $mrnm,
+		$mpos, $isize, $seq, $qual, $opt)
+		=
+		@{$a}{qw(qname flag rname pos map cigar mrnm mpos
+			 isize seq qual opt)};
+
+	    $qnames{$qname}++;
+	    $raw_flags{$flag}++;
+	    ($flag & $PAIRED)        && $flags{paired}++;
+	    ($flag & $PAIR_MAPPED)   && $flags{pair_mapped}++;
+	    ($flag & $UNMAPPED)      && $flags{unmapped}++;
+	    ($flag & $MATE_UNMAPPED) && $flags{mate_unmapped}++;
+	    ($flag & $REVERSE)       && $flags{reverse}++;
+	    ($flag & $MATE_REVERSE)  && $flags{mate_reverse}++;
+	    ($flag & $FIRST_READ)    && $flags{first_read}++;
+	    ($flag & $SECOND_READ)   && $flags{second_read}++;
+	    ($flag & $NOT_PRIMARY)   && $flags{not_primary}++;
+	    ($flag & $FAILS)	     && $flags{fails}++;
+	    ($flag & $DUPLICATE)     && $flags{duplicate}++;
+
+	    $rnames{$rname}++;
+	    $mapqs{$mapq}++;
+	}
+    }
+    print "TOTAL ALIGNMENTS:  $count\n\n";
+    print "QNAMES:  " . (scalar keys(%qnames)) . "\n\n";
+
 }
 
 #-----------------------------------------------------------------------------

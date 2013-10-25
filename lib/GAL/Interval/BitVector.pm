@@ -47,6 +47,8 @@ This document describes GAL::Interval::BitVector version 0.2.0
 sub new {
 	my ($class, @args) = @_;
 	my $self = $class->SUPER::new(@args);
+	$self->throw('class_not_implimented',
+		     'GAL::Interval::BitVector is not yet implimented');
 	return $self;
 }
 
