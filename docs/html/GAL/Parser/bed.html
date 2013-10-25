@@ -1,6 +1,6 @@
 <HTML>
 <HEAD>
-<TITLE>GAL::Parser::ncbi_blast_tab</TITLE>
+<TITLE>GAL::Parser::bed</TITLE>
 </HEAD>
 <BODY BGCOLOR="#ffffff" TEXT="#000000">
 <UL>
@@ -20,19 +20,19 @@
 
 </A></H1>
 
-<P>GAL::Parser::ncbi_blast_tab - Parse NCBI_BLAST_TAB files
+<P>GAL::Parser::bed - Parse BED files
 
 </P><H1><A NAME="VERSION">VERSION
 
 </A></H1>
 
-<P>This document describes GAL::Parser::ncbi_blast_tab version 0.2.0
+<P>This document describes GAL::Parser::bed version 0.2.0
 
 </P><H1><A NAME="SYNOPSIS">SYNOPSIS
 
 </A></H1>
 
-<PRE>    my $parser = GAL::Parser::ncbi_blast_tab-&gt;new(file =&gt; 'ncbi_blast_tab.txt');
+<PRE>    my $parser = GAL::Parser::bed-&gt;new(file =&gt; 'bed.txt');
 
     while (my $feature_hash = $parser-&gt;next_feature_hash) {
 	print $parser-&gt;to_gff3($feature_hash) . &quot;\n&quot;;
@@ -41,22 +41,20 @@
 
 </A></H1>
 
-<P><A HREF="../../GAL/Parser/ncbi_blast_tab.html">GAL::Parser::ncbi_blast_tab</A> provides a parser for tab-delimited
-NCBI Blast+ output created with using the ?? command line option to
-Blast.
+<P><A HREF="../../GAL/Parser/bed.html">GAL::Parser::bed</A> provides a parser for BED data.
 
 </P><H1><A NAME="Constructor">Constructor
 
 </A></H1>
 
-<P>New <A HREF="../../GAL/Parser/ncbi_blast_tab.html">GAL::Parser::ncbi_blast_tab</A> objects are created by the class method
+<P>New <A HREF="../../GAL/Parser/bed.html">GAL::Parser::bed</A> objects are created by the class method
 new.  Arguments should be passed to the constructor as a list (or
 reference) of key value pairs.  All attributes of the
-<A HREF="../../GAL/Parser/ncbi_blast_tab.html">GAL::Parser::ncbi_blast_tab</A> object can be set in the call to new. An
+<A HREF="../../GAL/Parser/bed.html">GAL::Parser::bed</A> object can be set in the call to new. An
 simple example of object creation would look like this:
 
 </P>
-<PRE>    my $parser = GAL::Parser::ncbi_blast_tab-&gt;new(file =&gt; 'ncbi_blast_tab.txt');</PRE>
+<PRE>    my $parser = GAL::Parser::bed-&gt;new(file =&gt; 'bed.txt');</PRE>
 
 <P>The constructor recognizes the following parameters which will set the
 appropriate attributes:
@@ -84,9 +82,9 @@ must be set.
 </A></H2>
 
 <PRE>     Title   : new
-     Usage   : GAL::Parser::ncbi_blast_tab-&gt;new();
-     Function: Creates a GAL::Parser::ncbi_blast_tab object;
-     Returns : A GAL::Parser::ncbi_blast_tab object
+     Usage   : GAL::Parser::bed-&gt;new();
+     Function: Creates a GAL::Parser::bed object;
+     Returns : A GAL::Parser::bed object
      Args    : See the attributes described above.</PRE>
 <H2><A NAME="parse_record">parse_record
 
@@ -110,13 +108,13 @@ must be set.
 
 </A></H1>
 
-<P><A HREF="../../GAL/Parser/ncbi_blast_tab.html">GAL::Parser::ncbi_blast_tab</A> does not throw any warnings or errors.
+<P><A HREF="../../GAL/Parser/bed.html">GAL::Parser::bed</A> does not throw any warnings or errors.
 
 </P><H1><A NAME="CONFIGURATION%20AND%20ENVIRONMENT">CONFIGURATION AND ENVIRONMENT
 
 </A></H1>
 
-<P><A HREF="../../GAL/Parser/ncbi_blast_tab.html">GAL::Parser::ncbi_blast_tab</A> requires no configuration files or environment variables.
+<P><A HREF="../../GAL/Parser/bed.html">GAL::Parser::bed</A> requires no configuration files or environment variables.
 
 </P><H1><A NAME="DEPENDENCIES">DEPENDENCIES
 
