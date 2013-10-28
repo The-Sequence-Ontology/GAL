@@ -3,9 +3,11 @@
 use strict;
 use warnings;
 
-use GAL::Run;
 use Test::More;
 use FindBin;
+use lib "$FindBin::RealBin/../../lib";
+use lib "$FindBin::RealBin/../../lib/cpan";
+use GAL::Run;
 
 chdir $FindBin::Bin;
 my $path = "$FindBin::Bin/..";

@@ -3,22 +3,24 @@
 use strict;
 use warnings;
 
-use GAL::Run;
 use Test::More;
 use FindBin;
+use lib "$FindBin::RealBin/../../lib";
+use lib "$FindBin::RealBin/../../lib/cpan";
+use GAL::Run;
 
 chdir $FindBin::Bin;
 my $path = "$FindBin::Bin/..";
 
-my $tool = GAL::Run->new(path => $path,
-			 command => 'foo');
+my $tool = GAL::Run->new(path    => $path,
+			 command => 'gff_tool');
 
 ################################################################################
 # Testing that foo compiles and returns usage statement
 ################################################################################
 
-ok(! $tool->run(cl_args => '--help'), 'foo complies');
-like($tool->get_stdout, qr/Synopsis/, 'foo prints usage statement');
+ok(! $tool->run(cl_args => '--help'), 'gff_tool complies');
+like($tool->get_stdout, qr/Synopsis/, 'gff_tool prints usage statement');
 
 ################################################################################
 # Testing that foo does something else
