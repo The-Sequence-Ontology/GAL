@@ -1,9 +1,10 @@
-13-10-25_Version_0.2.1 (Revision: 399)
-Fri Oct 25 14:30:53 MDT 2013
+13-10-28_Version_0.2.1 (Revision: 411)
+Mon Oct 28 12:55:29 MDT 2013
 
 -Addition of HTML documentation pages GAL/docs/html/GAL.html
--Many updates to docs filewide
--Many additions, updates and bug fixes library wide.
+-Many updates to docs library-wide
+-Many updates to tests
+-Many additions, updates and bug fixes library wide
 
 --------------------------------------------------------------------------------
 
