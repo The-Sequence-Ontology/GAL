@@ -1,0 +1,111 @@
+Genome Annotation Library (GAL)
+
+To install a basic functioning GAL you'll need a few Perl modules
+installed via CPAN (http://www.cpan.org/).  An installation script has
+been provided which will automatically install all the dependencies
+for you.  There are some accessory scripts within the GAL package that
+require additional dependencies, and the install script will ask you
+if you want to install these.  You can answer either yes or know and
+it won't affect the basic functionality of the GAL library.  The
+instructions below are divided into two sections, 1) a quick and easy
+install and 2) full installation instructions.
+
+1) GAL Quick Install:
+
+   ---------------------------------------- COMMAND LINE ----------------------------------------
+   perl Build.PL
+   sudo ./Build installdeps
+   ./Build test
+   ./Build install
+   ----------------------------------------------------------------------------------------------
+   
+2) GAL Complete Installation Instructions:
+
+   a) Linux
+
+      i) Red Hat, Fedora, CentOS and other Linux systems that use a
+         yum package manager:
+
+	 Install a set of developer tools (All we really need is the
+	 gcc compiler but it doesn't hurt to round out your
+	 installation). Type and answer Yes to the prompts:
+
+	 ---------------------------------------- COMMAND LINE ----------------------------------------
+	 sudo yum update # If you linux installation is out of date.
+	 sudo yum groupinstall "Development Tools"
+	 ----------------------------------------------------------------------------------------------
+
+	 If you want to install additional graphics libraries required
+	 by optional GAL accessory script you need to install the GD
+	 library (http://libgd.bitbucket.org/). Type and answer Yes to
+	 the prompts:
+
+	 ---------------------------------------- COMMAND LINE ----------------------------------------
+	 sudo yum install gd-devel
+	 ----------------------------------------------------------------------------------------------
+
+	 Red Hat likes to keep it's tools very retro, so here we'll
+         update part of our perl installation to make installing and
+         testing GAL easier. Type and accept defaults at prompts:
+
+	 ---------------------------------------- COMMAND LINE ----------------------------------------
+	 sudo cpan TAP::Harness
+	 sudo cpan Module::Build
+	 ----------------------------------------------------------------------------------------------
+
+      ii) Debian, Ubuntu and other Linux systems that use the Advance
+          Packaging Tool (i.e. apt-get):
+
+	 Install a set of developer tools (All we really need is the gcc compiler
+	 but it doesn't hurt to round out your installation).
+
+	 ---------------------------------------- COMMAND LINE ----------------------------------------
+	 sudo apt-get update # If your linux installation is out of date.
+	 sudo apt-get install build-essential
+	 ----------------------------------------------------------------------------------------------
+
+	 If you want to install additional graphics libraries
+	 required by optional GAL accessory script you need to
+         install the GD library (http://libgd.bitbucket.org/). Type
+
+	 ---------------------------------------- COMMAND LINE ----------------------------------------
+	 sudo apt-get install libgd2-xpm-dev
+	 ----------------------------------------------------------------------------------------------
+
+   b) Mac OSX:
+
+      Install XCode from the App Store.  Point your browser here
+      https://developer.apple.com/xcode/ and follow the link to the
+      App Store.
+
+      If you want to install additional graphics libraries required by
+      optional GAL accessory script you need to install the GD
+      library (http://libgd.bitbucket.org/).  We won't offer detailed
+      instructions here - Google ("install libgd mac osx") is your
+      friend.      
+
+   For all systems we now install GAL.
+
+   ---------------------------------------- COMMAND LINE ----------------------------------------
+   tar -xzvf GAL.tar.gz
+   cd GAL
+   perl Build.PL
+   ----------------------------------------------------------------------------------------------
+
+   When installing a minimal base installation of GAL answer 'N'
+   when asked if you want to install the optional recommended
+   modules otherwise answer yes, but make sure you've install GD as
+   described above.
+
+   ---------------------------------------- COMMAND LINE ----------------------------------------
+   sudo ./Build installdeps
+   ./Build test
+   ./Build install
+   ----------------------------------------------------------------------------------------------
+
+      
+Have a look at the examples in GAL/bin and look at the documentation in GAL/docs/html.
+
+Please report any errors to the mailing list.
+
+http://sourceforge.net/p/song/mailman/
