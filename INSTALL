@@ -10,14 +10,70 @@ it won't affect the basic functionality of the GAL library.
 
 1) GAL Quick Install:
 
-   ---------------------------------------- COMMAND LINE ----------------------------------------
-   perl Build.PL
-   sudo ./Build installdeps
-   ./Build test
-   ./Build install
-   ----------------------------------------------------------------------------------------------
+  ---------------------------------------- COMMAND LINE ----------------------------------------
+  perl Build.PL
+  sudo ./Build installdeps
+  ./Build test
+  ./Build install
+  ----------------------------------------------------------------------------------------------
+
+If you have trouble, try the complete installation instructions below
+first and then contact the mailing list if you still need help.
       
-Have a look at the examples in GAL/bin/examples and look at the documentation in GAL/docs/html.
+See details at the bottom of this document for docs, examples and the
+mailing list.
+
+2) GAL complete install instructions:
+
+If your computer has a minimal OS installation, as is often the case
+for new compluters, you'll need to set up your computer to prepare it
+for building software packages.  Follow the instructions below for
+your operating system.
+
+For all systems:
+
+Some installations of perl are a a bit out of date and you may need to
+update a few modules to install GAL.  It won't hurt to update the
+following two core modules just in case. Type the following and follow the prompts.
+
+  ---------------------------------------- COMMAND LINE ----------------------------------------
+  sudo cpan TAP::Harness
+  sudo cpan Module::Build
+  ----------------------------------------------------------------------------------------------
+
+   a) Linux
+
+      i) Red Hat, Fedora, CentOS and other Linux systems that use a
+         yum package manager:
+
+	 Install a set of developer tools (All we really need is the
+	 gcc compiler but it doesn't hurt to round out your
+	 installation). Type and answer Yes to the prompts:
+
+	 ---------------------------------------- COMMAND LINE ----------------------------------------
+	 sudo yum update # If you linux installation is out of date.
+	 sudo yum groupinstall "Development Tools"
+	 ----------------------------------------------------------------------------------------------
+
+      ii) Debian, Ubuntu and other Linux systems that use the Advance
+          Packaging Tool (i.e. apt-get):
+
+	 Install a set of developer tools (All we really need is the gcc compiler
+	 but it doesn't hurt to round out your installation).
+
+	 ---------------------------------------- COMMAND LINE ----------------------------------------
+	 sudo apt-get update # If your linux installation is out of date.
+	 sudo apt-get install build-essential
+	 ----------------------------------------------------------------------------------------------
+
+   b) Mac OSX:
+
+      Install XCode from the App Store.  Point your browser here
+      https://developer.apple.com/xcode/ and follow the link to the
+      App Store.
+
+Have a look at the examples in GAL/bin/examples and look at the
+documentation in GAL/docs/html.
 
 Please contact the mailing list for help or to report any bugs.
 
