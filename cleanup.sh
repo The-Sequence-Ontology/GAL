@@ -36,3 +36,5 @@ rm -f t/data/hg18_chr22.fa.index
 rm -f t/data/hg19_chr22.fa.index
 rm -f t/data/refseq_chr22.trim.sqlite
 rm -f t/data/test_storage.sqlite
+rm -f bin/t/gal_run_stdout*
+rm -f bin/t/gal_run_stderr*

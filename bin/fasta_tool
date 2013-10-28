@@ -22,6 +22,8 @@ use IO::All;
 #-----------------------------------------------------------------------------
 my $usage = "
 
+Synopsis:
+
 fasta_tool [-options] fasta_file
 
 Description:
