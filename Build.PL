@@ -46,6 +46,7 @@ my $builder = $class->new(
 				       'DBI'				   => 0,
 				       'DBIx::Class'		           => 0,
 				       'Getopt::Long'			   => 0,
+				       'IO::All'                           => 0,
 				       'List::MoreUtils'		   => 0,
 				       'List::Util'			   => 0,
 				       'Module::Build'			   => 0,
@@ -63,8 +64,7 @@ my $builder = $class->new(
 					     'Test::More'   => 0,
 					    },
 			  recommends => {
-					 #'Test::Distribution' => 0,
-					 'Time::HiRes'        => 0,
+					 'Time::HiRes' => 0,
 					 'DBIx::Class::ResultClass::HashRefInflator' => 0,
 
 					},
