@@ -200,15 +200,57 @@ list (or referenece) of key value pairs.
 
 =head1 METHODS
 
+=head2 verbosity
+
+ Title   : verbosity
+ Usage   : $base->verbosity($level);
+ Function: Set the level of verbosity reported in STDERR reported by
+	   the code.
+ Returns : None
+ Args    : debug|1:  Print all FATAL, WARN INFO and DEBUG messages.  Produces
+		     a lot of output.
+	   info|2:   Print all FATAL, WARN and INFO messages. This is the
+		     default.
+	   unique|3: Print only the first occurence of each error/info code.
+	   warn|4:   Don't print INFO messages.
+	   fatal|5:  Don't print INFO or WARN messages. Still dies with
+		     message on FATAL errors.
+
+=cut
+
+sub verbosity {
+  my ($self, $verbosity) = @_;
+
+  if ($verbosity) {
+    $verbosity = lc $verbosity;
+    $verbosity = ($verbosity =~ /^d/ ? 1 :
+		  $verbosity =~ /^i/ ? 2 :
+		  $verbosity =~ /^u/ ? 3 :
+		  $verbosity =~ /^w/ ? 4 :
+		  $verbosity =~ /^f/ ? 5 :
+		  $verbosity);
+    if (! grep {$verbosity eq $_} qw(1 2 3 4 5)) {
+      $self->warn('invalid_verbosity_level',
+		  "$verbosity - setting verbosity level to info");
+      $verbosity = 2;
+    }
+    $self->{verbosity} = $verbosity;
+  }
+  $self->{verbosity} ||= '2';
+  return $self->{verbosity};
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 handle_message
 
  Title   : handle_message
  Usage   : $base->handle_message($level, $code, $message);
- Function: Handle a message.
+ Function: Handle a message and report to the user appropriately.
  Returns : None
- Args    : level (INFO, WARM, FATAL)
-	   code (a_single_string_description)
-	   message (Free text explination)
+ Args    : level:   FATAL, WARN, INFO, DEBUG
+	   code:    $info_code # single_word_code_for_info
+	   message: $info_msg  # Free text description of info
 
 =cut
 
@@ -216,15 +258,50 @@ sub handle_message {
 	my ($self, $level, $code, $message) = @_;
 
 	my $caller = ref($self);
-
-	$level   ||= 'FATAL';
-	$code    ||= 'unspecified_code';
+	$level ||= 'UNKNOWN';
 	$message ||= $caller;
+	if (! $code) {
+	  $code = 'unspecified_code';
+	  $message = join '', ("GAL::Base is handling a message " .
+				"for $caller without an error code.  "  .
+				"Complain to the author of $caller!");
+	}
+	chomp $message;
+	$message .= "\n";
+	my $verbosity = $self->verbosity;
 
-	print STDERR join ' : ', ($level, $code, $message);
-	print STDERR "\n";
-
-	die $caller if $level eq 'FATAL';
+	if ($level eq 'FATAL') {
+	  $message = join ' : ', ('FATAL', $code, $message);
+	  croak $message;
+	}
+	elsif ($level eq 'WARN') {
+	  return if ($verbosity > 4);
+	  return if ($verbosity == 3 && $self->{unique_codes}{$code}++);
+	  $message = join ' : ', ('WARN', $code, $message);
+	  print STDERR $message;
+	}
+	elsif ($level eq 'INFO') {
+	  return if ($verbosity > 3);
+	  return if ($verbosity == 3 && $self->{unique_codes}{$code}++);
+	  $message = join ' : ', ('INFO', $code, $message);
+	  print STDERR $message;
+	}
+	elsif ($level eq 'DEBUG') {
+	  return if ($verbosity != 1);
+	  my $sub = (caller(4))[3];
+	  #my $sub = $data[3];
+	  $message = join ' : ', ('DEBUG', $code, "($caller\:\:$sub) $message");
+	  print STDERR $message;
+	  print '';
+	}
+	else {
+	  $message = join '', ("GAL::Base is handling a message " .
+			       "for $caller without an error level.  "  .
+			       "Complain to the author of $caller!\n");
+	  chomp $message;
+	  $message = join ' : ', ('UNKNOWN', $code, $message);
+	  croak $message;
+	}
 }
 
 #-----------------------------------------------------------------------------
@@ -294,7 +371,7 @@ sub debug {
 
 #-----------------------------------------------------------------------------
 
-=head2 wrap_text
+=Head2 wrap_text
 
  Title   : wrap_text
  Usage   : $text = $self->wrap_text($text, 50);
@@ -1149,68 +1226,68 @@ sub get_transcript_types {
 			 enzymatic_RNA
 			 exemplar_mRNA
 			 guide_RNA
-       			 lnc_RNA
-       			 mRNA
-       			 mRNA_recoded_by_codon_redefinition
-       			 mRNA_recoded_by_translational_bypass
-       			 mRNA_region
-       			 mRNA_with_frameshift
-       			 mRNA_with_minus_1_frameshift
-       			 mRNA_with_minus_2_frameshift
-       			 mRNA_with_plus_1_frameshift
-       			 mRNA_with_plus_2_frameshift
-       			 mature_transcript
-       			 mature_transcript_region
-       			 miRNA_primary_transcript
-       			 mini_exon_donor_RNA
-       			 monocistronic_mRNA
-       			 monocistronic_primary_transcript
-       			 monocistronic_transcript
-       			 ncRNA
-       			 nc_primary_transcript
-       			 piRNA
-       			 polyadenylated_mRNA
-       			 polycistronic_mRNA
-       			 polycistronic_primary_transcript
-       			 polycistronic_transcript
-       			 pre_edited_mRNA
-       			 primary_transcript
-       			 primary_transcript_region
-       			 processed_transcript
-       			 protein_coding_primary_transcript
-       			 pseudogenic_transcript
-       			 rRNA
-       			 rRNA_cleavage_RNA
-       			 rRNA_primary_transcript
-       			 rasiRNA
-       			 recoded_mRNA
-       			 regional_centromere_outer_repeat_transcript
-       			 riboswitch
-       			 ribozyme
-       			 scRNA
-       			 scRNA_primary_transcript
-       			 siRNA
-       			 small_regulatory_ncRNA
-       			 snRNA
-       			 snRNA_primary_transcript
-       			 snoRNA
-       			 snoRNA_primary_transcript
-       			 spliced_leader_RNA
-       			 stRNA
-       			 tRNA
-       			 tRNA_primary_transcript
-       			 tasiRNA
-       			 tasiRNA_primary_transcript
-       			 telomerase_RNA
-       			 tmRNA_primary_transcript
-       			 trans_spliced_mRNA
-       			 trans_spliced_transcript
-       			 transcript
-       			 transcript_bound_by_nucleic_acid
-       			 transcript_bound_by_protein
-       			 transcript_region
-       			 transcript_with_translational_frameshift
-       			 vault_RNA
+			 lnc_RNA
+			 mRNA
+			 mRNA_recoded_by_codon_redefinition
+			 mRNA_recoded_by_translational_bypass
+			 mRNA_region
+			 mRNA_with_frameshift
+			 mRNA_with_minus_1_frameshift
+			 mRNA_with_minus_2_frameshift
+			 mRNA_with_plus_1_frameshift
+			 mRNA_with_plus_2_frameshift
+			 mature_transcript
+			 mature_transcript_region
+			 miRNA_primary_transcript
+			 mini_exon_donor_RNA
+			 monocistronic_mRNA
+			 monocistronic_primary_transcript
+			 monocistronic_transcript
+			 ncRNA
+			 nc_primary_transcript
+			 piRNA
+			 polyadenylated_mRNA
+			 polycistronic_mRNA
+			 polycistronic_primary_transcript
+			 polycistronic_transcript
+			 pre_edited_mRNA
+			 primary_transcript
+			 primary_transcript_region
+			 processed_transcript
+			 protein_coding_primary_transcript
+			 pseudogenic_transcript
+			 rRNA
+			 rRNA_cleavage_RNA
+			 rRNA_primary_transcript
+			 rasiRNA
+			 recoded_mRNA
+			 regional_centromere_outer_repeat_transcript
+			 riboswitch
+			 ribozyme
+			 scRNA
+			 scRNA_primary_transcript
+			 siRNA
+			 small_regulatory_ncRNA
+			 snRNA
+			 snRNA_primary_transcript
+			 snoRNA
+			 snoRNA_primary_transcript
+			 spliced_leader_RNA
+			 stRNA
+			 tRNA
+			 tRNA_primary_transcript
+			 tasiRNA
+			 tasiRNA_primary_transcript
+			 telomerase_RNA
+			 tmRNA_primary_transcript
+			 trans_spliced_mRNA
+			 trans_spliced_transcript
+			 transcript
+			 transcript_bound_by_nucleic_acid
+			 transcript_bound_by_protein
+			 transcript_region
+			 transcript_with_translational_frameshift
+			 vault_RNA
   );
   return wantarray ? @transcripts : \@transcripts;
 }

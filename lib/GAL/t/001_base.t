@@ -22,8 +22,8 @@ isa_ok($base, 'GAL::Base');
 # ok($base->throw('error_code', 'Test throw'), '$base->throw');
 
 # TEST 3
-ok(! $base->warn('warn_code', 'Test warn'), '$base->warn');
-ok(! $base->info('info', 'Test info'), '$base->info');
+ok($base->warn('warn_code', 'Test warn'), '$base->warn');
+ok($base->info('info_code', 'Test info'), '$base->info');
 
 # TEST 4
 my $wrap_text = 'x' x 100;
