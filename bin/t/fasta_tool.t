@@ -17,6 +17,8 @@ my ($sto_text, $ste_text);
 my $tool = GAL::Run->new(path => $path,
 			 command => 'fasta_tool');
 
+$tool->verbosity('debug');
+
 ################################################################################
 # Testing that fasta_tool compiles and returns usage statement
 ################################################################################
@@ -25,12 +27,64 @@ ok(! $tool->run(cl_args => '--help'), 'fasta_tool complies');
 like($tool->get_stdout, qr/Synopsis/, 'fasta_tool prints usage statement');
 
 ################################################################################
-# Testing that fasta_tool does something else
+# Testing fasta_tool --split data/multi_fasta.fa
 ################################################################################
 
+my @cl_args = ('--split',
+	       "$FindBin::Bin/data/multi_fasta.fa",
+	      );
+
+ok(! $tool->run(cl_args => \@cl_args), 'fasta_tool --split');
+
+my %valid_md5 = ('multi_fasta_01.fasta' => 'e6a0135c236c6f7e6ad57c97a58cc594',
+		 'multi_fasta_02.fasta' => '60c0ec8808a51774004a30222bd5cf3e',
+		 'multi_fasta_03.fasta' => '697801c649d4471d31c5250371bbd8ea'
+		);
+
+for my $file (keys %valid_md5) {
+  my $md5_sum = `md5sum $file`;
+  chomp $md5_sum;
+  $md5_sum =~ s/(\S+).*/$1/;
+  ok($valid_md5{$file} eq $md5_sum, "fasta_tool --split produces valid output for $file");
+  $tool->clean_up($file);
+}
+
+$tool->clean_up();
+
+################################################################################
+# Testing fasta_tool --eval_code data/test.fa
+################################################################################
+
+@cl_args = ('--eval_code "\$seq =~ /[a-z]+/"',
+	    "$FindBin::Bin/data/multi_fasta.fa",
+	   );
+
+ok(! $tool->run(cl_args => \@cl_args), 'fasta_tool --eval_code');
+
+ok($tool->get_stdout =~ />multi_fasta_0[12]/,
+   "fasta_tool --eval_code keeps correct sequences");
+
+ok($tool->get_stdout !~ />multi_fasta_03]/,
+   "fasta_tool --eval_code discards correct sequences");
+
+$tool->clean_up();
+
+################################################################################
+# Testing fasta_tool --arg data/test.fa
+################################################################################
+#
+# my @cl_args = ('--arg',
+#	       "$FindBin::Bin/data/file.fa",
+#	      );
+#
+# ok(! $tool->run(cl_args => \@cl_args), 'fasta_tool --arg');
+#
+# ok($tool->get_stdout, "fasta_tool --arg produces valid output");
+#
+# $tool->clean_up();
+
+
 # Test these options:
-# split_fasta
-# eval_code
 # eval_all
 # extract_ids
 # grep_header
@@ -51,7 +105,7 @@ like($tool->get_stdout, qr/Synopsis/, 'fasta_tool prints usage statement');
 # print_seq
 # reverse_order
 # rev_comp{
-# uniq{
+# uniq
 # uniq_sub
 # shuffle_order
 # shuffle_seq
