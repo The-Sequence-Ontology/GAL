@@ -1,0 +1,269 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::Parser::hapmap_genotype</title>
+<link rel="stylesheet" type="text/css" href="../podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="../index.html">GAL</a> &gt; Perl Modules &gt;
+  Parser-hapmap_genotypes
+</div>
+<div>
+<a href="../src/Parser/hapmap_genotypes.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#METHODS">METHODS</a><br />
+<ul>
+	<li><a href="#new">new</a></li>
+	<li><a href="#parse_record">parse_record</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>GAL::Parser::hapmap_genotype - &lt;One line description of module's purpose here&gt;</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>This document describes GAL::Parser::hapmap_genotype version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<pre>     use GAL::Parser::hapmap_genotype;
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<h2 id="new">new</h2>
+
+<p><a href="#" onclick="toggleCode('method_new');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_new">
+                                        <pre>
+
+sub new {
+	my ($class, @args) = @_;
+	my $self = $class->SUPER::new(@args);
+	return $self;
+}
+</pre></div>
+
+<pre>     Title   : new
+     Usage   : GAL::Parser::hapmap_genotype-&gt;new();
+     Function: Creates a GAL::Parser::hapmap_genotype object;
+     Returns : A GAL::Parser::hapmap_genotype object
+     Args    :
+
+</pre><h2 id="parse_record">parse_record</h2>
+
+<p><a href="#" onclick="toggleCode('method_parse_record');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_parse_record">
+                                        <pre>
+
+sub parse_record {
+    my ($self, $data) = @_;
+    
+    # rsID alleles chrom pos strand assembly# center protLSID
+    # assayLSID panelLSID QCcode NA18484 NA18485 NA18486
+    
+    # Col1: refSNP rs# identifier at the time of release (NB might merge 
+    #       with another rs# in the future)
+    # Col2: SNP alleles according to dbSNP
+    # Col3: chromosome that SNP maps to 
+    # Col4: chromosome position of SNP, in basepairs on reference sequence
+    # Col5: strand of reference sequence that SNP maps to
+    # Col6: version of reference sequence assembly
+    # Col7: Center where genotyping was done
+    # Col8: HapMap genotype center that produced the genotypes
+    # Col9: LSID for HapMap protocol used for genotyping
+    # Col10: LSID for HapMap assay used for genotyping
+    # Col11: LSID for panel of individuals genotyped
+    # Col12: QC-code, currently 'QC+' for all entries (for future use)
+    # Col13: and on: observed genotypes of samples, one per column, sample 
+    # identifiers in column headers (Coriell catalog numbers, example: 
+    # NA10847). Duplicate samples have .dup suffix.
+    
+    my %record;
+    @record{qw(rsID alleles chrom pos strand assembly center
+	       protLSID assayLSID panelLSID QCcode)} = splice(@{$data}, 0, 11);
+    
+    my $seqid      = $record{chrom};
+    my @protocol_data = split /:/, $record{protLSID};
+    my $source     = join ':', ($record{center}, $protocol_data[4]);
+    my $type       = 'SNV';
+    my $start      = $record{pos};
+    my $end        = $start;
+    my $feature_id = join ':', ($source, $seqid, $start);
+    my $score      = '.';
+    my $strand     = $record{strand};
+    my $phase      = '.';
+    
+    my $reference_seq ||= uc $self->fasta->seq($seqid, $start, $end);
+    $reference_seq = $self->revcomp($reference_seq) if $strand eq '-';
+    
+    my %variant_seqs;
+    my ($header) = $self->reader->headers;
+    my @header_data = split /\s/, $header;
+    splice(@header_data, 0, 11);
+    @variant_seqs{@header_data} = @{$data};
+    
+    my @features;
+    for my $individual (sort keys %variant_seqs) {
+	my $this_feature_id = join ':', ($individual, $feature_id);
+	my %variant_seqs_hash = map {$_ => 1 } split //, $variant_seqs{$individual};
+	my @variant_seqs = keys %variant_seqs_hash;
+
+	# Make sure that at least one variant sequence is not N
+	next unless grep {$_ ne 'N'} @variant_seqs;
+	# Make sure that at least one variant sequence differs from
+        # the reference sequence.
+	next unless grep {$_ ne $reference_seq} @variant_seqs;
+	
+	my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+	
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
+			  Zygosity      => [$zygosity],
+			  ID            => [$this_feature_id],
+			  individual    => [$individual],
+		      };
+	
+	my $feature = {feature_id => $this_feature_id,
+		       seqid      => $seqid,
+		       source     => $source,
+		       type       => $type,
+		       start      => $start,
+		       end        => $end,
+		       score      => $score,
+		       strand     => $strand,
+		       phase      => $phase,
+		       attributes => $attributes,
+		   };
+	push @features, $feature;
+    }
+    return scalar @features ? \@features : undef;
+}
+</pre></div>
+
+<pre> Title   : parse_record
+ Usage   : $a = $self-&gt;parse_record();
+ Function: Parse the data from a record.
+ Returns : A hash ref needed by Feature.pm to create a Feature object
+ Args    : A hash ref of fields that this sub can understand (In this case GFF3).
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<dl>
+	<dt><code>Error message here, perhaps with %s placeholders</code></dt>
+		<dd><p>[Description of error here]</p></dd>
+	<dt><code>Another error message here</code></dt>
+		<dd><p>[Description of error here]</p></dd>
+		<dd><p>[Et cetera, et cetera]</p></dd>
+</dl>
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>&lt;GAL::Parser::hapmap_genotype&gt; requires no configuration files or environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>None.</p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

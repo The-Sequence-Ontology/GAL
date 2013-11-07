@@ -1,0 +1,883 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::Schema::Result::Feature::mrna</title>
+<link rel="stylesheet" type="text/css" href="../../../podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="../../../index.html">GAL</a> &gt; Perl Modules &gt;
+  Schema-Result-Feature-mrna
+</div>
+<div>
+<a href="../../../src/Schema/Result/Feature/mrna.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#METHODS">METHODS</a><br />
+<ul>
+	<li><a href="#CDSs">CDSs</a></li>
+	<li><a href="#CDS_seq_genomic">CDS_seq_genomic</a></li>
+	<li><a href="#CDS_seq">CDS_seq</a></li>
+	<li><a href="#protein_seq">protein_seq</a></li>
+	<li><a href="#map2CDS">map2CDS</a></li>
+	<li><a href="#map2protein">map2protein</a></li>
+	<li><a href="#CDS_start">CDS_start</a></li>
+	<li><a href="#CDS_end">CDS_end</a></li>
+	<li><a href="#CDS_length">CDS_length</a></li>
+	<li><a href="#protein_length">protein_length</a></li>
+	<li><a href="#phase_at_location">phase_at_location</a></li>
+	<li><a href="#frame_at_location">frame_at_location</a></li>
+	<li><a href="#codon_at_location">codon_at_location</a></li>
+	<li><a href="#translation_start">translation_start</a></li>
+	<li><a href="#translation_end">translation_end</a></li>
+	<li><a href="#five_prime_UTRs">five_prime_UTRs</a></li>
+	<li><a href="#three_prime_UTRs">three_prime_UTRs</a></li>
+	<li><a href="#infer_five_prime_UTR">infer_five_prime_UTR</a></li>
+	<li><a href="#infer_three_prime_UTR">infer_three_prime_UTR</a></li>
+	<li><a href="#five_prime_UTR_seq_genomic">five_prime_UTR_seq_genomic</a></li>
+	<li><a href="#five_prime_UTR_seq">five_prime_UTR_seq</a></li>
+	<li><a href="#three_prime_UTR_seq_genomic">three_prime_UTR_seq_genomic</a></li>
+	<li><a href="#three_prime_UTR_seq">three_prime_UTR_seq</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>GAL::Schema::Result::Feature::mrna - &lt;One line description of module's
+purpose here&gt;</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>This document describes GAL::Schema::Result::Feature::mrna version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<pre>     use GAL::Schema::Result::Feature::mrna;
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<h2 id="CDSs">CDSs</h2>
+
+<p><a href="#" onclick="toggleCode('method_CDSs');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_CDSs">
+                                        <pre>
+
+sub CDSs {
+
+  my $self = shift;
+
+  if (wantarray) {
+      return grep {$_->type eq 'CDS'} $self->children->all;
+  }
+  else {
+      my $sort_order = ($self->strand eq '-' ?
+			{'-desc' => 'end'}   :
+			{'-asc'  => 'start'});
+
+      my $CDSs = $self->children({type => 'CDS'},
+				  {order_by => $sort_order,
+				   distinct => 1});
+      return $CDSs;
+  }
+}
+</pre></div>
+
+<pre> Title   : CDSs
+ Usage   : $CDSs = $self-&gt;CDSs
+ Function: Get the mRNA's CDSs sorted in the order of the mRNA's strand.
+ Returns : A DBIx::Class::Result object loaded up with exons
+ Args    : None
+
+</pre><h2 id="CDS_seq_genomic">CDS_seq_genomic</h2>
+
+<p><a href="#" onclick="toggleCode('method_CDS_seq_genomic');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_CDS_seq_genomic">
+                                        <pre>
+
+sub CDS_seq_genomic {
+
+  my $self = shift;
+
+  my $CDS_seq_genomic;
+  for my $CDS (sort {$a->start <=> $b->start} $self->CDSs) {
+    my $this_seq = $CDS->genomic_seq;
+    $CDS_seq_genomic .= $this_seq if $this_seq;
+  }
+  return $CDS_seq_genomic;
+}
+</pre></div>
+
+<pre> Title   : CDS_seq_genomic
+ Usage   : $seq = $self-&gt;CDS_seq_genomic
+ Function: Return the genomic sequence (on the plus strand of the genome) of
+	   the full CDS for this mRNA.
+ Returns : A DNA sequence
+ Args    : None
+
+</pre><h2 id="CDS_seq">CDS_seq</h2>
+
+<p><a href="#" onclick="toggleCode('method_CDS_seq');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_CDS_seq">
+                                        <pre>
+
+sub CDS_seq {
+
+  my $self = shift;
+
+  my $CDS_seq = $self->CDS_seq_genomic;
+  if ($self->strand eq '-') {
+    $CDS_seq = $self->annotation->revcomp($CDS_seq);
+  }
+  return $CDS_seq;
+}
+</pre></div>
+
+<pre> Title   : CDS_seq
+ Usage   : $seq = $self-&gt;CDS_seq
+ Function: Return the sequence of the full CDS for this mRNA.
+ Returns : A DNA sequence
+ Args    : None
+
+</pre><h2 id="protein_seq">protein_seq</h2>
+
+<p><a href="#" onclick="toggleCode('method_protein_seq');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_protein_seq">
+                                        <pre>
+
+sub protein_seq {
+
+  my $self = shift;
+
+  my $CDS_seq = $self->CDS_seq;
+  my $protein_seq = $self->annotation->translate($CDS_seq);
+  $protein_seq =~ s/\*$//;
+  return $protein_seq;
+}
+</pre></div>
+
+<pre> Title   : protein_seq
+ Usage   : $seq = $self-&gt;protein_seq
+ Function: Return the protein sequence for this mRNA.
+ Returns : Protein sequence
+ Args    : None
+
+</pre><h2 id="map2CDS">map2CDS</h2>
+
+<p><a href="#" onclick="toggleCode('method_map2CDS');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_map2CDS">
+                                        <pre>
+
+sub map2CDS {
+
+  my ($self, @coordinates) = @_;
+
+  my ($CDS_start) = $self->genome2me($self->CDS_start);
+  my ($CDS_end)   = $self->genome2me($self->CDS_end);
+
+  my @CDS_coordinates = $self->genome2me(@coordinates);
+  for my $coordinate (@CDS_coordinates) {
+    if ($coordinate && $coordinate >= $CDS_start && $coordinate <= $CDS_end) {
+      $coordinate = $coordinate - $CDS_start + 1;
+    }
+    else {
+      $coordinate = undef;
+    }
+  }
+
+  return wantarray ? @CDS_coordinates : \@CDS_coordinates;
+}
+</pre></div>
+
+<pre> Title   : map2CDS
+ Usage   : @CDS_coordinates = $self-&gt;map2CDS(@genomic_coordinates);
+	   ($CDS_coordinate) = $self-&gt;map2CDS($genomic_coordinate);
+ Function: Transform genomic coordinates to CDS coordinates.
+ Returns : An array(ref) of integers or an empty list if the genomic
+	   coordinates given do not overlap the CDS of this mRNA.
+ Args    : An array of integers
+
+</pre><h2 id="map2protein">map2protein</h2>
+
+<p><a href="#" onclick="toggleCode('method_map2protein');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_map2protein">
+                                        <pre>
+
+sub map2protein {
+
+  my ($self, @coordinates) = @_;
+
+  my @protein_coordinates = $self->map2CDS(@coordinates);
+  map {$_ = int(($_ - 1) / 3) + 1 if $_} @protein_coordinates;
+
+  return wantarray ? @protein_coordinates : \@protein_coordinates;
+}
+</pre></div>
+
+<pre> Title   : map2protein
+ Usage   : @protein_coordinates = $self-&gt;map2protein(@genomic_coordinates);
+ Function: Transform genomic coordinates to protein sequence coordinates.
+	   Note that 3 genomic coordinates will return the same protein
+	   coordinate if they fall in the same codon.
+ Returns : An array(ref) of integers or an empty list if the genomic
+	   coordinates given do not overlap the protein (CDS) of this mRNA.
+ Args    : An array of integers
+
+</pre><h2 id="CDS_start">CDS_start</h2>
+
+<p><a href="#" onclick="toggleCode('method_CDS_start');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_CDS_start">
+                                        <pre>
+
+sub CDS_start {
+
+  my $self = shift;
+  my $strand = $self->strand;
+  my @CDSs = sort {$a->start <=> $b->start} $self->CDSs;
+  my $CDS_start = $strand eq '-' ? $CDSs[-1]->end : $CDSs[0]->start;
+  return $CDS_start;
+}
+</pre></div>
+
+<pre> Title   : CDS_start
+ Usage   : $start = $self-&gt;CDS_start
+ Function: Returns the genomic coordinate of the start of this CDS.
+ Returns : An integer
+ Args    : None
+
+</pre><h2 id="CDS_end">CDS_end</h2>
+
+<p><a href="#" onclick="toggleCode('method_CDS_end');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_CDS_end">
+                                        <pre>
+
+sub CDS_end {
+
+  my $self = shift;
+  my $strand = $self->strand;
+  my @CDSs = sort {$a->start <=> $b->start} $self->CDSs;
+  my $CDS_end = $strand eq '-' ? $CDSs[0]->start : $CDSs[-1]->end;
+  return $CDS_end;
+}
+</pre></div>
+
+<pre> Title   : CDS_end
+ Usage   : $end = $self-&gt;CDS_end
+ Function: Returns the genomic coordinate of the end of this CDS.
+ Returns : An integer
+ Args    : None
+
+</pre><h2 id="CDS_length">CDS_length</h2>
+
+<p><a href="#" onclick="toggleCode('method_CDS_length');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_CDS_length">
+                                        <pre>
+
+sub CDS_length {
+
+  my $self = shift;
+  my $CDS_length;
+  map {$CDS_length += $_->genomic_length} $self->CDSs;
+  return $CDS_length;
+}
+</pre></div>
+
+<pre> Title   : CDS_length
+ Usage   : $length = $self-&gt;CDS_length
+ Function: Return the length of the CDS for this mRNA.
+ Returns : An integer
+ Args    : None
+
+</pre><h2 id="protein_length">protein_length</h2>
+
+<p><a href="#" onclick="toggleCode('method_protein_length');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_protein_length">
+                                        <pre>
+
+sub protein_length {
+  my $self = shift;
+  return length $self->protein_seq;
+}
+</pre></div>
+
+<pre> Title   : protein_length
+ Usage   : $length = $self-&gt;protein_length
+ Function: Return the length of the protein for this mRNA.  If the CDS length
+	   is not divisable by three this method will truncate the integral
+	   portion of the protein length.
+ Returns : An integer
+ Args    : None
+
+</pre><h2 id="phase_at_location">phase_at_location</h2>
+
+<p><a href="#" onclick="toggleCode('method_phase_at_location');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_phase_at_location">
+                                        <pre>
+
+sub phase_at_location {
+
+  my ($self, $location) = @_;
+
+  my %mod2phase = (1 => 0,
+		   2 => 2,
+		   0 => 1,
+		  );
+  my ($CDS_location) = $self->map2CDS($location);
+  return undef unless $CDS_location;
+  my $modulus = $CDS_location % 3;
+  return $mod2phase{$modulus};
+}
+</pre></div>
+
+<pre> Title   : phase_at_location
+ Usage   : $phase = $self-&gt;phase_at_location($genomic_coordinate)
+ Function: Return the phase (how many nts 3' does the next codon begin) for
+	   a given genomic coordinate or undef if the coordinate does not overlap
+	   the CDS of this mRNA.
+ Returns : An integer
+ Args    : An intger (genomic coordinate).
+
+</pre><h2 id="frame_at_location">frame_at_location</h2>
+
+<p><a href="#" onclick="toggleCode('method_frame_at_location');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_frame_at_location">
+                                        <pre>
+
+sub frame_at_location {
+
+  my ($self, $location) = @_;
+  my %mod2frame = (1 => 0,
+		   2 => 1,
+		   0 => 2,
+		  );
+  my ($CDS_location) = $self->map2CDS($location);
+  return undef unless $CDS_location;
+  my $modulus = $CDS_location % 3;
+  my $frame = $mod2frame{$modulus};
+  return $frame;
+}
+</pre></div>
+
+<pre> Title   : frame_at_location
+ Usage   : $frame = $self-&gt;frame_at_location($genomic_coordinate);
+ Function: Return the reading frame (what position within a codon) for a given
+	   genomic coordinate or undef if the coordinate does not overlap
+	   the CDS of this mRNA.
+ Returns : An integer
+ Args    : An integer
+
+</pre><h2 id="codon_at_location">codon_at_location</h2>
+
+<p><a href="#" onclick="toggleCode('method_codon_at_location');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_codon_at_location">
+                                        <pre>
+
+sub codon_at_location {
+
+  my ($self, $location) = @_;
+
+  my $CDS_sequence = $self->CDS_seq;
+  my ($CDS_location) = $self->map2CDS($location);
+  return undef unless $CDS_location;
+  my $frame = $self->frame_at_location($location);
+  my $codon_start = $CDS_location - $frame;
+  $codon_start--;
+  return undef if (($codon_start + 3) > length $CDS_sequence);
+  my $codon = substr($CDS_sequence, $codon_start, 3);
+  return wantarray ? ($codon, $frame) : $codon;
+}
+</pre></div>
+
+<pre> Title   : codon_at_location
+ Usage   : $codon = $self-&gt;codon_at_location($genomic_coordinate);
+	   ($codon, $frame) = $self-&gt;codon_at_location
+ Function: Return the codon (and frame in list context) that overlaps a given
+	   genomic coordinate.  Returns undef in the genomic coordinate does
+	   not overlap a complete codon.
+ Returns : An scalar string and in list context also returns an integer.
+ Args    : An integer
+
+</pre><h2 id="translation_start">translation_start</h2>
+
+<p><a href="#" onclick="toggleCode('method_translation_start');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_translation_start">
+                                        <pre>
+
+sub translation_start {
+  my $self = shift;
+
+  my $strand = $self->strand;
+  my $sort_sub = ($strand eq '-'            ?
+		  sub {$b->start <=> $a->start} :
+		  sub {$a->start <=> $b->start});
+
+  my ($first_CDS) = sort $sort_sub $self->CDSs;
+  return $first_CDS->my_start;
+}
+</pre></div>
+
+<pre> Title   : translation_start
+ Usage   : $tans_start = $mrna-&gt;translation_start;
+ Function: Get the coordiante of the first nt of the start codon.
+ Returns : An integer
+ Args    : None
+
+</pre><h2 id="translation_end">translation_end</h2>
+
+<p><a href="#" onclick="toggleCode('method_translation_end');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_translation_end">
+                                        <pre>
+
+sub translation_end {
+  my $self = shift;
+
+  my $strand = $self->strand;
+  my $sort_sub = ($strand eq '-'            ?
+		  sub {$a->start <=> $b->start} :
+		  sub {$b->start <=> $a->start});
+
+  my ($last_CDS) = sort $sort_sub $self->CDSs;
+  return $last_CDS->my_end;
+}
+</pre></div>
+
+<pre> Title   : translation_end
+ Usage   : $tans_end = $mrna-&gt;translation_end;
+ Function: Get the coordiante of the last nt of the stop codon.
+ Returns : An integer
+ Args    : None
+
+</pre><h2 id="five_prime_UTRs">five_prime_UTRs</h2>
+
+<p><a href="#" onclick="toggleCode('method_five_prime_UTRs');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_five_prime_UTRs">
+                                        <pre>
+
+sub five_prime_UTRs {
+  my $self = shift;
+
+  if (wantarray) {
+      return grep {$_->type eq 'five_prime_UTR'} $self->children->all;
+  }
+  else {
+      my $sort_order = ($self->strand eq '-' ?
+			{'-desc' => 'end'}   :
+			{'-asc'  => 'start'});
+
+      my $five_prime_UTRs = $self->children({type => 'five_prime_UTR'},
+					    {order_by => $sort_order,
+					     distinct => 1});
+      return $five_prime_UTRs;
+  }
+}
+</pre></div>
+
+<pre> Title   : five_prime_UTRs
+ Usage   : $five_prime_UTRs = $self-&gt;five_prime_UTRs
+ Function: Get the features five_prime_UTRs
+ Returns : A DBIx::Class::Result object loaded up with five_prime_UTRs
+ Args    : None
+
+</pre><h2 id="three_prime_UTRs">three_prime_UTRs</h2>
+
+<p><a href="#" onclick="toggleCode('method_three_prime_UTRs');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_three_prime_UTRs">
+                                        <pre>
+
+sub three_prime_UTRs {
+  my $self = shift;
+
+  if (wantarray) {
+      return grep {$_->type eq 'three_prime_UTR'} $self->children->all;
+  }
+  else {
+    my $sort_order = ($self->strand eq '-' ?
+		      {'-desc' => 'end'}   :
+		      {'-asc'  => 'start'});
+
+    my $three_prime_UTRs = $self->children({type => 'three_prime_UTR'},
+					   {order_by => $sort_order,
+					    distinct => 1});
+    return $three_prime_UTRs;
+  }
+}
+</pre></div>
+
+<pre> Title   : three_prime_UTRs
+ Usage   : $three_prime_UTRs = $self-&gt;three_prime_UTRs
+ Function: Get the features three_prime_UTRs
+ Returns : A DBIx::Class::Result object loaded up with three_prime_UTRs
+ Args    : None
+
+</pre><h2 id="infer_five_prime_UTR">infer_five_prime_UTR</h2>
+
+<p><a href="#" onclick="toggleCode('method_infer_five_prime_UTR');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_infer_five_prime_UTR">
+                                        <pre>
+
+sub infer_five_prime_UTR {
+  my ($self, $five_prime_UTR) = @_;
+
+  $five_prime_UTR ||= $self->children({type => 'five_prime_UTR'},
+				      {order_by => { -asc => 'start' },
+				       distinct => 1});
+
+
+  my $strand = $self->strand;
+  my $sort_sub = ($strand eq '-'            ?
+		  sub {$b->start <=> $a->start} :
+		  sub {$a->start <=> $b->start});
+
+  my $translation_start = $self->translation_start;
+
+  my @coordinates;
+  for my $exon (sort $sort_sub $self->exons) {
+    if ($strand eq '-') {
+      last if $exon->end <= $translation_start;
+      unshift @coordinates, [$exon->start, $exon->end];
+    }
+    else {
+      last if $exon->start >= $translation_start;
+      push @coordinates, [$exon->start, $exon->end];
+    }
+  }
+
+  my %template = (seqid  => $self->seqid,
+		  source => $self->source,
+		  type   => 'five_prime_UTR',
+		  score  => '.',
+		  strand => $strand,
+		  phase  => '.',
+ );
+
+  my $parent_id = $self->feature_id;
+
+  my $count = 1;
+  my @five_prime_UTR;
+  for my $coordinate_pair (@coordinates) {
+    my ($start, $end) = @{$coordinate_pair};
+    if ($strand eq '-') {
+      $start = $translation_start + 1
+	if $start <= $translation_start;
+    }
+    else {
+      $end = $translation_start - 1
+	if $end >= $translation_start;
+    }
+    my $feature_id = $parent_id . ':five_prime_UTR:';
+    $feature_id .= sprintf("%03d", $count++);
+    my @attrbs = ({att_key    => 'ID',
+		   att_value  => $feature_id},
+		  {att_key    => 'Parent',
+		   att_value  => $parent_id},
+		 );
+    my @rels = {parent => $parent_id,
+		child  => $feature_id};
+
+    my %five_prime_UTR = %template;
+    @five_prime_UTR{qw(feature_id start end attributes my_parents)} =
+      ($feature_id, $start, $end, \@attrbs, \@rels);
+    my $five_prime_UTR = $five_prime_UTR->find_or_create(\%five_prime_UTR);
+    bless $five_prime_UTR, 'GAL::Schema::Result::Feature::five_prime_UTR';
+    push @five_prime_UTR, $five_prime_UTR;
+  }
+  $five_prime_UTR->set_cache(\@five_prime_UTR);
+  print '';
+}
+</pre></div>
+
+<pre> Title   : infer_five_prime_UTR
+ Usage   : $five_prime_UTR = $self-&gt;infer_five_prime_UTR
+ Function: Infer five_prime_UTR for the features
+ Returns : A DBIx::Class::Result object loaded up with five_prime_UTR
+ Args    : None
+
+</pre><h2 id="infer_three_prime_UTR">infer_three_prime_UTR</h2>
+
+<p><a href="#" onclick="toggleCode('method_infer_three_prime_UTR');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_infer_three_prime_UTR">
+                                        <pre>
+
+sub infer_three_prime_UTR {
+  my ($self, $three_prime_UTRs) = @_;
+
+  $three_prime_UTRs ||= $self->children({type => 'three_prime_UTR'},
+				       {order_by => { -asc => 'start' },
+					distinct => 1});
+
+
+  my $strand = $self->strand;
+  my $sort_sub = ($strand eq '-'            ?
+		  sub {$a->start <=> $b->start} :
+		  sub {$b->start <=> $a->start});
+
+  my $translation_end = $self->translation_end;
+
+  my @coordinates;
+  for my $exon (sort $sort_sub $self->exons) {
+    if ($strand eq '-') {
+      last if $exon->start >= $translation_end;
+      push @coordinates, [$exon->start, $exon->end];
+    }
+    else {
+      last if $exon->end <= $translation_end;
+      unshift @coordinates, [$exon->start, $exon->end];
+    }
+  }
+
+  my %template = (seqid  => $self->seqid,
+		  source => $self->source,
+		  type   => 'three_prime_UTR',
+		  score  => '.',
+		  strand => $strand,
+		  phase  => '.',
+ );
+
+  my $parent_id = $self->feature_id;
+
+  my $count = 1;
+  my @three_prime_UTRs;
+  for my $coordinate_pair (@coordinates) {
+    my ($start, $end) = @{$coordinate_pair};
+    if ($strand eq '-') {
+      $end = $translation_end - 1
+	if $end >= $translation_end;
+    }
+    else {
+      $start = $translation_end + 1
+	if $start <= $translation_end;
+    }
+    my $feature_id = $parent_id . ':three_prime_UTR:';
+    $feature_id .= sprintf("%03d", $count++);
+    my @attrbs = ({att_key    => 'ID',
+		   att_value  => $feature_id},
+		  {att_key    => 'Parent',
+		   att_value  => $parent_id},
+		 );
+    my @rels = {parent => $parent_id,
+		child  => $feature_id};
+
+    my %three_prime_UTR = %template;
+    @three_prime_UTR{qw(feature_id start end attributes my_parents)} =
+      ($feature_id, $start, $end, \@attrbs, \@rels);
+    my $three_prime_UTR = $three_prime_UTRs->find_or_create(\%three_prime_UTR);
+    bless $three_prime_UTR, 'GAL::Schema::Result::Feature::three_prime_UTR';
+    push @three_prime_UTRs, $three_prime_UTR;
+  }
+  $three_prime_UTRs->set_cache(\@three_prime_UTRs) if @three_prime_UTRs;
+  print '';
+}
+</pre></div>
+
+<pre> Title   : infer_three_prime_UTR
+ Usage   : $three_prime_UTR = $self-&gt;infer_three_prime_UTR
+ Function: Infer three_prime_UTR for the features
+ Returns : A DBIx::Class::Result object loaded up with three_prime_UTR
+ Args    : None
+
+</pre><h2 id="five_prime_UTR_seq_genomic">five_prime_UTR_seq_genomic</h2>
+
+<p><a href="#" onclick="toggleCode('method_five_prime_UTR_seq_genomic');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_five_prime_UTR_seq_genomic">
+                                        <pre>
+
+sub five_prime_UTR_seq_genomic {
+  my $self = shift;
+  my $five_prime_UTR_seq_genomic;
+  map {$five_prime_UTR_seq_genomic .= $_->genomic_seq} $self->five_prime_UTRs->all;
+  return $five_prime_UTR_seq_genomic;
+}
+</pre></div>
+
+<pre> Title   : five_prime_UTR_seq_genomic
+ Usage   : $seq = $self-&gt;five_prime_UTR_seq_genomic
+ Function: Get the transcripts spliced five_prime_UTR genomic sequence (not
+   reverse complimented for minus strand features.
+ Returns : A text string of the five_prime_UTR spliced genomic sequence.
+ Args    : None
+
+</pre><h2 id="five_prime_UTR_seq">five_prime_UTR_seq</h2>
+
+<p><a href="#" onclick="toggleCode('method_five_prime_UTR_seq');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_five_prime_UTR_seq">
+                                        <pre>
+
+sub five_prime_UTR_seq {
+  my $self = shift;
+  my $five_prime_UTR_seq = $self->five_prime_UTR_seq_genomic;
+  if ($self->strand eq '-') {
+    $five_prime_UTR_seq =
+      $self->annotation->revcomp($five_prime_UTR_seq);
+  }
+  return $five_prime_UTR_seq;
+}
+</pre></div>
+
+<pre> Title   : five_prime_UTR_seq
+ Usage   : $seq = $self-&gt;five_prime_UTR_seq
+ Function: Get the transcripts spliced five_prime_UTR sequence reverse
+   complimented for minus strand features.
+ Returns : A text string of the five_prime_UTR spliced sequence.
+ Args    : None
+
+</pre><h2 id="three_prime_UTR_seq_genomic">three_prime_UTR_seq_genomic</h2>
+
+<p><a href="#" onclick="toggleCode('method_three_prime_UTR_seq_genomic');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_three_prime_UTR_seq_genomic">
+                                        <pre>
+
+sub three_prime_UTR_seq_genomic {
+  my $self = shift;
+  my $three_prime_UTR_seq_genomic;
+  map {$three_prime_UTR_seq_genomic .= $_->genomic_seq} $self->three_prime_UTRs->all;
+  return $three_prime_UTR_seq_genomic;
+}
+</pre></div>
+
+<pre> Title   : three_prime_UTR_seq_genomic
+ Usage   : $seq = $self-&gt;three_prime_UTR_seq_genomic
+ Function: Get the transcripts spliced three_prime_UTR genomic sequence (not
+   reverse complimented for minus strand features.
+ Returns : A text string of the three_prime_UTR spliced genomic sequence.
+ Args    : None
+
+</pre><h2 id="three_prime_UTR_seq">three_prime_UTR_seq</h2>
+
+<p><a href="#" onclick="toggleCode('method_three_prime_UTR_seq');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_three_prime_UTR_seq">
+                                        <pre>
+
+sub three_prime_UTR_seq {
+  my $self = shift;
+  my $three_prime_UTR_seq = $self->three_prime_UTR_seq_genomic;
+  if ($self->strand eq '-') {
+    $three_prime_UTR_seq =
+      $self->annotation->revcomp($three_prime_UTR_seq);
+  }
+  return $three_prime_UTR_seq;
+}
+</pre></div>
+
+<pre> Title   : three_prime_UTR_seq
+ Usage   : $seq = $self-&gt;three_prime_UTR_seq
+ Function: Get the transcripts spliced three_prime_UTR sequence reverse
+   complimented for minus strand features.
+ Returns : A text string of the three_prime_UTR spliced sequence.
+ Args    : None
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<dl>
+	<dt><code>Error message here, perhaps with %s placeholders</code></dt>
+		<dd><p>[Description of error here]</p></dd>
+	<dt><code>Another error message here</code></dt>
+		<dd><p>[Description of error here]</p></dd>
+		<dd><p>[Et cetera, et cetera]</p></dd>
+</dl>
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>&lt;GAL::Schema::Result::Feature::mrna&gt; requires no configuration files or environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>None.</p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

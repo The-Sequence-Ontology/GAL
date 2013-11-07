@@ -1,0 +1,438 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::Schema::Result::Feature::gene</title>
+<link rel="stylesheet" type="text/css" href="../../../podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="../../../index.html">GAL</a> &gt; Perl Modules &gt;
+  Schema-Result-Feature-gene
+</div>
+<div>
+<a href="../../../src/Schema/Result/Feature/gene.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#METHODS">METHODS</a><br />
+<ul>
+	<li><a href="#transcripts">transcripts</a></li>
+	<li><a href="#infer_introns">infer_introns</a></li>
+	<li><a href="#splice_complexity">splice_complexity</a></li>
+	<li><a href="#mRNAs">mRNAs</a></li>
+	<li><a href="#is_coding">is_coding</a></li>
+	<li><a href="#get_transcript_types">get_transcript_types</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>GAL::Schema::Result::Feature::gene -  A gene object for the GAL Library</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>This document describes GAL::Schema::Result::Feature::gene version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<pre>    use GAL::Annotation;
+    my $feat_store = GAL::Annotation-&gt;new(storage =&gt; $feat_store_args,
+					  parser  =&gt; $parser_args,
+					  fasta   =&gt; $fasta_args,
+					 );
+
+    $feat_store-&gt;load_files(files =&gt; $feature_file,
+			    mode  =&gt; 'overwrite',
+			    );
+
+    my $features = $feat_store-&gt;schema-&gt;resultset('Feature');
+
+    my $genes = $features-&gt;search({type =&gt; 'gene'});
+    while (my $gene = $genes-&gt;next) {
+      my $mrnas = $gene-&gt;mRNAs;
+      while (my $mrna = $mrnas-&gt;next) {
+	my $id    = $mrna-&gt;feature_id;
+	my $start = $mrna-&gt;start;
+	my $end   = $mrna-&gt;end;
+      }
+    }
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>&lt;GAL::Schema::Result::Feature::gene&gt; provides a &lt;GAL::Schema::Result::Feature&gt;
+subclass for gene specific behavior.</p>
+
+<h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<h2 id="transcripts">transcripts</h2>
+
+<p><a href="#" onclick="toggleCode('method_transcripts');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_transcripts">
+                                        <pre>
+
+sub transcripts {
+
+  my $self = shift;
+
+  #TODO: GAL::lib::GAL::Schema::Result::Feature::gene::transcripts
+  #TODO: should use SO directly.
+
+  my $sort_order;
+  if ($self->strand eq '-') {
+    $sort_order = [{ -desc => 'end' },
+		   { -asc =>  'start'},
+		  ];
+  }
+  else {
+    $sort_order = [{ -asc  => 'start' },
+		   { -desc =>  'end'},
+		  ];
+  }
+
+  my $transcript_types = $self->get_transcript_types;
+  my $transcripts = $self->children({type => $transcript_types},
+				    {order_by => $sort_order,
+				    distinct => 1});
+
+  return wantarray ? $transcripts->all : $transcripts;
+
+}
+</pre></div>
+
+<pre> Title   : transcripts
+ Usage   : $transcripts = $self-&gt;transcripts
+ Function: Get the gene's transcript sorted by start with the longest
+	   transcripts first when start locations are equal.
+ Returns : A DBIx::Class::Result object loaded up with transcripts.
+ Args    : None
+
+</pre><h2 id="infer_introns">infer_introns</h2>
+
+<p><a href="#" onclick="toggleCode('method_infer_introns');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_infer_introns">
+                                        <pre>
+
+sub infer_introns {
+
+  my $self = shift;
+  for my $transcript ($self->transcripts) {
+    $transcript->infer_introns;
+  }
+}
+</pre></div>
+
+<pre> Title   : infer_introns
+ Usage   : $self-&gt;infer_introns
+ Function: Infer introns for all transcripts belonging to the gene.
+ Returns : N/A
+ Args    : None
+
+</pre><h2 id="splice_complexity">splice_complexity</h2>
+
+<p><a href="#" onclick="toggleCode('method_splice_complexity');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_splice_complexity">
+                                        <pre>
+
+sub splice_complexity {
+
+  my $self = shift;
+
+  my @transcripts = $self->transcripts;
+  return undef unless scalar @transcripts > 1;
+
+  my @AEDs;
+  my %seen_pairs;
+  for my $transcriptA (@transcripts) {
+    my $idA = $transcriptA->feature_id;
+    for my $transcriptB (@transcripts) {
+      my $idB = $transcriptB->feature_id;
+      my $pair = join '-', sort($idA, $idB);
+      next if ($idA eq $idB || exists $seen_pairs{$pair});
+      $seen_pairs{$pair}++;
+      my $AED = $transcriptA->AED($transcriptB);
+      push @AEDs, $AED;
+    }
+  }
+
+  my $total_AED;
+  map {$total_AED += $_} @AEDs;
+  return $total_AED / scalar @AEDs;
+}
+</pre></div>
+
+<pre> Title   : splice_complexity
+ Usage   : $splice_complexity = $self-&gt;splice_complexity
+ Function: Get the transcript splice_complexity (PMID: 19236712)
+ Returns : A numerical value
+ Args    : None
+
+</pre><h2 id="mRNAs">mRNAs</h2>
+
+<p><a href="#" onclick="toggleCode('method_mRNAs');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_mRNAs">
+                                        <pre>
+
+sub mRNAs {
+  my $self = shift;
+
+  my $sort_order;
+  if ($self->strand eq '-') {
+      $sort_order = [{ -desc => 'end' },
+		     { -asc =>  'start'},
+	  ];
+  }
+  else {
+      $sort_order = [{ -asc  => 'start' },
+		     { -desc =>  'end'},
+	  ];
+  }
+
+
+  #TODO: should use SO directly.
+  my $mRNAs = $self->children({type => 'mRNA'},
+			      {order_by => $sort_order,
+			       distinct => 1});
+  return wantarray ? $mRNAs->all : $mRNAs;
+}
+</pre></div>
+
+<pre> Title   : mRNAs
+ Usage   : $mRNAs = $self-&gt;mRNAs
+ Function: Get the genes mRNA features
+ Returns : A DBIx::Class::Result object loaded up with mRNA features.
+ Args    : None
+
+</pre><h2 id="is_coding">is_coding</h2>
+
+<p><a href="#" onclick="toggleCode('method_is_coding');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_is_coding">
+                                        <pre>
+
+sub is_coding {
+
+  my $self = shift;
+  return 1 if grep {$_->type eq 'mRNA'} $self->children(undef, {distinct => 1})->all;
+}
+</pre></div>
+
+<pre> Title   : is_coding
+ Usage   : $is_coding = $self-&gt;is_coding
+ Function: Return true if this gene has mRNA
+ Returns : 1 or undef
+ Args    : None
+
+</pre><h2 id="get_transcript_types">get_transcript_types</h2>
+
+<p><a href="#" onclick="toggleCode('method_get_transcript_types');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_get_transcript_types">
+                                        <pre>
+
+sub get_transcript_types {
+
+  my @transcripts = qw(EST
+		       RNase_MRP_RNA
+		       RNase_P_RNA
+		       SRP_RNA
+		       SRP_RNA_primary_transcript
+		       Y_RNA
+		       aberrant_processed_transcript
+		       alternatively_spliced_transcript
+		       antisense_RNA
+		       antisense_primary_transcript
+		       capped_mRNA
+		       capped_primary_transcript
+		       class_II_RNA
+		       class_I_RNA
+		       consensus_mRNA
+		       dicistronic_mRNA
+		       dicistronic_primary_transcript
+		       dicistronic_transcript
+		       edited_mRNA
+		       edited_transcript
+		       edited_transcript_by_A_to_I_substitution
+		       enhancerRNA
+		       enzymatic_RNA
+		       exemplar_mRNA
+		       guide_RNA
+		       lnc_RNA
+		       mRNA
+		       mRNA_recoded_by_codon_redefinition
+		       mRNA_recoded_by_translational_bypass
+		       mRNA_region
+		       mRNA_with_frameshift
+		       mRNA_with_minus_1_frameshift
+		       mRNA_with_minus_2_frameshift
+		       mRNA_with_plus_1_frameshift
+		       mRNA_with_plus_2_frameshift
+		       mature_transcript
+		       mature_transcript_region
+		       miRNA_primary_transcript
+		       mini_exon_donor_RNA
+		       monocistronic_mRNA
+		       monocistronic_primary_transcript
+		       monocistronic_transcript
+		       ncRNA
+		       nc_primary_transcript
+		       piRNA
+		       polyadenylated_mRNA
+		       polycistronic_mRNA
+		       polycistronic_primary_transcript
+		       polycistronic_transcript
+		       pre_edited_mRNA
+		       primary_transcript
+		       primary_transcript_region
+		       processed_transcript
+		       protein_coding_primary_transcript
+		       pseudogenic_transcript
+		       rRNA
+		       rRNA_cleavage_RNA
+		       rRNA_primary_transcript
+		       rasiRNA
+		       recoded_mRNA
+		       regional_centromere_outer_repeat_transcript
+		       riboswitch
+		       ribozyme
+		       scRNA
+		       scRNA_primary_transcript
+		       siRNA
+		       small_regulatory_ncRNA
+		       snRNA
+		       snRNA_primary_transcript
+		       snoRNA
+		       snoRNA_primary_transcript
+		       spliced_leader_RNA
+		       stRNA
+		       tRNA
+		       tRNA_primary_transcript
+		       tasiRNA
+		       tasiRNA_primary_transcript
+		       telomerase_RNA
+		       tmRNA_primary_transcript
+		       trans_spliced_mRNA
+		       trans_spliced_transcript
+		       transcript
+		       transcript_bound_by_nucleic_acid
+		       transcript_bound_by_protein
+		       transcript_region
+		       transcript_with_translational_frameshift
+		       vault_RNA
+		     );
+  return wantarray ? @transcripts : \@transcripts;
+}
+</pre></div>
+
+<pre> Title   : get_transcript_types
+ Usage   : $transcript_types = $self-&gt;get_transcript_types
+ Function: Get a list of all features that are types of transcripts.
+ Returns : An array or ref
+ Args    : None
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>This module does not throw any error or warning messages.</p>
+
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>&lt;GAL::Schema::Result::Feature::gene&gt; requires no configuration files or environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>&lt;GAL::Schema::Result::Feature::sequence_feature&gt;</p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

@@ -1,0 +1,376 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::Parser::venter_snp</title>
+<link rel="stylesheet" type="text/css" href="../podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="../index.html">GAL</a> &gt; Perl Modules &gt;
+  Parser-venter_snp
+</div>
+<div>
+<a href="../src/Parser/venter_snp.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#Constructor">Constructor</a><br />
+<ul>
+	<li><a href="#new">new</a></li>
+	<li><a href="#parse_record">parse_record</a></li>
+	<li><a href="#reader">reader</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>GAL::Parser::venter_snp - Parse SNP files from the Craig Venter genome</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>This document describes GAL::Parser::venter_snp version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<pre>    use GAL::Parser::venter_snp
+    my $parser = GAL::Parser::venter_snp-&gt;new(file =&gt; 'venter_snp.gff');
+
+    while (my $feature_hash = $parser-&gt;next_feature_hash) {
+	print $parser-&gt;to_gff3($feature_hash) . &quot;\n&quot;;
+    }
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p><a href="Parser/venter_snp.pm.html">GAL::Parser::venter_snp</a> parses SNP files from the Craig Venter
+genome published by Levy, et al. 2007
+(http://www.ncbi.nlm.nih.gov/pubmed/17803354).</p>
+
+<h1 id="Constructor">Constructor <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>New <a href="Parser/venter_snp.pm.html">GAL::Parser::venter_snp</a> objects are created by the class method
+new.  Arguments should be passed to the constructor as a list (or
+reference) of key value pairs.  All attributes of the
+<a href="Parser/venter_snp.pm.html">GAL::Parser::venter_snp</a> object can be set in the call to new. An
+simple example of object creation would look like this:</p>
+
+<pre>    my $parser = GAL::Parser::venter_snp-&gt;new(file =&gt; 'venter_snp');
+
+</pre><p>The constructor recognizes the following parameters which will set the
+appropriate attributes:</p>
+
+<p>This optional parameter provides the filename for the file containing
+the data to be parsed. While this parameter is optional either it, or
+the following fh parameter must be set.</p>
+
+<p>This optional parameter provides a filehandle to read data from. While
+this parameter is optional either it, or the following fh parameter
+must be set.</p>
+
+<h2 id="new">new</h2>
+
+<p><a href="#" onclick="toggleCode('method_new');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_new">
+                                        <pre>
+
+sub new {
+	my ($class, @args) = @_;
+	my $self = $class->SUPER::new(@args);
+	return $self;
+}
+</pre></div>
+
+<pre>     Title   : new
+     Usage   : GAL::Parser::venter_snp-&gt;new();
+     Function: Creates a GAL::Parser::venter_snp object;
+     Returns : A GAL::Parser::venter_snp object
+     Args    : See the attributes described above.
+
+</pre><h2 id="parse_record">parse_record</h2>
+
+<p><a href="#" onclick="toggleCode('method_parse_record');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_parse_record">
+                                        <pre>
+
+sub parse_record {
+	my ($self, $record) = @_;
+
+# 1.  Chromosome (NCBI 36)
+#
+# 2.  Variant identifier (unique to each variant)
+#
+# 3.  Variant Type
+#         There are 7 different variant types in this file.  See  Fig. 4
+#         in Levy, et al. for a description of the variant types.
+#         "heterozygous_mixed_sequence_variant" in this file corresponds
+#         to "complex" in the figure.
+#
+# 4.  Chromosome start position (NCBI 36, in space-based coordinates)
+#
+# 5.  Chromosome end position (NCBI 36, space-based coordinates)
+#
+# 6.  Not used.
+#
+# 7.  Orientation with respect to NCBI.  The sequence is give in column.
+#     If the value in column 7 is "+" or "-", this means that the sequence
+#     corresponds to the positive or negative strand of NCBI, respectively.
+#     A "." is given for variants that had ambiguous mapping.
+#
+# 8.  This field is delimited by semicolons. In the first field, the
+#     alleles of the variant are given (e.g. A/B).  For homozygous
+#     variants, the first allele A matches NCBI 36, the second allele B
+#     matches HuRef.  There can be more than 2 alleles, which may occur
+#     when reads may pile up in repititive regions.
+#
+#     The second field "RMR" indicates RepeatMasker status.   RMR=1
+#     indicates that the variant occurs in a region identified by
+#     RepeatMasker; RMR=0 indicates that the variant does not.
+#
+#     The third field "TR" indicates TandemRepeat status. TR=1 indicates
+#     that the variant occurs in a tandem repeat, as identified by
+#     TandemRepeatFinder.  TR=0 indicates that the variant does not.
+#
+#
+# 9.  This column indicates whether a variant was post-processed.
+#     Method1 indicates the variant was kept in its original form and
+#     not post-processed.  Method1_MSV_clean corresponds to a modified
+#     variant call where heterozygous mixed sequence variants were
+#     changed to indels.  Method2 indicates that the variant is composed of a
+#     cluster of Method1 variants that were within 10 bp of each other
+#     (see paper for procedure).  Method2_AmbiguousMapping indicates
+#     that after the clustering, the position of the new variant could
+#     not be easily placed on NCBI 36, and there may be some error in
+#     the mapping position given.
+#
+# *Please note that the values provided in Table 4 of Levy, et al. are based on Method1
+# variants.
+
+# 1       1103675000194   homozygous_SNP  815416  815417  .       +       A/G;RMR=1;TR=0  Method1
+# 1       1103675000195   heterozygous_SNP        817115  817116  .       +       A/C;RMR=1;TR=0  Method1
+
+	# Headers use by parser
+	# chromosome variant_id variant_type start end orientation seqs processing
+
+	# Fill in the first 8 columns for GFF3
+	my $id         = $record->{variant_id};
+	my $seqid      = 'chr' . $record->{chromosome};
+	my $source     = 'Celera';
+	my $type       = ''; # Assigned below
+	my $start      = ++$record->{start};
+	my $end        = $record->{end};
+	my $score      = '.';
+	my $strand     = $record->{orientation};
+	my $phase      = '.';
+
+
+	my ($their_zygosity, $variant_type) =
+	  $record->{variant_type} =~ /(.*?)_(.*)/;
+
+	#return undef unless $variant_type eq 'SNP';
+
+	my %type_map = (deletion               => 'nucleotide_deletion',
+			insertion              => 'nucleotide_insertion',
+			mixed_sequence_variant => 'sequence_alteration',
+			MNP                    => 'MNP',
+			SNP                    => 'SNV',
+		       );
+
+	$type = $type_map{$variant_type};
+
+	my $reference_seq = uc $self->fasta->seq($seqid, $start, $end);
+	$reference_seq = $self->revcomp($reference_seq) if $strand eq '-';
+
+	my ($seq_text) = split /;/, $record->{seqs};
+	my @variant_seqs = split m|/|, $seq_text;
+	shift @variant_seqs if $their_zygosity eq 'homozygous';
+
+	# if ($reference_seq ne $real_ref) {
+	#     $self->warn('reference_seq_mismatch',
+	#		('The reference sequence given for this record ' .
+	#		'does not match the reference sequence in the ' .
+	#		'given fasta files.'
+	#		)
+	#		);
+	# }
+
+	#unshift @variant_seqs, $reference_seq
+	#  if $record->{variant_type} =~ /^heterozygous/;
+
+	my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+
+	# sort | uniq -c | sort -nr
+	# 1624998 heterozygous_SNP
+	# 1450860 homozygous_SNP
+	#  128111 heterozygous_insertion
+	#   92647 heterozygous_deletion
+	#   22525 heterozygous_MNP
+	#   21480 heterozygous_mixed_sequence_variant
+	#   14838 homozygous_MNP
+
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
+			  Zygosity      => [$zygosity],
+			  ID            => [$id],
+			 };
+
+	my $feature_data = {feature_id => $id,
+			    seqid      => $seqid,
+			    source     => $source,
+			    type       => $type,
+			    start      => $start,
+			    end        => $end,
+			    score      => $score,
+			    strand     => $strand,
+			    phase      => $phase,
+			    attributes => $attributes,
+			   };
+
+	return $feature_data;
+}
+</pre></div>
+
+<pre> Title   : parse_record
+ Usage   : $a = $self-&gt;parse_record();
+ Function: Parse the data from a record.
+ Returns : A hash ref needed by Feature.pm to create a Feature object
+ Args    : A hash ref of fields that this sub can understand (In this case GFF3).
+
+</pre><h2 id="reader">reader</h2>
+
+<p><a href="#" onclick="toggleCode('method_reader');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_reader">
+                                        <pre>
+
+sub reader {
+  my $self = shift;
+
+  if (! $self->{reader}) {
+    my @field_names = qw(chromosome variant_id variant_type start end score
+			  orientation seqs processing);
+    my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
+    $self->{reader} = $reader;
+  }
+  return $self->{reader};
+}
+</pre></div>
+
+<pre> Title   : reader
+ Usage   : $a = $self-&gt;reader
+ Function: Return the reader object.
+ Returns : A L&lt;GAL::Reader::DelimitedLine&gt; singleton.
+ Args    : None
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<dl>
+	<dt>reference_seq_mismatch</dt>
+		<dd><p>The reference sequence given for this record does not match the
+reference sequence in the given fasta files.</p></dd>
+</dl>
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p><a href="Parser/venter_snp.pm.html">GAL::Parser::venter_snp</a> requires no configuration files or
+environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p><a href="Parser.pm.html">GAL::Parser</a>
+<a href="Reader/DelimitedLine.pm.html">GAL::Reader::DelimitedLine</a></p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All
+rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

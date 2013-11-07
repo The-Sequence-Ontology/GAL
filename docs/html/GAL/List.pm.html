@@ -1,0 +1,565 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::List</title>
+<link rel="stylesheet" type="text/css" href="podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="index.html">GAL</a> &gt; Perl Modules &gt;
+  List
+</div>
+<div>
+<a href="src/List.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#CONSTRUCTOR">CONSTRUCTOR</a><br />
+<ul>
+	<li><a href="#new">new</a></li>
+</ul>
+</li>
+	<li><a href="#ATTRIBUTES">ATTRIBUTES</a><br />
+<ul>
+	<li><a href="#list">list</a></li>
+	<li><a href="#method">method</a></li>
+	<li><a href="#key">key</a></li>
+	<li><a href="#iterator">iterator</a></li>
+</ul>
+</li>
+	<li><a href="#METHODS">METHODS</a><br />
+<ul>
+	<li><a href="#parse_list">_parse_list</a></li>
+	<li><a href="#hash_list">_hash_list</a></li>
+	<li><a href="#count">count</a></li>
+	<li><a href="#cardinality">cardinality</a></li>
+	<li><a href="#count_uniq">count_uniq</a></li>
+	<li><a href="#category_counts">category_counts</a></li>
+	<li><a href="#shuffle">shuffle</a></li>
+	<li><a href="#uniq">uniq</a></li>
+	<li><a href="#random_pick">random_pick</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>GAL::List - List aggregation and analysis functions for GAL</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>This document describes GAL::List version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<pre>    use GAL::List::Categorical;
+    my $list_catg = GAL::List::Categorical-&gt;new(list =&gt; [qw(red red red blue blue
+							       green yellow orange orange
+							       purple purple purple purple)]);
+    my $count    = $list_catg-&gt;count;
+    $list_ref    = $list_catg-&gt;list;
+    @list_ary    = $list_catg-&gt;list;
+    $catg_counts = $list_catg-&gt;cardinality;
+    $count_uniq  = $list_catg-&gt;count_uniq;
+    $max_str     = $list_catg-&gt;maxstr;
+    $min_str     = $list_catg-&gt;minstr;
+    @shff_list   = $list_catg_shuffle;
+    @uniq_list   = $list_catg_uniq;
+    $item        = $list_catg-&gt;random_pick;
+
+    use GAL::List::Numric;
+    $list_numeric = GAL::List::Numeric-&gt;new(list =&gt; [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    $max = $list_numeric-&gt;max;
+    $min = $list_numeric-&gt;min;
+    $sum = $list_numeric-&gt;sum;
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>&lt;GAL::List&gt; serves as a base class for the modules below it and
+provides basic list summarization details.  It is not intended to be
+used on it's own.  You should use it's subclasses instead.</p>
+
+<h1 id="CONSTRUCTOR">CONSTRUCTOR <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>To construct a GAL::List subclass simply pass it an appropriate list.</p>
+
+<pre>    my $list_catg = GAL::List::Categorical-&gt;new(list =&gt; [qw(red red red blue blue
+							       green yellow orange orange
+							       purple purple purple purple)]);
+    $list_numeric = GAL::List::Numeric-&gt;new(list =&gt; [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+
+
+
+</pre><h2 id="new">new</h2>
+
+<p><a href="#" onclick="toggleCode('method_new');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_new">
+                                        <pre>
+
+sub new {
+	my ($class, @args) = @_;
+	my $self = $class->SUPER::new(@args);
+	return $self;
+}
+</pre></div>
+
+<pre>     Title   : new
+     Usage   : GAL::List-&gt;new()
+     Function: Creates a GAL::List object;
+     Returns : A GAL::List object
+     Args    :
+
+</pre><h1 id="ATTRIBUTES">ATTRIBUTES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>All attributes can be supplied as parameters to the constructor as a
+list (or referenece) of key value pairs.</p>
+
+<h2 id="list">list</h2>
+
+<p><a href="#" onclick="toggleCode('method_list');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_list">
+                                        <pre>
+
+sub list {
+  my ($self, $list) = @_;
+  if ($list) {
+    my $err_msg = ('GAL::List requires an array reference as the ' .
+		   'first argument, but you gave a  ' . ref $list
+		  );
+    my $err_code = 'list_or_reference_required : ' . ref $list;
+    $self->warn($err_code, $err_msg) unless ref $list eq 'ARRAY';
+    $self->{list} = $list;
+  }
+  $self->{list} ||= [];
+  return wantarray ? @{$self->{list}} : $self->{list};
+}
+</pre></div>
+
+<pre> Title   : list
+ Usage   : $a = $self-&gt;list()
+ Function: Get/Set the value of list.
+ Returns : The value of list.
+ Args    : A value to set list to.
+
+</pre><h2 id="method">method</h2>
+
+<p><a href="#" onclick="toggleCode('method_method');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_method">
+                                        <pre>
+
+ sub method {
+   my ($self, $method) = @_;
+   $self->{method} = $method if $method;
+   return $self->{method};
+ }
+
+#-----------------------------------------------------------------------------
+
+=head2 key
+
+ Title   : key
+ Usage   : $a = $self->key()
+ Function: Get/Set the value of key.
+ Returns : The value of key.
+ Args    : A value to set key to.
+
+=cut
+
+ sub key {
+   my ($self, $key) = @_;
+   $self->{key} = $key if $key;
+   return $self->{key};
+ }
+
+#-----------------------------------------------------------------------------
+
+=head2 iterator
+
+ Title   : iterator
+ Usage   : $a = $self->iterator()
+ Function: Get/Set the value of iterator.
+ Returns : The value of iterator.
+ Args    : A value to set iterator to.
+
+=cut
+
+ sub iterator {
+   my ($self, $iterator) = @_;
+   $self->{iterator} = $iterator if $iterator;
+   return $self->{iterator};
+ }
+
+#-----------------------------------------------------------------------------
+#---------------------------------- Methods ----------------------------------
+#-----------------------------------------------------------------------------
+
+=head1 METHODS
+
+=head2 _parse_list
+
+ Title   : _parse_list
+ Usage   : $self->_parse_list()
+ Function: Parse the contents of the list and create an array of data if the
+	   data isn't already an array.
+ Returns : N/A
+ Args    : N/A
+
+=cut
+
+sub _parse_list {
+    my $self = shift;
+
+    my $list     = $self->list();
+    my $iterator = $self->iterator();
+    my $method   = $self->method();
+    my $key      = $self->method();
+
+  VALUE:
+    for my $value (@{$list}) {
+      if (! ref $value) {
+	next VALUE;
+      }
+      elsif (my $class = List::Util::blessed $value) {
+	if (! defined $method || ! $value->can($method)) {
+	  $self->warn('method_does_not_exist', "CLASS=$class; METHOD=$method");
+	  next VALUE;
+	}
+	$value = $value->$method;
+      }
+      elsif (ref $value eq 'HASH') {
+	if (! defined $key || ! exists $value->{$key}) {
+	  $self->warn('key_does_not_exist', ("KEY=$key; " .
+					     join ',', %{$value}));
+	  next VALUE;
+	}
+	$value = $value->{$key};
+      }
+    }
+
+    my @xtra_values;
+    if ($iterator && (my $class = List::Util::blessed $iterator)) {
+      if (! $iterator->can('next')) {
+	$self->warn('next_method_does_not_exist', "CLASS=$class; METHOD=next");
+      }
+      else {
+      ITR_LOOP:
+	while (my $value = $iterator->next) {
+	if (! defined $method || ! $value->can($method)) {
+	  $self->warn('method_does_not_exist', "CLASS=$class; METHOD=$method");
+	  next ITR_LOOP;
+	}
+	else {
+	  push @xtra_values, $value->$method;
+	}
+	}
+      }
+    }
+
+    push @{$self->{list}}, @xtra_values if @xtra_values;
+}
+</pre></div>
+
+<pre> Title   : method
+ Usage   : $a = $self-&gt;method()
+ Function: Get/Set the value of method.
+ Returns : The value of method.
+ Args    : A value to set method to.
+
+</pre><h2 id="key">key</h2>
+
+<pre> Title   : key
+ Usage   : $a = $self-&gt;key()
+ Function: Get/Set the value of key.
+ Returns : The value of key.
+ Args    : A value to set key to.
+
+</pre><h2 id="iterator">iterator</h2>
+
+<pre> Title   : iterator
+ Usage   : $a = $self-&gt;iterator()
+ Function: Get/Set the value of iterator.
+ Returns : The value of iterator.
+ Args    : A value to set iterator to.
+
+</pre><h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<h2 id="parse_list">_parse_list</h2>
+
+<pre> Title   : _parse_list
+ Usage   : $self-&gt;_parse_list()
+ Function: Parse the contents of the list and create an array of data if the
+	   data isn't already an array.
+ Returns : N/A
+ Args    : N/A
+
+</pre><h2 id="hash_list">_hash_list</h2>
+
+<p><a href="#" onclick="toggleCode('method__hash_list');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method__hash_list">
+                                        <pre>
+
+sub _hash_list {
+  my $self = shift;
+
+  if (! exists $self->{hash_list}) {
+    map {$self->{hash_list}{$_}++} $self->list;
+  }
+
+  return wantarray ? %{$self->{hash_list}} : $self->{hash_list};
+
+}
+</pre></div>
+
+<pre> Title   : _hash_list
+ Usage   : $hash = $self-&gt;_hash_list()
+ Function:
+	   data isn't already an array.
+ Returns : N/A
+ Args    : N/A
+
+</pre><h2 id="count">count</h2>
+
+<p><a href="#" onclick="toggleCode('method_count');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_count">
+                                        <pre>
+
+sub count {
+  my @list = shift->list;
+  return scalar @list;
+}
+</pre></div>
+
+<pre> Title   : count
+ Usage   : $a = $self-&gt;count
+ Function: Return the number of elements in the list
+ Returns : Integer
+ Args    : N/A
+
+</pre><h2 id="cardinality">cardinality</h2>
+
+<p><a href="#" onclick="toggleCode('method_cardinality');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_cardinality">
+                                        <pre>
+
+sub cardinality {
+  my $self = shift;
+  my @uniq = $self->uniq;
+  return scalar @uniq;
+}
+</pre></div>
+
+<pre> Title   : cardinality
+ Usage   : $a = $self-&gt;cardinality
+ Function: Return the number of uniq elements in the list
+ Returns : Integer
+ Args    : N/A
+
+</pre><h2 id="count_uniq">count_uniq</h2>
+
+<p><a href="#" onclick="toggleCode('method_count_uniq');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_count_uniq">
+                                        <pre>
+
+sub count_uniq {
+    return shift->cardinality;
+}
+</pre></div>
+
+<pre> Title   : count_uniq
+ Usage   : $a = $self-&gt;count_uniq()
+ Function: An alias for cardinality
+ Returns : Integer
+ Args    : N/A
+
+</pre><h2 id="category_counts">category_counts</h2>
+
+<p><a href="#" onclick="toggleCode('method_category_counts');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_category_counts">
+                                        <pre>
+
+sub category_counts {
+    my $self = shift;
+    my %hash = $self->_hash_list;
+    return wantarray ? %hash : \%hash;
+}
+</pre></div>
+
+<pre> Title   : category_counts
+ Usage   : $a = $self-&gt;category_counts()
+ Function: Return a hash(reference) with uniq elements as keys and element
+	   counts as values.
+ Returns : A hash(reference)
+ Args    : N/A
+
+</pre><h2 id="shuffle">shuffle</h2>
+
+<p><a href="#" onclick="toggleCode('method_shuffle');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_shuffle">
+                                        <pre>
+
+sub shuffle {
+  return wantarray ? List::Util::shuffle(shift->list) :
+    [List::Util::shuffle(shift->list)];
+}
+</pre></div>
+
+<pre> Title   : shuffle
+ Usage   : $a = $self-&gt;shuffle()
+ Function: Returns the elements of the list in random order
+ Returns : An array/array reference
+ Args    : N/A
+
+</pre><h2 id="uniq">uniq</h2>
+
+<p><a href="#" onclick="toggleCode('method_uniq');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_uniq">
+                                        <pre>
+
+sub uniq {
+  my $self = shift;
+  my @uniq = List::MoreUtils::uniq($self->list);
+  return wantarray ? @uniq : \@uniq;
+}
+</pre></div>
+
+<pre> Title   : uniq
+ Usage   : $a = $self-&gt;uniq()
+ Function:
+ Returns :
+ Args    :
+
+</pre><h2 id="random_pick">random_pick</h2>
+
+<p><a href="#" onclick="toggleCode('method_random_pick');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_random_pick">
+                                        <pre>
+
+sub random_pick {
+    my $self = shift;
+
+    my $random = int(rand($self->count));
+    return $self->{list}[$random];
+}
+</pre></div>
+
+<pre> Title   : random_pick
+ Usage   : $a = $self-&gt;random_pick()
+ Function:
+ Returns :
+ Args    :
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<dl>
+	<dt><code>list_or_reference_required</code></dt>
+		<dd><p>GAL::List::list require an array or a reference to any array be passed
+as an argument, but you have passed something else.</p></dd>
+		<dd><p>Keep in mind that several of GAL::List's methods are provided by
+List::Util, and errors not found here may be thrown by that module.</p></dd>
+</dl>
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>&lt;GAL::List&gt; requires no configuration files or environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>&lt;GAL::Base&gt;
+&lt;List::Util&gt;</p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

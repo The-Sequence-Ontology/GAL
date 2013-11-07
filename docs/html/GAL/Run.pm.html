@@ -1,0 +1,436 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::Run</title>
+<link rel="stylesheet" type="text/css" href="podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="index.html">GAL</a> &gt; Perl Modules &gt;
+  Run
+</div>
+<div>
+<a href="src/Run.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#METHODS">METHODS</a><br />
+<ul>
+	<li><a href="#new">new</a></li>
+	<li><a href="#path">path</a></li>
+	<li><a href="#command">command</a></li>
+	<li><a href="#stdout">stdout</a></li>
+	<li><a href="#stderr">stderr</a></li>
+	<li><a href="#run">run</a></li>
+	<li><a href="#get_stdout">get_stdout</a></li>
+	<li><a href="#get_stderr">get_stderr</a></li>
+	<li><a href="#stdout_fh">stdout_fh</a></li>
+	<li><a href="#stderr_fh">stderr_fh</a></li>
+	<li><a href="#"></a></li>
+	<li><a href="#-2"></a></li>
+	<li><a href="#-2"></a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>GAL::Run - &lt;One line description of module's purpose here&gt;</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>This document describes GAL::Run version 1.0.4</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<pre>     use GAL::Run;
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<h2 id="new">new</h2>
+
+<p><a href="#" onclick="toggleCode('method_new');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_new">
+                                        <pre>
+
+sub new {
+	my $class = shift;
+	my $self = {};
+	bless $self, $class;
+	$self->_initialize_args(@_);
+	return $self;
+}
+</pre></div>
+
+<pre>     Title   : new
+     Usage   : GAL::Run-&gt;new();
+     Function: Creates a Run object;
+     Returns : A Run object
+     Args    :
+
+</pre><h2 id="path">path</h2>
+
+<p><a href="#" onclick="toggleCode('method_path');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_path">
+                                        <pre>
+
+sub path {
+    my ($self, $value) = @_;
+
+    $self->{path} = $value if defined $value;
+    return $self->{path};
+}
+</pre></div>
+
+<pre> Title   : path
+ Usage   : $a = $self-&gt;path();
+ Function: Get/Set the value of path.
+ Returns : Value of path.
+ Args    : A value to set for path.
+
+</pre><h2 id="command">command</h2>
+
+<p><a href="#" onclick="toggleCode('method_command');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_command">
+                                        <pre>
+
+sub command {
+    my ($self, $value) = @_;
+
+    $self->{command} = $value if defined $value;
+    return $self->{command};
+}
+</pre></div>
+
+<pre> Title   : command
+ Usage   : $a = $self-&gt;command();
+ Function: Get/Set the value of command.
+ Returns : Value of command.
+ Args    : A value to set for command.
+
+</pre><h2 id="stdout">stdout</h2>
+
+<p><a href="#" onclick="toggleCode('method_stdout');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_stdout">
+                                        <pre>
+
+sub stdout {
+    my ($self, $value) = @_;
+
+    $self->{stdout} = $value if defined $value;
+    $self->{stdout} ||= 'gal_run_stdout_' . $self->random_string(8);
+
+    return $self->{stdout};
+}
+</pre></div>
+
+<pre> Title   : stdout
+ Usage   : $a = $self-&gt;stdout();
+ Function: Get/Set the value of stdout.
+ Returns : Value of stdout.
+ Args    : A value to set for stdout.
+
+</pre><h2 id="stderr">stderr</h2>
+
+<p><a href="#" onclick="toggleCode('method_stderr');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_stderr">
+                                        <pre>
+
+sub stderr {
+    my ($self, $value) = @_;
+
+    $self->{stderr} = $value if defined $value;
+    $self->{stderr} ||= 'gal_run_stderr_' . $self->random_string(8);
+    return $self->{stderr};
+}
+</pre></div>
+
+<pre> Title   : stderr
+ Usage   : $a = $self-&gt;stderr();
+ Function: Get/Set the value of stderr.
+ Returns : Value of stderr.
+ Args    : A value to set for stderr.
+
+</pre><h2 id="run">run</h2>
+
+<p><a href="#" onclick="toggleCode('method_run');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_run">
+                                        <pre>
+
+sub run {
+
+  my ($self, @args_array) = @_;
+
+  $self->clean_up;
+
+  my %args = ref $args_array[0] ? %{$args_array[0]} : @args_array;
+
+  my $path    = $self->path($args{path});
+  my $command = $self->command($args{command});
+  my $stdout  = $self->stdout($args{stdout});
+  my $stderr  = $self->stderr($args{stderr});
+
+  my @cl_args = ref $args{cl_args} ? @{$args{cl_args}} : $args{cl_args};
+
+  $command = $path . '/' . $command;
+  $command =~ s|/+|/|g;
+  $command .= join ' ', ('', @cl_args);
+  $command .= " > $stdout 2> $stderr";
+
+  $self->debug('running_command', $command);
+  my $rv = system($command);
+
+  $self->return_value($rv);
+  return $rv;
+}
+</pre></div>
+
+<pre> Title   : run
+ Usage   : $a = $self-&gt;run();
+ Function: Run a system command
+ Returns : The return value of the command run
+ Args    : A hash/ref of the following:
+	     cl_args =&gt; A scalar or arrayref of
+			command line arguments.
+	     path    =&gt; The path to the command
+			executable.
+	     command =&gt; The command to run.
+	     stdout  =&gt; The name of a file
+			for STDOUT output.
+	     stderr  =&gt; The name of a file
+			for STDERR output.
+
+</pre><h2 id="get_stdout">get_stdout</h2>
+
+<p><a href="#" onclick="toggleCode('method_get_stdout');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_get_stdout">
+                                        <pre>
+
+sub get_stdout {
+  my $self = shift;
+  if (! $self->{stdout_contents}) {
+    my $fh = $self->stdout_fh();
+    $self->{stdout_contents} = join '', (<$fh>);
+  }
+  return $self->{stdout_contents};
+}
+</pre></div>
+
+<pre> Title   : get_stdout
+ Usage   : $a = $self-&gt;get_stdout();
+ Function: Return STDOUT from the command as a scalar.
+ Returns : A scalar containing the output to STDOUT.
+ Args    : N/A
+
+</pre><h2 id="get_stderr">get_stderr</h2>
+
+<p><a href="#" onclick="toggleCode('method_get_stderr');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_get_stderr">
+                                        <pre>
+
+sub get_stderr {
+  my $self = shift;
+  if (! $self->{stderr_contents}) {
+    my $fh = $self->stderr_fh();
+    $self->{stderr_contents} = join '', (<$fh>);
+  }
+  return $self->{stderr_contents};
+}
+</pre></div>
+
+<pre> Title   : get_stderr
+ Usage   : $a = $self-&gt;get_stderr();
+ Function: Return STDERR from the command as a scalar.
+ Returns : A scalar containing the errput to STDERR.
+ Args    : N/A
+
+</pre><h2 id="stdout_fh">stdout_fh</h2>
+
+<p><a href="#" onclick="toggleCode('method_stdout_fh');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_stdout_fh">
+                                        <pre>
+
+sub stdout_fh {
+  my $self = shift;
+
+  if (! $self->{stdout_fh}) {
+    my $file = $self->{stdout};
+    open(my $IN, '<', $file) or
+      $self->throw('cant_open_file_for_reading', $file);
+    $self->{stdout_fh} = $IN;
+  }
+  return $self->{stdout_fh};
+}
+</pre></div>
+
+<pre> Title   : stdout_fh
+ Usage   : $a = $self-&gt;stdout_fh();
+ Function: Retuns a filehandle to the contents of STDOUT
+ Returns : A filehandle
+ Args    : N/A
+
+</pre><h2 id="stderr_fh">stderr_fh</h2>
+
+<p><a href="#" onclick="toggleCode('method_stderr_fh');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_stderr_fh">
+                                        <pre>
+
+sub stderr_fh {
+  my $self = shift;
+
+  if (! $self->{stderr_fh}) {
+    my $file = $self->{stderr};
+    open(my $IN, '<', $file) or
+      $self->throw('cant_open_file_for_reading', $file);
+    $self->{stderr_fh} = $IN;
+  }
+  return $self->{stderr_fh};
+}
+</pre></div>
+
+<pre> Title   : stderr_fh
+ Usage   : $a = $self-&gt;stderr_fh();
+ Function: Retuns a filehandle to the contents of STDERR
+ Returns : A filehandle
+ Args    : N/A
+
+</pre><h2 id=""></h2>
+
+<pre> Title   : return_value
+ Usage   : $a = $self-&gt;return_value();
+ Function: Returns the return value of the last executed command
+ Returns : A scalar
+ Args    : The return value to set
+
+</pre><h2 id="-2"></h2>
+
+<pre> Title   : clean_up
+ Usage   : $a = $self-&gt;clean_up();
+ Function: Deletes temp files for STDOUT and STDERR from most recent run.
+           Will also delete any additional files passed.
+ Returns : N/A
+ Args    : An array of filenames to delete.
+
+</pre><h2 id="-2"></h2>
+
+<pre> Title   : method
+ Usage   : $a = $self-&gt;method();
+ Function:
+ Returns :
+ Args    :
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<dl>
+	<dt><code>Error message here, perhaps with %s placeholders</code></dt>
+		<dd><p>[Description of error here]</p></dd>
+	<dt><code>Another error message here</code></dt>
+		<dd><p>[Description of error here]</p></dd>
+		<dd><p>[Et cetera, et cetera]</p></dd>
+</dl>
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>&lt;GAL::Run&gt; requires no configuration files or environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>None.</p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

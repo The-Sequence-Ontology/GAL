@@ -1,0 +1,491 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>&lt;a href=&quot;http://search.cpan.org/perldoc?GAL/Annotation&quot;&gt;GAL::Annotation&lt;/a&gt;</title>
+<link rel="stylesheet" type="text/css" href="podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="index.html">GAL</a> &gt; Perl Modules &gt;
+  Annotation
+</div>
+<div>
+<a href="src/Annotation.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#INHERITS_FROM">INHERITS FROM</a></li>
+	<li><a href="#INHERITED_BY">INHERITED BY</a></li>
+	<li><a href="#USES">USES</a></li>
+	<li><a href="#CONSTRUCTOR">CONSTRUCTOR</a><br />
+<ul>
+	<li><a href="#new">new</a></li>
+</ul>
+</li>
+	<li><a href="#ATTRIBUTES">ATTRIBUTES</a><br />
+<ul>
+	<li><a href="#parser">parser</a></li>
+	<li><a href="#storage">storage</a></li>
+	<li><a href="#fasta">fasta</a></li>
+</ul>
+</li>
+	<li><a href="#Methods">Methods</a><br />
+<ul>
+	<li><a href="#features">features</a></li>
+	<li><a href="#schema">schema</a></li>
+	<li><a href="#load_files">load_files</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p><a href="Annotation.pm.html">GAL::Annotation</a> - The Genome Annotation Library</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>This document describes GAL::Annotation version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<pre>    use GAL::Annotation;
+
+    my $annotation = GAL::Annotation-&gt;new('annotations.gff3',
+					  'genome.fa');
+
+    # Get a smart iterator object.
+    my $features = $annotation-&gt;features;
+    my $feature_count = $features-&gt;count;
+    my @types = $features-&gt;types-&gt;uniq;
+
+    # Do a search and get another smart iterator of matching features.
+    my $mrnas = $features-&gt;search({type =&gt; 'mRNA'});
+
+    # Iterate over the features.
+    while (my $mrna = $mrnas-&gt;next) {
+      # Get the feature ID
+      my $mrna_id = $mrna-&gt;feature_id;
+      my $protein_seq = $mrna-&gt;protein_seq;
+      # Get all the exons for this mRNA
+      my $exons = $mrna-&gt;exons;
+      while (my $exon = $exons-&gt;next) {
+	my $length = $exon-&gt;length;
+	my $gc_content = $exon-&gt;gc_content;
+      }
+      # Introns don't exist in the dataset, so GAL
+      # will infer them on the fly.
+      my $introns = $mrna-&gt;introns;
+      while (my $intron = $introns-&gt;next) {
+        my $seq = $intron-&gt;seq;
+      }
+    }
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p><a href="http://www.sequenceontology.org/software/GAL.html">The Genome Annotation Library (GAL)</a> is a
+collection of object oriented <a href="http://www.perl.org">Perl</a> modules
+developed by the <a href="http://www.sequenceontology.org">Sequence Ontology</a>
+that make working with genome annotations simple and intuitive.</p>
+
+<p>GAL was designed to work with sequence features stored in GFF3 files
+(or sequence alterations stored in GVF files) and GAL provids many
+parsers for converting sequence features in other formats to GFF3 and
+GVF.</p>
+
+<p>Sequence features are represented as objects in GAL based on the
+structure of the <a href="http://www.sequenceontology.org/browser/obob.cgi">Sequence Ontology</a>.  This
+allows the objects to inherit the appropriate behavior from their
+parent types based on the is_a relationships within the ontology and
+it also allows the programer to easily traverse the part_of
+relationships within while writing code.</p>
+
+<h1 id="INHERITS_FROM">INHERITS FROM <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p><a href="Base.pm.html">GAL::Base</a></p>
+
+<h1 id="INHERITED_BY">INHERITED BY <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>None</p>
+
+<h1 id="USES">USES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p><a href="Schema.pm.html">GAL::Schema</a></p>
+
+<h1 id="CONSTRUCTOR">CONSTRUCTOR <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>New Annotation objects are created by the class method new.  Arguments
+should be passed to the constructor as a list (or reference) of key
+value pairs.  All attributes of the Annotation object can be set in
+the call to new, but reasonable defaults will be used where ever
+possilbe to keep object creation simple.  An simple example of object
+creation would look like this:</p>
+
+<pre>    my $feat_store = GAL::Annotation-&gt;new($gff_file);
+    my $feat_store = GAL::Annotation-&gt;new($gff_file, $fasta_file);
+
+</pre><p>The resulting object would use a GFF3 parser and SQLite storage by
+default The first example would not have access to feature sequence,
+the second one would.</p>
+
+<p>A more complex object creation might look like this:</p>
+
+<pre>    my $feat_store = GAL::Annotation-&gt;new(parser  =&gt; {class =&gt; gff3},
+					  storage =&gt; {class =&gt; mysql,
+						      dsn   =&gt; 'dbi:mysql:database'
+						      user  =&gt; 'me',
+						      password =&gt; 'secret'
+					  fasta   =&gt;  '/path/to/fasta/files/'
+					  );
+
+</pre><p>The constructor recognizes the following parameters which will set the
+appropriate attributes:</p>
+
+<dl>
+	<dt>* <code>parser =&gt; parser_subclass [gff3]</code></dt>
+		<dd><p>This optional parameter defines which parser subclass to instantiate.
+This parameter will default to gff3 if not provided.  See GAL::Parser
+for a complete list of available parser classes.</p></dd>
+	<dt>* <code>storage =&gt; storage_subclass [SQLite]</code></dt>
+		<dd><p>This optional parameter defines which storage subclass to instantiate.
+Currently available storage classes are SQLite (the default) and
+mysql.</p></dd>
+	<dt>* <code>fasta =&gt; '/path/to/fasta/files/</code></dt>
+		<dd><p>This optional parameter defines a path to a fasta file or a collection
+of fasta files that correspond the annotated features.  The IDs (first
+contiguous non-whitespace charachters) of the fasta headers must
+correspond to the sequence IDs (seqids) in the annotated features.
+The fasta parameter is optional, but if the fasta attribute is not set
+then the features will not have access to their sequence.  Access to
+the sequence in provided by Bio::DB::Fasta.</p></dd>
+</dl>
+<h2 id="new">new</h2>
+
+<p><a href="#" onclick="toggleCode('method_new');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_new">
+                                        <pre>
+
+sub new {
+    my ($class, @args) = @_;
+
+    my ($args, $feature_file) = _check_for_simple_args(@args);
+
+    my $self = $class->SUPER::new($args);
+    $self->load_files($feature_file) if $feature_file;
+    return $self;
+}
+</pre></div>
+
+<pre>     Title   : new
+     Usage   : GAL::Annotation-&gt;new();
+     Function: Creates a GAL::Annotation object;
+     Returns : A GAL::Annotation object
+     Args    : A list of key value pairs for the attributes specified above.
+
+</pre><h1 id="ATTRIBUTES">ATTRIBUTES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>All attributes can be supplied as parameters to the GAL::Annotation
+constructor as a list (or referenece) of key value pairs.</p>
+
+<h2 id="parser">parser</h2>
+
+<p><a href="#" onclick="toggleCode('method_parser');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_parser">
+                                        <pre>
+
+sub parser {
+  my ($self, @args) = @_;
+
+  if (! $self->{parser} || @args) {
+    my $class = 'GAL::Parser';
+    $self->load_module($class);
+    my $parser = $class->new(@args);
+    my $weak_self = $self;
+    weaken $weak_self;
+    $parser->annotation($weak_self);
+    $self->{parser} = $parser;
+  }
+  return $self->{parser};
+}
+</pre></div>
+
+<pre> Title   : parser
+ Usage   : $parser = $self-&gt;parser();
+ Function: Create or return a parser object.
+ Returns : A GAL::Parser::subclass object.
+ Args    : (class =&gt; gal_parser_subclass)
+	   See GAL::Parser and its subclasses for more arguments.
+ Notes   : The parser object is created as a singleton, but it
+	   can be changed by passing new arguments to a call to
+	   parser.
+
+</pre><h2 id="storage">storage</h2>
+
+<p><a href="#" onclick="toggleCode('method_storage');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_storage">
+                                        <pre>
+
+sub storage {
+  my ($self, @args) = @_;
+
+  if (! $self->{storage}) {
+    my $class = 'GAL::Storage';
+    $self->load_module($class);
+    my $storage = $class->new(@args);
+    my $weak_self = $self;
+    weaken $weak_self;
+    $storage->annotation($weak_self);
+    $self->{storage} = $storage;
+  }
+  return $self->{storage};
+}
+</pre></div>
+
+<pre>  Title   : storage
+  Usage   : $storage = $self-&gt;storage();
+  Function: Create or return a storage object.
+  Returns : A GAL::Storage::subclass object.
+  Args    : (class =&gt; gal_storage_subclass)
+	    See GAL::Storage and its subclasses for more arguments.
+  Notes   : The storage object is created as a singleton and can not be
+	    destroyed or recreated after being created.
+
+</pre><h2 id="fasta">fasta</h2>
+
+<p>The fasta attribute is provided by GAL::Base, see that module for more
+details.</p>
+
+<h1 id="Methods">Methods <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<h2 id="features">features</h2>
+
+<p><a href="#" onclick="toggleCode('method_features');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_features">
+                                        <pre>
+
+sub features {
+  my ($self, $query) = shift;
+  my $features = $self->schema->resultset('Feature');
+  return $features;
+}
+</pre></div>
+
+<pre>  Title   : features
+  Usage   : $self-&gt;features();
+  Function: Return a GAL::Schema::Result::Feature object (a
+	    DBIx::Class::ResultSet for all features).
+  Returns : A GAL::Schema::Result::Feature object
+  Args    : N/A
+
+</pre><h2 id="schema">schema</h2>
+
+<p><a href="#" onclick="toggleCode('method_schema');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_schema">
+                                        <pre>
+
+sub schema {
+    my $self = shift;
+
+    # Create the schema if it doesn't exist
+    if (! $self->{schema}) {
+	# We should be able to reuse the Annotation dbh here!
+	# my $schema = GAL::Schema->connect([sub {$self->storage->dbh}]);
+	my $schema = GAL::Schema->connect($self->storage->dsn,
+					  $self->storage->user,
+					  $self->storage->password,
+					  );
+	# If we're using SQLite we should be using a larger cache_size;
+	# but why doesn't this seem to help?  Do this in the Storage object
+	# $schema->storage->dbh_do(sub {
+	#			     my ($storage, $dbh) = @_;
+	#			     $dbh->do('PRAGMA cache_size = 800000');
+	#			   },
+	#			  );
+	my $weak_self = $self;
+	weaken $weak_self;
+	$schema->annotation($weak_self); # See GAL::SchemaAnnotation
+	$self->{schema} = $schema;
+    }
+    return $self->{schema};
+}
+</pre></div>
+
+<pre>  Title   : schema
+  Usage   : $self-&gt;schema();
+  Function: Create and/or return the DBIx::Class::Schema object
+  Returns : DBIx::Class::Schema object.
+  Args    : N/A - Arguments are provided by the GAL::Storage object.
+
+</pre><h2 id="load_files">load_files</h2>
+
+<p><a href="#" onclick="toggleCode('method_load_files');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_load_files">
+                                        <pre>
+
+sub load_files {
+
+  my ($self, $files) = @_;
+
+  # If a single file
+  if (! ref $files) {
+    my ($file_ext) = $files =~ /\.([^\.]+)$/;
+    my $file_base;
+    ($file_base = $files) =~ s/\.[^\.]+$//;
+    my $sqlite_file = $file_base . '.sqlite';
+    # If an SQLite versions of the file exists
+    if (-e $files && -e $sqlite_file) {
+      # If the SQLite file is newer
+      if ((stat($sqlite_file))[9] > (stat($files))[9]) {
+	# Then load that SQLite file
+	$self->storage->database($sqlite_file);
+	return;
+      }
+    }
+  }
+  $self->storage->load_files($files);
+}
+</pre></div>
+
+<pre> Title   : load_files
+ Usage   : $a = $self-&gt;load_files();
+ Function: Parse and store all of the features in a file. If a single
+	   file is given as an argument and if there are gff[3] and
+	   sqlite versions of that files base name then time stamps
+	   are compared and the database is only (re)loaded if the
+	   GFF3 file is newer.
+ Returns : N/A
+ Args    : A list of files.
+ Notes   : Default
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>&lt;GAL::Annotation&gt; currently does not throw any warnings or errors, but
+most other modules in the library do, and details of those errors can
+be found in those modules.</p>
+
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>&lt;GAL::Annotation&gt; requires no configuration files or environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>Modules in GAL/lib use the following modules:</p>
+
+<p>Bio::DB::Fasta
+Carp
+DBD::SQLite
+DBI
+List::Util
+Scalar::Util
+Set::IntSpan::Fast
+Statistics::Descriptive
+Text::RecordParser</p>
+
+<p>Some script in GAL/bin and/or GAL/lib/GAL/t use the following modules:</p>
+
+<p>Data::Dumper
+FileHandle
+Getopt::Long
+IO::Prompt
+List::MoreUtils
+TAP::Harness
+Test::More
+Test::Pod::Coverage
+URI::Escape
+XML::LibXML::Reader</p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>I'm sure there are plenty of bugs right now - please let me know if you find one.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>
