@@ -1,0 +1,1490 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>&lt;a href=&quot;http://search.cpan.org/perldoc?GAL/Base&quot;&gt;GAL::Base&lt;/a&gt;</title>
+<link rel="stylesheet" type="text/css" href="podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="index.html">GAL</a> &gt; Perl Modules &gt;
+  Base
+</div>
+<div>
+<a href="src/Base.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#INHERITS_FROM">INHERITS FROM</a></li>
+	<li><a href="#INHERITED_BY">INHERITED BY</a></li>
+	<li><a href="#USES">USES</a></li>
+	<li><a href="#CONSTRUCTOR">CONSTRUCTOR</a><br />
+	<ul>
+	<li><a href="#new">new</a></li>
+</ul>
+</li>
+	<li><a href="#ATTRIBUTES">ATTRIBUTES</a><br />
+<ul>
+	<li><a href="#fasta">fasta</a></li>
+	<li><a href="#class">class</a></li>
+</ul>
+</li>
+	<li><a href="#METHODS">METHODS</a><br />
+<ul>
+	<li><a href="#verbosity">verbosity</a></li>
+	<li><a href="#handle_message">handle_message</a></li>
+	<li><a href="#throw">throw</a></li>
+	<li><a href="#warn">warn</a></li>
+	<li><a href="#info">info</a></li>
+	<li><a href="#debug">debug</a></li>
+	<li><a href="#trim_whitespace">trim_whitespace</a></li>
+	<li><a href="#prepare_args">prepare_args</a></li>
+	<li><a href="#set_attributes">set_attributes</a></li>
+	<li><a href="#expand_iupac_nt_codes">expand_iupac_nt_codes</a></li>
+	<li><a href="#load_module">load_module</a></li>
+	<li><a href="#revcomp">revcomp</a></li>
+	<li><a href="#get_feature_bins">get_feature_bins</a></li>
+	<li><a href="#translate">translate</a></li>
+	<li><a href="#genetic_code">genetic_code</a></li>
+	<li><a href="#amino_acid_data">amino_acid_data</a></li>
+	<li><a href="#time_stamp">time_stamp</a></li>
+	<li><a href="#random_string">random_string</a></li>
+	<li><a href="#float_lt">float_lt</a></li>
+	<li><a href="#float_le">float_le</a></li>
+	<li><a href="#float_gt">float_gt</a></li>
+	<li><a href="#float_ge">float_ge</a></li>
+	<li><a href="#get_transcript_types">get_transcript_types</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p><a href="Base.pm.html">GAL::Base</a> - Base class for the Genome Annotation Library</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>This document describes <a href="Base.pm.html">GAL::Base</a> version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<pre>    use base qw(GAL::Base);
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>GAL::Base serves as a base class for all of the other classes in the
+GAL.  It is not intended to be instantiated directly, but rather to be
+used with the 'use base' pragma.  GAL::Base provides object
+instantiation, argument preparation and attribute setting functions
+for other classes during object construction.  In addition it provides
+a wide range of utility functions that are expected to be widly
+applicable throughout the library.</p>
+
+<h1 id="INHERITS_FROM">INHERITS FROM <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>None</p>
+
+<h1 id="INHERITED_BY">INHERITED BY <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+
+
+
+
+
+
+<h1 id="USES">USES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<dl>
+	<dt>* <a href="http://search.cpan.org/perldoc?Carp">Carp</a></dt>
+	<dt>* <a href="http://search.cpan.org/perldoc?Bio/DB/Fasta">Bio::DB::Fasta</a></dt>
+	<dt>* <a href="http://search.cpan.org/perldoc?Scalar/Util">Scalar::Util</a></dt>
+</dl>
+<h1 id="CONSTRUCTOR">CONSTRUCTOR <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p><a href="Base.pm.html">GAL::Base</a> is not intended to by instantiated on it's own.  It does
+however, handle object creation for the rest of the library.  Each
+class in GAL calls:</p>
+
+<pre>    my $self = $class-&gt;SUPER::new(@args);
+
+</pre><p>This means that GAL::Base - at the bottom of the inheritance chain
+does the actual object creation.  It creates the new object based on
+the calling class, and then checks to see if there is a 'class'
+argument provided.  If there is it calls the class attribute, which
+<a href="Base.pm.html">GAL::Base</a> provides, and reblesses the object using the value to the
+class argument as a subclass of the current calling class.  This
+allows this kind of an idiom for any class that has subclasses:</p>
+
+<pre>    my $parser = GAL::Parser-&gt;(class =&gt; 'gff3');
+
+</pre><p>That invocation would return a <a href="Parser/gff3.pm.html">GAL::Parser::gff3</a> object instead of a
+<a href="Parser.pm.html">GAL::Parser</a> object.</p>
+
+<p><a href="Base.pm.html">GAL::Base</a> provides the following attributes to all other classes in
+the GAL.</p>
+
+<dl>
+	<dt>* <code>fasta =&gt; '/path/to/fasta/files/'</code></dt>
+		<dd><p>This optional parameter defines a path to fasta files that are (or
+will be) indexed and available to all objects in the library.</p></dd>
+	<dt>* <code>class =&gt; 'subclass'</code></dt>
+		<dd><p>This optional parameter will cause the current object to be reblessed
+as the given subclass of the calling object.</p></dd>
+<h2 id="new">new</h2>
+
+<p><a href="#" onclick="toggleCode('method_new');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_new">
+                                        <pre>
+
+sub new {
+	my ($class, @args) = @_;
+	$class = ref($class) || $class;
+	my $self = bless {}, $class;
+
+	my $args = $self->prepare_args(@args);
+
+	# Call attribute class first so that objects get reblessed
+	# into the appropriate subclass before they set their
+	# attributes.
+	if ($args->{class}) {
+	  $self = $self->class($args->{class});
+	  delete $args->{class};
+	}
+
+	$self->_initialize_args($args);
+	return $self;
+}
+</pre></div>
+
+<dd><pre>     Title   : new
+     Usage   : GAL::SomeClass-&gt;new();
+     Function: Creates on object of the calling class
+     Returns : An object of the calling class
+     Args    : See the attributes described above
+
+</pre></dd><h1 id="ATTRIBUTES">ATTRIBUTES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+		<dd><p>All attributes can be supplied as parameters to the constructor as a
+list (or referenece) of key value pairs.</p></dd>
+<h2 id="fasta">fasta</h2>
+
+<p><a href="#" onclick="toggleCode('method_fasta');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_fasta">
+                                        <pre>
+
+ sub fasta {
+   my ($self, $fasta_path) = @_;
+
+   if ($fasta_path) {
+     # $fasta_path ||= $self->config('default_fasta_path');
+     $self->info('fasta_database_loading_indexing', "Loading (and possibly indexing) $fasta_path");
+     my $fasta = Bio::DB::Fasta->new($fasta_path);
+     $self->{fasta} = $fasta;
+   }
+   return $self->{fasta};
+ }
+
+#-----------------------------------------------------------------------------
+
+=head2 class
+
+  Title   : class
+  Usage   : $class = $self->class($subclass);
+  Function: Reblesses an object into the appropriate subclass.
+  Returns : A object blessed into $subclass
+  Args    : A class name of a subclass of the calling object.
+
+=cut
+
+ sub class {
+   my ($self, $subclass) = @_;
+
+   my $class = ref($self);
+   $subclass =~ s/$class//;
+   $subclass = $class . "::$subclass";
+   $self->load_module($subclass);
+   bless $self, $subclass;
+   return $self;
+ }
+
+#-----------------------------------------------------------------------------
+#------------------------------------ Methods --------------------------------
+#-----------------------------------------------------------------------------
+
+=head1 METHODS
+
+=head2 verbosity
+
+ Title   : verbosity
+ Usage   : $base->verbosity($level);
+ Function: Set the level of verbosity reported in STDERR reported by
+	   the code.
+ Returns : None
+ Args    : debug|1:  Print all FATAL, WARN INFO and DEBUG messages.  Produces
+		     a lot of output.
+	   info|2:   Print all FATAL, WARN and INFO messages. This is the
+		     default.
+	   unique|3: Print only the first occurence of each error/info code.
+	   warn|4:   Don't print INFO messages.
+	   fatal|5:  Don't print INFO or WARN messages. Still dies with
+		     message on FATAL errors.
+
+=cut
+
+sub verbosity {
+  my ($self, $verbosity) = @_;
+
+  if ($verbosity) {
+    $verbosity = lc $verbosity;
+    $verbosity = ($verbosity =~ /^d/ ? 1 :
+		  $verbosity =~ /^i/ ? 2 :
+		  $verbosity =~ /^u/ ? 3 :
+		  $verbosity =~ /^w/ ? 4 :
+		  $verbosity =~ /^f/ ? 5 :
+		  $verbosity);
+    if (! grep {$verbosity eq $_} qw(1 2 3 4 5)) {
+      $self->warn('invalid_verbosity_level',
+		  "$verbosity - setting verbosity level to info");
+      $verbosity = 2;
+    }
+    $self->{verbosity} = $verbosity;
+  }
+  $self->{verbosity} ||= '2';
+  return $self->{verbosity};
+}
+</pre></div>
+
+<dd><pre>  Title   : fasta
+  Usage   : $fasta = $self-&gt;fasta($fasta_dir);
+  Function: Provides a Bio::DB::Fasta object
+  Returns : A Bio::DB::Fasta object
+  Args    : A directory of fasta files.
+
+</pre></dd><h2 id="class">class</h2>
+
+<dd><pre>  Title   : class
+  Usage   : $class = $self-&gt;class($subclass);
+  Function: Reblesses an object into the appropriate subclass.
+  Returns : A object blessed into $subclass
+  Args    : A class name of a subclass of the calling object.
+
+</pre></dd><h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<h2 id="verbosity">verbosity</h2>
+
+<dd><pre> Title   : verbosity
+ Usage   : $base-&gt;verbosity($level);
+ Function: Set the level of verbosity reported in STDERR reported by
+	   the code.
+ Returns : None
+ Args    : debug|1:  Print all FATAL, WARN INFO and DEBUG messages.  Produces
+		     a lot of output.
+	   info|2:   Print all FATAL, WARN and INFO messages. This is the
+		     default.
+	   unique|3: Print only the first occurence of each error/info code.
+	   warn|4:   Don't print INFO messages.
+	   fatal|5:  Don't print INFO or WARN messages. Still dies with
+		     message on FATAL errors.
+
+</pre></dd><h2 id="handle_message">handle_message</h2>
+
+<p><a href="#" onclick="toggleCode('method_handle_message');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_handle_message">
+                                        <pre>
+
+sub handle_message {
+	my ($self, $level, $code, $message) = @_;
+
+	my $caller = ref($self);
+	$level ||= 'UNKNOWN';
+	$message ||= $caller;
+	if (! $code) {
+	  $code = 'unspecified_code';
+	  $message = join '', ("GAL::Base is handling a message " .
+				"for $caller without an error code.  "  .
+				"Complain to the author of $caller!");
+	}
+	chomp $message;
+	$message .= "\n";
+	my $verbosity = $self->verbosity;
+
+	if ($level eq 'FATAL') {
+	  $message = join ' : ', ('FATAL', $code, $message);
+	  croak $message;
+	}
+	elsif ($level eq 'WARN') {
+	  return if ($verbosity > 4);
+	  return if ($verbosity == 3 && $self->{unique_codes}{$code}++);
+	  $message = join ' : ', ('WARN', $code, $message);
+	  print STDERR $message;
+	}
+	elsif ($level eq 'INFO') {
+	  return if ($verbosity > 3);
+	  return if ($verbosity == 3 && $self->{unique_codes}{$code}++);
+	  $message = join ' : ', ('INFO', $code, $message);
+	  print STDERR $message;
+	}
+	elsif ($level eq 'DEBUG') {
+	  return if ($verbosity != 1);
+	  my $sub = (caller(4))[3];
+	  #my $sub = $data[3];
+	  $message = join ' : ', ('DEBUG', $code, "($caller\:\:$sub) $message");
+	  print STDERR $message;
+	  print '';
+	}
+	else {
+	  $message = join '', ("GAL::Base is handling a message " .
+			       "for $caller without an error level.  "  .
+			       "Complain to the author of $caller!\n");
+	  chomp $message;
+	  $message = join ' : ', ('UNKNOWN', $code, $message);
+	  croak $message;
+	}
+}
+</pre></div>
+
+<dd><pre> Title   : handle_message
+ Usage   : $base-&gt;handle_message($level, $code, $message);
+ Function: Handle a message and report to the user appropriately.
+ Returns : None
+ Args    : level:   FATAL, WARN, INFO, DEBUG
+	   code:    $info_code # single_word_code_for_info
+	   message: $info_msg  # Free text description of info
+
+</pre></dd><h2 id="throw">throw</h2>
+
+<p><a href="#" onclick="toggleCode('method_throw');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_throw">
+                                        <pre>
+
+sub throw {
+	shift->handle_message('FATAL', @_);
+}
+</pre></div>
+
+<dd><pre> Title   : throw
+ Usage   : $base-&gt;throw(message =&gt; $err_msg, code =&gt; $err_code);
+ Function: Throw an error - print an error message and die.
+ Returns : None
+ Args    : message =&gt; $err_msg  # Free text description of error
+	   code    =&gt; $err_code # single_word_code_for_error
+
+</pre></dd><h2 id="warn">warn</h2>
+
+<p><a href="#" onclick="toggleCode('method_warn');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_warn">
+                                        <pre>
+
+sub warn {
+	shift->handle_message('WARN', @_);
+}
+</pre></div>
+
+<dd><pre> Title   : warn
+ Usage   : $base-&gt;warn($code, $warning_message);
+ Function: Send a warning.
+ Returns : None
+ Args    : message =&gt; $warning_message
+
+</pre></dd><h2 id="info">info</h2>
+
+<p><a href="#" onclick="toggleCode('method_info');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_info">
+                                        <pre>
+
+sub info {
+	shift->handle_message('INFO', @_);
+      }
+
+#-----------------------------------------------------------------------------
+
+=head2 debug
+
+ Title   : debug
+ Usage   : $base->debug(message => $debug_message);
+ Function: Send a DEBUG message.
+ Returns : None
+ Args    : message => $debug_message
+
+=cut
+
+sub debug {
+	shift->handle_message('DEBUG', @_);
+      }
+
+#-----------------------------------------------------------------------------
+
+=Head2 wrap_text
+
+ Title   : wrap_text
+ Usage   : $text = $self->wrap_text($text, 50);
+ Function: Wrap text to the specified column width.
+ Returns : Wrapped text
+ Args    : A string of text and an optional integer value.
+
+=cut
+
+sub wrap_text {
+	my ($self, $text, $cols) = @_;
+	$cols ||= 50;
+	$text =~ s/(.{0,$cols})/$1\n/g;
+	$text =~ s/\n+$//;
+	return $text;
+}
+</pre></div>
+
+<dd><pre> Title   : info
+ Usage   : $base-&gt;info(message =&gt; $info_message);
+ Function: Send a INFO message.
+ Returns : None
+ Args    : message =&gt; $info_message
+
+</pre></dd><h2 id="debug">debug</h2>
+
+<dd><pre> Title   : debug
+ Usage   : $base-&gt;debug(message =&gt; $debug_message);
+ Function: Send a DEBUG message.
+ Returns : None
+ Args    : message =&gt; $debug_message
+
+</pre></dd><dd><pre> Title   : wrap_text
+ Usage   : $text = $self-&gt;wrap_text($text, 50);
+ Function: Wrap text to the specified column width.
+ Returns : Wrapped text
+ Args    : A string of text and an optional integer value.
+
+</pre></dd><h2 id="trim_whitespace">trim_whitespace</h2>
+
+<p><a href="#" onclick="toggleCode('method_trim_whitespace');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_trim_whitespace">
+                                        <pre>
+
+sub trim_whitespace {
+	my ($self, $text) = @_;
+	$text =~ s/^\s+//;
+	$text =~ s/\s+$//;
+	return $text;
+}
+</pre></div>
+
+<dd><pre> Title   : trim_whitespace
+ Usage   : $trimmed_text = $self-&gt;trim_whitespace($text);
+ Function: Trim leading and trailing whitespace from text;
+ Returns : Trimmed text.
+ Args    : Text
+
+</pre></dd><h2 id="prepare_args">prepare_args</h2>
+
+<p><a href="#" onclick="toggleCode('method_prepare_args');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_prepare_args">
+                                        <pre>
+
+sub prepare_args {
+
+	my ($self, @args) = @_;
+
+	my %args_hash;
+
+	if (! $args[0]) {
+	  # If no args are passed, don't do anything just return an empty
+	  # hash(ref).
+	}
+	elsif (scalar @args == 1 && ref $args[0] eq 'ARRAY') {
+		%args_hash = @{$args[0]};
+	}
+	elsif (scalar @args == 1 && ref $args[0] eq 'HASH') {
+		%args_hash = %{$args[0]};
+	}
+	elsif (scalar @args % 2 == 0) {
+		%args_hash = @args;
+	}
+	else {
+		my $class = ref($self);
+		my $err_code = 'invalid_arguments_to_prepare_args';
+		my $err_msg  = ("Bad arguments passed to $class. A list "   .
+				"of key value pairs or a reference to "     .
+				"such a list was expected, But we got:\n"   .
+				join ' ', @args);
+		$self->throw($err_code, $err_msg);
+	}
+
+	return wantarray ? %args_hash : \%args_hash;
+}
+</pre></div>
+
+<dd><pre> Title   : prepare_args
+ Usage   : $args = $self-&gt;prepare_args(@_);
+ Function: Take a list of key value pairs that may be an array, hash or ref
+	   to either and return them as a hash or hash reference depending on
+	   calling context.
+ Returns : Hash or hash reference
+ Args    : An array, hash or reference to either
+
+</pre></dd><h2 id="set_attributes">set_attributes</h2>
+
+<p><a href="#" onclick="toggleCode('method_set_attributes');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_set_attributes">
+                                        <pre>
+
+sub set_attributes {
+
+	my $self = shift;
+	my $args = shift;
+
+	# Allow @valid_attributes to be passed as array or arrayref.
+	my @valid_attributes = ref($_[0]) eq 'ARRAY' ? @{$_[0]} : @_;
+
+	my $package = __PACKAGE__;
+	my $caller = ref($self);
+
+	$args = $self->prepare_args($args);
+
+	for my $attribute (@valid_attributes) {
+		next unless exists $args->{$attribute};
+		if (exists $self->{$attribute}) {
+			my $package = __PACKAGE__;
+			my $caller = ref($self);
+			my $warning_message =
+			  ("$package is about to reset the value of $attribute " .
+			   "on behalf of a $caller object.  This is probably "   .
+			   "a bad idea.");
+			$self->warn('resetting_attribute_values', $warning_message);
+		}
+		$self->$attribute($args->{$attribute});
+		delete $args->{$attribute};
+	}
+}
+</pre></div>
+
+<dd><pre> Title   : set_attributes
+ Usage   : $base-&gt;set_attributes($args, @valid_attributes);
+ Function: Take a hash reference of arguments and a list of valid attribute
+	   names and call the methods to set those attribute values.
+ Returns : None
+ Args    : A hash reference of arguments and an array or array reference of
+	   valid attributes names.
+
+</pre></dd><h2 id="expand_iupac_nt_codes">expand_iupac_nt_codes</h2>
+
+<p><a href="#" onclick="toggleCode('method_expand_iupac_nt_codes');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_expand_iupac_nt_codes">
+                                        <pre>
+
+sub expand_iupac_nt_codes {
+	my ($self, @codes) = @_;
+
+	my %iupac_code_map = ('A' => ['A'],
+			      'C' => ['C'],
+			      'G' => ['G'],
+			      'T' => ['T'],
+			      'U' => ['T'],
+			      'M' => ['A', 'C'],
+			      'R' => ['A', 'G'],
+			      'W' => ['A', 'T'],
+			      'S' => ['C', 'G'],
+			      'Y' => ['C', 'T'],
+			      'K' => ['G', 'T'],
+			      'V' => ['A', 'C', 'G'],
+			      'H' => ['A', 'C', 'T'],
+			      'D' => ['A', 'G', 'T'],
+			      'B' => ['C', 'G', 'T'],
+			      'N' => ['A', 'C', 'G', 'T'],
+			      'X' => ['A', 'C', 'G', 'T'],
+			      '-' => ['-'],
+			     );
+
+	my @nts;
+	for my $code (@codes) {
+	  my $nts = $iupac_code_map{$code};
+	  $self->throw('invalid_ipuac_nucleotide_code', $code)
+	    unless $nts;
+	  push @nts, @{$nts};
+	}
+
+
+	return wantarray ? @nts : \@nts;
+}
+</pre></div>
+
+<dd><pre> Title   : expand_iupac_nt_codes
+ Usage   : @nucleotides = $self-&gt;expand_iupac_nt_codes('W');
+ Function: Expands an IUPAC ambiguity codes to an array of nucleotides
+ Returns : An array or array ref of nucleotides
+ Args    : An IUPAC Nucleotide ambiguity code or an array of such
+
+</pre></dd><h2 id="load_module">load_module</h2>
+
+<p><a href="#" onclick="toggleCode('method_load_module');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_load_module">
+                                        <pre>
+
+sub load_module {
+
+	my ($self, $module_name) = @_;
+	eval "require $module_name";
+	if ($@) {
+	  my $self_class = ref $self;
+	  my $err_code = "failed_to_load_module : $module_name";
+	  my $err_msg  = "Failed to load $module_name in $self_class:\n$@";
+	  $self->throw($err_code, $err_msg);
+	}
+	return 1;
+}
+</pre></div>
+
+<dd><pre> Title   : load_module
+ Usage   : $base-&gt;load_module(Some::Module);
+ Function: Do runtime loading (require) of a module/class.
+ Returns : 1 on success - throws exception on failure
+ Args    : A valid module name
+
+</pre></dd><h2 id="revcomp">revcomp</h2>
+
+<p><a href="#" onclick="toggleCode('method_revcomp');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_revcomp">
+                                        <pre>
+
+sub revcomp {
+
+  my ($self, $sequence) = @_;
+
+  my $revcomp_seq = reverse $sequence;
+  $revcomp_seq =~ tr/acgtrymkswhbvdnxACGTRYMKSWHBVDNX/tgcayrkmswdvbhnxTGCAYRKMSWDVBHNX/;
+  return $revcomp_seq;
+}
+</pre></div>
+
+<dd><pre> Title   : revcomp
+ Usage   : $base-&gt;revcomp($sequence);
+ Function: Get the reverse compliment of a nucleotide sequence
+ Returns : The reverse complimented sequence
+ Args    : A nucleotide sequence
+
+</pre></dd><h2 id="get_feature_bins">get_feature_bins</h2>
+
+<p><a href="#" onclick="toggleCode('method_get_feature_bins');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_get_feature_bins">
+                                        <pre>
+
+sub get_feature_bins {
+
+    my ($self, $feature) = @_;
+
+    my ($seqid, $start, $end);
+    if (ref $feature eq 'HASH') {
+      ($seqid, $start, $end) = @{$feature}{qw(seqid start end)};
+    }
+    elsif (blessed $feature && $feature->can('seqid') &&
+	   $feature->can('start') && $feature->can('end')) {
+      ($seqid, $start, $end) = ($feature->seqid, $feature->start,
+				$feature->end)
+    }
+    else {
+      my $data = ref $feature || $feature;
+      $self->throw('invalid_arguments_to_get_feature_bins', $data);
+    }
+    my @feature_bins;
+    my $count;
+    my $single_bin;
+    for my $bin_size (128_000, 1_000_000, 8_000_000, 64_000_000,
+		      512_000_000) {
+      $count++;
+      my $start_bin = int($start/$bin_size);
+      my $end_bin   = int($end/$bin_size);
+      my @these_bins = map {$_ = join ':', ($seqid, $count, $_)} ($start_bin .. $end_bin);
+	if (! $single_bin && scalar @these_bins == 1) {
+	    $single_bin = shift @these_bins;
+	}
+	unshift @feature_bins, @these_bins;
+    }
+    unshift @feature_bins, $single_bin;
+    return wantarray ? @feature_bins : \@feature_bins;
+}
+</pre></div>
+
+<dd><pre> Title   : get_feature_bins
+ Usage   : $base-&gt;get_feature_bins($feature);
+ Function: Get the genome bins for a range
+ Returns : An array of bins that the given
+	   range falls in.
+ Args    : A hash reference with key values seqid, start, end (i.e. a
+	   feature hash) or an object with methods seqid, start, end.
+
+</pre></dd><h2 id="translate">translate</h2>
+
+<p><a href="#" onclick="toggleCode('method_translate');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_translate">
+                                        <pre>
+
+sub translate {
+  my ($self, $sequence, $offset, $length) = @_;
+
+  my $genetic_code = $self->genetic_code;
+
+  $offset ||= 0;
+  $length ||= length($sequence);
+
+  my $polypeptide;
+  for (my $i = (0 + $offset); $i < $length; $i += 3) {
+    my $codon = uc substr($sequence, $i, 3);
+    my $aa = $genetic_code->{$codon};
+    $polypeptide .= $aa;
+  }
+  return $polypeptide;
+}
+</pre></div>
+
+<dd><pre> Title   : translate
+ Usage   : $base-&gt;translate($sequence, $offset, $length);
+ Function: Translate a nucleotide sequence to an amino acid sequence
+ Returns : An amino acid sequence
+ Args    : The sequence as a scalar, and integer offset and an integer
+	   length
+
+</pre></dd><h2 id="genetic_code">genetic_code</h2>
+
+<p><a href="#" onclick="toggleCode('method_genetic_code');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_genetic_code">
+                                        <pre>
+
+sub genetic_code {
+  my $self = shift;
+
+  return {AAA => 'K',
+	  AAC => 'N',
+	  AAG => 'K',
+	  AAT => 'N',
+	  ACA => 'T',
+	  ACC => 'T',
+	  ACG => 'T',
+	  ACT => 'T',
+	  AGA => 'R',
+	  AGC => 'S',
+	  AGG => 'R',
+	  AGT => 'S',
+	  ATA => 'I',
+	  ATC => 'I',
+	  ATG => 'M',
+	  ATT => 'I',
+	  CAA => 'Q',
+	  CAC => 'H',
+	  CAG => 'Q',
+	  CAT => 'H',
+	  CCA => 'P',
+	  CCC => 'P',
+	  CCG => 'P',
+	  CCT => 'P',
+	  CGA => 'R',
+	  CGC => 'R',
+	  CGG => 'R',
+	  CGT => 'R',
+	  CTA => 'L',
+	  CTC => 'L',
+	  CTG => 'L',
+	  CTT => 'L',
+	  GAA => 'E',
+	  GAC => 'D',
+	  GAG => 'E',
+	  GAT => 'D',
+	  GCA => 'A',
+	  GCC => 'A',
+	  GCG => 'A',
+	  GCT => 'A',
+	  GGA => 'G',
+	  GGC => 'G',
+	  GGG => 'G',
+	  GGT => 'G',
+	  GTA => 'V',
+	  GTC => 'V',
+	  GTG => 'V',
+	  GTT => 'V',
+	  TAA => '*',
+	  TAC => 'Y',
+	  TAG => '*',
+	  TAT => 'Y',
+	  TCA => 'S',
+	  TCC => 'S',
+	  TCG => 'S',
+	  TCT => 'S',
+	  TGA => '*',
+	  TGC => 'C',
+	  TGG => 'W',
+	  TGT => 'C',
+	  TTA => 'L',
+	  TTC => 'F',
+	  TTG => 'L',
+	  TTT => 'F',
+	 };
+}
+</pre></div>
+
+<dd><pre> Title   : genetic_code
+ Usage   : $base-&gt;genetic_code;
+ Function: Returns a hash reference of the genetic code
+ Returns : A hash reference of the genetic code
+ Args    : None
+
+</pre></dd><h2 id="amino_acid_data">amino_acid_data</h2>
+
+<p><a href="#" onclick="toggleCode('method_amino_acid_data');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_amino_acid_data">
+                                        <pre>
+
+sub amino_acid_data {
+
+  my ($self, $aa, $datum) = @_;
+
+  my %aa321 = (Ala => 'A',
+	       Arg => 'R',
+	       Asn => 'N',
+	       Asp => 'D',
+	       Cys => 'C',
+	       Glu => 'E',
+	       Gln => 'Q',
+	       Gly => 'G',
+	       His => 'H',
+	       Ile => 'I',
+	       Leu => 'L',
+	       Lys => 'K',
+	       Met => 'M',
+	       Phe => 'F',
+	       Pro => 'P',
+	       Ser => 'S',
+	       Thr => 'T',
+	       Trp => 'W',
+	       Tyr => 'Y',
+	       Val => 'V',
+	       Sec => 'U',
+	       Pyl => 'O',
+	      );
+
+  if (length($aa) == 3) {
+    $aa = $aa321{$aa}
+  }
+
+  return $aa if $datum eq 'one_letter';
+
+  $datum =~ s/_letter//;
+
+  my %aa_data = (A => {name        => 'Alanine',
+		       three       => 'Ala',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => 1.8,
+		       weight      => 71.09,
+		       size        => 'small',
+		       h_bond      => 0,
+		       aromaticity => 'aliphatic',
+		      },
+		 R => {name        => 'Arginine',
+		       three       => 'Arg',
+		       polarity    => 'polar',
+		       charge      => 'positive',
+		       hydropathy  => -4.5,
+		       weight      => 156.19,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 N => {name        => 'Asparagine',
+		       three       => 'Asn',
+		       polarity    => 'polar',
+		       charge      => 'neutral',
+		       hydropathy  => -3.5,
+		       weight      => 114.11,
+		       size        => 'small',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 D => {name        => 'Aspartic acid',
+		       three       => 'Asp',
+		       polarity    => 'polar',
+		       charge      => 'negative',
+		       hydropathy  => -3.5,
+		       weight      => 115.09,
+		       size        => 'small',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 C => {name        => 'Cysteine',
+		       three       => 'Cys',
+		       polarity    => 'polar',
+		       charge      => 'neutral',
+		       hydropathy  => 2.5,
+		       weight      => 103.15,
+		       size        => 'small',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 E => {name        => 'Glutamic acid',
+		       three       => 'Glu',
+		       polarity    => 'polar',
+		       charge      => 'negative',
+		       hydropath   => -3.5,
+		       weight      => 129.12,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		     },
+		 Q => {name        => 'Glutamine',
+		       three       => 'Gln',
+		       polarity    => 'polar',
+		       charge      => 'neutral',
+		       hydropathy  => -3.5,
+		       weight      => 128.14,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 G => {name        => 'Glycine',
+		       three       => 'Gly',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => -0.4,
+		       weight      => 57.05,
+		       size        => 'small',
+		       h_bond      => 0,
+		       aromaticity => 'aliphatic',
+		      },
+		 H => {name        => 'Histidine',
+		       three       => 'His',
+		       polarity    => 'polar',
+		       charge      => 'positive',
+		       hydropathy  => -3.2,
+		       weight      => 137.14,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => 'aromatic',
+		      },
+		 I => {name        => 'Isoleucine',
+		       three       => 'Ile',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => 4.5,
+		       weight      => 113.16,
+		       size        => 'large',
+		       h_bond      => 0,
+		       aromaticity => 'aliphatic',
+		      },
+		 L => {name        => 'Leucine',
+		       three       => 'Leu',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => 3.8,
+		       weight      => 113.16,
+		       size        => 'large',
+		       h_bond      => 0,
+		       aromaticity => 'aliphatic',
+		      },
+		 K => {name        => 'Lysine',
+		       three       => 'Lys',
+		       polarity    => 'polar',
+		       charge      => 'positive',
+		       hydropathy  => -3.9,
+		       weight      => 128.17,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 M => {name        => 'Methionine',
+		       three       => 'Met',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => 1.9,
+		       weight      => 131.19,
+		       size        => 'large',
+		       h_bond      => 0,
+		       aromaticity => undef,
+		      },
+		 F => {name        => 'Phenylalanine',
+		       three       => 'Phe',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => 2.8,
+		       weight      => 147.18,
+		       size        => 'large',
+		       h_bond      => 0,
+		       aromaticity => 'aromatic',
+		      },
+		 P => {name        => 'Proline',
+		       three       => 'Pro',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => -1.6,
+		       weight      => 97.12,
+		       size        => 'small',
+		       h_bond      => 0,
+		       aromaticity => 'aliphatic',
+		      },
+		 S => {name        => 'Serine',
+		       three       => 'Ser',
+		       polarity    => 'polar',
+		       charge      => 'neutral',
+		       hydropathy  => -0.8,
+		       weight      => 87.08,
+		       size        => 'small',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 T => {name        => 'Threonine',
+		       three       => 'Thr',
+		       polarity    => 'polar',
+		       charge      => 'neutral',
+		       hydropathy  => -0.7,
+		       size        => 'small',
+		       h_bond      => 1,
+		       aromaticity => undef,
+		      },
+		 W => {name        => 'Tryptophan',
+		       three       => 'Trp',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => -0.9,
+		       weight      => 186.21,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => 'aromatic',
+		      },
+		 Y => {name        => 'Tyrosine',
+		       three       => 'Tyr',
+		       polarity    => 'polar',
+		       charge      => 'neutral',
+		       hydropathy  => -1.3,
+		       weight      => 163.18,
+		       size        => 'large',
+		       h_bond      => 1,
+		       aromaticity => 'aromatic',
+		      },
+		 V => {name        => 'Valine',
+		       three       => 'Val',
+		       polarity    => 'nonpolar',
+		       charge      => 'neutral',
+		       hydropathy  => 4.2,
+		       weight      => 99.14,
+		       size        => 'small',
+		       h_bond      => 0,
+		       aromaticity => 'aliphatic',
+		      },
+		 U => {name        => 'Selenocysteine',
+		       three       => 'Sec',
+		       polarity    => undef,
+		       charge      => undef,
+		       hydropathy  => undef,
+		       weight      => undef,
+		       size        => undef,
+		       h_bond      => undef,
+		       aromaticity => undef,
+		      },
+		 O => {name        => 'Pyrrolysine',
+		       three       => 'Pyl',
+		       polarity    => undef,
+		       charge      => undef,
+		       hydropathy  => undef,
+		       weight      => undef,
+		       size        => undef,
+		       h_bond      => undef,
+		       aromaticity => undef,
+		      }
+		);
+
+  my $value = $aa_data{$aa}{$datum};
+  return $value;
+}
+</pre></div>
+
+<dd><pre> Title   : amino_acid_data
+ Usage   : $base-&gt;amino_acid_data($aa, $value);
+ Function: Returns data about an amino acid
+ Returns : A string representing data about an amino acid
+ Args    : 1) An amino acid in either:
+	      a) single-letter code
+	      b) three-letter
+	   2) A code for the value to return.  Any of:
+	      a) name : The full name of the amino acid.
+	      b) one_letter : The one-letter code for the amino acid.
+	      c) three_letter : The three-letter code for the amino acid.
+	      d) polarity : The polarity of the amino acid.
+	      e) charge : The charge of the amino acid's side chain (at pH 7.4).
+	      f) hydropathy : The hydropathy index of the amino acid.
+	      g) weight : The molecular weight of the amino acid in g/mol.
+	      h) size : Returns small or large.
+	      i) h_bond : return 1 or 0 indicating if the amino acid can form hydrogen bonds
+	      j) aromaticity : Returns aromatic, aliphatic or undef.
+
+</pre></dd><h2 id="time_stamp">time_stamp</h2>
+
+<p><a href="#" onclick="toggleCode('method_time_stamp');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_time_stamp">
+                                        <pre>
+
+sub time_stamp {
+
+  my $self = shift;
+
+  my ($sec,$min,$hour,$mday,$mon,$year,$wday,
+      $yday,$isdst) = localtime(time);
+  my $time_stamp = sprintf("%02d%02d%02d", $year + 1900,
+			   $mon + 1, $mday);
+  return $time_stamp;
+}
+</pre></div>
+
+<dd><pre> Title   : time_stamp
+ Usage   : $base-&gt;time_stamp;
+ Function: Returns a YYYYMMDD time_stamp
+ Returns : A YYYYMMDD time_stamp
+ Args    : None
+
+</pre></dd><h2 id="random_string">random_string</h2>
+
+<p><a href="#" onclick="toggleCode('method_random_string');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_random_string">
+                                        <pre>
+
+sub random_string {
+  my ($self, $length) = @_;
+  $length ||= 8;
+  my $random_string = join "", map { unpack "H*", chr(rand(256)) } (1 .. $length);
+  return substr($random_string, 0, $length);
+}
+</pre></div>
+
+<dd><pre> Title   : random_string
+ Usage   : $base-&gt;random_string;
+ Function: Returns a random alphanumeric string
+ Returns : A random alphanumeric string
+ Args    : The length of the string to be returned [8]
+
+</pre></dd><h2 id="float_lt">float_lt</h2>
+
+<p><a href="#" onclick="toggleCode('method_float_lt');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_float_lt">
+                                        <pre>
+
+sub float_lt {
+	my ($self, $A, $B, $accuracy) = @_;
+
+	$accuracy ||= 6;
+	$A = sprintf("%.${accuracy}f", $A);
+	$B = sprintf("%.${accuracy}f", $B);
+	$A =~ s/\.//;
+	$B =~ s/\.//;
+	return $A < $B;
+}
+</pre></div>
+
+<dd><pre> Title   : float_lt
+ Usage   : $base-&gt;float_lt(0.0000123, 0.0000124, 7);
+ Function: Return true if the first number given is less than (&lt;) the
+	   second number at a given level of accuracy.
+ Returns : 1 if the first number is less than the second, otherwise 0
+ Args    : The two values to compare and optionally a integer value for
+	   the accuracy.  Accuracy defaults to 6 decimal places.
+
+</pre></dd><h2 id="float_le">float_le</h2>
+
+<p><a href="#" onclick="toggleCode('method_float_le');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_float_le">
+                                        <pre>
+
+sub float_le {
+	my ($self, $A, $B, $accuracy) = @_;
+
+	$accuracy ||= 6;
+	$A = sprintf("%.${accuracy}f", $A);
+	$B = sprintf("%.${accuracy}f", $B);
+	$A =~ s/\.//;
+	$B =~ s/\.//;
+	return $A <= $B;
+}
+</pre></div>
+
+<dd><pre> Title   : float_le
+ Usage   : $base-&gt;float_le(0.0000123, 0.0000124, 7);
+ Function: Return true if the first number given is less than or equal to
+	   (&lt;=) the second number at a given level of accuracy.
+ Returns : 1 if the first number is less than or equal to the second,
+	   otherwise 0
+ Args    : The two values to compare and optionally a integer value for
+	   the accuracy.  Accuracy defaults to 6 decimal places.
+
+</pre></dd><h2 id="float_gt">float_gt</h2>
+
+<p><a href="#" onclick="toggleCode('method_float_gt');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_float_gt">
+                                        <pre>
+
+sub float_gt {
+	my ($self, $A, $B, $accuracy) = @_;
+
+	$accuracy ||= 6;
+	$A = sprintf("%.${accuracy}f", $A);
+	$B = sprintf("%.${accuracy}f", $B);
+	$A =~ s/\.//;
+	$B =~ s/\.//;
+	return $A > $B;
+}
+</pre></div>
+
+<dd><pre> Title   : float_gt
+ Usage   : $base-&gt;float_gt(0.0000123, 0.0000124, 7);
+ Function: Return true if the first number given is greater than (&gt;) the
+	   second number at a given level of accuracy.
+ Returns : 1 if the first number is greater than the second, otherwise 0
+ Args    : The two values to compare and optionally a integer value for
+	   the accuracy.  Accuracy defaults to 6 decimal places.
+
+</pre></dd><h2 id="float_ge">float_ge</h2>
+
+<p><a href="#" onclick="toggleCode('method_float_ge');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_float_ge">
+                                        <pre>
+
+sub float_ge {
+	my ($self, $A, $B, $accuracy) = @_;
+
+	$accuracy ||= 6;
+	$A = sprintf("%.${accuracy}f", $A);
+	$B = sprintf("%.${accuracy}f", $B);
+	$A =~ s/\.//;
+	$B =~ s/\.//;
+	return $A >= $B;
+}
+</pre></div>
+
+<dd><pre> Title   : float_ge
+ Usage   : $base-&gt;float_ge(0.0000123, 0.0000124, 7);
+ Function: Return true if the first number given is greater than or equal
+	   to (&gt;=) the second number at a given level of accuracy.
+ Returns : 1 if the first number is greater than or equal to the second,
+	   otherwise 0
+ Args    : The two values to compare and optionally a integer value for
+	   the accuracy.  Accuracy defaults to 6 decimal places.
+
+</pre></dd><h2 id="get_transcript_types">get_transcript_types</h2>
+
+<p><a href="#" onclick="toggleCode('method_get_transcript_types');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_get_transcript_types">
+                                        <pre>
+
+sub get_transcript_types {
+
+    my $self = shift;
+
+    my @transcripts = qw(EST
+			 RNase_MRP_RNA
+			 RNase_P_RNA
+			 SRP_RNA
+			 SRP_RNA_primary_transcript
+			 Y_RNA
+			 aberrant_processed_transcript
+			 alternatively_spliced_transcript
+			 antisense_RNA
+			 antisense_primary_transcript
+			 capped_mRNA
+			 capped_primary_transcript
+			 class_II_RNA
+			 class_I_RNA
+			 consensus_mRNA
+			 dicistronic_mRNA
+			 dicistronic_primary_transcript
+			 dicistronic_transcript
+			 edited_mRNA
+			 edited_transcript
+			 edited_transcript_by_A_to_I_substitution
+			 enhancerRNA
+			 enzymatic_RNA
+			 exemplar_mRNA
+			 guide_RNA
+			 lnc_RNA
+			 mRNA
+			 mRNA_recoded_by_codon_redefinition
+			 mRNA_recoded_by_translational_bypass
+			 mRNA_region
+			 mRNA_with_frameshift
+			 mRNA_with_minus_1_frameshift
+			 mRNA_with_minus_2_frameshift
+			 mRNA_with_plus_1_frameshift
+			 mRNA_with_plus_2_frameshift
+			 mature_transcript
+			 mature_transcript_region
+			 miRNA_primary_transcript
+			 mini_exon_donor_RNA
+			 monocistronic_mRNA
+			 monocistronic_primary_transcript
+			 monocistronic_transcript
+			 ncRNA
+			 nc_primary_transcript
+			 piRNA
+			 polyadenylated_mRNA
+			 polycistronic_mRNA
+			 polycistronic_primary_transcript
+			 polycistronic_transcript
+			 pre_edited_mRNA
+			 primary_transcript
+			 primary_transcript_region
+			 processed_transcript
+			 protein_coding_primary_transcript
+			 pseudogenic_transcript
+			 rRNA
+			 rRNA_cleavage_RNA
+			 rRNA_primary_transcript
+			 rasiRNA
+			 recoded_mRNA
+			 regional_centromere_outer_repeat_transcript
+			 riboswitch
+			 ribozyme
+			 scRNA
+			 scRNA_primary_transcript
+			 siRNA
+			 small_regulatory_ncRNA
+			 snRNA
+			 snRNA_primary_transcript
+			 snoRNA
+			 snoRNA_primary_transcript
+			 spliced_leader_RNA
+			 stRNA
+			 tRNA
+			 tRNA_primary_transcript
+			 tasiRNA
+			 tasiRNA_primary_transcript
+			 telomerase_RNA
+			 tmRNA_primary_transcript
+			 trans_spliced_mRNA
+			 trans_spliced_transcript
+			 transcript
+			 transcript_bound_by_nucleic_acid
+			 transcript_bound_by_protein
+			 transcript_region
+			 transcript_with_translational_frameshift
+			 vault_RNA
+  );
+  return wantarray ? @transcripts : \@transcripts;
+}
+</pre></div>
+
+<dd><pre> Title   : get_transcript_types
+ Usage   : $transcript_types = $self-&gt;get_transcript_types
+  Function: Get a list of all features that are types of transcripts.
+ Returns : An array or ref
+ Args    : None
+
+</pre></dd><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<dd><dl>
+	<dt><code>invalid_arguments_to_prepare_args</code></dt>
+		<dd><p><code>GAL::Base::prepare_args</code> accepts an array, a hash or a reference to
+either an array or hash, but it was passed something different.</p></dd>
+	<dt><code>invalid_ipuac_nucleotide_code</code></dt>
+		<dd><p><code>GAL::Base::expand_iupac_nt_codes</code> was passed a charachter that is
+not a valid IUPAC nucleotide code
+(http://en.wikipedia.org/wiki/Nucleic_acid_notation).</p></dd>
+	<dt><code>failed_to_load_module</code></dt>
+		<dd><p><code>GAL::Base::load_module</code> was unable to load (require) the specified
+module.  The module may not be installed or it may have a compile time
+error.</p></dd>
+	<dt><code>invalid_arguments_to_get_feature_bins</code></dt>
+		<dd><p><code>GAL::Base::get_feature_bins</code> was called with invalid arguments.  It
+must have either a hash with the keys qw(seqid start end) or an object
+with those same keys as methods.  The error message will try to give
+you some idea of what arguments were passed.</p></dd>
+</dl>
+</dd>
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+		<dd><p><a href="Base.pm.html">GAL::Base</a> requires no configuration files or environment variables.</p></dd>
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<dd><dl>
+	<dt><a href="http://search.cpan.org/perldoc?Carp">Carp</a> qw(croak cluck)</dt>
+	<dt><a href="http://search.cpan.org/perldoc?Bio/DB/Fasta">Bio::DB::Fasta</a></dt>
+</dl>
+</dd>
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+		<dd><p>None reported.</p></dd>
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+		<dd><p>No bugs have been reported.</p></dd>
+		<dd><p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p></dd>
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+		<dd><p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p></dd>
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+		<dd><p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p></dd>
+<dd><pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre></dd><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+		<dd><p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.</p></dd>
+		<dd><p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.</p></dd>
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

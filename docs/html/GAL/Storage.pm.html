@@ -1,0 +1,536 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::Storage</title>
+<link rel="stylesheet" type="text/css" href="podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="index.html">GAL</a> &gt; Perl Modules &gt;
+  Storage
+</div>
+<div>
+<a href="src/Storage.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#CONSTRUCTOR">CONSTRUCTOR</a></li>
+	<li><a href="#METHODS">METHODS</a><br />
+<ul>
+	<li><a href="#new">new</a></li>
+	<li><a href="#annotation">annotation</a></li>
+	<li><a href="#dsn">dsn</a></li>
+	<li><a href="#scheme">scheme</a></li>
+	<li><a href="#driver">driver</a></li>
+	<li><a href="#database">database</a></li>
+	<li><a href="#user">user</a></li>
+	<li><a href="#password">password</a></li>
+	<li><a href="#add_features_to_buffer">add_features_to_buffer</a></li>
+	<li><a href="#features2buffer">features2buffer</a></li>
+	<li><a href="#flush_buffer">flush_buffer</a></li>
+	<li><a href="#prepare_features">prepare_features</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>GAL::Storage - Base class for GAL storage engines</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>This document describes GAL::Storage version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>my $feat_store_args = {class    =&gt; $storage,
+		       dsn      =&gt; $feature_dsn,
+		       user     =&gt; $user,
+		       password =&gt; $password,
+		   };</p>
+
+<p>my $parser_args = {class =&gt; $parser,
+		  };</p>
+
+<p>my $fasta_args = {path =&gt; $fasta};</p>
+
+<p>my $feat_store = GAL::Annotation-&gt;new(storage =&gt; $feat_store_args,
+				      parser  =&gt; $parser_args,
+				      fasta   =&gt; $fasta_args,
+				     );</p>
+
+<p>$feat_store-&gt;load_files(files =&gt; $feature_file,
+			  mode  =&gt; 'overwrite',
+			 );
+my $features = $feat_store-&gt;schema-&gt;resultset('Feature');</p>
+
+<p>my $mrnas = $features-&gt;search({type =&gt; 'mRNA'});
+while (my $mrna = $mrnas-&gt;next) {
+  my $mrna_id = $mrna-&gt;feature_id;
+}</p>
+
+<h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>The <a href="Storage.pm.html">GAL::Storage</a> class provides a base class for the storage
+classes available to GAL.  It is not intended to be used directly -
+you should use one of it's subclasses instead.  It provides many of
+the general attributes used by the sublcasses and several general
+methods.</p>
+
+<h1 id="CONSTRUCTOR">CONSTRUCTOR <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>New GAL::Storage::subclass objects are created by the class method
+new.  Arguments should be passed to the constructor as a list (or
+reference) of key value pairs.  All attributes of the Storage object
+can be set in the call to new. An simple example of object creation
+would look like this:</p>
+
+<pre>    my $parser = GAL::Storage::SQLite-&gt;new(dsn =&gt; 'dbi:SQLite:db_name);
+
+</pre><p>The constructor recognizes the following parameters which will set the
+appropriate attributes:</p>
+
+<dl>
+	<dt>* <code>annotation</code></dt>
+		<dd><p>This is a read only attribute that provides access to a weakened
+version of the <a href="Annotation.pm.html">GAL::Annotation</a> object that created this storage</p></dd>
+	<dt>* <code>dsn'</code></dt>
+		<dd><p>dsn =&gt; 'dbi:SQLite:db_name</p></dd>
+		<dd><p>This optional parameter defines the data source name of the database
+to open.  By default Storage will use and SQLite database with a
+random filename, but see the comment for the database attribute below.</p></dd>
+	<dt>* <code>scheme</code></dt>
+		<dd><p>This is a read only parameter that is set to 'DBI';</p></dd>
+	<dt>* <code>driver </code></dt>
+		<dd><p>This is a read only parameter that defines the database driver
+(i.e. what RDMS you are going to use).  It is set by each storage
+subclass.</p></dd>
+	<dt>* <code>database</code></dt>
+		<dd><p>database =&gt; 'db_name'</p></dd>
+		<dd><p>This optional parameter defines the database name.  You don't need to
+specify both the database name and the dsn as they both contain the
+database name. Since the driver and the scheme are set by the class
+you could give either the dsn or the database name it it will work.</p></dd>
+	<dt>* <code>user =</code> 'user_name'&gt;</dt>
+		<dd><p>This optional parameter defines the user name for connecting to the
+database.</p></dd>
+	<dt>* <code>password =</code> 'password'&gt;</dt>
+		<dd><p>This optional parameter defines the password for connecting to the
+database.</p></dd>
+</dl>
+<h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<h2 id="new">new</h2>
+
+<p><a href="#" onclick="toggleCode('method_new');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_new">
+                                        <pre>
+
+sub new {
+	my ($class, @args) = @_;
+	my $self = $class->SUPER::new(@args);
+	return $self;
+}
+</pre></div>
+
+<pre>     Title   : new
+     Usage   : GAL::Storage-&gt;new()
+     Function: Creates a Storage object;
+     Returns : A Storage object
+     Args    : See L&lt;/attributes&gt; above
+
+</pre><h2 id="annotation">annotation</h2>
+
+<p><a href="#" onclick="toggleCode('method_annotation');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_annotation">
+                                        <pre>
+
+sub annotation {
+  my ($self, $annotation) = @_;
+  $self->{annotation} = $annotation if $annotation;
+  return $self->{annotation};
+}
+</pre></div>
+
+<pre> Title   : annotation
+ Usage   : $annotation = $self-&gt;annotation()
+ Function: Get a weakened copy of the L&lt;GAL::Annotation&gt; object that owns
+	   this storage object.
+ Returns : A L&lt;GAL::Annotation&gt; object.
+ Args    : None
+
+</pre><h2 id="dsn">dsn</h2>
+
+<p><a href="#" onclick="toggleCode('method_dsn');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_dsn">
+                                        <pre>
+
+sub dsn {
+	my ($self, $dsn) = @_;
+
+	if ($self->{dsn} && ! $dsn) {
+		return $self->{dsn};
+	}
+
+	# If we don't have a dsn, then create one
+	$dsn ||= '';
+	my ($scheme, $driver, $attr_string, $attr_hash, $driver_dsn)
+	  = DBI->parse_dsn($dsn);
+	$scheme = $self->scheme;
+	my $self_driver = $self->driver;
+	$self->warn('conflicting_db_drivers',
+		    "You gave: $driver, using $self_driver instead\n"
+		   )
+	  if $driver && $self_driver ne $driver;
+	$driver = $self->driver($driver);
+
+	my ($database, %attributes);
+	if ($driver_dsn =~ /=/) {
+	  my %attributes = map {split /=/} split /;/, $driver_dsn;
+	  $database = $attributes{dbname} || $attributes{database};
+	}
+	else {
+	  $database = $driver_dsn;
+	}
+
+	$database = $self->database($database);
+	my $attribute_txt = '';
+	map {$attribute_txt .= $_ . '=' . $attributes{$_} . ';'} keys %attributes;
+
+	$self->{dsn} = join ':', ($scheme, $driver, $database, $attribute_txt);
+	$self->{dsn} =~ s/:$//;
+
+	return $self->{dsn};
+}
+</pre></div>
+
+<pre> Title   : dsn
+ Usage   : $dsn = $self-&gt;dsn('dbi:SQLite:db_name')
+ Function: Get/Set the value of the Database Source Name (DSN).
+ Returns : A text value for the DSN
+ Args    : A text value of the form scheme:driver:db_name.
+
+</pre><h2 id="scheme">scheme</h2>
+
+<p><a href="#" onclick="toggleCode('method_scheme');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_scheme">
+                                        <pre>
+
+sub scheme {
+  return 'DBI';
+}
+</pre></div>
+
+<pre> Title   : scheme
+ Usage   : $scheme = $self-&gt;scheme
+ Function: Get the value of scheme.
+ Returns : The value 'DBI'.
+ Args    : None
+
+</pre><h2 id="driver">driver</h2>
+
+<p><a href="#" onclick="toggleCode('method_driver');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_driver">
+                                        <pre>
+
+sub driver {
+  return 'SQLite';
+}
+</pre></div>
+
+<pre> Title   : driver
+ Usage   : $driver = $self-&gt;driver
+ Function: Get  the value of driver.
+ Returns : The value 'SQLite'
+ Args    : None
+
+</pre><h2 id="database">database</h2>
+
+<p><a href="#" onclick="toggleCode('method_database');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_database">
+                                        <pre>
+
+sub database {
+      my ($self, $database) = @_;
+
+      $self->{database} = $database if $database;
+      $self->{database} ||= join '_', ('gal_database',
+				       $self->time_stamp,
+				       $self->random_string(8)
+				      );
+      return $self->{database};
+}
+</pre></div>
+
+<pre> Title   : database
+ Usage   : $db = $self-&gt;database('db_name');
+ Function: Get/Set the value of the database name.
+ Returns : The value of the database name.
+ Args    : A text value to set the database name to.
+
+</pre><h2 id="user">user</h2>
+
+<p><a href="#" onclick="toggleCode('method_user');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_user">
+                                        <pre>
+
+sub user {
+	my ($self, $user) = @_;
+	$self->{user} = $user if $user;
+	return $self->{user};
+}
+</pre></div>
+
+<pre> Title   : user
+ Usage   : $a = $self-&gt;user()
+ Function: Get/Set the value of the database user.
+ Returns : The value of user.
+ Args    : A value to set user to.
+
+</pre><h2 id="password">password</h2>
+
+<p><a href="#" onclick="toggleCode('method_password');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_password">
+                                        <pre>
+
+sub password {
+	my ($self, $password) = @_;
+	$self->{password} = $password if $password;
+	return $self->{password};
+}
+</pre></div>
+
+<pre> Title   : password
+ Usage   : $a = $self-&gt;password()
+ Function: Get/Set the value of the database password.
+ Returns : The value of password.
+ Args    : A value to set password to.
+
+</pre><h2 id="add_features_to_buffer">add_features_to_buffer</h2>
+
+<pre> Title   : add_features_to_buffer
+ Usage   : $self-&gt;add_features_to_buffer(@features)
+ Function: Add feature hashes to a buffer for loading into storage.
+ Returns : N/A
+ Args    : A reference to an array of feature hashes.
+ Alias   : features2buffer
+
+</pre><h2 id="features2buffer">features2buffer</h2>
+
+<p><a href="#" onclick="toggleCode('method_features2buffer');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_features2buffer">
+                                        <pre>
+
+sub features2buffer {shift->add_features_to_buffer(@_)}
+
+sub add_features_to_buffer {
+
+	my ($self, $features) = @_;
+
+	$features = ref $features eq 'ARRAY' ? $features : [$features];
+
+	$self->{_feature_buffer} ||= [];
+
+	#my $max_feature_buffer = $self->config('MAX_FEATURE_BUFFER')
+	my $max_feature_buffer = 10_000;
+	if (scalar @{$self->{_feature_buffer}} + scalar @{$features} >= $max_feature_buffer) {
+	  push @{$self->{_feature_buffer}}, @{$features};
+	  $self->flush_buffer;
+	}
+	else {
+	  push @{$self->{_feature_buffer}}, @{$features};
+	}
+}
+</pre></div>
+
+<p>An alias for add_features_to_buffer.</p>
+
+<h2 id="flush_buffer">flush_buffer</h2>
+
+<p><a href="#" onclick="toggleCode('method_flush_buffer');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_flush_buffer">
+                                        <pre>
+
+sub flush_buffer {
+
+	my $self = shift;
+
+	$self->{_feature_buffer} ||= [];
+	if (scalar @{$self->{_feature_buffer}}) {
+		$self->add_features($self->{_feature_buffer});
+		$self->{_feature_buffer} = undef;
+	}
+}
+</pre></div>
+
+<pre> Title   : flush_buffer
+ Usage   : $self-&gt;flush_buffer()
+ Function: Get/Set value of flush_buffer.
+ Returns : Value of flush_buffer.
+ Args    : Value to set add_feature to.
+
+</pre><h2 id="prepare_features">prepare_features</h2>
+
+<p><a href="#" onclick="toggleCode('method_prepare_features');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_prepare_features">
+                                        <pre>
+
+sub prepare_features {
+
+  my ($self, $feature_hashes) = @_;
+
+  $feature_hashes = ref $feature_hashes eq 'ARRAY' ? $feature_hashes :
+    [$feature_hashes];
+
+  my (@features, @attributes, @relationships);
+
+  my $feature_idx;
+  for my $feature_hash (@{$feature_hashes}) {
+    my $feature_id = $feature_hash->{feature_id};
+    my ($bin) = $self->get_feature_bins($feature_hash);
+    my $attributes = $feature_hash->{attributes};
+    my @parents = ref $attributes->{Parent} eq 'ARRAY' ? @{$attributes->{Parent}} : ();
+    my @feature_data = (++$feature_idx, @{$feature_hash}{qw(feature_id seqid source
+							    type start end score strand
+							    phase)},
+			$bin);
+    push @features, \@feature_data;
+
+    for my $key (keys %{$attributes}) {
+      my @values = @{$attributes->{$key}};
+      for my $value (@values) {
+	#push @attributes, [undef, $feature_id, $key, $value];
+	push @attributes, [$feature_idx, $key, $value];
+      }
+    }
+
+    for my $parent (@parents) {
+      my @relationship_data = ($parent, $feature_id);
+      push @relationships, \@relationship_data;
+    }
+  }
+  return (\@features, \@attributes, \@relationships);
+}
+</pre></div>
+
+<pre> Title   : prepare_features
+ Usage   : $self-&gt;prepare_features()
+ Function: Normalizes feature hashes produced by the parsers and seperates
+	   the attributes and relationships for bulk insert into the database;
+ Returns : An array reference of feature data and an array reference of
+	   attribute data.
+ Args    : A feature hash or array of feature hashes.
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>&lt;GAL::Storage&gt; subclasses are required to override a number of methods.  You
+have called one of those methods and the author of the subclass has not
+written a method to override it - you should complain bitterly to the author
+of the subclass.</p>
+
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>&lt;GAL::Storage&gt; requires no configuration files or environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p><a href="Base.pm.html">GAL::Base</a>
+<a href="http://search.cpan.org/perldoc?DBI">DBI</a></p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All
+rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

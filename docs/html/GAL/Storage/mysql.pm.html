@@ -1,0 +1,588 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::Storage::mysql</title>
+<link rel="stylesheet" type="text/css" href="../podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="../index.html">GAL</a> &gt; Perl Modules &gt;
+  Storage-mysql
+</div>
+<div>
+<a href="../src/Storage/mysql.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#CONSTRUCTOR">CONSTRUCTOR</a></li>
+	<li><a href="#METHODS">METHODS</a><br />
+<ul>
+	<li><a href="#new">new</a></li>
+	<li><a href="#scheme">scheme</a></li>
+	<li><a href="#driver">driver</a></li>
+	<li><a href="#dbh">dbh</a></li>
+	<li><a href="#database">database</a></li>
+	<li><a href="#drop_database">drop_database</a></li>
+	<li><a href="#open_or_create_database">_open_or_create_database</a></li>
+	<li><a href="#load_schema">_load_schema</a></li>
+	<li><a href="#index_database">index_database</a></li>
+	<li><a href="#load_files">load_files</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>GAL::Storage::mysql - MySQL feature storage for GAL</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>This document describes GAL::Storage::mysql version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<pre>    use GAL::Storage::mysql;
+    my $storage = GAL::Storage::mysql-&gt;new(dsn =&gt; 'dbi:mysql:db_name');
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>The <a href="Storage/SQLite.pm.html">GAL::Storage::SQLite</a> class provides SQLite based storage to
+GAL.</p>
+
+<h1 id="CONSTRUCTOR">CONSTRUCTOR <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>New GAL::Storage::mysql objects are created by the class method new.
+Arguments should be passed to the constructor as a list (or reference)
+of key value pairs.  All attributes of the Storage object can be set
+in the call to new. An simple example of object creation would look
+like this:</p>
+
+<pre>    my $parser = GAL::Storage::mysql-&gt;new(dsn =&gt; 'dbi:mysql:db_name);
+
+</pre><p>The constructor recognizes the following parameters which will set the
+appropriate attributes:</p>
+
+<dl>
+	<dt>* <code>scheme</code></dt>
+		<dd><p>This is a read only parameter that is set to 'DBI';</p></dd>
+	<dt>* <code>driver </code></dt>
+		<dd><p>This is a read only parameter that is set to 'SQLite';</p></dd>
+	<dt>* <code>database</code></dt>
+		<dd><p>database =&gt; 'db_name'</p></dd>
+		<dd><p>This optional parameter defines the database name.  You don't need to
+specify both the database name and the dsn as they both contain the
+database name. Since the driver and the scheme are set by the class
+you could give either the dsn or the database name and it will work.</p></dd>
+		<dd><p><strong>The following attributes are inherited from</strong> <a href="Storage.pm.html">GAL::Storage</a></p></dd>
+	<dt>* <code>annotation</code></dt>
+		<dd><p>This is a read only attribute that provides access to a weakened
+version of the <a href="Annotation.pm.html">GAL::Annotation</a> object that created this storage</p></dd>
+	<dt>* <code>dsn =</code> 'dbi:SQLite:db_name'&gt;</dt>
+		<dd><p>dsn =&gt; 'dbi:mysql:db_name</p></dd>
+		<dd><p>This optional parameter defines the data source name of the database
+to open.  By default Storage will use and SQLite database with a
+random filename, but see the comment for the database attribute below.</p></dd>
+	<dt>* <code>user =</code> 'user_name'&gt;</dt>
+		<dd><p>This optional parameter defines the user name for connecting to the
+database.</p></dd>
+	<dt>* <code>password =</code> 'password'&gt;</dt>
+		<dd><p>This optional parameter defines the password for connecting to the
+database.</p></dd>
+</dl>
+<h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<h2 id="new">new</h2>
+
+<p><a href="#" onclick="toggleCode('method_new');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_new">
+                                        <pre>
+
+sub new {
+	my ($class, @args) = @_;
+	my $self = $class->SUPER::new(@args);
+	return $self;
+}
+</pre></div>
+
+<pre>     Title   : new
+     Usage   : GAL::Storage::SQLite-&gt;new();
+     Function: Creates a Storage object;
+     Returns : A L&lt;GAL::Storage::mysql&gt; object
+     Args    : See the attributes described above.
+
+</pre><h2 id="scheme">scheme</h2>
+
+<p><a href="#" onclick="toggleCode('method_scheme');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_scheme">
+                                        <pre>
+
+sub scheme {'DBI'}
+
+#-----------------------------------------------------------------------------
+
+=head2 driver
+
+ Title   : driver
+ Usage   : $a = $self->driver();
+ Function: Get the value of driver.
+ Returns : mysql
+ Args    : N/A
+
+=cut
+
+sub driver {'mysql'}
+
+#-----------------------------------------------------------------------------
+
+=head2 dbh
+
+ Title   : dbh
+ Usage   : $a = $self->dbh();
+ Function: Get/Set the database handle
+ Returns : The a DBI::mysql object
+ Args    : A DBI::mysql object
+
+=cut
+
+sub dbh {
+
+  my $self = shift;
+  $self->{dbh} ||= $self->_open_or_create_database;
+  return $self->{dbh};
+}
+</pre></div>
+
+<pre> Title   : scheme
+ Usage   : $a = $self-&gt;scheme();
+ Function: Return the RDMS scheme.
+ Returns : DBI
+ Args    : N/A
+
+</pre><h2 id="driver">driver</h2>
+
+<p><a href="#" onclick="toggleCode('method_driver');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_driver">
+                                        <pre>
+
+sub driver {
+  return 'SQLite';
+}
+</pre></div>
+
+<pre> Title   : driver
+ Usage   : $a = $self-&gt;driver();
+ Function: Get the value of driver.
+ Returns : mysql
+ Args    : N/A
+
+</pre><h2 id="dbh">dbh</h2>
+
+<pre> Title   : dbh
+ Usage   : $a = $self-&gt;dbh();
+ Function: Get/Set the database handle
+ Returns : The a DBI::mysql object
+ Args    : A DBI::mysql object
+
+</pre><h2 id="database">database</h2>
+
+<p><a href="#" onclick="toggleCode('method_database');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_database">
+                                        <pre>
+
+sub database {
+      my ($self, $database) = @_;
+
+      if (! $database && ! $self->{database}) {
+	$database = $self->random_string . '.mysql';
+      }
+      $self->{database} = $database if $database;
+      return $self->{database};
+}
+</pre></div>
+
+<pre> Title   : database
+ Usage   : $a = $self-&gt;database();
+ Function: Get/Set the database name.
+ Returns : A database name.
+ Args    : A database name.
+
+</pre><h2 id="drop_database">drop_database</h2>
+
+<p><a href="#" onclick="toggleCode('method_drop_database');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_drop_database">
+                                        <pre>
+
+sub drop_database {
+
+  my $self = shift;
+
+  my @databases = DBI->data_sources($self->driver,
+				    {user     => $self->user,
+				     password => $self->password,
+				    }
+				   );
+  my $dbh;
+  my $dsn = $self->dsn;
+  my $database = $self->database;
+  if (grep {$_ eq $dsn} @databases) {
+    my $drh = DBI->install_driver("mysql");
+    my $host = ''; # Defaults to localhost, abstract this later.
+    my $rc = $drh->func('dropdb',
+			$database,
+			$host,
+			$self->user,
+			$self->password,
+			'admin');
+  }
+  return;
+}
+</pre></div>
+
+<pre>  Title   : drop_database
+  Usage   : $self-&gt;drop_database();
+  Function: Drop the database;
+  Returns : Nothing
+  Args    : None
+
+</pre><h2 id="open_or_create_database">_open_or_create_database</h2>
+
+<p><a href="#" onclick="toggleCode('method__open_or_create_database');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method__open_or_create_database">
+                                        <pre>
+
+sub _open_or_create_database {
+  my $self = shift;
+
+  my @databases = DBI->data_sources('mysql',
+				    {user     => $self->user,
+				     password => $self->password,
+				    }
+				   );
+
+  my $dbh;
+  my $dsn = $self->dsn;
+  my $database = $self->database;
+  if (! grep {$_ eq $dsn} @databases) {
+    my $drh = DBI->install_driver("mysql");
+    my $host = ''; # Defaults to localhost, abstract this later.
+    my $rc = $drh->func('createdb',
+			$database,
+			$host,
+			$self->user,
+			$self->password,
+			'admin');
+
+    $dbh = DBI->connect($self->dsn, $self->user,
+			$self->password);
+
+    # TODO: Write GAL::Storage::mysql::_load_schema
+    $self->_load_schema($dbh);
+  }
+  else {
+    $self->warn('using_existing_database',
+		("A database by the name $database already " .
+		 "existed, so I'll use it as is.")
+		);
+    $dbh = DBI->connect($self->dsn, $self->user,
+			$self->password);
+    $self->_load_schema($dbh);
+  }
+  return $dbh;
+}
+</pre></div>
+
+<pre> Title   : _open_or_create_database
+ Usage   : $self-&gt;_open_or_create_database();
+ Function: Create the database if it doesnt exists.
+ Returns : A DBD::mysql object
+ Args    : None
+
+</pre><h2 id="load_schema">_load_schema</h2>
+
+<p><a href="#" onclick="toggleCode('method__load_schema');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method__load_schema">
+                                        <pre>
+
+sub _load_schema {
+  my ($self, $dbh) = @_;
+
+    $dbh->do("DROP TABLE IF EXISTS feature");
+    $dbh->do("DROP TABLE IF EXISTS attribute");
+    $dbh->do("DROP TABLE IF EXISTS relationship");
+    $dbh->do("CREATE TABLE feature ("    .
+            "feature_id VARCHAR(255), " .
+            "seqid      VARCHAR(255), " .
+            "source     VARCHAR(255), " .
+            "type       VARCHAR(255), " .
+            "start      INT, "          .
+            "end        INT, "          .
+            "score      VARCHAR(255), " .
+            "strand     VARCHAR(1), "   .
+            "phase      VARCHAR(1),"    .
+            "bin        VARCHAR(15))"
+           );
+    $dbh->do("CREATE TABLE attribute ("  .
+            "attribute_id INT NOT NULL AUTO_INCREMENT, " .
+            "feature_id VARCHAR(255), " .
+            "att_key    VARCHAR(255), "    .
+            "att_value  TEXT, "  .
+            "PRIMARY KEY (attribute_id))"
+           );
+    $dbh->do("CREATE TABLE relationship ("  .
+            "parent       VARCHAR(255), " .
+            "child        VARCHAR(255), "    .
+            "relationship VARCHAR(255)) "
+           );
+  my $self = shift;
+}
+</pre></div>
+
+<pre> Title   : _load_schema
+ Usage   : $self-&gt;_load_schema();
+ Function: Get/Set value of _load_schema.
+ Returns : Value of _load_schema.
+ Args    : Value to set _load_schema to.
+
+</pre><h2 id="index_database">index_database</h2>
+
+<p><a href="#" onclick="toggleCode('method_index_database');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_index_database">
+                                        <pre>
+
+sub index_database {
+
+  my $self = shift;
+  my $dbh  = $self->dbh;
+
+
+  print STDERR "Creating db indexes\n";
+  print STDERR "Creating feature_id_index\n";
+  # Create feature indeces
+  $dbh->do("CREATE INDEX feat_feature_id_index USING BTREE ON feature (feature_id)");
+  my $e = tv_interval($t0);
+  print STDERR "$e\n";
+  print STDERR "Creating feat_source_index\n";
+  $dbh->do("CREATE INDEX feat_source_index USING BTREE ON feature (source)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
+  print STDERR "Creating feat_type_index\n";
+  $dbh->do("CREATE INDEX feat_type_index USING BTREE ON feature (type)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
+  print STDERR "Creating feat_bin_index\n";
+  $dbh->do("CREATE INDEX feat_bin_index USING BTREE ON feature (bin)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
+  print STDERR "Creating attribute_feature_id_index\n";
+
+  # Create attribute indeces
+  $dbh->do("CREATE INDEX att_feature_id_index USING BTREE ON attribute (feature_id)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
+  print STDERR "Creating attribute_feature_id_index\n";
+
+  $dbh->do("CREATE INDEX rel_parent_index USING BTREE ON relationship (parent)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
+  print STDERR "Creating rel_parent_index\n";
+  $dbh->do("CREATE INDEX rel_child_index  USING BTREE ON relationship (child)");
+  $e = tv_interval($t0);
+  print STDERR "$e\n";
+
+}
+</pre></div>
+
+<pre> Title   : index_database
+ Usage   : $self-&gt;index_database();
+ Function: Create indeces on the database.
+ Returns : Nothing
+ Args    : None
+
+</pre><h2 id="load_files">load_files</h2>
+
+<p><a href="#" onclick="toggleCode('method_load_files');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_load_files">
+                                        <pre>
+
+sub load_files {
+
+  my ($self, $files) = @_;
+
+  $files = ref $files eq 'ARRAY' ? $files : [$files];
+
+  my $temp_dir;
+  ($temp_dir) = grep {-d $_} qw(/tmp .) unless ($temp_dir &&-d $temp_dir);
+
+  my ($FEAT_TEMP,  $feat_filename)  = tempfile('gal_feat_XXXXXX',
+					       SUFFIX => '.tmp',
+					       DIR    => $temp_dir,
+					       UNLINK => 0,
+					      );
+
+  my ($ATT_TEMP,  $att_filename)  = tempfile('gal_att_XXXXXX',
+					     SUFFIX => '.tmp',
+					     DIR    => $temp_dir,
+					     UNLINK => 0,
+					    );
+
+  my ($REL_TEMP,  $rel_filename)  = tempfile('gal_rel_XXXXXX',
+					     SUFFIX => '.tmp',
+					     DIR    => $temp_dir,
+					     UNLINK => 0,
+					    );
+
+  chmod (0444, $feat_filename, $att_filename, $rel_filename);
+
+  my $counter;
+  for my $file (@{$files}) {
+
+    my $parser = GAL::Parser::gff3->new(file => $file);
+
+    while (my $feature = $parser->next_feature_hash) {
+      my ($feature_rows, $attribute_rows, $relationship_rows) = $self->prepare_features($feature);
+
+      for my $feature_row (@{$feature_rows}) {
+	print $FEAT_TEMP join "\t", @{$feature_row};
+	print $FEAT_TEMP "\n";
+      }
+
+      for my $attribute_row (@{$attribute_rows}) {
+	print $ATT_TEMP  join "\t", @{$attribute_row};
+	print $ATT_TEMP "\n";
+      }
+      for my $relationship_row (@{$relationship_rows}) {
+	print $REL_TEMP join "\t", @{$relationship_row};
+	print $REL_TEMP "\n";
+      }
+      unless (++$counter % 10000) {
+	my $e = tv_interval($t0);
+	print STDERR "print $counter\t$e (" . int($counter/$e) . ")\r";
+      }
+    }
+  }
+  $self->_load_temp_files($feat_filename, $att_filename, $rel_filename);
+}
+</pre></div>
+
+<pre> Title   : load_files
+ Usage   : $self-&gt;load_files();
+ Function: Get/Set value of load_file.
+ Returns : Value of load_file.
+ Args    : Value to set load_file to.
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<dl>
+	<dt><code>using_existing_database</code></dt>
+		<dd><p>A database by the same name specified already existed and you haven't
+asked for it to be overwritten, so it will be used and possible
+appended to.  If you want to overwrite this database you should use
+the attribute <code>mode =</code> overwrite&gt; when you create the storage object.</p></dd>
+</dl>
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>&lt;GAL::Storage::mysql&gt; requires no configuration files or environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p><a href="Storage.pm.html">GAL::Storage</a>
+<a href="http://search.cpan.org/perldoc?DBI">DBI</a>
+<a href="http://search.cpan.org/perldoc?DBD/mysql">DBD::mysql</a></p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All
+rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

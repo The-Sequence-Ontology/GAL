@@ -1,0 +1,327 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::Reader</title>
+<link rel="stylesheet" type="text/css" href="podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="index.html">GAL</a> &gt; Perl Modules &gt;
+  Reader
+</div>
+<div>
+<a href="src/Reader.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#CONSTRUCTOR">CONSTRUCTOR</a><br />
+<ul>
+	<li><a href="#new">new</a></li>
+</ul>
+</li>
+	<li><a href="#ATTRIBUTES">ATTRIBUTES</a><br />
+<ul>
+	<li><a href="#file">file</a></li>
+	<li><a href="#fh">fh</a></li>
+</ul>
+</li>
+	<li><a href="#METHODS">METHODS</a><br />
+<ul>
+	<li><a href="#external_reader">_external_reader</a></li>
+	<li><a href="#next_record">next_record</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>GAL::Reader - Reader objects for the Genome Annotation Library</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>This document describes GAL::Reader version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<pre>  use GAL::Reader::DelimitedLine;
+  $reader = GAL::Reader::DelimitedLine-&gt;new(field_names =&gt; \@field_names);
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>&lt;GAL::Reader&gt;, via it's subclasses, provides file reading access for a
+variety of file formats.  The reader objects don't parse the
+information in the files themselves, but rather provide standard
+access to broad categories of formats such as tab-delimited,
+multi-line record, XML files and others.  &lt;GAL::Reader&gt; should not be
+instantiated on it's own, but rather acts as a base class for
+functionality common to all readers.</p>
+
+<h1 id="CONSTRUCTOR">CONSTRUCTOR <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>New GAL::Reader::subclass objects are created by the class method new.
+Arguments should be passed to the constructor as a list (or reference)
+of key value pairs.  All attributes of the Reader object can be set in
+the call to new. An simple example of object creation would look like
+this:</p>
+
+<pre>  $reader = GAL::Reader::DelimitedLine-&gt;new(field_names =&gt; \@field_names);
+
+</pre><p>The constructor recognizes the following parameters which will set the
+appropriate attributes:</p>
+
+<dl>
+	<dt>* <code>file =&gt; feature_file.txt</code></dt>
+		<dd><p>This optional parameter defines what file to parse. While this
+parameter is optional either it, or the following fh parameter must be
+set before the first call to next_record.</p></dd>
+	<dt>* <code>fh =&gt; $FH</code></dt>
+		<dd><p>This optional parameter provides a file handle to parse. While this
+parameter is optional, either it or the previous must be set before
+the first call to next_record.</p></dd>
+</dl>
+<p>Other attributes are used by subclasses of &lt;GAL::Reader&gt;.  See those modules
+for details.</p>
+
+<h2 id="new">new</h2>
+
+<p><a href="#" onclick="toggleCode('method_new');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_new">
+                                        <pre>
+
+sub new {
+	my ($class, @args) = @_;
+	my $self = $class->SUPER::new(@args);
+	return $self;
+}
+</pre></div>
+
+<pre>     Title   : new
+     Usage   : GAL::Reader::DelimitedLine-&gt;new();
+     Function: Creates a GAL::Reader::DelimitedLine object;
+     Returns : A GAL::Reader::DelimitedLine object
+     Args    : See &lt;GAL::Reader::DelimitedLine&gt; and other subclasses.
+
+</pre><h1 id="ATTRIBUTES">ATTRIBUTES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>All attributes can be supplied as parameters to the constructor as a
+list (or referenece) of key value pairs.</p>
+
+<h2 id="file">file</h2>
+
+<p><a href="#" onclick="toggleCode('method_file');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_file">
+                                        <pre>
+
+sub file {
+  my ($self, $value) = @_;
+  $self->{file} = $value if defined $value;
+  return $self->{file};
+}
+</pre></div>
+
+<pre> Title   : file
+ Usage   : $a = $self-&gt;file();
+ Function: Get/Set the value of file.
+ Returns : The value of file.
+ Args    : The filename of a readable file.
+
+</pre><h2 id="fh">fh</h2>
+
+<p><a href="#" onclick="toggleCode('method_fh');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_fh">
+                                        <pre>
+
+sub fh {
+  my ($self, $fh) = @_;
+  $self->{fh} = $fh if defined $fh;
+  if (! $self->{fh}) {
+    my $file = $self->file;
+    if ($file) {
+      # TODO $self->open_file($file, 'read');
+      $self->throw('file_doesnt_exist', $file) if ! -e $file;
+      $self->throw('unreadable_file', $file)   if ! -r $file;
+      open($fh, '<', $file) or $self->throw('failed_to_open_file', $file);
+      $self->{fh} = $fh;
+    }
+  }
+  return $self->{fh};
+}
+</pre></div>
+
+<pre> Title   : fh
+ Usage   : $a = $self-&gt;fh();
+ Function: Get/Set the filehandle.  Once the file handle is set, the same
+	   file handle is returned until another file handle is passed in.
+ Returns : A filehandle
+ Args    : A filehandle
+
+</pre><h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<h2 id="external_reader">_external_reader</h2>
+
+<p><a href="#" onclick="toggleCode('method__external_reader');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method__external_reader">
+                                        <pre>
+
+sub _external_reader {
+	my ($self, $reader) = @_;
+	$self->{_external_reader} = $reader if $reader;
+	return $self->{_external_reader};
+
+}
+</pre></div>
+
+<pre> Title   : _external_reader
+ Usage   : $a = $self-&gt;_external_reader();
+ Function: Get/Set the _external_reader if one is used.  This allows, for
+	   example, Text::RecordParser or XML::Twig to be easily added as
+	   an external reader by subclasses.
+ Returns : The value of _external_reader.
+ Args    : A value to set _external_reader to.
+
+</pre><h2 id="next_record">next_record</h2>
+
+<p><a href="#" onclick="toggleCode('method_next_record');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_next_record">
+                                        <pre>
+
+sub next_record {
+	my $self = shift;
+	my $err_code = 'method_must_be_overridden : GAL::Reader::next_record';
+	my $caller = ref $self;
+	my $err_msg  = ("The method GAL::Reader::next_record must be "       .
+			"overridden by subclasses of GAL::Reader.  Send an " .
+			"angry e-mail to the author of $caller!");
+	$self->throw($err_code, $err_msg);
+}
+</pre></div>
+
+<pre> Title   : next_record
+ Usage   : $a = $self-&gt;next_record();
+ Function: Return the next record from the external_reader.  Note that this
+	   method must be overridden by a sublass of GAL::Reader.
+ Returns : The next record from the external_reader.
+ Args    : N/A
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<dl>
+	<dt><code>file_doesnt_exist</code></dt>
+		<dd><p>GAL::Reader tried to open a file that did not exist.  Please check you
+file path and filename.</p></dd>
+	<dt><code>cant_read_file</code></dt>
+		<dd><p>GAL::Reader tried to open a file that exists, but could not be read.
+Please check your file permissions.</p></dd>
+	<dt><code>failed_to_open_file</code></dt>
+		<dd><p>GAL::Reader tried to open a file, but failed.</p></dd>
+	<dt><code>method_must_be_overridden</code></dt>
+		<dd><p>GAL::Parser::next_record must be overridden by a subclasses of
+&lt;GAL::Parser&gt;, but this was not done.  Please contact the author of
+the subclass that you were using.</p></dd>
+</dl>
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>&lt;GAL::Reader&gt; requires no configuration files or environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>&lt;GAL::Base&gt;</p>
+
+<p>Subclasses of GAL::Reader may have additional dependencies.</p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

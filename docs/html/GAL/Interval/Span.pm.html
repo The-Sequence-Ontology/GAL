@@ -1,0 +1,474 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::Interval::Span</title>
+<link rel="stylesheet" type="text/css" href="../podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="../index.html">GAL</a> &gt; Perl Modules &gt;
+  Interval-Span
+</div>
+<div>
+<a href="../src/Interval/Span.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#METHODS">METHODS</a><br />
+<ul>
+	<li><a href="#new">new</a></li>
+	<li><a href="#sets">sets</a></li>
+	<li><a href="#add_feature">add_feature</a></li>
+	<li><a href="#seqids">seqids</a></li>
+	<li><a href="#stats">stats</a></li>
+	<li><a href="#span_count">span_count</a></li>
+	<li><a href="#length_min">length_min</a></li>
+	<li><a href="#length_max">length_max</a></li>
+	<li><a href="#length_sum">length_sum</a></li>
+	<li><a href="#footprint">footprint</a></li>
+	<li><a href="#length_stdev">length_stdev</a></li>
+	<li><a href="#length_mean">length_mean</a></li>
+	<li><a href="#length_median">length_median</a></li>
+	<li><a href="#method">method</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>GAL::Interval::Span - Provide functions for intervals on sequence</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>This document describes GAL::Interval::Span version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<pre>    use GAL::Interval::Span;
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<pre>    GAL::Interval::Span provides a collection of methods for intervals
+    on sequence.  It uses Set::IntSpan::Fast under the hood to provide
+    the functionality.
+
+</pre><h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<h2 id="new">new</h2>
+
+<p><a href="#" onclick="toggleCode('method_new');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_new">
+                                        <pre>
+
+sub new {
+	my ($class, @args) = @_;
+	my $self = $class->SUPER::new(@args);
+	return $self;
+}
+</pre></div>
+
+<pre>     Title   : new
+     Usage   : GAL::Interval::Span-&gt;new()
+     Function: Creates a GAL::Interval::Span object;
+     Returns : A GAL::Interval::Span object
+     Args    : list =&gt; \@list
+
+</pre><h2 id="sets">sets</h2>
+
+<p><a href="#" onclick="toggleCode('method_sets');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_sets">
+                                        <pre>
+
+sub sets {
+    my ($self, @seqids) = @_;
+
+    @seqids = $self->seqids unless scalar @seqids;
+
+    my @sets;
+    for my $seqid (@seqids) {
+      $self->{set}{$seqid} ||= Set::IntSpan::Fast->new();
+      push @sets, $self->{set}{$seqid};
+    }
+    return wantarray ? @sets : scalar @seqids < 2 ? shift @sets : \@sets;
+}
+</pre></div>
+
+<pre> Title   : sets
+ Usage   : $sets = $self-&gt;set('chr1');
+ Function: Get the underlying Set::IntSpan::Fast object.
+
+ Returns : A Set::IntSpan::Fast object(s) as array(ref) or scalar if
+	   only one seqid is requrested.
+ Args    : One or more valid seqids.
+
+</pre><h2 id="add_feature">add_feature</h2>
+
+<p><a href="#" onclick="toggleCode('method_add_feature');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_add_feature">
+                                        <pre>
+
+sub add_feature {
+    my ($self, $feature) = @_;
+
+    my ($seqid, $start, $end);
+    if (ref $feature eq 'HASH') {
+      ($seqid, $start, $end) = @{$feature}{qw(seqid start end)};
+    }
+    elsif (ref $feature) {
+      eval{
+	($seqid, $start, $end) = ($feature->seqid, $feature->start,
+				  $feature->end);
+      };
+      if ($@) {
+	my $type = ref $feature;
+	$self->throw('invald_feature',
+		     ("Got $type, need hash or object.  ".
+		      "See GAL::Set::Span->add_feature"));
+      }
+    }
+    else {
+      $self->throw('invald_feature', ("Got $feature, need hash or object.  ".
+				      "See GAL::Set::Span->add_feature"));
+    }
+    $self->throw('invalid_feature', join ', ', ($seqid, $start, $end))
+      unless ($seqid && $start && $end);
+    $self->sets($seqid)->add_range($start, $end);
+}
+</pre></div>
+
+<pre> Title   : add_feature
+ Usage   : $a = $self-&gt;add_feature($feature)
+ Function: Add a feature to the set.
+ Returns : N/A
+ Args    :  A feature either as a hash reference (with keys seqid,
+	    start and end) or an object (with methods seqid, start and
+	    end).
+
+</pre><h2 id="seqids">seqids</h2>
+
+<p><a href="#" onclick="toggleCode('method_seqids');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_seqids">
+                                        <pre>
+
+sub seqids {
+    my $self = shift;
+
+    my @seqids = keys %{$self->{set}};
+    return wantarray ? @seqids : \@seqids;
+}
+</pre></div>
+
+<pre> Title   : seqids
+ Usage   : @seqids = $self-&gt;seqids();
+ Function: Return a list of all seqids represented in the sets.
+ Returns : An array(ref) of seqids.
+ Args    : N/A
+
+</pre><h2 id="stats">stats</h2>
+
+<p><a href="#" onclick="toggleCode('method_stats');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_stats">
+                                        <pre>
+
+sub stats {
+  my $self = shift;
+
+  return $self->{stats} if $self->{stats};
+
+  my $start_min  = 1e15;
+  my $start_max  = 0;
+  my $end_min    = 1e15;
+  my $end_max    = 0;
+  my $span_count = 0;
+  my @lengths;
+
+  my $stats = Statistics::Descriptive::Full->new();
+  for my $set ($self->sets) {
+    my $iter = $set->iterate_runs();
+    while (my ( $start, $end ) = $iter->()) {
+      my $length = $end - $start + 1;
+      $stats->add_data($length);
+      $start_min = $start_min > $start ? $start : $start_min;
+      $start_max = $start_max < $start ? $start : $start_max;
+
+      $end_min = $end_min > $end ? $end : $end_min;
+      $end_max = $end_max < $end ? $end : $end_max;
+    }
+    $self->{stats} = $stats;
+    return $self->{stats};
+  }
+}
+</pre></div>
+
+<pre> Title   : stats
+ Usage   : $a = $self-&gt;stats
+ Function: Calculate simple summary stats on spans
+ Returns : N/A
+ Args    : N/A
+
+</pre><h2 id="span_count">span_count</h2>
+
+<p><a href="#" onclick="toggleCode('method_span_count');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_span_count">
+                                        <pre>
+
+sub span_count {
+    return shift->stats->count;
+}
+</pre></div>
+
+<pre> Title   : span_count
+ Usage   : $a = $self-&gt;span_count()
+ Function: Return the count of spans
+ Returns : An integer - count of spans
+ Args    : N/A
+
+</pre><h2 id="length_min">length_min</h2>
+
+<p><a href="#" onclick="toggleCode('method_length_min');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_length_min">
+                                        <pre>
+
+sub length_min {
+    return shift->stats->min;
+}
+</pre></div>
+
+<pre> Title   : length_min
+ Usage   : $a = $self-&gt;length_min()
+ Function:
+ Returns :
+ Args    : N/A
+
+</pre><h2 id="length_max">length_max</h2>
+
+<p><a href="#" onclick="toggleCode('method_length_max');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_length_max">
+                                        <pre>
+
+sub length_max {
+    return shift->stats->max;
+}
+</pre></div>
+
+<pre> Title   : length_max
+ Usage   : $a = $self-&gt;length_max()
+ Function:
+ Returns :
+ Args    : N/A
+
+</pre><h2 id="length_sum">length_sum</h2>
+
+<p><a href="#" onclick="toggleCode('method_length_sum');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_length_sum">
+                                        <pre>
+
+sub length_sum {
+    return shift->stats->sum;
+}
+</pre></div>
+
+<pre> Title   : length_sum
+ Usage   : $a = $self-&gt;length_sum()
+ Function:
+ Returns :
+ Args    : N/A
+
+</pre><h2 id="footprint">footprint</h2>
+
+<p><a href="#" onclick="toggleCode('method_footprint');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_footprint">
+                                        <pre>
+
+sub footprint {
+    return shift->stats->sum;
+}
+</pre></div>
+
+<pre> Title   : footprint
+ Usage   : $a = $self-&gt;footprint()
+ Function: An alias for length_sum
+ Returns : Integer - length of all spans
+ Args    : N/A
+
+</pre><h2 id="length_stdev">length_stdev</h2>
+
+<p><a href="#" onclick="toggleCode('method_length_stdev');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_length_stdev">
+                                        <pre>
+
+sub length_stdev {
+    return shift->stats->standard_deviation;
+}
+</pre></div>
+
+<pre> Title   : length_stdev
+ Usage   : $a = $self-&gt;length_stdev()
+ Function:
+ Returns :
+ Args    : N/A
+
+</pre><h2 id="length_mean">length_mean</h2>
+
+<p><a href="#" onclick="toggleCode('method_length_mean');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_length_mean">
+                                        <pre>
+
+sub length_mean {
+    return shift->stats->mean;
+}
+</pre></div>
+
+<pre> Title   : length_mean
+ Usage   : $a = $self-&gt;length_mean()
+ Function:
+ Returns :
+ Args    : N/A
+
+</pre><h2 id="length_median">length_median</h2>
+
+<p><a href="#" onclick="toggleCode('method_length_median');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_length_median">
+                                        <pre>
+
+sub length_median {
+    return shift->stats->median;
+}
+</pre></div>
+
+<pre> Title   : length_median
+ Usage   : $a = $self-&gt;length_median()
+ Function:
+ Returns :
+ Args    : N/A
+
+</pre><h2 id="method">method</h2>
+
+<p><a href="#" onclick="toggleCode('method_method');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_method">
+                                        <pre>
+
+sub method {
+    my $self = shift;
+    $self->throw('method_not_implimented', 'method');
+}
+</pre></div>
+
+<pre> Title   : method
+ Usage   : $a = $self-&gt;method()
+ Function:
+ Returns :
+ Args    :
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<dl>
+	<dt><code>Metohd histogram not implimented yet</code></dt>
+		<dd><p>There is a place holder for the histogram method, but the method has
+not been written yet.</p></dd>
+</dl>
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>&lt;GAL::Interval::Span&gt; requires no configuration files or environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>&lt;GAL::Interval&gt;
+&lt;Statistics::Descriptive::Discreet&gt;</p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

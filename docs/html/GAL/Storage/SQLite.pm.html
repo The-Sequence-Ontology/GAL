@@ -1,0 +1,574 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::Storage::SQLite</title>
+<link rel="stylesheet" type="text/css" href="../podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="../index.html">GAL</a> &gt; Perl Modules &gt;
+  Storage-SQLite
+</div>
+<div>
+<a href="../src/Storage/SQLite.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#CONSTRUCTOR">CONSTRUCTOR</a></li>
+	<li><a href="#CONSTRUCTOR">CONSTRUCTOR</a><br />
+<ul>
+	<li><a href="#new">new</a></li>
+</ul>
+</li>
+	<li><a href="#Attributes">Attributes</a><br />
+<ul>
+	<li><a href="#mode">mode</a></li>
+	<li><a href="#scheme">scheme</a></li>
+	<li><a href="#driver">driver</a></li>
+	<li><a href="#dbh">dbh</a></li>
+	<li><a href="#database">database</a></li>
+	<li><a href="#drop_database">drop_database</a></li>
+	<li><a href="#index_database">index_database</a></li>
+	<li><a href="#load_files">load_files</a></li>
+	<li><a href="#add_features">add_features</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>GAL::Storage::SQLite - SQLite feature storage for GAL</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>This document describes GAL::Storage::SQLite version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<pre>    use GAL::Storage::SQLite;
+    my $storage = GAL::Storage::SQLite-&gt;new(dsn =&gt; 'dbi:SQLite:db_name');
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>The <a href="Storage/SQLite.pm.html">GAL::Storage::SQLite</a> class provides SQLite based storage to
+GAL.</p>
+
+<h1 id="CONSTRUCTOR">CONSTRUCTOR <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>New GAL::Storage::SQLite objects are created by the class method new.
+Arguments should be passed to the constructor as a list (or reference)
+of key value pairs.  All attributes of the Storage object can be set
+in the call to new. An simple example of object creation would look
+like this:</p>
+
+<pre>    my $parser = GAL::Storage::SQLite-&gt;new(dsn =&gt; 'dbi:SQLite:db_name);
+
+</pre><p>The constructor recognizes the following parameters which will set the
+appropriate attributes:</p>
+
+<dl>
+	<dt>* <code>scheme</code></dt>
+		<dd><p>This is a read only parameter that is set to 'DBI';</p></dd>
+	<dt>* <code>driver </code></dt>
+		<dd><p>This is a read only parameter that is set to 'SQLite';</p></dd>
+	<dt>* <code>database</code></dt>
+		<dd><p>database =&gt; 'db_name'</p></dd>
+		<dd><p>This optional parameter defines the database name.  You don't need to
+specify both the database name and the dsn as they both contain the
+database name. Since the driver and the scheme are set by the class
+you could give either the dsn or the database name and it will work.</p></dd>
+		<dd><p><strong>The following attributes are inherited from</strong> <a href="Storage.pm.html">GAL::Storage</a></p></dd>
+	<dt>* <code>annotation</code></dt>
+		<dd><p>This is a read only attribute that provides access to a weakened
+version of the <a href="Annotation.pm.html">GAL::Annotation</a> object that created this storage</p></dd>
+	<dt>* <code>dsn =</code> 'dbi:SQLite:db_name'&gt;</dt>
+		<dd><p>dsn =&gt; 'dbi:SQLite:db_name</p></dd>
+		<dd><p>This optional parameter defines the data source name of the database
+to open.  By default Storage will use and SQLite database with a
+random filename, but see the comment for the database attribute below.</p></dd>
+	<dt>* <code>user =</code> 'user_name'&gt;</dt>
+		<dd><p>This optional parameter defines the user name for connecting to the
+database.</p></dd>
+	<dt>* <code>password =</code> 'password'&gt;</dt>
+		<dd><p>This optional parameter defines the password for connecting to the
+database.</p></dd>
+</dl>
+<h1 id="CONSTRUCTOR">CONSTRUCTOR <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<h2 id="new">new</h2>
+
+<p><a href="#" onclick="toggleCode('method_new');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_new">
+                                        <pre>
+
+sub new {
+	my ($class, @args) = @_;
+	my $self = $class->SUPER::new(@args);
+	return $self;
+}
+</pre></div>
+
+<pre>     Title   : new
+     Usage   : GAL::Storage::SQLite-&gt;new();
+     Function: Creates a Storage object;
+     Returns : A L&lt;GAL::Storage::SQLite&gt; object
+     Args    : See the attributes described above.
+
+</pre><h1 id="Attributes">Attributes <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<h2 id="mode">mode</h2>
+
+<p><a href="#" onclick="toggleCode('method_mode');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_mode">
+                                        <pre>
+
+sub mode {
+
+  my ($self, $mode) = @_;
+
+  $self->{mode} = $mode if $mode;
+  $self->{mode} ||= 'overwrite';
+  return $self->{mode};
+}
+</pre></div>
+
+<pre>     Title   : mode
+     Usage   : GAL::Storage::SQLite-&gt;mode('append');
+     Function: Get/set the value of mode. This defines
+               whether the database is overwritten or
+               appended.
+     Returns : The value of mode
+     Args    : The valude append or the default overwrite.
+
+</pre><h2 id="scheme">scheme</h2>
+
+<p><a href="#" onclick="toggleCode('method_scheme');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_scheme">
+                                        <pre>
+
+sub scheme {'dbi'}
+
+#-----------------------------------------------------------------------------
+
+=head2 driver
+
+ Title   : driver
+ Usage   : $a = $self->driver();
+ Function: Get the value of driver.
+ Returns : SQLite
+ Args    : N/A
+
+=cut
+
+sub driver {'SQLite'}
+
+#-----------------------------------------------------------------------------
+
+=head2 dbh
+
+ Title   : dbh
+ Usage   : $a = $self->dbh();
+ Function: Get/Set the database handle
+ Returns : The a DBI::SQLite object
+ Args    : A DBI::SQLite object
+
+=cut
+
+sub dbh {
+  my $self = shift;
+  $self->{dbh} ||= $self->_open_or_create_database;
+  return $self->{dbh};
+}
+</pre></div>
+
+<pre> Title   : scheme
+ Usage   : $a = $self-&gt;scheme();
+ Function: Return the RDMS scheme.
+ Returns : DBI
+ Args    : N/A
+
+</pre><h2 id="driver">driver</h2>
+
+<p><a href="#" onclick="toggleCode('method_driver');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_driver">
+                                        <pre>
+
+sub driver {
+  return 'SQLite';
+}
+</pre></div>
+
+<pre> Title   : driver
+ Usage   : $a = $self-&gt;driver();
+ Function: Get the value of driver.
+ Returns : SQLite
+ Args    : N/A
+
+</pre><h2 id="dbh">dbh</h2>
+
+<pre> Title   : dbh
+ Usage   : $a = $self-&gt;dbh();
+ Function: Get/Set the database handle
+ Returns : The a DBI::SQLite object
+ Args    : A DBI::SQLite object
+
+</pre><h2 id="database">database</h2>
+
+<p><a href="#" onclick="toggleCode('method_database');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_database">
+                                        <pre>
+
+sub database {
+  my ($self, $database) = @_;
+
+  if (! $database && ! $self->{database}) {
+    $database = $self->random_string . '.sqlite';
+  }
+  $self->{database} = $database if $database;
+  return $self->{database};
+}
+</pre></div>
+
+<pre> Title   : database
+ Usage   : $a = $self-&gt;database();
+ Function: Get/Set the database name.
+ Returns : A database name.
+ Args    : A database name.
+
+</pre><h2 id="drop_database">drop_database</h2>
+
+<p><a href="#" onclick="toggleCode('method_drop_database');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_drop_database">
+                                        <pre>
+
+sub drop_database {
+
+  my $self = shift;
+
+  my $database = $self->database;
+  if (-e $database) {
+    $self->warn('dropping_database', $database);
+    `rm $database`;
+  }
+}
+</pre></div>
+
+<pre>  Title   : drop_database
+  Usage   : $self-&gt;drop_database();
+  Function: Drop the database;
+  Returns : N/A
+  Args    : N/A
+
+</pre><h2 id="index_database">index_database</h2>
+
+<p><a href="#" onclick="toggleCode('method_index_database');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_index_database">
+                                        <pre>
+
+sub index_database {
+
+  my $self = shift;
+  my $dbh  = $self->dbh;
+
+  $self->info('indexing_database', $self->database);
+  # Create feature indeces
+  $self->info('indexing_feature_id', $self->database);
+  $dbh->do("CREATE INDEX feat_id_index ON feature (feature_id)");
+  $self->info('indexing_locus', $self->database);
+  $dbh->do("CREATE INDEX feat_locus_index ON feature (bin, seqid, start, end)");
+  $self->info('indexing_feature_type', $self->database);
+  $dbh->do("CREATE INDEX feat_type_index ON feature (type)");
+
+  # Create attribute indeces
+  $self->info('indexing_feature_attributes', $self->database);
+  $dbh->do("CREATE INDEX att_feature_idx_index ON attribute (feature_idx, att_key, att_value)");
+
+  # Create relationship indeces
+  $self->info('indexing_relationships', $self->database);
+  $dbh->do("CREATE INDEX rel_parent_child_index ON relationship (parent, child)");
+  $dbh->do("CREATE INDEX rel_child_parent_index ON relationship (child, parent)");
+
+  # Analyze
+  $self->info('analyzing_database', $self->database);
+  $dbh->do("ANALYZE");
+
+  $self->info('finished_indexing_database', $self->database);
+  return 1;
+}
+</pre></div>
+
+<pre> Title   : index_database
+ Usage   : $self-&gt;index_database();
+ Function: Create indeces on the database.
+ Returns : Nothing
+ Args    : None
+
+</pre><h2 id="load_files">load_files</h2>
+
+<p><a href="#" onclick="toggleCode('method_load_files');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_load_files">
+                                        <pre>
+
+sub load_files {
+
+  my ($self, $files) = @_;
+  $files = ref $files eq 'ARRAY' ? $files : [$files];
+
+  my $parser = $self->annotation->parser;
+
+  $self->drop_database if $self->mode eq 'overwrite';
+
+  for my $file (@{$files}) {
+    $parser->file($file);
+    $self->info('loading_database', $file);
+    while (my $feature = $parser->next_feature_hash) {
+      $self->add_features_to_buffer($feature);
+    }
+    $self->flush_buffer;
+    $self->info('finished_loading_database', $file);
+  }
+  $self->index_database;
+}
+</pre></div>
+
+<pre> Title   : load_files
+ Usage   : $self-&gt;load_files();
+ Function: Load a file(s) into the database
+ Returns : Nothing
+ Args    : An scalar string or array reference containing the name(s) of
+	   files to load.
+
+</pre><h2 id="add_features">add_features</h2>
+
+<p><a href="#" onclick="toggleCode('method_add_features');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_add_features">
+                                        <pre>
+
+sub add_features {
+  my ($self, $features) = @_;
+
+  my ($feat_rows, $att_rows, $rel_rows) = $self->prepare_features($features);
+  my $dbh = $self->dbh;
+
+  # "feature_idx INT, " .
+  # "feature_id  VARCHAR(255), " .
+  # "seqid       VARCHAR(255), " .
+  # "source      VARCHAR(255), " .
+  # "type        VARCHAR(255), " .
+  # "start       INT, "          .
+  # "end         INT, "          .
+  # "score       VARCHAR(255), " .
+  # "strand      VARCHAR(1), "   .
+  # "phase       VARCHAR(1),"    .
+  # "bin         VARCHAR(15))"
+
+  my $feat_stmt = "INSERT INTO feature VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+  my $feat_sth  = $dbh->prepare($feat_stmt);
+
+  my %feat_idx_map;
+
+  # http://search.cpan.org/~adamk/DBD-SQLite-1.29/lib/DBD/SQLite.pm#Transactions
+  $dbh->begin_work;
+  for my $feat_row (@{$feat_rows}) {
+    my $old_feat_idx = $feat_row->[0];
+    $feat_row->[0] = undef;
+    my $rv = $feat_sth->execute(@{$feat_row});
+    if ($rv) {
+      my ($auto_inc) = $dbh->selectrow_array('SELECT last_insert_rowid()');
+      $feat_idx_map{$old_feat_idx} = $auto_inc;
+    }
+    else {
+      my $warn_message = ('The following data failed to insert into the ' .
+			  'feature table : ');
+      my $warn_code = 'bad_feature_table_insert :';
+      my $data = join ', ', @{$feat_row};
+      $warn_message .= $data;
+      $self->warn($warn_code,
+		  $warn_message);
+    }
+  }
+
+  # Removed # "attribute_id INT NOT NULL AUTO_INCREMENT, " .
+  # "feature_idx VARCHAR(255), " .
+  # "att_key     VARCHAR(255), "    .
+  # "att_value   TEXT, "  .
+
+  #my $att_stmt = "INSERT INTO attribute VALUES (?, ?, ?, ?)";
+  my $att_stmt = "INSERT INTO attribute VALUES (?, ?, ?)";
+  my $att_sth = $dbh->prepare($att_stmt);
+
+  for my $att_row (@{$att_rows}) {
+    next unless exists $feat_idx_map{$att_row->[0]};
+    $att_row->[0] = $feat_idx_map{$att_row->[0]};
+    my $rv = $att_sth->execute(@{$att_row});
+    unless ($rv) {
+      my $warn_message = ('The following data failed to insert into the ' .
+			  'attribute table : ');
+      my $warn_code = 'bad_attribute_table_insert :';
+      my $data = join ', ', @{$att_row};
+      $warn_message .= $data;
+      $warn_code    .= $data;
+      $self->warn($warn_code,
+		  $warn_message);
+    }
+  }
+
+  # "parent   VARCHAR(255), " .
+  # "child    VARCHAR(255), "    .
+  # REMOVED # "relationship VARCHAR(255)) "
+
+  my $rel_stmt = "INSERT INTO relationship VALUES (?, ?)";
+  my $rel_sth = $dbh->prepare($rel_stmt);
+
+  for my $rel_row (@{$rel_rows}) {
+    my $rv = $rel_sth->execute(@{$rel_row});
+    unless ($rv) {
+      my $warn_message = ('The following data failed to insert into the ' .
+			  'relationship table : ');
+      my $warn_code = 'bad_relationship_table_insert :';
+      my $data = join ', ', @{$rel_row};
+      $warn_message .= $data;
+      $warn_code    .= $data;
+      $self->warn($warn_code,
+		  $warn_message);
+    }
+  }
+  $dbh->commit;
+}
+</pre></div>
+
+<pre> Title   : add_features
+ Usage   : $self-&gt;add_features();
+ Function: Add features to the database.
+ Returns : Nothing
+ Args    : An array reference of feature hashes.
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<dl>
+	<dt><code>using_existing_database</code></dt>
+		<dd><p>A database by the same name specified already existed and you haven't
+asked for it to be overwritten, so it will be used and possible
+appended to.  If you want to overwrite this database you should use
+the attribute <code>mode =</code> overwrite&gt; when you create the storage object.</p></dd>
+	<dt><code>bad_feature_table_insert</code></dt>
+		<dd><p>An error occured while trying to insert data into the feature table.
+The offending data is given as a comma separated list.  Make sure that
+all of the data is compatible with the database schema.  This may be a
+problem in the parser you are using, or more likely the incoming data
+is not in the correct format.</p></dd>
+	<dt><code>bad_attribute_table_insert</code></dt>
+		<dd><p>Same problem as <code>bad_feature_table_insert</code> above, but for the
+attribute table.</p></dd>
+	<dt><code>bad_relationship_table_insert</code></dt>
+		<dd><p>Same problem as <code>bad_feature_table_insert</code> above, but for the
+attribute table.</p></dd>
+</dl>
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>&lt;GAL::Storage::SQLite&gt; requires no configuration files or environment
+variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p><a href="Storage.pm.html">GAL::Storage</a>
+<a href="http://search.cpan.org/perldoc?DBI">DBI</a>
+<a href="http://search.cpan.org/perldoc?DBD/SQLite">DBD::SQLite</a></p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All
+rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

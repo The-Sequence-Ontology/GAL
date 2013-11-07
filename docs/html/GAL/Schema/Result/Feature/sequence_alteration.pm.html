@@ -1,0 +1,344 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::Schema::Result::Feature::sequence_alteration</title>
+<link rel="stylesheet" type="text/css" href="../../../podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="../../../index.html">GAL</a> &gt; Perl Modules &gt;
+  Schema-Result-Feature-sequence_alteration
+</div>
+<div>
+<a href="../../../src/Schema/Result/Feature/sequence_alteration.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#METHODS">METHODS</a><br />
+<ul>
+	<li><a href="#variant_seq">variant_seq</a></li>
+	<li><a href="#variant_seq_no_ref">variant_seq_no_ref</a></li>
+	<li><a href="#reference_seq">reference_seq</a></li>
+	<li><a href="#Variant_reads">Variant_reads</a></li>
+	<li><a href="#total_reads">total_reads</a></li>
+	<li><a href="#genotype">genotype</a></li>
+	<li><a href="#variant_effect">variant_effect</a></li>
+	<li><a href="#variant_copy_number">variant_copy_number</a></li>
+	<li><a href="#reference_copy_number">reference_copy_number</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>GAL::Schema::Result::Feature::sequence_alteration - A
+sequence_alteration object for the GAL library</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>This document describes
+GAL::Schema::Result::Feature::sequence_alteration version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<pre>    use GAL::Annotation
+    my $var_store = GAL::Annotation-&gt;new(storage =&gt; $var_store_args,
+					 parser  =&gt; $parser_args,
+					 fasta   =&gt; $fasta_args,
+					);
+
+      $var_store-&gt;load_files(files =&gt; $variant_file,
+			     mode  =&gt; 'overwrite',
+			    );
+    my $variants = $var_store-&gt;schema-&gt;resultset('Feature');
+    my $snvs = $variants-&gt;search(\%where);
+
+    while (my @snv = $snvs-&gt;next) {
+      my $snv_id = $snv-&gt;feature_id;
+      my $start  = $snv-&gt;start;
+      my $reference_seq = $snv-&gt;reference_seq;
+      my @variant_seqs  = $snv-&gt;variant_seqs;
+    }
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>&lt;GAL::Schema::Result::Feature::sequence_alteration&gt; provides a
+&lt;GAL::Schema::Result::Feature&gt; subclass for sequence_alteration
+specific behavior.  See documentation for
+&lt;GAL::Schema::Result::Feature&gt; for more methods and details.</p>
+
+<h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<h2 id="variant_seq">variant_seq</h2>
+
+<p><a href="#" onclick="toggleCode('method_variant_seq');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_variant_seq">
+                                        <pre>
+
+sub variant_seq {
+  my $self = shift;
+  my $variant_seqs = $self->attribute_value('Variant_seq');
+  return wantarray ? @{$variant_seqs} : $variant_seqs;
+}
+</pre></div>
+
+<pre> Title   : variant_seq
+ Usage   : $variant_seq = $self-&gt;variant_seq
+ Function: Get the value(s) for the features Variant_seq attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+</pre><h2 id="variant_seq_no_ref">variant_seq_no_ref</h2>
+
+<p><a href="#" onclick="toggleCode('method_variant_seq_no_ref');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_variant_seq_no_ref">
+                                        <pre>
+
+sub variant_seq_no_ref {
+  my $self = shift;
+  my $reference_seq = $self->reference_seq;
+  my @variant_seqs_no_ref = grep {$_ ne $reference_seq}
+    $self->attribute_value('Variant_seq');
+  return wantarray ? @variant_seqs_no_ref : \@variant_seqs_no_ref;
+}
+</pre></div>
+
+<pre> Title   : variant_seq_no_ref
+ Usage   : $variant_seq_no_ref = $self-&gt;variant_seq_no_ref
+ Function: Get the value(s) for the features Variant_seq attribute, but
+           remove the reference sequence if it is present.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+</pre><h2 id="reference_seq">reference_seq</h2>
+
+<p><a href="#" onclick="toggleCode('method_reference_seq');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_reference_seq">
+                                        <pre>
+
+sub reference_seq {
+  my $self = shift;
+  my $reference_seq = $self->attribute_value('Reference_seq');
+  return $reference_seq->[0];
+}
+</pre></div>
+
+<pre> Title   : reference_seq
+ Usage   : $reference_seq = $self-&gt;reference_seq
+ Function: Get the value(s) for the features Reference_seq attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+</pre><h2 id="Variant_reads">Variant_reads</h2>
+
+<pre> Title   : Variant_reads
+ Usage   : $Variant_reads = $self-&gt;Variant_reads
+ Function: Get the value(s) for the features Variant_reads attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+</pre><h2 id="total_reads">total_reads</h2>
+
+<p><a href="#" onclick="toggleCode('method_total_reads');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_total_reads">
+                                        <pre>
+
+sub total_reads {
+  my $self = shift;
+  my $total_reads = $self->attribute_value('Total_reads');
+  return wantarray ? @{$total_reads} : $total_reads;
+}
+</pre></div>
+
+<pre> Title   : total_reads
+ Usage   : $total_reads = $self-&gt;total_reads
+ Function: Get the value(s) for the features Total_reads attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+</pre><h2 id="genotype">genotype</h2>
+
+<p><a href="#" onclick="toggleCode('method_genotype');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_genotype">
+                                        <pre>
+
+sub genotype {
+  my $self = shift;
+  my $genotype = $self->attribute_value('Genotype');
+  return $genotype->[0];
+}
+</pre></div>
+
+<pre> Title   : genotype
+ Usage   : $genotype = $self-&gt;genotype
+ Function: Get the value(s) for the features Genotype attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+</pre><h2 id="variant_effect">variant_effect</h2>
+
+<p><a href="#" onclick="toggleCode('method_variant_effect');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_variant_effect">
+                                        <pre>
+
+sub variant_effect {
+  my $self = shift;
+  my $variant_effect = $self->attribute_value('Variant_effect');
+  return wantarray ? @{$variant_effect} : $variant_effect;
+}
+</pre></div>
+
+<pre> Title   : variant_effect
+ Usage   : $variant_effect = $self-&gt;variant_effect
+ Function: Get the value(s) for the features Variant_effect attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+</pre><h2 id="variant_copy_number">variant_copy_number</h2>
+
+<p><a href="#" onclick="toggleCode('method_variant_copy_number');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_variant_copy_number">
+                                        <pre>
+
+sub variant_copy_number {
+  my $self = shift;
+  my $variant_copy_number = $self->attribute_value('Variant_copy_number');
+  return wantarray ? @{$variant_copy_number} : $variant_copy_number;
+}
+</pre></div>
+
+<pre> Title   : variant_copy_number
+ Usage   : $variant_copy_number = $self-&gt;variant_copy_number
+ Function: Get the value(s) for the features Variant_copy_number attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+</pre><h2 id="reference_copy_number">reference_copy_number</h2>
+
+<p><a href="#" onclick="toggleCode('method_reference_copy_number');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_reference_copy_number">
+                                        <pre>
+
+sub reference_copy_number {
+  my $self = shift;
+  my $reference_copy_number = $self->attribute_value('Reference_copy_number');
+  return $reference_copy_number->[0];
+}
+</pre></div>
+
+<pre> Title   : reference_copy_number
+ Usage   : $reference_copy_number = $self-&gt;reference_copy_number
+ Function: Get the value(s) for the features Reference_copy_number attribute.
+ Returns : An array or reference of sequences.
+ Args    : None
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>&lt;GAL::Schema::Result::Feature::sequence_alteration&gt; throws no warnings
+or errors.</p>
+
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>&lt;GAL::Schema::Result::Feature::sequence_alteration&gt; requires no
+configuration files or environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>&lt;GAL::Schema::Result::Feature::sequence_feature&gt;</p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="../../../up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>
