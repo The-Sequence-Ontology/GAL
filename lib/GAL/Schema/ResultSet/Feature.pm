@@ -4,6 +4,7 @@ use warnings;
 use base 'DBIx::Class::ResultSet';
 use GAL::List::Numeric;
 use GAL::List::Categorical;
+use List::MoreUtils qw(uniq);
 
 sub seqids {
   return GAL::List::Categorical->new(list => [shift->get_column('seqid')->all]);
@@ -25,6 +26,18 @@ sub ends {
   return GAL::List::Numeric->new(list => [shift->get_column('end')->all]);
 }
 
+sub scores {
+  return GAL::List::Numeric->new(list => [shift->get_column('score')->all]);
+}
+
+sub strands {
+  return GAL::List::Categorical->new(list => [shift->get_column('strand')->all]);
+}
+
+sub phases {
+  return GAL::List::Categorical->new(list => [shift->get_column('phase')->all]);
+}
+
 sub spans {
   my $self = shift;
 
@@ -35,6 +48,16 @@ sub spans {
   }
   $self->{_gal_spans} = $spans;
   return $self->{_gal_spans};
+}
+
+sub method_list {
+  my ($self, $method) = @_;
+  my @values;
+  while (my $feature = $self->next) {
+    my $value = $feature->$method;
+    push @values, $value;
+  }
+  return GAL::List::Numeric->new(list => \@values);
 }
 
 ## Attribute aggregation

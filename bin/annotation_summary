@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use GAL::Annotation;
+use GAL::List;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -44,29 +45,44 @@ my $annotation = GAL::Annotation->new($feature_file,
 
 my $features = $annotation->features;
 
+#for my $column (qw(seqids sources types strands phases)) {
+#  print $features->$column->count_table($column, qw(count));
+#}
+#
+my @types = $features->types->uniq;
+#
+#for my $method (qw(length gc_content)) {
+#  for my $type (@types) {
+#    my $type_rs = $features->search({type => $type});
+#    my $values = $type_rs->method_list($method);
+#    print join "\t", $type, $values->mean;
+#    print "\n";
+#    print '';
+#  }
+#  print '';
+#}
 
-my %counts;
-for my $column (qw(seqid source type strand phase)) {
-  my $rs = $features->get_column($column);
-  map {$counts{$column}{$_}++} $rs->all;
+for my $type (@types) {
+  my $type_rs = $features->search({type => $type});
+  my %counts;
+  while (my $feature = $type_rs->next) {
+    my $children = $feature->children;
+    while (my $child = $children->next) {
+      $counts{$child->type}++;
+    }
+  }
+  next unless %counts;
+  print "$type\n";
+  for my $child_type (keys %counts) {
+    my $list = GAL::List::Numeric->new($counts{$child_type});
+    print "$child_type\t" . $list->mean;
+    print "\n";
+    print '';
+  }
+  print '';
 }
-
-my %lengths;
-map {push @{$lengths{$_->type}}, $_->length} $features->all;
-
-my %gc_content;
-while (my $feature = $features->next) {
-  my $seq = $feature->seq;
-  my $length = length($seq);
-  my $gc_count = $seq =~ tr/GCgc/GCgc/;
-  my $pct_gc = $gc_count / $length;
-  push @{$gc_content{$feature->type}}, $pct_gc;
-}
-
-my %children;
-
-
 print '';
+
 
 # Do the search and get an interator for all matching features
 my $mrnas = $features->search({type => 'mRNA'});
