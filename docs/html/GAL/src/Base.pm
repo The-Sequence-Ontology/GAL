@@ -36,9 +36,129 @@ None
 
 =head1 INHERITED BY
 
+=over 4
+
+=item L<Annotation.pm>
+
+=item L<Base.pm>
+
+=item L<Index.pm>
+
+=item L<Interval.pm>
+
+=item L<List.pm>
+
+=item L<List::Categorical.pm>
+
+=item L<List::Numeric.pm>
+
+=item L<Manual.pm>
+
+=item L<Parser.pm>
+
+=over 4
+
+=item L<Parser::23andMe.pm>
+
+=item L<Parser::basic_snp.pm>
+
+=item L<Parser::bed.pm>
+
+=item L<Parser::cgi_complete.pm>
+
+=item L<Parser::dbsnp_flat.pm>
+
+=item L<Parser::gff3.pm>
+
+=item L<Parser::gff3_fast.pm>
+
+=item L<Parser::hapmap_genotypes.pm>
+
+=item L<Parser::hgmd_indel.pm>
+
+=item L<Parser::hgmd_snv.pm>
+
+=item L<Parser::ncbi_blast_tab.pm>
+
+=item L<Parser::samtools_pileup.pm>
+
+=item L<Parser::soap_snp.pm>
+
+=item L<Parser::solid_snp.pm>
+
+=item L<Parser::template.pm>
+
+=item L<Parser::template_sequence_alteration.pm>
+
+=item L<Parser::ucsc_gene_table.pm>
+
+=item L<Parser::vaast_smp.pm>
+
+=item L<Parser::VCFv4_0.pm>
+
+=back
+
+=item L<Reader::DelimitedLine.pm>
+
+=item L<Reader::RecordParser.pm>
+
+=item L<Reader::Template.pm>
+
+=item L<Reader.pm>
+
+=item L<Run.pm>
+
+=item L<Schema::Result::Attribute.pm>
+
+=item L<Schema::Result::Feature::cds.pm>
+
+=item L<Schema::Result::Feature::exon.pm>
+
+=item L<Schema::Result::Feature::five_prime_utr.pm>
+
+=item L<Schema::Result::Feature::gene.pm>
+
+=item L<Schema::Result::Feature::intron.pm>
+
+=item L<Schema::Result::Feature::mrna.pm>
+
+=item L<Schema::Result::Feature::protein.pm>
+
+=item L<Schema::Result::Feature::sequence_alteration.pm>
+
+=item L<Schema::Result::Feature::sequence_feature.pm>
+
+=item L<Schema::Result::Feature::template.pm>
+
+=item L<Schema::Result::Feature::three_prime_utr.pm>
+
+=item L<Schema::Result::Feature::transcript.pm>
+
+=item L<Schema::Result::Feature.pm>
+
+=item L<Schema::Result::Relationship.pm>
+
+=item L<Schema::ResultSet::Feature.pm>
+
+=item L<Schema.pm>
+
+=item L<SchemaAnnotation.pm>
+
+=item L<Storage::mysql.pm>
+
+=item L<Storage::RAM.pm>
+
+=item L<Storage::SQLite.pm>
+
+=item L<Storage.pm>
+
+=back
 
 
 =head1 USES
+
+L<Bio::DB::Fasta>
+L<Scalar::Util>
 
 =over
 
