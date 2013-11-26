@@ -647,6 +647,25 @@ sub locus {
 
 #-----------------------------------------------------------------------------
 
+=head2 count_children
+
+ Title   : count_children
+ Usage   : @values = $self->count_children();
+ Function: Get the number of 1st degree children
+ Returns : An array or ref
+ Args : A list of fields to retrieve (seqid source type start end
+        score strand phase).
+
+=cut
+
+sub count_children {
+
+  my $self = shift;
+
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 get_values
 
  Title   : get_values

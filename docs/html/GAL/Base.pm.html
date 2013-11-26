@@ -111,7 +111,7 @@
 
 <h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>This document describes <a href="Base.pm.html">GAL::Base</a> version 0.2.0</p>
+<p>This document describes <a href="Base.pm.html">GAL::Base</a> version 0.2.1</p>
 
 <h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
@@ -119,13 +119,13 @@
 
 </pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>GAL::Base serves as a base class for all of the other classes in the
+<p><a href="Base.pm.html">GAL::Base</a> serves as a base class for all of the other classes in
 GAL.  It is not intended to be instantiated directly, but rather to be
-used with the 'use base' pragma.  GAL::Base provides object
-instantiation, argument preparation and attribute setting functions
-for other classes during object construction.  In addition it provides
-a wide range of utility functions that are expected to be widly
-applicable throughout the library.</p>
+used with the 'use base' pragma by the other modules.  <a href="Base.pm.html">GAL::Base</a>
+provides object instantiation, argument preparation and attribute
+setting functions for other classes during object construction.  In
+addition it provides a wide range of utility functions that are
+expected to be applicable throughout the library.</p>
 
 <h1 id="INHERITS_FROM">INHERITS FROM <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
@@ -139,8 +139,11 @@ applicable throughout the library.</p>
 	<dt><a href="http://search.cpan.org/perldoc?Index.pm">Index.pm</a></dt>
 	<dt><a href="http://search.cpan.org/perldoc?Interval.pm">Interval.pm</a></dt>
 	<dt><a href="http://search.cpan.org/perldoc?List.pm">List.pm</a></dt>
+<dd><dl>
 	<dt><a href="http://search.cpan.org/perldoc?List/Categorical.pm">List::Categorical.pm</a></dt>
 	<dt><a href="http://search.cpan.org/perldoc?List/Numeric.pm">List::Numeric.pm</a></dt>
+</dl>
+</dd>
 	<dt><a href="http://search.cpan.org/perldoc?Manual.pm">Manual.pm</a></dt>
 	<dt><a href="http://search.cpan.org/perldoc?Parser.pm">Parser.pm</a></dt>
 <dd><dl>
@@ -165,11 +168,16 @@ applicable throughout the library.</p>
 	<dt><a href="http://search.cpan.org/perldoc?Parser/VCFv4_0.pm">Parser::VCFv4_0.pm</a></dt>
 </dl>
 </dd>
+	<dt><a href="http://search.cpan.org/perldoc?Reader.pm">Reader.pm</a></dt>
+<dd><dl>
 	<dt><a href="http://search.cpan.org/perldoc?Reader/DelimitedLine.pm">Reader::DelimitedLine.pm</a></dt>
 	<dt><a href="http://search.cpan.org/perldoc?Reader/RecordParser.pm">Reader::RecordParser.pm</a></dt>
 	<dt><a href="http://search.cpan.org/perldoc?Reader/Template.pm">Reader::Template.pm</a></dt>
-	<dt><a href="http://search.cpan.org/perldoc?Reader.pm">Reader.pm</a></dt>
+</dl>
+</dd>
 	<dt><a href="http://search.cpan.org/perldoc?Run.pm">Run.pm</a></dt>
+	<dt><a href="http://search.cpan.org/perldoc?Schema.pm">Schema.pm</a></dt>
+<dd><dl>
 	<dt><a href="http://search.cpan.org/perldoc?Schema/Result/Attribute.pm">Schema::Result::Attribute.pm</a></dt>
 	<dt><a href="http://search.cpan.org/perldoc?Schema/Result/Feature/cds.pm">Schema::Result::Feature::cds.pm</a></dt>
 	<dt><a href="http://search.cpan.org/perldoc?Schema/Result/Feature/exon.pm">Schema::Result::Feature::exon.pm</a></dt>
@@ -186,20 +194,18 @@ applicable throughout the library.</p>
 	<dt><a href="http://search.cpan.org/perldoc?Schema/Result/Feature.pm">Schema::Result::Feature.pm</a></dt>
 	<dt><a href="http://search.cpan.org/perldoc?Schema/Result/Relationship.pm">Schema::Result::Relationship.pm</a></dt>
 	<dt><a href="http://search.cpan.org/perldoc?Schema/ResultSet/Feature.pm">Schema::ResultSet::Feature.pm</a></dt>
-	<dt><a href="http://search.cpan.org/perldoc?Schema.pm">Schema.pm</a></dt>
+</dl>
+</dd>
 	<dt><a href="http://search.cpan.org/perldoc?SchemaAnnotation.pm">SchemaAnnotation.pm</a></dt>
+	<dt><a href="http://search.cpan.org/perldoc?Storage.pm">Storage.pm</a></dt>
+<dd><dl>
 	<dt><a href="http://search.cpan.org/perldoc?Storage/mysql.pm">Storage::mysql.pm</a></dt>
 	<dt><a href="http://search.cpan.org/perldoc?Storage/RAM.pm">Storage::RAM.pm</a></dt>
 	<dt><a href="http://search.cpan.org/perldoc?Storage/SQLite.pm">Storage::SQLite.pm</a></dt>
-	<dt><a href="http://search.cpan.org/perldoc?Storage.pm">Storage.pm</a></dt>
 </dl>
-
-
-
+</dd>
+</dl>
 <h1 id="USES">USES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
-
-<p><a href="http://search.cpan.org/perldoc?Bio/DB/Fasta">Bio::DB::Fasta</a>
-<a href="http://search.cpan.org/perldoc?Scalar/Util">Scalar::Util</a></p>
 
 <dl>
 	<dt>* <a href="http://search.cpan.org/perldoc?Carp">Carp</a></dt>
@@ -228,13 +234,15 @@ allows this kind of an idiom for any class that has subclasses:</p>
 <a href="Parser.pm.html">GAL::Parser</a> object.</p>
 
 <p><a href="Base.pm.html">GAL::Base</a> provides the following attributes to all other classes in
-the GAL.</p>
+the GAL.  Each attribute is described full below in the
+<a href="#quot_Attributes_quot">&quot;Attributes&quot;</a> section.</p>
 
 <dl>
 	<dt>* <code>fasta =&gt; '/path/to/fasta/files/'</code></dt>
 		<dd><p>This optional parameter defines a path to fasta files that are (or
-will be) indexed and available to all objects in the library.</p></dd>
-	<dt>* <code>class =&gt; 'subclass'</code></dt>
+will be) indexed and available to all objects in the library.  The
+object created is an instance of <a href="http://search.cpan.org/perldoc?Bio/DB/Fasta">Bio::DB::Fasta</a>.</p></dd>
+	<dt>* <code>class =&gt; 'subclass_name'</code></dt>
 		<dd><p>This optional parameter will cause the current object to be reblessed
 as the given subclass of the calling object.</p></dd>
 <h2 id="new">new</h2>
@@ -267,7 +275,7 @@ sub new {
      Usage   : GAL::SomeClass-&gt;new();
      Function: Creates on object of the calling class
      Returns : An object of the calling class
-     Args    : See the attributes described above
+     Args    : See the attributes described above.
 
 </pre></dd><h1 id="ATTRIBUTES">ATTRIBUTES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
@@ -296,9 +304,9 @@ list (or referenece) of key value pairs.</p></dd>
 =head2 class
 
   Title   : class
-  Usage   : $class = $self->class($subclass);
+  Usage   : $class = $self->class($subclass_name);
   Function: Reblesses an object into the appropriate subclass.
-  Returns : A object blessed into $subclass
+  Returns : A object blessed into the given subclass
   Args    : A class name of a subclass of the calling object.
 
 =cut
@@ -307,6 +315,7 @@ list (or referenece) of key value pairs.</p></dd>
    my ($self, $subclass) = @_;
 
    my $class = ref($self);
+   $subclass =~ s/\.pm$//;
    $subclass =~ s/$class//;
    $subclass = $class . "::$subclass";
    $self->load_module($subclass);
@@ -324,17 +333,19 @@ list (or referenece) of key value pairs.</p></dd>
 
  Title   : verbosity
  Usage   : $base->verbosity($level);
- Function: Set the level of verbosity reported in STDERR reported by
-	   the code.
+ Function: Set the level of verbosity written to STDERR by the code.
  Returns : None
- Args    : debug|1:  Print all FATAL, WARN INFO and DEBUG messages.  Produces
-		     a lot of output.
-	   info|2:   Print all FATAL, WARN and INFO messages. This is the
-		     default.
-	   unique|3: Print only the first occurence of each error/info code.
-	   warn|4:   Don't print INFO messages.
-	   fatal|5:  Don't print INFO or WARN messages. Still dies with
-		     message on FATAL errors.
+ Args    : Arguments can be either the words debug, info, unique, warn,
+           fatal or their numerical equivalents as given below.
+
+           debug  | 1: Print all FATAL, WARN, INFO, and DEBUG messages.  Produces
+		       a lot of output.
+	   info   | 2: Print all FATAL, WARN, and INFO messages. This is the
+		       default.
+	   unique | 3: Print only the first occurence of each error/info code.
+	   warn   | 4: Don't print INFO messages.
+	   fatal  | 5: Don't print INFO or WARN messages. Still dies with
+		       message on FATAL errors.
 
 =cut
 
@@ -365,14 +376,14 @@ sub verbosity {
   Usage   : $fasta = $self-&gt;fasta($fasta_dir);
   Function: Provides a Bio::DB::Fasta object
   Returns : A Bio::DB::Fasta object
-  Args    : A directory of fasta files.
+  Args    : A fasta file or directory of fasta files.
 
 </pre></dd><h2 id="class">class</h2>
 
 <dd><pre>  Title   : class
-  Usage   : $class = $self-&gt;class($subclass);
+  Usage   : $class = $self-&gt;class($subclass_name);
   Function: Reblesses an object into the appropriate subclass.
-  Returns : A object blessed into $subclass
+  Returns : A object blessed into the given subclass
   Args    : A class name of a subclass of the calling object.
 
 </pre></dd><h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
@@ -381,17 +392,19 @@ sub verbosity {
 
 <dd><pre> Title   : verbosity
  Usage   : $base-&gt;verbosity($level);
- Function: Set the level of verbosity reported in STDERR reported by
-	   the code.
+ Function: Set the level of verbosity written to STDERR by the code.
  Returns : None
- Args    : debug|1:  Print all FATAL, WARN INFO and DEBUG messages.  Produces
-		     a lot of output.
-	   info|2:   Print all FATAL, WARN and INFO messages. This is the
-		     default.
-	   unique|3: Print only the first occurence of each error/info code.
-	   warn|4:   Don't print INFO messages.
-	   fatal|5:  Don't print INFO or WARN messages. Still dies with
-		     message on FATAL errors.
+ Args    : Arguments can be either the words debug, info, unique, warn,
+           fatal or their numerical equivalents as given below.
+
+</pre></dd><dd><pre>           debug  | 1: Print all FATAL, WARN, INFO, and DEBUG messages.  Produces
+		       a lot of output.
+	   info   | 2: Print all FATAL, WARN, and INFO messages. This is the
+		       default.
+	   unique | 3: Print only the first occurence of each error/info code.
+	   warn   | 4: Don't print INFO messages.
+	   fatal  | 5: Don't print INFO or WARN messages. Still dies with
+		       message on FATAL errors.
 
 </pre></dd><h2 id="handle_message">handle_message</h2>
 
@@ -452,11 +465,24 @@ sub handle_message {
 
 <dd><pre> Title   : handle_message
  Usage   : $base-&gt;handle_message($level, $code, $message);
- Function: Handle a message and report to the user appropriately.
+ Function: Handle a message and print to STDERR accordingly.
  Returns : None
- Args    : level:   FATAL, WARN, INFO, DEBUG
-	   code:    $info_code # single_word_code_for_info
+ Args    : level  : FATAL, WARN, INFO, DEBUG
+	   code   : $info_code # single_word_code_for_info
 	   message: $info_msg  # Free text description of info
+
+</pre></dd><dd><pre>          Note that the 'code' above should not contain whitespace,
+          should generally by lowercase unless uppercase is needed for
+          clarity, and should be standardized throughout the library
+          such that a code like 'file_not_found' is used consistently
+          rather than 'file_not_found' in one place and
+          'file_does_not_exist' in another.  All codes should be
+          documented in the module and in Manual.pm
+
+</pre></dd><dd><pre>          The 'message' above can be arbitrary text and should provide
+          details that will help explain this instance of the error,
+          such as &quot;Expected an integer but got the text 'ABCDEFG'
+          instead&quot;.
 
 </pre></dd><h2 id="throw">throw</h2>
 
@@ -470,11 +496,12 @@ sub throw {
 </pre></div>
 
 <dd><pre> Title   : throw
- Usage   : $base-&gt;throw(message =&gt; $err_msg, code =&gt; $err_code);
- Function: Throw an error - print an error message and die.
+ Usage   : $base-&gt;throw($error_code, $error_message);
+ Function: Throw an error - print an error message to STDERR and die.
  Returns : None
- Args    : message =&gt; $err_msg  # Free text description of error
-	   code    =&gt; $err_code # single_word_code_for_error
+ Args    : A text string for the error code and a text string for the
+           error message. See the documentation for the method
+           handle_message in this module for more details.
 
 </pre></dd><h2 id="warn">warn</h2>
 
@@ -488,10 +515,12 @@ sub warn {
 </pre></div>
 
 <dd><pre> Title   : warn
- Usage   : $base-&gt;warn($code, $warning_message);
- Function: Send a warning.
+ Usage   : $base-&gt;warn($warning_code, $warning_message);
+ Function: Send a warning message to STDERR.
  Returns : None
- Args    : message =&gt; $warning_message
+ Args    : A text string for the error code and a text string for the
+           error message. See the documentation for the method
+           handle_message in this module for more details.
 
 </pre></dd><h2 id="info">info</h2>
 
@@ -508,10 +537,12 @@ sub info {
 =head2 debug
 
  Title   : debug
- Usage   : $base->debug(message => $debug_message);
+ Usage   : $base->debug($debug_code, $debug_message);
  Function: Send a DEBUG message.
  Returns : None
- Args    : message => $debug_message
+ Args    : A text string for the debug code and a text string for the
+           debug message. See the documentation for the method
+           handle_message in this module for more details.
 
 =cut
 
@@ -525,9 +556,11 @@ sub debug {
 
  Title   : wrap_text
  Usage   : $text = $self->wrap_text($text, 50);
- Function: Wrap text to the specified column width.
- Returns : Wrapped text
- Args    : A string of text and an optional integer value.
+ Function: Wrap text to the specified column width.  Default width is 50
+           characters.
+ Returns : Returns wrapped text as a string.
+ Args    : A string of text and an optional integer value for the wrapped
+           width.
 
 =cut
 
@@ -541,24 +574,30 @@ sub wrap_text {
 </pre></div>
 
 <dd><pre> Title   : info
- Usage   : $base-&gt;info(message =&gt; $info_message);
+ Usage   : $base-&gt;info($info_code, $info_message);
  Function: Send a INFO message.
  Returns : None
- Args    : message =&gt; $info_message
+ Args    : A text string for the info code and a text string for the
+           info message. See the documentation for the method
+           handle_message in this module for more details.
 
 </pre></dd><h2 id="debug">debug</h2>
 
 <dd><pre> Title   : debug
- Usage   : $base-&gt;debug(message =&gt; $debug_message);
+ Usage   : $base-&gt;debug($debug_code, $debug_message);
  Function: Send a DEBUG message.
  Returns : None
- Args    : message =&gt; $debug_message
+ Args    : A text string for the debug code and a text string for the
+           debug message. See the documentation for the method
+           handle_message in this module for more details.
 
 </pre></dd><dd><pre> Title   : wrap_text
  Usage   : $text = $self-&gt;wrap_text($text, 50);
- Function: Wrap text to the specified column width.
- Returns : Wrapped text
- Args    : A string of text and an optional integer value.
+ Function: Wrap text to the specified column width.  Default width is 50
+           characters.
+ Returns : Returns wrapped text as a string.
+ Args    : A string of text and an optional integer value for the wrapped
+           width.
 
 </pre></dd><h2 id="trim_whitespace">trim_whitespace</h2>
 
@@ -577,8 +616,8 @@ sub trim_whitespace {
 <dd><pre> Title   : trim_whitespace
  Usage   : $trimmed_text = $self-&gt;trim_whitespace($text);
  Function: Trim leading and trailing whitespace from text;
- Returns : Trimmed text.
- Args    : Text
+ Returns : Returns trimmed text as a string.
+ Args    : A text string.
 
 </pre></dd><h2 id="prepare_args">prepare_args</h2>
 
@@ -621,11 +660,12 @@ sub prepare_args {
 
 <dd><pre> Title   : prepare_args
  Usage   : $args = $self-&gt;prepare_args(@_);
- Function: Take a list of key value pairs that may be an array, hash or ref
-	   to either and return them as a hash or hash reference depending on
-	   calling context.
- Returns : Hash or hash reference
- Args    : An array, hash or reference to either
+ Function: Take a list of key value pairs that may be structured as an
+           array, a hash or and array or hash reference and return
+	   them as a hash or hash reference depending on calling
+	   context.
+ Returns : Hash or hash reference.
+ Args    : An array, hash or reference to either.
 
 </pre></dd><h2 id="set_attributes">set_attributes</h2>
 
@@ -653,7 +693,7 @@ sub set_attributes {
 			my $caller = ref($self);
 			my $warning_message =
 			  ("$package is about to reset the value of $attribute " .
-			   "on behalf of a $caller object.  This is probably "   .
+			   "on behalf of a $caller object.  This may be "   .
 			   "a bad idea.");
 			$self->warn('resetting_attribute_values', $warning_message);
 		}
@@ -665,8 +705,9 @@ sub set_attributes {
 
 <dd><pre> Title   : set_attributes
  Usage   : $base-&gt;set_attributes($args, @valid_attributes);
- Function: Take a hash reference of arguments and a list of valid attribute
-	   names and call the methods to set those attribute values.
+ Function: Take a hash reference of arguments and a list (or reference) of
+           valid attribute names and call the methods to set those
+	   attribute values.
  Returns : None
  Args    : A hash reference of arguments and an array or array reference of
 	   valid attributes names.
@@ -716,8 +757,9 @@ sub expand_iupac_nt_codes {
 <dd><pre> Title   : expand_iupac_nt_codes
  Usage   : @nucleotides = $self-&gt;expand_iupac_nt_codes('W');
  Function: Expands an IUPAC ambiguity codes to an array of nucleotides
- Returns : An array or array ref of nucleotides
- Args    : An IUPAC Nucleotide ambiguity code or an array of such
+ Returns : An array or array ref of nucleotides (ATGC-);
+ Args    : An IUPAC Nucleotide ambiguity code (ACGTUMRWSYKVHDBNX-) or an
+           array (or ref) of such.
 
 </pre></dd><h2 id="load_module">load_module</h2>
 
@@ -731,8 +773,8 @@ sub load_module {
 	eval "require $module_name";
 	if ($@) {
 	  my $self_class = ref $self;
-	  my $err_code = "failed_to_load_module : $module_name";
-	  my $err_msg  = "Failed to load $module_name in $self_class:\n$@";
+	  my $err_code = 'failed_to_load_module';
+	  my $err_msg  = "$module_name in $self_class\n$@";
 	  $self->throw($err_code, $err_msg);
 	}
 	return 1;
@@ -743,7 +785,7 @@ sub load_module {
  Usage   : $base-&gt;load_module(Some::Module);
  Function: Do runtime loading (require) of a module/class.
  Returns : 1 on success - throws exception on failure
- Args    : A valid module name
+ Args    : A valid module name.
 
 </pre></dd><h2 id="revcomp">revcomp</h2>
 
@@ -765,7 +807,8 @@ sub revcomp {
  Usage   : $base-&gt;revcomp($sequence);
  Function: Get the reverse compliment of a nucleotide sequence
  Returns : The reverse complimented sequence
- Args    : A nucleotide sequence
+ Args    : A nucleotide sequence (ACGTRYMKSWHBVDNX).  Input sequence is case
+           insensitive and case is maintained.
 
 </pre></dd><h2 id="get_feature_bins">get_feature_bins</h2>
 
@@ -811,9 +854,23 @@ sub get_feature_bins {
 
 <dd><pre> Title   : get_feature_bins
  Usage   : $base-&gt;get_feature_bins($feature);
- Function: Get the genome bins for a range
- Returns : An array of bins that the given
-	   range falls in.
+ Function: Get the genome bins for a given range.  GAL uses a feature binning
+           scheme to speed range queries to a database.  This binning
+           scheme is similar to (but not identical to) the scheme
+           described in the UCSC Genome Browser publication
+           (http://www.ncbi.nlm.nih.gov/pubmed/12045153) and on the
+           UCSC Genome Browser wiki
+           (http://genomewiki.ucsc.edu/index.php/Bin_indexing_system).
+           Breifly, for a given genomic range this method will
+           calculate the bins on the genome of sizes 512 MB, 64 MB, 8
+           MB, 1 MB, and 128 KB that completely contains the feature.
+           These bins are returned as a list sorted smallest bin to
+           largest so that the first value returned is the smallest
+           bin that completely contains the feature.
+ Returns : An array of bins that the given range is compeltely contained
+           within sorted smallest bin to largest so that the first
+           value return is smallest possible bin in which the feature
+           is fully contained.
  Args    : A hash reference with key values seqid, start, end (i.e. a
 	   feature hash) or an object with methods seqid, start, end.
 
@@ -845,8 +902,9 @@ sub translate {
  Usage   : $base-&gt;translate($sequence, $offset, $length);
  Function: Translate a nucleotide sequence to an amino acid sequence
  Returns : An amino acid sequence
- Args    : The sequence as a scalar, and integer offset and an integer
-	   length
+ Args    : The sequence as a scalar, an integer offset from which to begin
+           translation (default 0), and an integer length to translate
+           (default is full length of input sequence).
 
 </pre></dd><h2 id="genetic_code">genetic_code</h2>
 
@@ -856,6 +914,8 @@ sub translate {
 
 sub genetic_code {
   my $self = shift;
+
+  #TODO: Need to add ambiguity codes to codons.
 
   return {AAA => 'K',
 	  AAC => 'N',
@@ -927,7 +987,8 @@ sub genetic_code {
 
 <dd><pre> Title   : genetic_code
  Usage   : $base-&gt;genetic_code;
- Function: Returns a hash reference of the genetic code
+ Function: Returns a hash reference of the genetic code.  Currently only
+           supports the standard genetic code without ambiguity codes.
  Returns : A hash reference of the genetic code
  Args    : None
 
@@ -969,244 +1030,275 @@ sub amino_acid_data {
     $aa = $aa321{$aa}
   }
 
-  return $aa if $datum eq 'one_letter';
-
-  $datum =~ s/_letter//;
-
-  my %aa_data = (A => {name        => 'Alanine',
-		       three       => 'Ala',
-		       polarity    => 'nonpolar',
-		       charge      => 'neutral',
-		       hydropathy  => 1.8,
-		       weight      => 71.09,
-		       size        => 'small',
-		       h_bond      => 0,
-		       aromaticity => 'aliphatic',
+  my %aa_data = (A => {name         => 'Alanine',
+		       one_letter   => 'A',
+		       three_letter => 'Ala',
+		       polarity     => 'nonpolar',
+		       charge       => 'neutral',
+		       hydropathy   => 1.8,
+		       weight       => 71.09,
+		       size         => 'small',
+		       h_bond       => 0,
+		       aromaticity  => 'aliphatic',
 		      },
-		 R => {name        => 'Arginine',
-		       three       => 'Arg',
-		       polarity    => 'polar',
-		       charge      => 'positive',
-		       hydropathy  => -4.5,
-		       weight      => 156.19,
-		       size        => 'large',
-		       h_bond      => 1,
-		       aromaticity => undef,
+		 R => {name         => 'Arginine',
+		       one_letter   => 'R',
+		       three_letter => 'Arg',
+		       polarity     => 'polar',
+		       charge       => 'positive',
+		       hydropathy   => -4.5,
+		       weight       => 156.19,
+		       size         => 'large',
+		       h_bond       => 1,
+		       aromaticity  => undef,
 		      },
-		 N => {name        => 'Asparagine',
-		       three       => 'Asn',
-		       polarity    => 'polar',
-		       charge      => 'neutral',
-		       hydropathy  => -3.5,
-		       weight      => 114.11,
-		       size        => 'small',
-		       h_bond      => 1,
-		       aromaticity => undef,
+		 N => {name         => 'Asparagine',
+		       one_letter   => 'N',
+		       three_letter => 'Asn',
+		       polarity     => 'polar',
+		       charge       => 'neutral',
+		       hydropathy   => -3.5,
+		       weight       => 114.11,
+		       size         => 'small',
+		       h_bond       => 1,
+		       aromaticity  => undef,
 		      },
-		 D => {name        => 'Aspartic acid',
-		       three       => 'Asp',
-		       polarity    => 'polar',
-		       charge      => 'negative',
-		       hydropathy  => -3.5,
-		       weight      => 115.09,
-		       size        => 'small',
-		       h_bond      => 1,
-		       aromaticity => undef,
+		 D => {name         => 'Aspartic acid',
+		       one_letter   => 'D',
+		       three_letter => 'Asp',
+		       polarity     => 'polar',
+		       charge       => 'negative',
+		       hydropathy   => -3.5,
+		       weight       => 115.09,
+		       size         => 'small',
+		       h_bond       => 1,
+		       aromaticity  => undef,
 		      },
-		 C => {name        => 'Cysteine',
-		       three       => 'Cys',
-		       polarity    => 'polar',
-		       charge      => 'neutral',
-		       hydropathy  => 2.5,
-		       weight      => 103.15,
-		       size        => 'small',
-		       h_bond      => 1,
-		       aromaticity => undef,
+		 C => {name         => 'Cysteine',
+		       one_letter   => 'C',
+		       three_letter => 'Cys',
+		       polarity     => 'polar',
+		       charge       => 'neutral',
+		       hydropathy   => 2.5,
+		       weight       => 103.15,
+		       size         => 'small',
+		       h_bond       => 1,
+		       aromaticity  => undef,
 		      },
-		 E => {name        => 'Glutamic acid',
-		       three       => 'Glu',
-		       polarity    => 'polar',
-		       charge      => 'negative',
-		       hydropath   => -3.5,
-		       weight      => 129.12,
-		       size        => 'large',
-		       h_bond      => 1,
-		       aromaticity => undef,
+		 E => {name         => 'Glutamic acid',
+		       one_letter   => 'E',
+		       three_letter => 'Glu',
+		       polarity     => 'polar',
+		       charge       => 'negative',
+		       hydropath    => -3.5,
+		       weight       => 129.12,
+		       size         => 'large',
+		       h_bond       => 1,
+		       aromaticity  => undef,
 		     },
-		 Q => {name        => 'Glutamine',
-		       three       => 'Gln',
-		       polarity    => 'polar',
-		       charge      => 'neutral',
-		       hydropathy  => -3.5,
-		       weight      => 128.14,
-		       size        => 'large',
-		       h_bond      => 1,
-		       aromaticity => undef,
+		 Q => {name         => 'Glutamine',
+		       one_letter   => 'Q',
+		       three_letter => 'Gln',
+		       polarity     => 'polar',
+		       charge       => 'neutral',
+		       hydropathy   => -3.5,
+		       weight       => 128.14,
+		       size         => 'large',
+		       h_bond       => 1,
+		       aromaticity  => undef,
 		      },
-		 G => {name        => 'Glycine',
-		       three       => 'Gly',
-		       polarity    => 'nonpolar',
-		       charge      => 'neutral',
-		       hydropathy  => -0.4,
-		       weight      => 57.05,
-		       size        => 'small',
-		       h_bond      => 0,
-		       aromaticity => 'aliphatic',
+		 G => {name         => 'Glycine',
+		       one_letter   => 'G',
+		       three_letter => 'Gly',
+		       polarity     => 'nonpolar',
+		       charge       => 'neutral',
+		       hydropathy   => -0.4,
+		       weight       => 57.05,
+		       size         => 'small',
+		       h_bond       => 0,
+		       aromaticity  => 'aliphatic',
 		      },
-		 H => {name        => 'Histidine',
-		       three       => 'His',
-		       polarity    => 'polar',
-		       charge      => 'positive',
-		       hydropathy  => -3.2,
-		       weight      => 137.14,
-		       size        => 'large',
-		       h_bond      => 1,
-		       aromaticity => 'aromatic',
+		 H => {name         => 'Histidine',
+		       one_letter   => 'H',
+		       three_letter => 'His',
+		       polarity     => 'polar',
+		       charge       => 'positive',
+		       hydropathy   => -3.2,
+		       weight       => 137.14,
+		       size         => 'large',
+		       h_bond       => 1,
+		       aromaticity  => 'aromatic',
 		      },
-		 I => {name        => 'Isoleucine',
-		       three       => 'Ile',
-		       polarity    => 'nonpolar',
-		       charge      => 'neutral',
-		       hydropathy  => 4.5,
-		       weight      => 113.16,
-		       size        => 'large',
-		       h_bond      => 0,
-		       aromaticity => 'aliphatic',
+		 I => {name         => 'Isoleucine',
+		       one_letter   => 'I',
+		       three_letter => 'Ile',
+		       polarity     => 'nonpolar',
+		       charge       => 'neutral',
+		       hydropathy   => 4.5,
+		       weight       => 113.16,
+		       size         => 'large',
+		       h_bond       => 0,
+		       aromaticity  => 'aliphatic',
 		      },
-		 L => {name        => 'Leucine',
-		       three       => 'Leu',
-		       polarity    => 'nonpolar',
-		       charge      => 'neutral',
-		       hydropathy  => 3.8,
-		       weight      => 113.16,
-		       size        => 'large',
-		       h_bond      => 0,
-		       aromaticity => 'aliphatic',
+		 L => {name         => 'Leucine',
+		       one_letter   => 'L',
+		       three_letter => 'Leu',
+		       polarity     => 'nonpolar',
+		       charge       => 'neutral',
+		       hydropathy   => 3.8,
+		       weight       => 113.16,
+		       size         => 'large',
+		       h_bond       => 0,
+		       aromaticity  => 'aliphatic',
 		      },
-		 K => {name        => 'Lysine',
-		       three       => 'Lys',
-		       polarity    => 'polar',
-		       charge      => 'positive',
-		       hydropathy  => -3.9,
-		       weight      => 128.17,
-		       size        => 'large',
-		       h_bond      => 1,
-		       aromaticity => undef,
+		 K => {name         => 'Lysine',
+		       one_letter   => 'K',
+		       three_letter => 'Lys',
+		       polarity     => 'polar',
+		       charge       => 'positive',
+		       hydropathy   => -3.9,
+		       weight       => 128.17,
+		       size         => 'large',
+		       h_bond       => 1,
+		       aromaticity  => undef,
 		      },
-		 M => {name        => 'Methionine',
-		       three       => 'Met',
-		       polarity    => 'nonpolar',
-		       charge      => 'neutral',
-		       hydropathy  => 1.9,
-		       weight      => 131.19,
-		       size        => 'large',
-		       h_bond      => 0,
-		       aromaticity => undef,
+		 M => {name         => 'Methionine',
+		       one_letter   => 'M',
+		       three_letter => 'Met',
+		       polarity     => 'nonpolar',
+		       charge       => 'neutral',
+		       hydropathy   => 1.9,
+		       weight       => 131.19,
+		       size         => 'large',
+		       h_bond       => 0,
+		       aromaticity  => undef,
 		      },
-		 F => {name        => 'Phenylalanine',
-		       three       => 'Phe',
-		       polarity    => 'nonpolar',
-		       charge      => 'neutral',
-		       hydropathy  => 2.8,
-		       weight      => 147.18,
-		       size        => 'large',
-		       h_bond      => 0,
-		       aromaticity => 'aromatic',
+		 F => {name         => 'Phenylalanine',
+		       one_letter   => 'F',
+		       three_letter => 'Phe',
+		       polarity     => 'nonpolar',
+		       charge       => 'neutral',
+		       hydropathy   => 2.8,
+		       weight       => 147.18,
+		       size         => 'large',
+		       h_bond       => 0,
+		       aromaticity  => 'aromatic',
 		      },
-		 P => {name        => 'Proline',
-		       three       => 'Pro',
-		       polarity    => 'nonpolar',
-		       charge      => 'neutral',
-		       hydropathy  => -1.6,
-		       weight      => 97.12,
-		       size        => 'small',
-		       h_bond      => 0,
-		       aromaticity => 'aliphatic',
+		 P => {name         => 'Proline',
+		       one_letter   => 'P',
+		       three_letter => 'Pro',
+		       polarity     => 'nonpolar',
+		       charge       => 'neutral',
+		       hydropathy   => -1.6,
+		       weight       => 97.12,
+		       size         => 'small',
+		       h_bond       => 0,
+		       aromaticity  => 'aliphatic',
 		      },
-		 S => {name        => 'Serine',
-		       three       => 'Ser',
-		       polarity    => 'polar',
-		       charge      => 'neutral',
-		       hydropathy  => -0.8,
-		       weight      => 87.08,
-		       size        => 'small',
-		       h_bond      => 1,
-		       aromaticity => undef,
+		 S => {name         => 'Serine',
+		       one_letter   => 'S',
+		       three_letter => 'Ser',
+		       polarity     => 'polar',
+		       charge       => 'neutral',
+		       hydropathy   => -0.8,
+		       weight       => 87.08,
+		       size         => 'small',
+		       h_bond       => 1,
+		       aromaticity  => undef,
 		      },
-		 T => {name        => 'Threonine',
-		       three       => 'Thr',
-		       polarity    => 'polar',
-		       charge      => 'neutral',
-		       hydropathy  => -0.7,
-		       size        => 'small',
-		       h_bond      => 1,
-		       aromaticity => undef,
+		 T => {name         => 'Threonine',
+		       one_letter   => 'T',
+		       three_letter => 'Thr',
+		       polarity     => 'polar',
+		       charge       => 'neutral',
+		       hydropathy   => -0.7,
+		       size         => 'small',
+		       h_bond       => 1,
+		       aromaticity  => undef,
 		      },
-		 W => {name        => 'Tryptophan',
-		       three       => 'Trp',
-		       polarity    => 'nonpolar',
-		       charge      => 'neutral',
-		       hydropathy  => -0.9,
-		       weight      => 186.21,
-		       size        => 'large',
-		       h_bond      => 1,
-		       aromaticity => 'aromatic',
+		 W => {name         => 'Tryptophan',
+		       one_letter   => 'W',
+		       three_letter => 'Trp',
+		       polarity     => 'nonpolar',
+		       charge       => 'neutral',
+		       hydropathy   => -0.9,
+		       weight       => 186.21,
+		       size         => 'large',
+		       h_bond       => 1,
+		       aromaticity  => 'aromatic',
 		      },
-		 Y => {name        => 'Tyrosine',
-		       three       => 'Tyr',
-		       polarity    => 'polar',
-		       charge      => 'neutral',
-		       hydropathy  => -1.3,
-		       weight      => 163.18,
-		       size        => 'large',
-		       h_bond      => 1,
-		       aromaticity => 'aromatic',
+		 Y => {name         => 'Tyrosine',
+		       one_letter   => 'Y',
+		       three_letter => 'Tyr',
+		       polarity     => 'polar',
+		       charge       => 'neutral',
+		       hydropathy   => -1.3,
+		       weight       => 163.18,
+		       size         => 'large',
+		       h_bond       => 1,
+		       aromaticity  => 'aromatic',
 		      },
-		 V => {name        => 'Valine',
-		       three       => 'Val',
-		       polarity    => 'nonpolar',
-		       charge      => 'neutral',
-		       hydropathy  => 4.2,
-		       weight      => 99.14,
-		       size        => 'small',
-		       h_bond      => 0,
-		       aromaticity => 'aliphatic',
+		 V => {name         => 'Valine',
+		       one_letter   => 'V',
+		       three_letter => 'Val',
+		       polarity     => 'nonpolar',
+		       charge       => 'neutral',
+		       hydropathy   => 4.2,
+		       weight       => 99.14,
+		       size         => 'small',
+		       h_bond       => 0,
+		       aromaticity  => 'aliphatic',
 		      },
-		 U => {name        => 'Selenocysteine',
-		       three       => 'Sec',
-		       polarity    => undef,
-		       charge      => undef,
-		       hydropathy  => undef,
-		       weight      => undef,
-		       size        => undef,
-		       h_bond      => undef,
-		       aromaticity => undef,
+		 U => {name         => 'Selenocysteine',
+		       one_letter   => 'U',
+		       three_letter => 'Sec',
+		       polarity     => undef,
+		       charge       => undef,
+		       hydropathy   => undef,
+		       weight       => undef,
+		       size         => undef,
+		       h_bond       => undef,
+		       aromaticity  => undef,
 		      },
-		 O => {name        => 'Pyrrolysine',
-		       three       => 'Pyl',
-		       polarity    => undef,
-		       charge      => undef,
-		       hydropathy  => undef,
-		       weight      => undef,
-		       size        => undef,
-		       h_bond      => undef,
-		       aromaticity => undef,
+		 O => {name         => 'Pyrrolysine',
+		       one_letter   => 'O',
+		       three_letter => 'Pyl',
+		       polarity     => undef,
+		       charge       => undef,
+		       hydropathy   => undef,
+		       weight       => undef,
+		       size         => undef,
+		       h_bond       => undef,
+		       aromaticity  => undef,
 		      }
 		);
 
-  my $value = $aa_data{$aa}{$datum};
-  return $value;
+
+  if (defined $datum) {
+    if (exists $aa_data{$aa}{$datum}) {
+      return $aa_data{$aa}{$datum};
+    }
+    else {
+      $self->throw('invalid_aa_datum_code',
+		   "$datum passed to GAL::Base::amino_acid_data");
+    }
+  }
+  else {
+      return $aa_data{$aa};
+  }
 }
 </pre></div>
 
 <dd><pre> Title   : amino_acid_data
  Usage   : $base-&gt;amino_acid_data($aa, $value);
- Function: Returns data about an amino acid
- Returns : A string representing data about an amino acid
+ Function: Returns data about an amino acid - either a specific value or a
+           hash reference of all data for that amino acid.
+ Returns : A string representing a data point about an given amino acid or a
+           hash reference with all data points about the given amino acid.
  Args    : 1) An amino acid in either:
 	      a) single-letter code
 	      b) three-letter
-	   2) A code for the value to return.  Any of:
+	   2) Optionally a code for the value to return.  Any of:
 	      a) name : The full name of the amino acid.
 	      b) one_letter : The one-letter code for the amino acid.
 	      c) three_letter : The three-letter code for the amino acid.
@@ -1257,9 +1349,10 @@ sub random_string {
 </pre></div>
 
 <dd><pre> Title   : random_string
- Usage   : $base-&gt;random_string;
+ Usage   : $base-&gt;random_string(8);
  Function: Returns a random alphanumeric string
- Returns : A random alphanumeric string
+ Returns : A random alphanumeric string of a given length.  Default length is
+           8 charachters.
  Args    : The length of the string to be returned [8]
 
 </pre></dd><h2 id="float_lt">float_lt</h2>
@@ -1283,8 +1376,9 @@ sub float_lt {
 <dd><pre> Title   : float_lt
  Usage   : $base-&gt;float_lt(0.0000123, 0.0000124, 7);
  Function: Return true if the first number given is less than (&lt;) the
-	   second number at a given level of accuracy.
- Returns : 1 if the first number is less than the second, otherwise 0
+	   second number at a given level of accuracy.  Default accuracy
+           length is 6 decimal places.
+ Returns : 1 if the first number is less than the second, otherwise 0.
  Args    : The two values to compare and optionally a integer value for
 	   the accuracy.  Accuracy defaults to 6 decimal places.
 
@@ -1309,9 +1403,10 @@ sub float_le {
 <dd><pre> Title   : float_le
  Usage   : $base-&gt;float_le(0.0000123, 0.0000124, 7);
  Function: Return true if the first number given is less than or equal to
-	   (&lt;=) the second number at a given level of accuracy.
+	   (&lt;=) the second number at a given level of accuracy.  Default
+           accuracy length is 6 decimal places.
  Returns : 1 if the first number is less than or equal to the second,
-	   otherwise 0
+	   otherwise 0.
  Args    : The two values to compare and optionally a integer value for
 	   the accuracy.  Accuracy defaults to 6 decimal places.
 
@@ -1336,7 +1431,8 @@ sub float_gt {
 <dd><pre> Title   : float_gt
  Usage   : $base-&gt;float_gt(0.0000123, 0.0000124, 7);
  Function: Return true if the first number given is greater than (&gt;) the
-	   second number at a given level of accuracy.
+	   second number at a given level of accuracy.  Default accuracy
+           length is 6 decimal places.
  Returns : 1 if the first number is greater than the second, otherwise 0
  Args    : The two values to compare and optionally a integer value for
 	   the accuracy.  Accuracy defaults to 6 decimal places.
@@ -1362,9 +1458,10 @@ sub float_ge {
 <dd><pre> Title   : float_ge
  Usage   : $base-&gt;float_ge(0.0000123, 0.0000124, 7);
  Function: Return true if the first number given is greater than or equal
-	   to (&gt;=) the second number at a given level of accuracy.
+	   to (&gt;=) the second number at a given level of accuracy.  Default
+           accuracy length is 6 decimal places.
  Returns : 1 if the first number is greater than or equal to the second,
-	   otherwise 0
+	   otherwise 0.
  Args    : The two values to compare and optionally a integer value for
 	   the accuracy.  Accuracy defaults to 6 decimal places.
 
@@ -1472,8 +1569,8 @@ sub get_transcript_types {
 
 <dd><pre> Title   : get_transcript_types
  Usage   : $transcript_types = $self-&gt;get_transcript_types
-  Function: Get a list of all features that are types of transcripts.
- Returns : An array or ref
+ Function: Get a list of all features that are types of transcripts.
+ Returns : An array or ref of feature names for transcript and it's children.
  Args    : None
 
 </pre></dd><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
@@ -1495,6 +1592,10 @@ error.</p></dd>
 must have either a hash with the keys qw(seqid start end) or an object
 with those same keys as methods.  The error message will try to give
 you some idea of what arguments were passed.</p></dd>
+	<dt><code>invalid_aa_datum_code</code></dt>
+		<dd><p>An invalid amino acid code was passed to
+<code>GAL::Base::amino_acid_data</code>.  Single-letter or three-letter amino
+acid codes are required.</p></dd>
 </dl>
 </dd>
 <h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
@@ -1520,7 +1621,8 @@ barry.moore@genetics.utah.edu</p></dd>
 		<dd><p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p></dd>
 <h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-		<dd><p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p></dd>
+		<dd><p>Copyright (c) 2010-2013, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.
+All rights reserved.</p></dd>
 <dd><pre>    This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself (See LICENSE).
 

@@ -79,6 +79,7 @@
 	<li><a href="#to_gff3">to_gff3</a></li>
 	<li><a href="#get_recursive_children">get_recursive_children</a></li>
 	<li><a href="#locus">locus</a></li>
+	<li><a href="#count_children">count_children</a></li>
 	<li><a href="#get_values">get_values</a></li>
 	<li><a href="#get_transcript_types">get_transcript_types</a></li>
 </ul>
@@ -617,6 +618,26 @@ sub locus {
  Function: Get the locus of a feature formatted as seqid:start-end
  Returns : A string formatted as seqid:start-end.
  Args    : None
+
+</pre><h2 id="count_children">count_children</h2>
+
+<p><a href="#" onclick="toggleCode('method_count_children');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_count_children">
+                                        <pre>
+
+sub count_children {
+
+  my $self = shift;
+
+}
+</pre></div>
+
+<pre> Title   : count_children
+ Usage   : @values = $self-&gt;count_children();
+ Function: Get the number of 1st degree children
+ Returns : An array or ref
+ Args : A list of fields to retrieve (seqid source type start end
+        score strand phase).
 
 </pre><h2 id="get_values">get_values</h2>
 
