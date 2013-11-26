@@ -1,4 +1,4 @@
-package GAL::Annotation;
+ackage GAL::Annotation;
 
 use strict;
 use warnings;
@@ -16,7 +16,7 @@ L<GAL::Annotation> - The Genome Annotation Library
 
 =head1 VERSION
 
-This document describes GAL::Annotation version 0.2.0
+This document describes GAL::Annotation version 0.2.1
 
 =head1 SYNOPSIS
 
@@ -30,7 +30,8 @@ This document describes GAL::Annotation version 0.2.0
     my $feature_count = $features->count;
     my @types = $features->types->uniq;
 
-    # Do a search and get another smart iterator of matching features.
+    # Do a search and get iterator of features matching the
+    # search criteria.
     my $mrnas = $features->search({type => 'mRNA'});
 
     # Iterate over the features.
@@ -61,17 +62,17 @@ developed by the L<Sequence Ontology|http://www.sequenceontology.org>
 that make working with genome annotations simple and intuitive.
 
 GAL was designed to work with sequence features stored in GFF3 files
-(or sequence alterations stored in GVF files) and GAL provids many
+(or sequence alterations stored in GVF files) and GAL provides many
 parsers for converting sequence features in other formats to GFF3 and
 GVF.
 
 Sequence features are represented as objects in GAL based on the
-structure of the L<Sequence
+relationships in the L<Sequence
 Ontology|http://www.sequenceontology.org/browser/obob.cgi>.  This
 allows the objects to inherit the appropriate behavior from their
 parent types based on the is_a relationships within the ontology and
-it also allows the programer to easily traverse the part_of
-relationships within while writing code.
+it also allows the programmer to easily traverse the part_of
+relationships while writing code.
 
 =head1 INHERITS FROM
 
@@ -119,7 +120,7 @@ appropriate attributes:
 =item * C<< parser => parser_subclass [gff3] >>
 
 This optional parameter defines which parser subclass to instantiate.
-This parameter will default to gff3 if not provided.  See GAL::Parser
+This parameter will default to parsing GFF3 if not provided.  See L<GAL::Parser>
 for a complete list of available parser classes.
 
 =item * C<< storage => storage_subclass [SQLite] >>
@@ -149,10 +150,10 @@ the sequence in provided by Bio::DB::Fasta.
 =head2 new
 
      Title   : new
-     Usage   : GAL::Annotation->new();
+     Usage   : GAL::Annotation->new($gff3_file, $fasta_file);
      Function: Creates a GAL::Annotation object;
      Returns : A GAL::Annotation object
-     Args    : A list of key value pairs for the attributes specified above.
+     Args    : A list (ref) of key value pairs for the attributes specified above.
 
 =cut
 
@@ -162,6 +163,10 @@ sub new {
     my ($args, $feature_file) = _check_for_simple_args(@args);
 
     my $self = $class->SUPER::new($args);
+    if (! defined $feature_file) {
+      $self->throw('missing_feature_file',
+		   'GAL::Annotation requires at least a feature file');
+    }
     $self->load_files($feature_file) if $feature_file;
     return $self;
 }
@@ -195,9 +200,11 @@ sub _check_for_simple_args {
     # If one or two files are passed in along
     # we'll assume they are a GFF3 and Fasta file
     my ($args, $feature_file, $fasta_file);
-    # If one or two files and not
+    # If one or two args
     if (@args <= 2) {
-	if (! ref $args[0] && $args[0] !~ /^(parser|storage|fasta)$/) {
+	if (defined $args[0] && # and args are defined and not
+	    ! ref $args[0]   && # and not a reference
+	    $args[0] !~ /^(parser|storage|fasta)$/) { # and not an option
 	    ($feature_file, $fasta_file) = @args;
 	    my $sqlite_file;
 	    ($sqlite_file = $feature_file) =~ s/\.[^\.]+$//;
@@ -206,14 +213,17 @@ sub _check_for_simple_args {
 		      storage => {class    => 'SQLite',
 				  database => $sqlite_file}
 		  });
+	    $args->{file}  = $feature_file;
 	    $args->{fasta} = $fasta_file if $fasta_file;
 	}
 	else {
-	    my %args = @args;
+	    my %args;
+	    %args = @args if defined $args[1];
 	    $args = \%args;
 	}
 	return ($args, $feature_file);
     }
+    return {};
 }
 
 #-----------------------------------------------------------------------------
@@ -230,11 +240,11 @@ constructor as a list (or referenece) of key value pairs.
 =head2 parser
 
  Title   : parser
- Usage   : $parser = $self->parser();
+ Usage   : $parser = $self->parser(class => gff3);
  Function: Create or return a parser object.
  Returns : A GAL::Parser::subclass object.
- Args    : (class => gal_parser_subclass)
-	   See GAL::Parser and its subclasses for more arguments.
+ Args    : (class => gal_parser_subclass_name)
+	   See L<GAL::Parser> and its subclasses for more arguments.
  Notes   : The parser object is created as a singleton, but it
 	   can be changed by passing new arguments to a call to
 	   parser.
@@ -261,7 +271,7 @@ sub parser {
 =head2 storage
 
   Title   : storage
-  Usage   : $storage = $self->storage();
+  Usage   : $storage = $self->storage(class => 'SQLite');
   Function: Create or return a storage object.
   Returns : A GAL::Storage::subclass object.
   Args    : (class => gal_storage_subclass)
@@ -286,10 +296,11 @@ sub storage {
   return $self->{storage};
 }
 
+#-----------------------------------------------------------------------------
 
 =head2 fasta
 
-The fasta attribute is provided by GAL::Base, see that module for more
+The fasta attribute is provided by L<GAL::Base>, see that module for more
 details.
 
 =cut
@@ -304,9 +315,10 @@ details.
 
   Title   : features
   Usage   : $self->features();
-  Function: Return a GAL::Schema::Result::Feature object (a
-	    DBIx::Class::ResultSet for all features).
-  Returns : A GAL::Schema::Result::Feature object
+  Function: Return an iterator L<GAL::Schema::Result::Feature> object.
+            This object is a subclass of L<DBIx::Class::ResultSet> for
+            all features.
+  Returns : A L<GAL::Schema::Result::Feature> object
   Args    : N/A
 
 =cut
@@ -323,9 +335,9 @@ sub features {
 
   Title   : schema
   Usage   : $self->schema();
-  Function: Create and/or return the DBIx::Class::Schema object
-  Returns : DBIx::Class::Schema object.
-  Args    : N/A - Arguments are provided by the GAL::Storage object.
+  Function: Create and/or return the L<DBIx::Class::Schema> object
+  Returns : L<DBIx::Class::Schema> object.
+  Args    : N/A - Arguments are provided by the <GAL::Storage> object.
 
 =cut
 
@@ -360,7 +372,7 @@ sub schema {
 =head2 load_files
 
  Title   : load_files
- Usage   : $a = $self->load_files();
+ Usage   : $a = $self->load_files(qw(file1.gff3 file2.gff3));
  Function: Parse and store all of the features in a file. If a single
 	   file is given as an argument and if there are gff[3] and
 	   sqlite versions of that files base name then time stamps
@@ -399,9 +411,14 @@ sub load_files {
 
 =head1 DIAGNOSTICS
 
-<GAL::Annotation> currently does not throw any warnings or errors, but
-most other modules in the library do, and details of those errors can
-be found in those modules.
+=over
+
+=item C<< missing_feature_file >>
+
+C<GAL::Annotation> must have at least a feature file to run, but you
+did not provide one.
+
+missing_feature_file
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
@@ -421,7 +438,7 @@ Set::IntSpan::Fast
 Statistics::Descriptive
 Text::RecordParser
 
-Some script in GAL/bin and/or GAL/lib/GAL/t use the following modules:
+Some scripts in GAL/bin and/or GAL/lib/GAL/t use the following modules:
 
 Data::Dumper
 FileHandle
@@ -451,7 +468,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010-2013, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself (See LICENSE).

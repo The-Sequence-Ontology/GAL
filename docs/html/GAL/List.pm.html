@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-	<title>GAL::List</title>
+	<title>&lt;code&gt;GAL::List&lt;/code&gt;</title>
 <link rel="stylesheet" type="text/css" href="podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <script type="text/javascript">
 
@@ -67,13 +67,12 @@
 </li>
 	<li><a href="#METHODS">METHODS</a><br />
 <ul>
-	<li><a href="#parse_list">_parse_list</a></li>
-	<li><a href="#hash_list">_hash_list</a></li>
 	<li><a href="#count">count</a></li>
 	<li><a href="#cardinality">cardinality</a></li>
 	<li><a href="#count_uniq">count_uniq</a></li>
 	<li><a href="#category_counts">category_counts</a></li>
 	<li><a href="#shuffle">shuffle</a></li>
+	<li><a href="#in_place_shuffle">in_place_shuffle</a></li>
 	<li><a href="#uniq">uniq</a></li>
 	<li><a href="#random_pick">random_pick</a></li>
 </ul>
@@ -92,49 +91,54 @@
 
 <h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>GAL::List - List aggregation and analysis functions for GAL</p>
+<p><code>GAL::List</code> - List aggregation and analysis functions for GAL</p>
 
 <h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>This document describes GAL::List version 0.2.0</p>
+<p>This document describes <code>GAL::List</code> version 0.2.0</p>
 
 <h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
 <pre>    use GAL::List::Categorical;
-    my $list_catg = GAL::List::Categorical-&gt;new(list =&gt; [qw(red red red blue blue
-							       green yellow orange orange
-							       purple purple purple purple)]);
-    my $count    = $list_catg-&gt;count;
-    $list_ref    = $list_catg-&gt;list;
-    @list_ary    = $list_catg-&gt;list;
-    $catg_counts = $list_catg-&gt;cardinality;
-    $count_uniq  = $list_catg-&gt;count_uniq;
-    $max_str     = $list_catg-&gt;maxstr;
-    $min_str     = $list_catg-&gt;minstr;
-    @shff_list   = $list_catg_shuffle;
-    @uniq_list   = $list_catg_uniq;
-    $item        = $list_catg-&gt;random_pick;
+    my $list = GAL::List::Categorical-&gt;new(list =&gt; [qw(red red red blue blue
+						       green yellow orange orange
+						       purple purple purple purple)]);
+    my $count    = $list-&gt;count;
+    $list_ref    = $list-&gt;list;
+    @list_ary    = $list-&gt;list;
+    $catg_counts = $list-&gt;cardinality;
+    $count_uniq  = $list-&gt;count_uniq;
+    $max_str     = $list-&gt;maxstr;
+    $min_str     = $list-&gt;minstr;
+    @shff_list   = $list-&gt;shuffle;
+    @uniq_list   = $list-&gt;uniq;
+    $item        = $list-&gt;random_pick;
 
     use GAL::List::Numric;
-    $list_numeric = GAL::List::Numeric-&gt;new(list =&gt; [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
-    $max = $list_numeric-&gt;max;
-    $min = $list_numeric-&gt;min;
-    $sum = $list_numeric-&gt;sum;
+    $list = GAL::List::Numeric-&gt;new(list =&gt; [0, 1, 2, 3, 4, 5, 6,
+                                             7, 8, 9]);
+    $max = $list-&gt;max;
+    $min = $list-&gt;min;
+    $sum = $list-&gt;sum;
 
 </pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>&lt;GAL::List&gt; serves as a base class for the modules below it and
+<p><code>GAL::List</code> serves as a base class for the modules below it and
 provides basic list summarization details.  It is not intended to be
 used on it's own.  You should use it's subclasses instead.</p>
 
 <h1 id="CONSTRUCTOR">CONSTRUCTOR <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>To construct a GAL::List subclass simply pass it an appropriate list.</p>
+<p>To construct a <code>GAL::List</code> subclass simply pass it an appropriate list.</p>
 
-<pre>    my $list_catg = GAL::List::Categorical-&gt;new(list =&gt; [qw(red red red blue blue
-							       green yellow orange orange
-							       purple purple purple purple)]);
-    $list_numeric = GAL::List::Numeric-&gt;new(list =&gt; [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+<pre>  my $colors = GAL::List::Categorical-&gt;new(list =&gt; [qw(red red red
+                                                       blue green
+						       yellow orange
+						       orange purple
+						       purple)]);
+
+  my $numbers = GAL::List::Numeric-&gt;new(list =&gt; [0, 1, 2, 3, 4, 5, 6,
+                                                 7, 8, 9]);
 
 
 
@@ -153,10 +157,10 @@ sub new {
 </pre></div>
 
 <pre>     Title   : new
-     Usage   : GAL::List-&gt;new()
-     Function: Creates a GAL::List object;
-     Returns : A GAL::List object
-     Args    :
+     Usage   : GAL::List-&gt;new(list =&gt; $array_ref)
+     Function: Creates a C&lt;GAL::List&gt; object;
+     Returns : A C&lt;GAL::List&gt; object
+     Args    : Any valid attributes as described below.
 
 </pre><h1 id="ATTRIBUTES">ATTRIBUTES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
@@ -185,52 +189,87 @@ sub list {
 </pre></div>
 
 <pre> Title   : list
- Usage   : $a = $self-&gt;list()
- Function: Get/Set the value of list.
- Returns : The value of list.
- Args    : A value to set list to.
+ Usage   : $ref   = $self-&gt;list();
+           @array = $self-&gt;list();
+ Function: Get/Set the contents of the objects list.
+ Returns : The elements of the list as an array or a array reference.
+ Args    : One of the following:
+               - An array reference of scalar values: The values will
+                 be added to the list.
+               - An array reference of hashes: A key name must also be
+                 supplied to L&lt;GAL::List::key|/key&gt; and this key will be used
+                 to retrieve data from each hash reference.
+               - An array reference of objects: A method name must also be
+                 supplied to L&lt;GAL::List::method|/method&gt; and this method will be used
+                 to retrieve data from each hash reference.
+=cut
 
-</pre><h2 id="method">method</h2>
+</pre><p>sub list {
+  my ($self, $list) = @_;
+  if ($list) {
+    my $err_msg = ('GAL::List requires an array reference as the ' .
+		   'first argument, but you gave a  ' . ref $list
+		  );
+    my $err_code = 'list_or_reference_required : ' . ref $list;
+    $self-&gt;warn($err_code, $err_msg) unless ref $list eq 'ARRAY';
+    $self-&gt;{list} = $list;
+  }
+  $self-&gt;{list} ||= [];
+  return wantarray ? @{$self-&gt;{list}} : $self-&gt;{list};
+}</p>
+
+<p>#-----------------------------------------------------------------------------</p>
+
+<h2 id="method">method</h2>
 
 <p><a href="#" onclick="toggleCode('method_method');return false;">[Source]</a></p>
                                         <div class="method-source-code" id="method_method">
                                         <pre>
 
- sub method {
-   my ($self, $method) = @_;
-   $self->{method} = $method if $method;
-   return $self->{method};
- }
+sub method {
+  my ($self, $method) = @_;
+  $self->{method} = $method if $method;
+  return $self->{method};
+}
+</pre></div>
 
-#-----------------------------------------------------------------------------
+<pre> Title   : method
+ Usage   : my $list = GAL::List(iterator =&gt; $features,
+                                method   =&gt; 'length');
+ Function: When an iterator object is passed to the C&lt;GAL::List&gt;
+ 	   constructor or object (see the iterator attribute below),
+ 	   this attribute sets the method used to retrieve the
+ 	   appropriate value from the iterator.
+ Returns : The value of method.
+ Args    : A value to set method to.
 
-=head2 key
+</pre><h2 id="key">key</h2>
 
- Title   : key
- Usage   : $a = $self->key()
- Function: Get/Set the value of key.
+<p><a href="#" onclick="toggleCode('method_key');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_key">
+                                        <pre>
+
+sub key {
+  my ($self, $key) = @_;
+  $self->{key} = $key if $key;
+  return $self->{key};
+}
+</pre></div>
+
+<pre> Title   : key
+ Usage   : my $list = GAL::List(list =&gt; $hash_ref,
+                                key  =&gt; score)
+ Function: When a hash reference is passed to the list attribute, this
+ 	   attribute sets the key used to retrieve the appropriate
+ 	   value from each hash.
  Returns : The value of key.
  Args    : A value to set key to.
 
-=cut
+</pre><h2 id="iterator">iterator</h2>
 
- sub key {
-   my ($self, $key) = @_;
-   $self->{key} = $key if $key;
-   return $self->{key};
- }
-
-#-----------------------------------------------------------------------------
-
-=head2 iterator
-
- Title   : iterator
- Usage   : $a = $self->iterator()
- Function: Get/Set the value of iterator.
- Returns : The value of iterator.
- Args    : A value to set iterator to.
-
-=cut
+<p><a href="#" onclick="toggleCode('method_iterator');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_iterator">
+                                        <pre>
 
  sub iterator {
    my ($self, $iterator) = @_;
@@ -244,85 +283,59 @@ sub list {
 
 =head1 METHODS
 
-=head2 _parse_list
-
- Title   : _parse_list
- Usage   : $self->_parse_list()
- Function: Parse the contents of the list and create an array of data if the
-	   data isn't already an array.
- Returns : N/A
- Args    : N/A
-
 =cut
 
 sub _parse_list {
-    my $self = shift;
+  my $self = shift;
 
-    my $list     = $self->list();
-    my $iterator = $self->iterator();
-    my $method   = $self->method();
-    my $key      = $self->method();
+  my $list     = $self->list();
+  my $iterator = $self->iterator();
+  my $method   = $self->method();
+  my $key      = $self->method();
 
-  VALUE:
-    for my $value (@{$list}) {
-      if (! ref $value) {
+ VALUE:
+  for my $value (@{$list}) {
+    if (! ref $value) {
+      next VALUE;
+    }
+    elsif (my $class = Scalar::Util::blessed $value) {
+      if (! $method) {
+	$self->throw('no_method_given_for_objects', "CLASS=$class; METHOD=$method");
+      }
+      if (! defined $method || ! $value->can($method)) {
+	$self->warn('method_does_not_exist', "CLASS=$class; METHOD=$method");
 	next VALUE;
       }
-      elsif (my $class = List::Util::blessed $value) {
-	if (! defined $method || ! $value->can($method)) {
-	  $self->warn('method_does_not_exist', "CLASS=$class; METHOD=$method");
-	  next VALUE;
-	}
-	$value = $value->$method;
-      }
-      elsif (ref $value eq 'HASH') {
-	if (! defined $key || ! exists $value->{$key}) {
-	  $self->warn('key_does_not_exist', ("KEY=$key; " .
-					     join ',', %{$value}));
-	  next VALUE;
-	}
-	$value = $value->{$key};
-      }
+      $value = $value->$method;
     }
+    elsif (ref $value eq 'HASH') {
+      if (! defined $key || ! exists $value->{$key}) {
+	$self->warn('key_does_not_exist', ("KEY=$key; "));
+	next VALUE;
+      }
+      $value = $value->{$key};
+    }
+  }
 
-    my @xtra_values;
-    if ($iterator && (my $class = List::Util::blessed $iterator)) {
-      if (! $iterator->can('next')) {
-	$self->warn('next_method_does_not_exist', "CLASS=$class; METHOD=next");
+  my @xtra_values;
+  if ($iterator) {
+    if (my $class = Scalar::Util::blessed $iterator) {
+      if (! defined $method || ! $iterator->can($method)) {
+	$self->warn('method_does_not_exist', "CLASS=$class; METHOD=$method");
       }
       else {
       ITR_LOOP:
-	while (my $value = $iterator->next) {
-	if (! defined $method || ! $value->can($method)) {
-	  $self->warn('method_does_not_exist', "CLASS=$class; METHOD=$method");
-	  next ITR_LOOP;
-	}
-	else {
-	  push @xtra_values, $value->$method;
-	}
+	while (my $obj = $iterator->next) {
+	  my $value = $obj->method;
+	  push @xtra_values, $value;
 	}
       }
     }
+  }
 
-    push @{$self->{list}}, @xtra_values if @xtra_values;
+  push @{$self->{list}}, @xtra_values if @xtra_values;
 }
 </pre></div>
-
-<pre> Title   : method
- Usage   : $a = $self-&gt;method()
- Function: Get/Set the value of method.
- Returns : The value of method.
- Args    : A value to set method to.
-
-</pre><h2 id="key">key</h2>
-
-<pre> Title   : key
- Usage   : $a = $self-&gt;key()
- Function: Get/Set the value of key.
- Returns : The value of key.
- Args    : A value to set key to.
-
-</pre><h2 id="iterator">iterator</h2>
 
 <pre> Title   : iterator
  Usage   : $a = $self-&gt;iterator()
@@ -332,41 +345,7 @@ sub _parse_list {
 
 </pre><h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<h2 id="parse_list">_parse_list</h2>
-
-<pre> Title   : _parse_list
- Usage   : $self-&gt;_parse_list()
- Function: Parse the contents of the list and create an array of data if the
-	   data isn't already an array.
- Returns : N/A
- Args    : N/A
-
-</pre><h2 id="hash_list">_hash_list</h2>
-
-<p><a href="#" onclick="toggleCode('method__hash_list');return false;">[Source]</a></p>
-                                        <div class="method-source-code" id="method__hash_list">
-                                        <pre>
-
-sub _hash_list {
-  my $self = shift;
-
-  if (! exists $self->{hash_list}) {
-    map {$self->{hash_list}{$_}++} $self->list;
-  }
-
-  return wantarray ? %{$self->{hash_list}} : $self->{hash_list};
-
-}
-</pre></div>
-
-<pre> Title   : _hash_list
- Usage   : $hash = $self-&gt;_hash_list()
- Function:
-	   data isn't already an array.
- Returns : N/A
- Args    : N/A
-
-</pre><h2 id="count">count</h2>
+<h2 id="count">count</h2>
 
 <p><a href="#" onclick="toggleCode('method_count');return false;">[Source]</a></p>
                                         <div class="method-source-code" id="method_count">
@@ -379,7 +358,7 @@ sub count {
 </pre></div>
 
 <pre> Title   : count
- Usage   : $a = $self-&gt;count
+ Usage   : $list = $self-&gt;count
  Function: Return the number of elements in the list
  Returns : Integer
  Args    : N/A
@@ -398,7 +377,7 @@ sub cardinality {
 </pre></div>
 
 <pre> Title   : cardinality
- Usage   : $a = $self-&gt;cardinality
+ Usage   : $list = $self-&gt;cardinality
  Function: Return the number of uniq elements in the list
  Returns : Integer
  Args    : N/A
@@ -415,7 +394,7 @@ sub count_uniq {
 </pre></div>
 
 <pre> Title   : count_uniq
- Usage   : $a = $self-&gt;count_uniq()
+ Usage   : $list = $self-&gt;count_uniq()
  Function: An alias for cardinality
  Returns : Integer
  Args    : N/A
@@ -434,7 +413,7 @@ sub category_counts {
 </pre></div>
 
 <pre> Title   : category_counts
- Usage   : $a = $self-&gt;category_counts()
+ Usage   : $list = $self-&gt;category_counts()
  Function: Return a hash(reference) with uniq elements as keys and element
 	   counts as values.
  Returns : A hash(reference)
@@ -447,15 +426,23 @@ sub category_counts {
                                         <pre>
 
 sub shuffle {
-  return wantarray ? List::Util::shuffle(shift->list) :
-    [List::Util::shuffle(shift->list)];
+  mu $self = shift;
+  $self->list([$self->shuffle]);
 }
 </pre></div>
 
 <pre> Title   : shuffle
- Usage   : $a = $self-&gt;shuffle()
+ Usage   : $list = $self-&gt;shuffle()
  Function: Returns the elements of the list in random order
  Returns : An array/array reference
+ Args    : N/A
+
+</pre><h2 id="in_place_shuffle">in_place_shuffle</h2>
+
+<pre> Title   : in_place_shuffle
+ Usage   : $list = $self-&gt;in_place_shuffle()
+ Function: Shuffles the elements of a list in place
+ Returns : N/A
  Args    : N/A
 
 </pre><h2 id="uniq">uniq</h2>
@@ -472,10 +459,10 @@ sub uniq {
 </pre></div>
 
 <pre> Title   : uniq
- Usage   : $a = $self-&gt;uniq()
- Function:
- Returns :
- Args    :
+ Usage   : $list = $self-&gt;uniq()
+ Function: Returns uniq values from the list.
+ Returns : An array (ref) of unique values from the list.
+ Args    : N/A
 
 </pre><h2 id="random_pick">random_pick</h2>
 
@@ -484,36 +471,56 @@ sub uniq {
                                         <pre>
 
 sub random_pick {
-    my $self = shift;
+    my ($self, $count) = @_;
 
-    my $random = int(rand($self->count));
-    return $self->{list}[$random];
+    my @random_list;
+    for (1 .. $count) {
+      my $random = int(rand($self->count));
+      push @random_list, $self->{list}[$random];
+    }
+    return wantarray ? @random_list : \@random_list;
 }
 </pre></div>
 
 <pre> Title   : random_pick
- Usage   : $a = $self-&gt;random_pick()
- Function:
- Returns :
- Args    :
+ Usage   : $list = $self-&gt;random_pick(8)
+ Function: Return a random selection from the list of a given length.
+ Returns : An array (ref) of randomly selected values from the list.
+ Args    : An integer for the size of the returned list. Default is one.
 
 </pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
 <dl>
 	<dt><code>list_or_reference_required</code></dt>
-		<dd><p>GAL::List::list require an array or a reference to any array be passed
-as an argument, but you have passed something else.</p></dd>
-		<dd><p>Keep in mind that several of GAL::List's methods are provided by
+		<dd><p><a href="#list">GAL::List::list</a> require an array or a reference to any array
+be passed as an argument, but you have passed something else.</p></dd>
+		<dd><p>Keep in mind that several of <code>GAL::List</code>'s methods are provided by
 List::Util, and errors not found here may be thrown by that module.</p></dd>
+	<dt><code>no_method_given_for_iterator'</code></dt>
+		<dd><p><code>GAL::List</code> can accept an iterator object that provides a next
+method.  For each object returned by calling next <code>GAL::List</code> will
+call the method provided to <a href="#method">GAL::List::method</a>.  A method name
+must be provided to <a href="#method">GAL::List::method</a> with an iterator is
+provided to <a href="#iterator">GAL::List::iterator</a>.</p></dd>
+	<dt><code>method_does_not_exist</code></dt>
+		<dd><p>An iterator was provided to <a href="#iterator">GAL::List::iterator</a> and a
+method was provided to <a href="#method">GAL::List::method</a>, but the objects
+returned by the iterator do not impliment the method provided to
+<a href="#method">GAL::List::method</a>.</p></dd>
+	<dt><code>key_does_not_exist'</code></dt>
+		<dd><p>If a hash reference is provided as the value for <a href="#list">GAL::List::list</a> then
+a key must be provided to <a href="#key">GAL::List::key</a>. <code>GAL::List</code> will then use the
+key to retrieve it's value from the hash.  A hash was provided to
+<a href="#list">GAL::List::list</a>, but no key was given.</p></dd>
 </dl>
 <h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>&lt;GAL::List&gt; requires no configuration files or environment variables.</p>
+<p><code>GAL::List</code> requires no configuration files or environment variables.</p>
 
 <h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>&lt;GAL::Base&gt;
-&lt;List::Util&gt;</p>
+<p><a href="Base.pm.html">GAL::Base</a>
+<a href="http://search.cpan.org/perldoc?List/Util">List::Util</a></p>
 
 <h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
@@ -532,7 +539,7 @@ barry.moore@genetics.utah.edu</p>
 
 <h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p>
+<p>Copyright (c) 2010-2013, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p>
 
 <pre>    This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself (See LICENSE).

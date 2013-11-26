@@ -55,6 +55,7 @@
 	<li><a href="#CONSTRUCTOR">CONSTRUCTOR</a><br />
 <ul>
 	<li><a href="#new">new</a></li>
+	<li><a href="#count_table">count_table</a></li>
 	<li><a href="#count">count</a></li>
 	<li><a href="#cardinality">cardinality</a></li>
 	<li><a href="#count_uniq">count_uniq</a></li>
@@ -157,6 +158,42 @@ sub new {
      Args    : list =&gt; \@list
 	       But see the method, key, and iterator attributes for other
 	       ways to construct a list.
+
+</pre><h2 id="count_table">count_table</h2>
+
+<p><a href="#" onclick="toggleCode('method_count_table');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_count_table">
+                                        <pre>
+
+sub count_table {
+  my ($self, $header) = @_;
+
+  my $table = Text::Table->new('|', $header, '|', 'Count', '|');
+  my @data;
+  my %counts = $self->category_counts();
+  for my $key (sort keys %counts) {
+    push @data, ['|', $key, '|', $counts{$key}, '|'];
+  }
+  $table->load(@data);
+  my $title_rule  = $table->rule('=', '=');
+  my $body_rule   = $table->rule('-', '+');
+  my $bottom_rule = $table->rule('-', '-');
+  my $text_table;
+  $text_table .= $title_rule;
+  $text_table .= $table->title;
+  $text_table .= $title_rule;
+  $text_table .= join $body_rule, $table->body;
+  $text_table .= $bottom_rule;
+  return $text_table;
+}
+</pre></div>
+
+<pre> Title   : count_table
+ Usage   : $a = $self-&gt;count_table()
+ Function: Returns a string with a text based table of the counts of
+           categories.
+ Returns : A string
+ Args    : A scalar containing the name for the list.
 
 </pre><h2 id="count">count</h2>
 
@@ -276,8 +313,8 @@ sub minstr {
                                         <pre>
 
 sub shuffle {
-  return wantarray ? List::Util::shuffle(shift->list) :
-    [List::Util::shuffle(shift->list)];
+  mu $self = shift;
+  $self->list([$self->shuffle]);
 }
 </pre></div>
 
@@ -313,10 +350,14 @@ sub uniq {
                                         <pre>
 
 sub random_pick {
-    my $self = shift;
+    my ($self, $count) = @_;
 
-    my $random = int(rand($self->count));
-    return $self->{list}[$random];
+    my @random_list;
+    for (1 .. $count) {
+      my $random = int(rand($self->count));
+      push @random_list, $self->{list}[$random];
+    }
+    return wantarray ? @random_list : \@random_list;
 }
 </pre></div>
 

@@ -74,7 +74,8 @@
 	<li><a href="#load_files">load_files</a></li>
 </ul>
 </li>
-	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a><br />
+	<ul>
 	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
 	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
 	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
@@ -92,7 +93,7 @@
 
 <h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>This document describes GAL::Annotation version 0.2.0</p>
+<p>This document describes GAL::Annotation version 0.2.1</p>
 
 <h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
@@ -106,7 +107,8 @@
     my $feature_count = $features-&gt;count;
     my @types = $features-&gt;types-&gt;uniq;
 
-    # Do a search and get another smart iterator of matching features.
+    # Do a search and get iterator of features matching the
+    # search criteria.
     my $mrnas = $features-&gt;search({type =&gt; 'mRNA'});
 
     # Iterate over the features.
@@ -136,16 +138,16 @@ developed by the <a href="http://www.sequenceontology.org">Sequence Ontology</a>
 that make working with genome annotations simple and intuitive.</p>
 
 <p>GAL was designed to work with sequence features stored in GFF3 files
-(or sequence alterations stored in GVF files) and GAL provids many
+(or sequence alterations stored in GVF files) and GAL provides many
 parsers for converting sequence features in other formats to GFF3 and
 GVF.</p>
 
 <p>Sequence features are represented as objects in GAL based on the
-structure of the <a href="http://www.sequenceontology.org/browser/obob.cgi">Sequence Ontology</a>.  This
+relationships in the <a href="http://www.sequenceontology.org/browser/obob.cgi">Sequence Ontology</a>.  This
 allows the objects to inherit the appropriate behavior from their
 parent types based on the is_a relationships within the ontology and
-it also allows the programer to easily traverse the part_of
-relationships within while writing code.</p>
+it also allows the programmer to easily traverse the part_of
+relationships while writing code.</p>
 
 <h1 id="INHERITS_FROM">INHERITS FROM <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
@@ -191,7 +193,7 @@ appropriate attributes:</p>
 <dl>
 	<dt>* <code>parser =&gt; parser_subclass [gff3]</code></dt>
 		<dd><p>This optional parameter defines which parser subclass to instantiate.
-This parameter will default to gff3 if not provided.  See GAL::Parser
+This parameter will default to parsing GFF3 if not provided.  See <a href="Parser.pm.html">GAL::Parser</a>
 for a complete list of available parser classes.</p></dd>
 	<dt>* <code>storage =&gt; storage_subclass [SQLite]</code></dt>
 		<dd><p>This optional parameter defines which storage subclass to instantiate.
@@ -218,16 +220,20 @@ sub new {
     my ($args, $feature_file) = _check_for_simple_args(@args);
 
     my $self = $class->SUPER::new($args);
+    if (! defined $feature_file) {
+      $self->throw('missing_feature_file',
+		   'GAL::Annotation requires at least a feature file');
+    }
     $self->load_files($feature_file) if $feature_file;
     return $self;
 }
 </pre></div>
 
 <pre>     Title   : new
-     Usage   : GAL::Annotation-&gt;new();
+     Usage   : GAL::Annotation-&gt;new($gff3_file, $fasta_file);
      Function: Creates a GAL::Annotation object;
      Returns : A GAL::Annotation object
-     Args    : A list of key value pairs for the attributes specified above.
+     Args    : A list (ref) of key value pairs for the attributes specified above.
 
 </pre><h1 id="ATTRIBUTES">ATTRIBUTES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
@@ -257,11 +263,11 @@ sub parser {
 </pre></div>
 
 <pre> Title   : parser
- Usage   : $parser = $self-&gt;parser();
+ Usage   : $parser = $self-&gt;parser(class =&gt; gff3);
  Function: Create or return a parser object.
  Returns : A GAL::Parser::subclass object.
- Args    : (class =&gt; gal_parser_subclass)
-	   See GAL::Parser and its subclasses for more arguments.
+ Args    : (class =&gt; gal_parser_subclass_name)
+	   See L&lt;GAL::Parser&gt; and its subclasses for more arguments.
  Notes   : The parser object is created as a singleton, but it
 	   can be changed by passing new arguments to a call to
 	   parser.
@@ -289,7 +295,7 @@ sub storage {
 </pre></div>
 
 <pre>  Title   : storage
-  Usage   : $storage = $self-&gt;storage();
+  Usage   : $storage = $self-&gt;storage(class =&gt; 'SQLite');
   Function: Create or return a storage object.
   Returns : A GAL::Storage::subclass object.
   Args    : (class =&gt; gal_storage_subclass)
@@ -299,7 +305,7 @@ sub storage {
 
 </pre><h2 id="fasta">fasta</h2>
 
-<p>The fasta attribute is provided by GAL::Base, see that module for more
+<p>The fasta attribute is provided by <a href="Base.pm.html">GAL::Base</a>, see that module for more
 details.</p>
 
 <h1 id="Methods">Methods <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
@@ -319,9 +325,10 @@ sub features {
 
 <pre>  Title   : features
   Usage   : $self-&gt;features();
-  Function: Return a GAL::Schema::Result::Feature object (a
-	    DBIx::Class::ResultSet for all features).
-  Returns : A GAL::Schema::Result::Feature object
+  Function: Return an iterator L&lt;GAL::Schema::Result::Feature&gt; object.
+            This object is a subclass of L&lt;DBIx::Class::ResultSet&gt; for
+            all features.
+  Returns : A L&lt;GAL::Schema::Result::Feature&gt; object
   Args    : N/A
 
 </pre><h2 id="schema">schema</h2>
@@ -359,9 +366,9 @@ sub schema {
 
 <pre>  Title   : schema
   Usage   : $self-&gt;schema();
-  Function: Create and/or return the DBIx::Class::Schema object
-  Returns : DBIx::Class::Schema object.
-  Args    : N/A - Arguments are provided by the GAL::Storage object.
+  Function: Create and/or return the L&lt;DBIx::Class::Schema&gt; object
+  Returns : L&lt;DBIx::Class::Schema&gt; object.
+  Args    : N/A - Arguments are provided by the &lt;GAL::Storage&gt; object.
 
 </pre><h2 id="load_files">load_files</h2>
 
@@ -394,7 +401,7 @@ sub load_files {
 </pre></div>
 
 <pre> Title   : load_files
- Usage   : $a = $self-&gt;load_files();
+ Usage   : $a = $self-&gt;load_files(qw(file1.gff3 file2.gff3));
  Function: Parse and store all of the features in a file. If a single
 	   file is given as an argument and if there are gff[3] and
 	   sqlite versions of that files base name then time stamps
@@ -406,19 +413,18 @@ sub load_files {
 
 </pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>&lt;GAL::Annotation&gt; currently does not throw any warnings or errors, but
-most other modules in the library do, and details of those errors can
-be found in those modules.</p>
-
+<dl>
+	<dt><code>missing_feature_file</code></dt>
+		<dd><p><code>GAL::Annotation</code> must have at least a feature file to run, but you
+did not provide one.</p></dd>
+		<dd><p>missing_feature_file</p></dd>
 <h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>&lt;GAL::Annotation&gt; requires no configuration files or environment variables.</p>
-
+		<dd><p>&lt;GAL::Annotation&gt; requires no configuration files or environment variables.</p></dd>
 <h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>Modules in GAL/lib use the following modules:</p>
-
-<p>Bio::DB::Fasta
+		<dd><p>Modules in GAL/lib use the following modules:</p></dd>
+		<dd><p>Bio::DB::Fasta
 Carp
 DBD::SQLite
 DBI
@@ -426,11 +432,9 @@ List::Util
 Scalar::Util
 Set::IntSpan::Fast
 Statistics::Descriptive
-Text::RecordParser</p>
-
-<p>Some script in GAL/bin and/or GAL/lib/GAL/t use the following modules:</p>
-
-<p>Data::Dumper
+Text::RecordParser</p></dd>
+		<dd><p>Some scripts in GAL/bin and/or GAL/lib/GAL/t use the following modules:</p></dd>
+		<dd><p>Data::Dumper
 FileHandle
 Getopt::Long
 IO::Prompt
@@ -439,33 +443,27 @@ TAP::Harness
 Test::More
 Test::Pod::Coverage
 URI::Escape
-XML::LibXML::Reader</p>
-
+XML::LibXML::Reader</p></dd>
 <h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>None reported.</p>
-
+		<dd><p>None reported.</p></dd>
 <h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>I'm sure there are plenty of bugs right now - please let me know if you find one.</p>
-
-<p>Please report any bugs or feature requests to:
-barry.moore@genetics.utah.edu</p>
-
+		<dd><p>I'm sure there are plenty of bugs right now - please let me know if you find one.</p></dd>
+		<dd><p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p></dd>
 <h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
-
+		<dd><p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p></dd>
 <h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p>
-
-<pre>    This module is free software; you can redistribute it and/or
+		<dd><p>Copyright (c) 2010-2013, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p></dd>
+<dd><pre>    This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself (See LICENSE).
 
-</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
+</pre></dd><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="up.gif" /></a></h1>
 
-<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+		<dd><p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
 FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
 OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
 PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
@@ -473,9 +471,8 @@ EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
 ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
 YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
-NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
-
-<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+NECESSARY SERVICING, REPAIR, OR CORRECTION.</p></dd>
+		<dd><p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
 WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
 REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
 LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
@@ -484,8 +481,7 @@ THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
 RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
 FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
 SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
-SUCH DAMAGES.</p>
-
+SUCH DAMAGES.</p></dd>
 
 </div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
 </html>

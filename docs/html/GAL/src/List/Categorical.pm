@@ -120,6 +120,41 @@ sub _initialize_args {
 #------------------------------------ Methods --------------------------------
 #-----------------------------------------------------------------------------
 
+=head2 count_table
+
+ Title   : count_table
+ Usage   : $a = $self->count_table()
+ Function: Returns a string with a text based table of the counts of
+           categories.
+ Returns : A string
+ Args    : A scalar containing the name for the list.
+
+=cut
+
+sub count_table {
+  my ($self, $header) = @_;
+
+  my $table = Text::Table->new('|', $header, '|', 'Count', '|');
+  my @data;
+  my %counts = $self->category_counts();
+  for my $key (sort keys %counts) {
+    push @data, ['|', $key, '|', $counts{$key}, '|'];
+  }
+  $table->load(@data);
+  my $title_rule  = $table->rule('=', '=');
+  my $body_rule   = $table->rule('-', '+');
+  my $bottom_rule = $table->rule('-', '-');
+  my $text_table;
+  $text_table .= $title_rule;
+  $text_table .= $table->title;
+  $text_table .= $title_rule;
+  $text_table .= join $body_rule, $table->body;
+  $text_table .= $bottom_rule;
+  return $text_table;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 count
 
  Title   : count
