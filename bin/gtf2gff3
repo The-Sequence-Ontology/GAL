@@ -96,35 +96,35 @@ if ($cfg_file) {
 }
 
 # Use INPUT_FEATURE_MAP to map GTF feature types (column 3 in GTF) to valid SO types.
-# Don't edit the SO terms below. Mapping must be many to one.  That means that 
+# Don't edit the SO terms below. Mapping must be many to one.  That means that
 # exon_this and exon_that could both map to the SO term exon, but exon_this
 # could not map to multiple SO terms.
 our $INPUT_FEATURE_MAP = $config{INPUT_FEATURE_MAP};
 #GTF Term     (maps to)       #SO Term
-$INPUT_FEATURE_MAP ||= {"3'-UTR"             	  => 'three_prime_UTR',
-			'3UTR'                 	  => 'three_prime_UTR',
+$INPUT_FEATURE_MAP ||= {"3'-UTR"	  => 'three_prime_UTR',
+			'3UTR'	  => 'three_prime_UTR',
 			"5'-UTR"                  => 'five_prime_UTR',
-			'5UTR'                 	  => 'five_prime_UTR',
+			'5UTR'	  => 'five_prime_UTR',
 			ARS                       => 'ARS',
 			binding_site              => 'binding_site',
 			BLASTN_HIT                => 'nucleotide_match',
-			CDS                  	  => 'CDS',
+			CDS	  => 'CDS',
 			CDS_motif                 => 'nucleotide_motif',
 			CDS_parts                 => 'mRNA_region',
 			centromere                => 'centromere',
 			chromosome                => 'chromosome',
 			conflict                  => 'conflict',
 			Contig                    => 'contig',
-			exon                 	  => 'exon',
-			five_prime_utr       	  => 'five_prime_UTR',
-			five_prime_UTR    	  => 'five_prime_UTR',
-			gene                 	  => 'gene',
+			exon	  => 'exon',
+			five_prime_utr	  => 'five_prime_UTR',
+			five_prime_UTR	  => 'five_prime_UTR',
+			gene	  => 'gene',
 			insertion                 => 'insertion',
 			intron                    => 'intron',
 			LTR                       => 'long_terminal_repeat',
 			misc_feature              => 'sequence_feature',
 			misc_RNA                  => 'transcript',
-			mRNA                 	  => 'mRNA',
+			mRNA	  => 'mRNA',
 			nc_primary_transcript     => 'nc_primary_transcript',
 			ncRNA                     => 'ncRNA',
 			nucleotide_match          => 'nucleotide_match',
@@ -142,13 +142,13 @@ $INPUT_FEATURE_MAP ||= {"3'-UTR"             	  => 'three_prime_UTR',
 			snoRNA                    => 'snoRNA',
 			snRNA                     => 'snRNA',
 			source                    => 'sequence_feature',
-			start_codon          	  => 'start_codon',
-			start_codon	  	  => 'start_codon',
-			stop_codon           	  => 'stop_codon',
-			stop_codon	  	  => 'stop_codon',
+			start_codon	  => 'start_codon',
+			start_codon		  => 'start_codon',
+			stop_codon	  => 'stop_codon',
+			stop_codon		  => 'stop_codon',
 			telomere                  => 'telomere',
-			three_prime_utr      	  => 'three_prime_UTR',
-			three_prime_UTR   	  => 'three_prime_UTR',
+			three_prime_utr	  => 'three_prime_UTR',
+			three_prime_UTR	  => 'three_prime_UTR',
 			transcript_region         => 'transcript_region',
 			transcript                => 'transcript',
 			transposable_element_gene => 'transposable_element',
@@ -166,10 +166,10 @@ $INPUT_FEATURE_MAP ||= {"3'-UTR"             	  => 'three_prime_UTR',
 # who the parents of a feature are.
 our $GTF_ATTRB_MAP  = $config{GTF_ATTRB_MAP};
 #Code Tag  (comes from)  #GTF Tag
-$GTF_ATTRB_MAP ||= {gene_id    		  => 'gene_id',
-		    gene_name  		  => 'gene_name',
-		    trnsc_id   		  => 'transcript_id',
-		    trnsc_name 		  => 'transcript_name'};
+$GTF_ATTRB_MAP ||= {gene_id		  => 'gene_id',
+		    gene_name		  => 'gene_name',
+		    trnsc_id		  => 'transcript_id',
+		    trnsc_name		  => 'transcript_name'};
 
 # Maps tags used internally to output GFF3 attribute tags.
 # Also, when LIMIT_ATTRB is set to 1 only these tags will be
@@ -205,9 +205,9 @@ our $DEFAULT_STRAND = (exists $config{MISC}{DEFAULT_STRAND} ?
 
 my @META_DATA;
 my ($genes, $features) = parse_gtf($file);
-     
+
 $genes = build_genes($genes);
-     
+
 print_gff3($genes, $features);
 
 #-----------------------------------------------------------------------------
@@ -215,39 +215,40 @@ print_gff3($genes, $features);
 #-----------------------------------------------------------------------------
 
 sub parse_gtf {
-    
+
     my $file = shift;
     open (my $IN, '<', $file) or
 	handle_message('FATAL', 'cant_open_file_for_reading', $file);
-    
+
     # %genes will have the following structure:
     # $genes->gene_id->trnsc_id->feature_type->feature
     #                |
     #                ->other->feature_type->feature
     #
     my (%genes, %features);
-    
+
   LINE:
     while (my $line = <$IN>) {
-	
+
 	chomp $line;
 	$line =~ s/^\s+//;
 	$line =~ s/\s+$//;
-	
+
 	next LINE unless $line;
-	
+
 	#Handle full line comments, meta-comments and blank lines;
 	if ($line =~ /^\#/) {
 	    if ($line =~ /^\#\#gff-version\s+3/) {
 		handle_message('FATAL', 'file_claims_to_be_gff3', $line);
 	    }
+	    $line =~ s/^\#+/\#/;
 	    push @META_DATA, $line;
 	    next LINE;
 	}
-	
+
 	#Grab any comments
 	my ($comment) = $line =~ s/(\#.*)$//;
-				    
+
 	my @columns = split /\t/, $line;
 
 	handle_message('FATAL', 'too_many_columns_for_gtf_data', $line)
@@ -255,7 +256,7 @@ sub parse_gtf {
 
 	my ($seqname, $source, $feature_type, $start, $end, $score,
 	    $strand, $frame, $attrb_text) = @columns;
-		
+
 	handle_message('FATAL', 'invalid_start', $line)
 	    unless $start =~ /^\d+$/;
 	handle_message('FATAL', 'invalid_end', $line)
@@ -267,7 +268,7 @@ sub parse_gtf {
 	if (! scalar keys %{$attributes}) {
 	    handle_message('WARN', 'failed_to_parse_attributes', $line);
 	}
-				    
+
 	if (exists $INPUT_FEATURE_MAP->{$feature_type}) {
 	    $feature_type = $INPUT_FEATURE_MAP->{$feature_type};
 	}
@@ -275,7 +276,7 @@ sub parse_gtf {
 	    handle_message('WARN', 'cant_map_feature_type', $feature_type);
 	    $feature_type = 'sequence_feature';
 	}
-	
+
 	#Note here that we're mapping between GTF/GFF and GFF3
 	#nomeclature for the hash keys
 	my $feature = {seq_id     => $seqname,
@@ -288,12 +289,12 @@ sub parse_gtf {
 		       phase      => $frame,
 		       attributes => $attributes,
 		       comment    => $comment};
-	
+
 	#Feature has a gene_id
 	if (exists $attributes->{$GTF_ATTRB_MAP->{gene_id}}) {
-	    
+
 	    my $gene_id = $attributes->{$GTF_ATTRB_MAP->{gene_id}}[0];
-	    
+
 	    #Feature has a gene ID and transcript ID
 	    if (exists $attributes->{$GTF_ATTRB_MAP->{trnsc_id}}) {
 		my $trnsc_id = $attributes->{$GTF_ATTRB_MAP->{trnsc_id}}[0];
@@ -309,7 +310,7 @@ sub parse_gtf {
 		push @{$genes{$seqname}{$gene_id}{other}{$feature}},
 		$feature;
 	    }
-	    
+
 	}
 	else {
 	    push @{$features{$feature_type}}, $feature;
@@ -317,28 +318,28 @@ sub parse_gtf {
     }
     return (\%genes, \%features);
 }
-    
+
 #-----------------------------------------------------------------------------
-    
+
 sub parse_attributes {
-    
+
     my $attrb_text = shift;
-    
+
     #Skip it if it's undefined or empty
     if (! defined $attrb_text || $attrb_text =~ /^\s+$/) {
 	    handle_message('WARN', 'empty_attribute_text');
 	return {};
     }
-    
+
     #Split the attributes
     my @attrb_array = split $ATTRB_DELIMITER, $attrb_text;
-    
+
     #Grab key, value pairs
     my %attributes;
   ATT:
     for my $attrb (@attrb_array) {
 	my ($key, $value);
-	
+
 	if ($attrb =~ $ATTRB_REGEX) {
 	    ($key, $value) = ($1, $2);
 	    $value =~ s/\"//g if $value !~ /\s/;
@@ -363,13 +364,13 @@ sub parse_attributes {
 #-----------------------------------------------------------------------------
 
 sub build_genes {
-    
+
     my $genes = shift;
-    
+
     my @genes;
     for my $seq_id (keys %{$genes}) {
 	for my $gene_id (keys %{$genes->{$seq_id}}) {
-	    
+
 	    my $gene = build_gene($genes->{$seq_id}{$gene_id});
 	    push @genes, $gene;
 	}
@@ -380,13 +381,13 @@ sub build_genes {
 #-----------------------------------------------------------------------------
 
 sub build_gene {
-    
+
     my $trnscs = shift;
-    
+
     my @trnscs;
   TRN:
     for my $trnsc_id (keys %{$trnscs}) {
-	
+
 	if ($trnsc_id eq 'other') {
 	    #Handle non-transcript gene features
 	    handle_message('WARN', 'non-transcript_gene_feature',
@@ -405,7 +406,7 @@ sub build_gene {
 	    handle_message('WARN', 'transcript_not_built', $trnsc_id);
 	}
     }
-    
+
     my $gene = validate_and_build_gene(\@trnscs);
     return $gene;
 }
@@ -413,30 +414,30 @@ sub build_gene {
 #-----------------------------------------------------------------------------
 
 sub build_trnsc {
-    
+
     my $features = shift;
-    
+
     my $exons      = $features->{exon}	        || [];
     my $CDSs       = $features->{CDS}	        || [];
     my $start      = $features->{start_codon}	|| [];
     my $stop       = $features->{stop_codon}	|| [];
     my $five_UTRs  = $features->{five_prime_UTR}    || [];
     my $three_UTRs = $features->{three_prime_UTR}   || [];
-    
+
     #We require at least CDSs or exons
     unless (scalar @{$CDSs} || scalar @{$exons}) {
 	handle_message('WARN', 'must_have_exons_or_CDS_to_build_transcript',
 		       join ", ", keys %{$features});
 	return;
     }
-    
+
     #Make start codons if they don't exist
     $start = process_start($exons, $CDSs, $start, $five_UTRs)
 	if ! scalar @{$start};
     #Make stop codons if they don't exist
     $stop  = process_stop($exons, $CDSs, $stop, $three_UTRs)
 	if ! scalar @{$stop};
-    
+
     #Make UTRs, exons and/or CDSs if they don't exist
     ($five_UTRs,
      $exons,
@@ -445,15 +446,15 @@ sub build_trnsc {
 					  $start, $stop,
 					  $five_UTRs,
 					  $three_UTRs);
-    
+
     @{$features}{qw(exon five_prime_UTR start_codon CDS stop_codon
 		    three_prime_UTR)} =
 		    ($exons, $five_UTRs, $start, $CDSs,
 		     $stop, $three_UTRs);
-    
+
     #Build and validate the transcripts
     my $trnsc = validate_and_finish_trnsc($features);
-    
+
     return $trnsc;
 }
 
@@ -461,9 +462,9 @@ sub build_trnsc {
 
 sub process_start {
     my ($exons, $CDSs, $start, $five_UTRs) = @_;
-    
+
     my ($start_codon_start, $start_codon_end);
-    
+
     my $strand;
     #Get the strand for exons or CDSs
     if (scalar @{$exons}) {
@@ -475,25 +476,25 @@ sub process_start {
     else {
 	handle_message('WARN', 'need_exons_or_cdss_to_build_transcripts');
     }
-    
+
     #Already have start
     if (scalar @{$start}) {
 	return $start;
     }
-    
+
     ################################################################################
     # Don't infer start codons from CDS unless backed by UTR or exon infered UTR
     ################################################################################
-    
+
     #Build start from CDS
     elsif (scalar @{$CDSs} && scalar @{$exons}) {
-	
+
 	$CDSs = sort_features($CDSs, $strand);
 	my $first_CDS = $CDSs->[0];
-	
+
 	$exons = sort_features($exons, $strand);
 	my $first_exon = $exons->[0];
-	
+
 	if ($strand == 1) {
 	    if ($first_exon->{start} < $first_CDS->{start}) {
 		$start_codon_start = $first_CDS->{start};
@@ -519,10 +520,10 @@ sub process_start {
     #must be at the begining of the first CDS.  To be more rigorous we should
     #check the coordinates and be sure that the 5' UTR and CDS are contiguous.
     elsif (scalar @{$CDSs} && scalar @{$five_UTRs}) {
-	
+
 	$CDSs = sort_features($CDSs, $strand);
 	my $first_CDS = $CDSs->[0];
-	
+
 	if ($strand == 1) {
 	    $start_codon_start = $first_CDS->{start};
 	    #Move start codon out of CDS if config says to
@@ -561,16 +562,16 @@ sub process_start {
 	# We don't really need to die here some annotations have
 	# stop_codon, but not start_codon
     }
-    
+
     return [] if (! defined $start_codon_start ||
 		  ! defined $start_codon_end);
-    
+
     $start = [{start => $start_codon_start,
 	       end   => $start_codon_end,
 	       type  => 'start_codon',
 	       score => '.',
 	       phase => '0'}];
-    
+
     return $start;
 }
 
@@ -578,9 +579,9 @@ sub process_start {
 
 sub process_stop {
     my ($exons, $CDSs, $stop, $three_UTRs) = @_;
-    
+
     my ($stop_codon_start, $stop_codon_end);
-    
+
     #Get the strand
     my $strand;
     if (scalar @{$exons}) {
@@ -592,25 +593,25 @@ sub process_stop {
     else {
 	handle_message('WARN', 'need_exons_or_cdss_to_build_transcripts');
     }
-    
+
     #If we already have a stop then return it.
     if (scalar @{$stop}) {
 	return $stop;
     }
-    
+
     ################################################################################
     # Don't infer stop codons from CDS unless backed by UTR or exon infered UTR
     ################################################################################
-    
+
     #Build stop from CDSs
     elsif (scalar @{$CDSs} && scalar @{$exons}) {
-	
+
 	$CDSs = sort_features($CDSs, $strand);
 	my $last_CDS = $CDSs->[-1];
-	
+
 	$exons = sort_features($exons, $strand);
 	my $last_exon = $exons->[0];
-	
+
 	if ($strand == 1) {
 	    if ($last_exon->{end} > $last_CDS->{end}) {
 		$stop_codon_start = $last_CDS->{end} - 2;
@@ -629,15 +630,15 @@ sub process_stop {
 		}
 	    }
 	}
-	
+
 	$stop_codon_end   = $stop_codon_start + 2
 	    if defined $stop_codon_end;
     }
     elsif (scalar @{$CDSs} && scalar @{$three_UTRs}) {
-	
+
 	$CDSs = sort_features($CDSs, $strand);
 	my $last_CDS = $CDSs->[-1];
-	
+
 	if ($strand == 1) {
 	    $stop_codon_start = $last_CDS->{end} - 2;
 	    #Move stop codon out of CDS is config says to
@@ -657,15 +658,15 @@ sub process_stop {
     #Build stop from UTRs
     elsif (scalar @{$three_UTRs}) {
 	handle_message('FATAL', 'untested_code', 'The subroutine '       .
-                       'process_stop has run into data it doesn\'t know ' .
-                       'how to handle. Please contact the aurthor for '  .
-                       'support if you see this message');
+		       'process_stop has run into data it doesn\'t know ' .
+		       'how to handle. Please contact the aurthor for '  .
+		       'support if you see this message');
 	my $strand = strand($three_UTRs->[0]);
 	$three_UTRs = sort_features($three_UTRs, $strand);
 	my $first_three_UTR = $three_UTRs->[0];
 	$stop_codon_start = $strand == 1 ? $first_three_UTR->{start} - 3 :
 	    $first_three_UTR->{end} + 1;
-	
+
 	$stop_codon_end   = $stop_codon_start + 2;
     }
     elsif (scalar @{$exons}) {
@@ -679,16 +680,16 @@ sub process_stop {
 	return [];
 	#die "FATAL : Invalid feature set : process_stop\n";
     }
-    
+
     return [] if (! defined $stop_codon_start ||
 		  ! defined $stop_codon_end);
-    
+
     $stop = [{start => $stop_codon_start,
 	      end   => $stop_codon_end,
 	      type  => 'stop_codon',
 	      score => '.',
 	      phase => '0'}];
-    
+
     return $stop;
 }
 
@@ -697,7 +698,7 @@ sub process_stop {
 sub process_exon_CDS_UTRs {
     my ($exons, $CDSs, $start, $stop,
 	$five_UTRs, $three_UTRs) = @_;
-    
+
     #Check what features we already have so we don't rebuild them
     my $have_five_UTRs++  if scalar @{$five_UTRs};
     my $have_exons++      if scalar @{$exons};
@@ -705,12 +706,12 @@ sub process_exon_CDS_UTRs {
     my $have_CDSs++       if scalar @{$CDSs};
     my $have_stop++       if scalar @{$stop};
     my $have_three_UTRs++ if scalar @{$three_UTRs};
-    
+
     #If CDSs already exist make sure that they include start and stop codons
     if (scalar @{$CDSs}) {
 	include_terminal_codons($CDSs, $start, $stop);
     }
-    
+
     #If we already have everything, then return
     if ($have_exons && $have_CDSs && ($have_five_UTRs || $have_three_UTRs)) {
 	return ($five_UTRs, $exons, $CDSs, $three_UTRs);
@@ -744,7 +745,7 @@ sub process_exon_CDS_UTRs {
 		       'The subroutine process_exon_CDS_UTRs was given ' .
 		       'a set of feature that it can\'t work with.');
     }
-    
+
     return ($five_UTRs, $exons, $CDSs, $three_UTRs);
 }
 
@@ -752,13 +753,13 @@ sub process_exon_CDS_UTRs {
 
 sub include_terminal_codons {
     my ($CDSs, $start, $stop) = @_;
-    
+
     my $strand = strand($CDSs->[0]{strand});
-    
+
     $CDSs = sort_features($CDSs, $strand);
     my $first_CDS = $CDSs->[0];
     my $last_CDS  = $CDSs->[-1];
-    
+
     if ($strand == 1) {
 	if (scalar @{$start}) {
 	    $first_CDS->{start} = $start->[0]{start}
@@ -769,12 +770,12 @@ sub include_terminal_codons {
 	#		elsif (defined $START_IN_CDS) {
 	#			$first_CDS->{start} -= 3 if ! $START_IN_CDS;
 	#		}
-	
+
 	if (scalar @{$stop}) {
 	    $last_CDS->{end} = $stop->[0]{end}
 	    if $stop->[0]{start} - 1 == $last_CDS->{end};
 	}
-	
+
 	#STOP_IN_CDS was considered when stop was built, so it could introduce errors
 	#to consider it again here
 	#		elsif (defined $STOP_IN_CDS) {
@@ -791,7 +792,7 @@ sub include_terminal_codons {
 	#		elsif (defined $START_IN_CDS) {
 	#			$first_CDS->{end} += 3 if ! $START_IN_CDS;
 	#		}
-	
+
 	if (scalar @{$stop}) {
 	    $last_CDS->{start} = $stop->[0]{start}
 	    if $stop->[0]{end} + 1 == $last_CDS->{start};
@@ -808,17 +809,17 @@ sub include_terminal_codons {
 
 sub evaluate_exon {
     my ($exon, $start, $stop) = @_;
-    
+
     my $strand = strand($exon);
-    
+
     my %five_UTR;
     my %CDS;
     my %three_UTR;
-    
+
     #######################################
     # Allow success if missing either start or stop
     #######################################
-    
+
     if ($strand == 1) {
 	#Exon is fully 5' UTR
 	if (defined $start->{start} &&
@@ -932,11 +933,11 @@ sub evaluate_exon {
 
 sub build_exons {
     my ($five_UTRs, $start, $CDSs, $stop, $three_UTRs) = @_;
-    
+
     my $strand = $CDSs->[0]{strand};
-    
+
     my @exons;
-    
+
     #Make an exon for every 5' UTR
     for my $five_UTR (@{$five_UTRs}) {
 	push @exons, {start => $five_UTR->{start},
@@ -946,9 +947,9 @@ sub build_exons {
 		      strand     => $strand,
 		      phase      => '.'};
     }
-    
+
     #Make and exon for every CDS
-    $CDSs = sort_features($CDSs);
+    $CDSs = sort_features($CDSs, $strand);
     for my $CDS (@{$CDSs}) {
 	my $exon = {start => $CDS->{start},
 		    end   => $CDS->{end},
@@ -956,10 +957,10 @@ sub build_exons {
 		    score      => '.',
 		    strand     => $strand,
 		    phase      => '.'};
-	
+
     push @exons, $exon;
     }
-    
+
     #Make an exon for every 3' UTR
     for my $three_UTR (@{$three_UTRs}) {
 	push @exons, {start => $three_UTR->{start},
@@ -969,7 +970,7 @@ sub build_exons {
 		      strand     => $strand,
 		      phase      => '.'};
     }
-    
+
     # Merge any contiguous exons (i.e. from UTR & CDS neighbors)
     my $exons = sort_features(\@exons, 1);
     my @merged_exons = shift @{$exons};
@@ -988,10 +989,10 @@ sub build_exons {
 
 sub validate_and_finish_trnsc {
     my $features = shift;
-    
+
     my ($seq_id, $source, $strand, $gene_id, $gene_name,
 	$trnsc_id, $trnsc_name);
-    
+
     #Find default parameters from either exons or CDSs
   TYPE:
     for my $type ( qw(exon CDS) ) {
@@ -1012,48 +1013,48 @@ sub validate_and_finish_trnsc {
 						$trnsc_id, $trnsc_name);
 	}
     }
-    
-    
+
+
     #Flag if we have any coding features (CDS, start_codon, stop_codon)
     my $coding_flag;
     #Min and max for transcript boundaries
     my ($min, $max);
     for my $feature_type (keys %{$features}) {
 	my $count;
-	
+
 	#For keeping track of the phase for the next CDS.
 	my $next_phase = '.';
-	
+
 	#Sort the features
 	$features->{$feature_type} =
 	    sort_features($features->{$feature_type},
-			  strand($strand));
+			  $strand);
 	for my $feature (@{$features->{$feature_type}}) {
-	    
+
 	    #min and max to calculate transcript boundaries
 	    $min = ! defined $min        ?
 		$feature->{start}        :
 		$min > $feature->{start} ?
 		$feature->{start}        :
 		$min;
-	    
+
 	    $max = ! defined $max        ?
 		$feature->{end}          :
 		$max < $feature->{end}   ?
 		$feature->{end}          :
 		$max;
-	    
+
 	    #Set the flag if we see indications of coding features
 	    if (grep {$feature_type eq $_} qw(CDS start_codon
 					      stop_codon)) {
 		$coding_flag++ if  $feature->{start};
 	    }
-	    
+
 	    #Calculate CDS phases.
 	    if ($feature_type eq 'CDS') {
 		($feature, $next_phase) = CDS_phase($feature, $next_phase);
 	    }
-	    
+
 	    #Set parameters to defaults for all features that
 	    #don't already have them set
 	    if (! defined $feature->{seq_id}) {
@@ -1097,14 +1098,14 @@ sub validate_and_finish_trnsc {
 					      ":" . ++$count];
 	}
     }
-    
+
     my $trnsc_type = $coding_flag ? 'mRNA' : 'transcript';
-    
+
     my $attributes = {parent      => $gene_id,
 		      parent_name => $gene_name,
 		      id          => $trnsc_id,
 		      name        => $trnsc_name};
-    
+
     my $trnsc = {seq_id     => $seq_id,
 		 source     => $source,
 		 type       => $trnsc_type,
@@ -1115,7 +1116,7 @@ sub validate_and_finish_trnsc {
 		 phase      => '.',
 		 attributes => $attributes,
 		 features   => $features};
-    
+
     return $trnsc;
 }
 
@@ -1123,7 +1124,7 @@ sub validate_and_finish_trnsc {
 
 sub CDS_phase {
     my ($feature, $next_phase) = @_;
-    
+
     #If phase isn't already valid assign it
     if (! defined $feature->{phase} ||
 	$feature->{phase} !~ /^0|1|2$/) {
@@ -1141,17 +1142,17 @@ sub CDS_phase {
 	# #at 2.
 	# $next_phase = $feature->{phase} + $hang_5;
 	# $next_phase -= 3 if $next_phase > 2;
-	
+
 	# This was update 5/24/10 in response to an
 	# e-mail from Leighton Prichard regarding
 	# errors in the GFF3 spec.  The code above
 	# calculates the phase correctly, but the
 	# formula suggested by Leighton is cleaner.
-	
+
 	$next_phase = ($feature->{phase} - $length) % 3;
-	
+
     }
-    
+
     return ($feature, $next_phase);
 }
 
@@ -1159,14 +1160,14 @@ sub CDS_phase {
 
 sub validate_and_build_gene {
     my $trnscs = shift;
-    
+
     #Get parameter defaults
     my $seq_id     = $trnscs->[0]{seq_id};
     my $source     = $trnscs->[0]{source};
     my $strand     = $trnscs->[0]{strand};
     my $gene_id    = $trnscs->[0]{attributes}{parent};
     my $gene_name  = $trnscs->[0]{attributes}{parent_name};
-    
+
     my %sources;
     #Get gene boundaries and check all transcripts for agreement with
     #parameter defaults
@@ -1177,38 +1178,38 @@ sub validate_and_build_gene {
 	    $min > $trnsc->{start} ?
 	    $trnsc->{start}        :
 	    $min;
-	
+
 	$max = ! defined $max      ?
 	    $trnsc->{end}          :
 	    $max < $trnsc->{end}   ?
 	    $trnsc->{end}          :
 	    $max;
-	
+
 	# Make sure feature seqid matches gene seqid
 	handle_message('WARN', 'gene_seq_id_conflict',
 		       "$gene_id->[0] ($seq_id) ne $trnsc->{attributes}{id}[0] ($trnsc->{seq_id})")
 	    if $seq_id ne $trnsc->{seq_id};
-	
+
 	# Make sure feature source matches gene source
 	handle_message('WARN', 'gene_source_conflict',
 		       "$gene_id->[0] ($source) ne $trnsc->{attributes}{id}[0] ($trnsc->{source})")
 	    if $source ne $trnsc->{source};
 	$sources{$trnsc->{source}}++;
-		 
+
 	# Make sure feature strand matches gene strand
 	handle_message('WARN', 'gene_strand_conflict',
 		       "$gene_id->[0] ($strand) ne $trnsc->{attributes}{id}[0] ($trnsc->{strand})")
 	    if $strand ne $trnsc->{strand};
-	
+
 	# Make sure feature gene_id matches gene gene_id
-	handle_message('WARN', 'gene_id_conflict', 
+	handle_message('WARN', 'gene_id_conflict',
 		       "$gene_id->[0] (if $gene_id->[0] ne $trnsc->{attributes}{id}[0] (Parent: $trnsc->{attributes}{parent}[0])")
 	    if $gene_id->[0] ne $trnsc->{attributes}{parent}[0];
-	
+
     }
     my $attributes = {id   => $gene_id,
 		      name => $gene_name || $gene_id};
-    
+
     # If multiple sources exist for this gene default to '.'
     $source = scalar keys %sources > 1 ? '.' : $source;
 
@@ -1222,7 +1223,7 @@ sub validate_and_build_gene {
 		phase      => '.',
 		attributes => $attributes,
 		trnscs     => $trnscs};
-    
+
     return $gene;
 }
 
@@ -1230,16 +1231,19 @@ sub validate_and_build_gene {
 
 sub print_gff3 {
     my ($genes, $features) = @_;
-    
+
     #GFF3 Header here
     print "##gff-version 3\n";
 
-    print join "\n", @META_DATA;
-    
+    if (scalar @META_DATA) {
+      print join "\n", @META_DATA;
+      print "\n";
+    }
+
     for my $gene (@{$genes}) {
 	print_gene($gene);
     }
-    
+
     print_features($features) if scalar keys %{$features};
 }
 
@@ -1247,7 +1251,7 @@ sub print_gff3 {
 
 sub print_gene {
     my $gene = shift;
-    
+
     my $attrb_text = make_attribute_text($gene->{attributes});
     #$attrb_text   .= ";Name=$gene->{attributes}{id}[0]";
     print join "\t", ($gene->{seq_id},
@@ -1262,7 +1266,7 @@ sub print_gene {
 		      );
     print " " . $gene->{comment} if $gene->{comment};
     print "\n";
-    
+
     for my $trnsc (@{$gene->{trnscs}}) {
 	print_trnsc($trnsc);
     }
@@ -1272,7 +1276,7 @@ sub print_gene {
 
 sub print_trnsc {
     my $trnsc = shift;
-    
+
     my $attrb_text = make_attribute_text($trnsc->{attributes});
     print join "\t", ($trnsc->{seq_id},
 		      $trnsc->{source},
@@ -1286,7 +1290,7 @@ sub print_trnsc {
 		      );
     print " " . $trnsc->{comment} if $trnsc->{comment};
     print "\n";
-    
+
     print_features($trnsc->{features});
 }
 
@@ -1294,11 +1298,11 @@ sub print_trnsc {
 
 sub print_features {
     my $features = shift;
-    
+
     my @sorted_feature_types = sort_feature_types($features);
     for my $feature_type (@sorted_feature_types) {
 	$features->{$feature_type} =
-	    sort_features($features->{$feature_type});
+	    sort_features($features->{$feature_type}, 1);
 	for my $feature (@{$features->{$feature_type}}) {
 	    my $attrb_text =
 		make_attribute_text($feature->{attributes});
@@ -1312,9 +1316,10 @@ sub print_features {
 			      $feature->{phase},
 			      $attrb_text,
 			      );
-	    print " " . $feature->{comment} if
-		$feature->{comment};
+	    #print " " . $feature->{comment} if
+	    #$feature->{comment};
 	    print "\n";
+	    print '';
 	}
     }
 }
@@ -1323,17 +1328,17 @@ sub print_features {
 
 sub make_attribute_text {
     my $attributes = shift;
-    
+
     #Only print the attributes listed in $LIMIT_ATTRB
-    my @tags = $LIMIT_ATTRB ? 
+    my @tags = $LIMIT_ATTRB ?
 	grep {exists $GFF3_ATTRB_MAP->{$_}} keys %{$attributes} :
 	keys %{$attributes};
-    
+
     my %order = (id     => 1,
 		 name   => 2,
 		 parent => 3,
 		 );
-    
+
     my @pairs;
     for my $tag (sort {($order{$a} || 999) <=> ($order{$b} || 999)} @tags) {
 	next if $tag eq 'gene_id';
@@ -1352,9 +1357,9 @@ sub make_attribute_text {
 
 sub sort_features {
     my ($features, $strand) = @_;
-    
+
     $strand = strand($strand) || strand($features->[0]);
-    
+
     #Make sure we get the array ref that we wanted
     if (ref $features eq 'ARRAY') {
 	#If we get an array ref with more than one element - sort it
@@ -1392,7 +1397,7 @@ sub sort_features {
 
 sub sort_feature_types {
     my ($feature_types) = @_;
-    
+
     #Make sure we get the hash ref that we wanted
     if (ref $feature_types eq 'HASH') {
 	my @types = keys %{$feature_types};
@@ -1409,7 +1414,7 @@ sub sort_feature_types {
 		       'The sort_feature subroutine can not ' .
 		       'determine the strand of the feature')
 	    if ! defined $strand;
-	
+
 	#If we get an hash ref with more than one element - sort it
 	if (scalar keys %{$feature_types} > 1) {
 	    #Sort + strand features
@@ -1448,7 +1453,7 @@ sub sort_feature_types {
 		       'The subroutine sort_feature_types '       .
 		       'requires a hash reference but was given ' .
 		       ref $features);
-	
+
     }
 }
 
@@ -1456,9 +1461,9 @@ sub sort_feature_types {
 
 sub strand {
     my $feature = shift;
-    
+
     my $strand = ref $feature ? $feature->{strand} : $feature;
-    
+
     #If strand is undefined or invalid...
     if (! defined $strand || $strand !~ /\+|-|1|-1/) {
 	# ...and if we have a default value then use it...
@@ -1473,7 +1478,7 @@ sub strand {
 	    return $strand if ! defined $strand;
 	}
     }
-    
+
     if ($strand eq '+') {
 	return 1;
     }
@@ -1492,45 +1497,45 @@ sub strand {
 
 sub min_feature {
     my ($features, $terminus) = @_;
-    
+
     my $min;
-    
+
     for my $feature (@{$features}) {
 	$min ||= $feature->{$terminus};
 	$min = $feature->{$terminus} if $min > $feature->{$terminus};
     }
     return $min;
 }
-	
+
 #-----------------------------------------------------------------------------
-	
+
 sub max_feature {
     my ($features, $terminus) = @_;
-    
+
     my $max;
-    
+
     for my $feature (@{$features}) {
 	$max ||= $feature->{$terminus};
 	$max = $feature->{$terminus} if $max < $feature->{$terminus};
     }
     return $max;
 }
-	
+
 #-----------------------------------------------------------------------------
-	
+
 sub handle_message {
-    
+
     my ($level, $code, @messages) = @_;
-    
+
     $level ||= 'FATAL';
     $code  ||= 'unknown_warning';
     my $message = join ' ', @messages;
     $message ||= 'No additional message';
-    
+
     $message = join ' : ', ($level, $code, $message);
     chomp $message;
     $message .= "\n";
-    
+
     if ($level eq 'FATAL') {
 	print STDERR $message;
 	die;
@@ -1541,9 +1546,9 @@ sub handle_message {
 }
 
 #-----------------------------------------------------------------------------
-	
+
 =head1 NAME
-	    
+
 gtf2gff3
 
 =head1 VERSION
