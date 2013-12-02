@@ -57,7 +57,7 @@ my $list_categorical_uniq_test = 'blue green orange purple red yellow';
 ok($list_categorical_uniq eq $list_categorical_uniq_test, '$list_categorical->uniq');
 
 # TEST 
-ok($list_categorical->random_pick, '$list_categorical->random_pick');
+ok($list_categorical->random_pick(1), '$list_categorical->random_pick');
 
 # TEST 
 my $list_numeric = GAL::List::Numeric->new(list => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);

@@ -5,7 +5,7 @@ use Test::More;
 
 BEGIN {
   use FindBin;
-  use lib "$FindBin::Bin/../../";
+  use lib "$FindBin::RealBin/../../";
   use_ok('GAL::Annotation');
 }
 
@@ -14,8 +14,9 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-my $object = GAL::Annotation->new();
-isa_ok($object, 'GAL::Annotation');
+my $data_file = 'data/dmel-4-r5.24.partial.gff';
+my $annotation = GAL::Annotation->new($data_file);
+isa_ok($annotation, 'GAL::Annotation');
 
 # To get a list of all of the subs and throws:
 # Select an empty line and then: C-u M-| grep -nP '^sub ' ../Class.pm

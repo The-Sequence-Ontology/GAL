@@ -46,8 +46,9 @@ my @uniq = $list->uniq;
 ok(scalar @uniq == 6, '$list->uniq');
 
 # TEST 10
-my $random_element = $list->random_pick;
-ok($random_element =~ /^(red|blue|green|yellow|orange|purple)$/, '$list->count');
+my ($random_element) = $list->random_pick(1);
+ok($random_element =~ /^(red|blue|green|yellow|orange|purple)$/,
+   '$list->random_pick');
 
 ################################################################################
 ################################# Ways to Test #################################

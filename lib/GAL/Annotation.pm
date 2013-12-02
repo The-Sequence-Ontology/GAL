@@ -1,4 +1,4 @@
-ackage GAL::Annotation;
+package GAL::Annotation;
 
 use strict;
 use warnings;
