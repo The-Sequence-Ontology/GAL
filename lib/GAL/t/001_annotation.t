@@ -4,38 +4,17 @@ use strict;
 use Test::More  'no_plan'; # tests => 17;
 
 BEGIN {
-	use lib '../../';
-	#TEST 1
-	use_ok('GAL::Annotation');
+    use FindBin;
+    use lib "$FindBin::RealBin/../../";
+    use_ok('GAL::Annotation');
 }
 
-my $path = $0;
-$path =~ s/[^\/]+$//;
-$path ||= '.';
-chdir($path);
-
-# TEST 2
-my $annotation = GAL::Annotation->new();
-isa_ok($annotation, 'GAL::Annotation');
-
-# TEST 
-isa_ok($annotation->parser(class => 'gff3'), 'GAL::Parser::gff3', '$annotation->parser');
-
-# TEST 
-isa_ok($annotation->storage(dsn   => 'DBI:SQLite:data/test_storage.sqlite',
-			    class => 'SQLite'
-			   ), 'GAL::Storage::SQLite', '$annotation->storage');
-
-# TEST 
+chdir $FindBin::RealBin;
 
 my $data_file = 'data/dmel-4-r5.24.partial.gff';
-my $db_file;
-($db_file = $data_file) =~ s/\.gff$/.sqlite/;
-`rm -f $db_file` if -e $db_file;
-ok($annotation->load_files($data_file),
-   '$annotation->load_files');
+my $annotation = GAL::Annotation->new($data_file);
+isa_ok($annotation, 'GAL::Annotation');
 
-# TEST 
 isa_ok($annotation->schema, 'GAL::Schema', '$annotation->schema');
 
 my $features = $annotation->features;
@@ -45,7 +24,6 @@ while (my $feature = $features->next) {
   ok($feature->seqid, '$feature->seqid');
 }
 
-# TEST 
 my $annotation1 = GAL::Annotation->new('./data/dmel-4-r5.24.partial.gff');
 isa_ok($annotation, 'GAL::Annotation');
 

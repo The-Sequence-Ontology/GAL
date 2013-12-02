@@ -373,8 +373,8 @@ sub shuffle {
 
 =cut
 
-sub shuffle {
-  mu $self = shift;
+sub in_place_shuffle {
+  my $self = shift;
   $self->list([$self->shuffle]);
 }
 

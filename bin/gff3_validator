@@ -45,11 +45,13 @@ if ($help) {
  exit(0);
 }
 
-my $gff3_file = shift;
+my @gff3_files = @ARGV;
 
-die "$usage\n\nFATAL : missing_gff3_file : GFF3 file required\n" unless $gff3_file;
+die "$usage\n\nFATAL : missing_gff3_file : GFF3 file required\n" unless $gff3_files[0];
 
-validate_gff3($gff3_file, $so_file);
+for my $gff3_file (@gff3_files) {
+    validate_gff3($gff3_file, $so_file);
+}
 
 #-----------------------------------------------------------------------------
 #-------------------------------- SUBROUTINES --------------------------------

@@ -3,6 +3,10 @@
 use strict;
 use warnings;
 use Getopt::Long;
+
+use FindBin;
+use lib "$FindBin::RealBin/../lib/";
+
 use GAL::Annotation;
 use GAL::List;
 
@@ -74,8 +78,7 @@ for my $type (@types) {
   next unless %counts;
   print "$type\n";
   for my $child_type (keys %counts) {
-    my $list = GAL::List::Numeric->new($counts{$child_type});
-    print "$child_type\t" . $list->mean;
+    print "$child_type\t" . $counts{$child_type};
     print "\n";
     print '';
   }
