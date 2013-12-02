@@ -1,0 +1,10 @@
+chr1	refGene	exon	207262584	207262934	.	+	.	gene_id "C4BPB"; transcript_id "NM_001017364"; exon_number "1"; exon_id "NM_001017364.1"; gene_name "C4BPB";
+chr1	refGene	CDS	207262877	207262934	.	+	0	gene_id "C4BPB"; transcript_id "NM_001017364"; exon_number "1"; exon_id "NM_001017364.1"; gene_name "C4BPB";
+chr1	refGene	exon	207263656	207263826	.	+	.	gene_id "C4BPB"; transcript_id "NM_001017364"; exon_number "2"; exon_id "NM_001017364.2"; gene_name "C4BPB";
+chr1	refGene	CDS	207263656	207263826	.	+	2	gene_id "C4BPB"; transcript_id "NM_001017364"; exon_number "2"; exon_id "NM_001017364.2"; gene_name "C4BPB";
+chr1	refGene	exon	207264989	207265165	.	+	.	gene_id "C4BPB"; transcript_id "NM_001017364"; exon_number "3"; exon_id "NM_001017364.3"; gene_name "C4BPB";
+chr1	refGene	CDS	207264989	207265165	.	+	2	gene_id "C4BPB"; transcript_id "NM_001017364"; exon_number "3"; exon_id "NM_001017364.3"; gene_name "C4BPB";
+chr1	refGene	exon	207269867	207269960	.	+	.	gene_id "C4BPB"; transcript_id "NM_001017364"; exon_number "4"; exon_id "NM_001017364.4"; gene_name "C4BPB";
+chr1	refGene	CDS	207269867	207269960	.	+	2	gene_id "C4BPB"; transcript_id "NM_001017364"; exon_number "4"; exon_id "NM_001017364.4"; gene_name "C4BPB";
+chr1	refGene	exon	207271495	207271609	.	+	.	gene_id "C4BPB"; transcript_id "NM_001017364"; exon_number "5"; exon_id "NM_001017364.5"; gene_name "C4BPB";
+chr1	refGene	CDS	207271495	207271609	.	+	1	gene_id "C4BPB"; transcript_id "NM_001017364"; exon_number "5"; exon_id "NM_001017364.5"; gene_name "C4BPB";
