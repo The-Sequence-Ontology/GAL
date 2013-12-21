@@ -387,8 +387,12 @@ sub load_files {
   for my $file (@{$files}) {
     $parser->file($file);
     $self->info('loading_database', $file);
+    my $counter = 0;
     while (my $feature = $parser->next_feature_hash) {
       $self->add_features_to_buffer($feature);
+      if (++$counter % 10000 == 0) {
+	$self->info('loading_database', "Loaded $counter features");
+      }
     }
     $self->flush_buffer;
     $self->info('finished_loading_database', $file);
