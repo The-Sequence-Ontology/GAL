@@ -17,6 +17,13 @@ my $tool = GAL::Run->new(path => $path,
 
 $tool->verbosity('debug');
 
+################################################################################
+# Testing that gtf2gff3 compiles and returns usage statement
+################################################################################
+
+ok(! $tool->run(cl_args => '--help'), 'gtf2gff3 complies');
+like($tool->get_stdout, qr/Synopsis/, 'gtf2gff3 prints usage statement');
+
 # ~/GAL/bin/gtf2gff3  data/augustus_short.gtf           >  augustus_short.gff3           2>  augustus_short.err           &
 # ~/GAL/bin/gtf2gff3  data/cufflinks_short.gtf          >  cufflinks_short.gff3          2>  cufflinks_short.err          &
 # ~/GAL/bin/gtf2gff3  data/Danio.short.gtf              >  Danio.short.gff3              2>  Danio.short.err              &
@@ -29,118 +36,22 @@ $tool->verbosity('debug');
 # ~/GAL/bin/gtf2gff3  data/twinscan_chr1.short.gtf      >  twinscan_chr1.short.gff3      2>  twinscan_chr1.short.err      &
 # ~/GAL/bin/gtf2gff3  data/unknown_01_short.gtf         >  unknown_01_short.gff3         2>  unknown_01_short.err         &
 
+my $file;
 ################################################################################
-# Testing that fasta_tool compiles and returns usage statement
-################################################################################
-
-ok(! $tool->run(cl_args => '--help'), 'fasta_tool complies');
-like($tool->get_stdout, qr/Synopsis/, 'fasta_tool prints usage statement');
-
-################################################################################
-# Testing fasta_tool --split data/multi_fasta.fa
+# Testing gtf2gff3
 ################################################################################
 
-my @cl_args = ('--split',
-	       "$FindBin::Bin/data/multi_fasta.fa",
+$file = "$FindBin::Bin/data/data/augustus_short.gtf";
+my @cl_args = ($file,
 	      );
 
-ok(! $tool->run(cl_args => \@cl_args), 'fasta_tool --split');
+ok(! $tool->run(cl_args => \@cl_args), 'gtf2gff3 augustus_short.gtf');
 
-my %valid_md5 = ('multi_fasta_01.fasta' => 'e6a0135c236c6f7e6ad57c97a58cc594',
-		 'multi_fasta_02.fasta' => '60c0ec8808a51774004a30222bd5cf3e',
-		 'multi_fasta_03.fasta' => '697801c649d4471d31c5250371bbd8ea'
-		);
-
-for my $file (keys %valid_md5) {
-  my $md5_sum = `md5sum $file`;
-  chomp $md5_sum;
-  $md5_sum =~ s/(\S+).*/$1/;
-  ok($valid_md5{$file} eq $md5_sum, "fasta_tool --split produces valid output for $file");
-  $tool->clean_up($file);
-}
-
-$tool->clean_up();
-
-################################################################################
-# Testing fasta_tool --eval_code data/test.fa
-################################################################################
-
-@cl_args = ('--eval_code "\$seq =~ /[a-z]+/"',
-	    "$FindBin::Bin/data/multi_fasta.fa",
-	   );
-
-ok(! $tool->run(cl_args => \@cl_args), 'fasta_tool --eval_code');
-
-ok($tool->get_stdout =~ />multi_fasta_0[12]/,
-   "fasta_tool --eval_code keeps correct sequences");
-
-ok($tool->get_stdout !~ />multi_fasta_03]/,
-   "fasta_tool --eval_code discards correct sequences");
-
-$tool->clean_up();
-
-################################################################################
-# Testing fasta_tool --arg data/test.fa
-################################################################################
-#
-# my @cl_args = ('--arg',
-#	       "$FindBin::Bin/data/file.fa",
-#	      );
-#
-# ok(! $tool->run(cl_args => \@cl_args), 'fasta_tool --arg');
-#
-# ok($tool->get_stdout, "fasta_tool --arg produces valid output");
-#
-# $tool->clean_up();
-
-
-# Test these options:
-# eval_all
-# extract_ids
-# grep_header
-# grepv_header
-# mRNAseq
-# EST
-# grep_seq
-# grepv_seq
-# fix_prot
-# translate
-# trim_maker_utr
-# seq_only
-# nt_count
-# seq_length
-# total_length
-# n50
-# tab
-# print_seq
-# reverse_order
-# rev_comp{
-# uniq
-# uniq_sub
-# shuffle_order
-# shuffle_seq
-# shuffle_codon
-# shuffle_pick
-# remove_ids
-# select_ids
-# print_this_seq
-# wrap_seq
-# get_header
-# shuffle
-# swap_ids
-# subseq
-# tile_seq
-
-#my $gff_file = "$FindBin::Bin/data/Dmel_genes_4.gff";
-#
-#my @cl_args = ('--arg1',
-#	       '--arg2 value',
-#	       $gff_file,
-#	      );
-#
-#ok($tool->run(cl_args => \@cl_args), 'fasta_tool does something');
-#ok($tool->get_stdout =~ /match something/,
-#   'fasta_tool has the correct output');
+my $md5_sum = `md5sum $file`;
+chomp $md5_sum;
+$md5_sum =~ s/(\S+).*/$1/;
+ok($valid_md5{$file} eq $md5_sum, "gtf2gff3 --split produces valid output for $file");
+$tool->clean_up($file);
 
 $tool->clean_up;
 done_testing();
