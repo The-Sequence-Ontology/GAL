@@ -159,12 +159,21 @@ ok($tool->get_stdout =~ /\t1\t39\t/,
 ok($tool->get_stdout =~ /\t401\t439\t/,
    'gff_tool --i_lcomplement has the correct output');
 
+################################################################################
+# Testing gff_tool --template ../../gff_tool_gvf_example.tt \
+#                  10Gen_Chinese_SNV_chr22.gvf
+################################################################################
 
+@cl_args = ('--template',
+	    "$FindBin::RealBin/../../templates/gff_tool_gvf_example.tt",
+	    "$FindBin::RealBin/data/10Gen_Chinese_SNV_chr22.gvf",
+	   );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gff_tool template runs');
+ok($tool->get_stdout =~ /chr22\tSNV\t14449341\t14449341\tG\tA,G/,
+   'gff_tool --template has the correct output');
 
 $tool->clean_up;
-
-
-
 
 done_testing();
 

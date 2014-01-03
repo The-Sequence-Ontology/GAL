@@ -6,6 +6,8 @@ use List::Util;
 use List::MoreUtils;
 use Statistics::Descriptive;
 use Set::IntSpan::Fast;
+use FindBin;
+use Template;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -233,6 +235,14 @@ to the altered copy of the feature.  All filters given are applied.
 
 --Reporting Options--
 
+  template
+
+		  Pass a Template Toolkit
+		  (http://www.template-toolkit.org/) formatted
+		  template and gff_tool will pass the variant data to
+		  the templating engine.  See the GAL/templates
+		  directory for example templates.
+
   validate|v
 
 		  The validate command provides simple validation for
@@ -416,60 +426,61 @@ gff_tool --hash_ag "push @{$h{$f->{type}}}, $f"          \
 my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
     $SEQIDS_FILE, $include, $exclude, $code, $filter, $overlaps,
     $genes, $merge, $blend, $sort, $alter, $hash_ag, $map_seqids,
-    $map_feature_ids, $validate, $stats, $print_gff, $sequence,
-    $splice_sequence, $fasta_only, $fasta_no, $fasta_add, $meta_only,
-    $meta_no, $meta_add, $add_ID, $pragmas, $features, $union,
-    $intersection, $lcomplement, $sdifference, $i_union,
+    $map_feature_ids, $template, $validate, $stats, $print_gff,
+    $sequence, $splice_sequence, $fasta_only, $fasta_no, $fasta_add,
+    $meta_only, $meta_no, $meta_add, $add_ID, $pragmas, $features,
+    $union, $intersection, $lcomplement, $sdifference, $i_union,
     $i_intersection, $i_lcomplement, $i_sdifference, $titv,
     $gvf_stats, $effect_stats, $gvf_sets, $fix_gvf,);
 
-my $opt_success = GetOptions('help|h'	       	 => \$help,
-			     'in_place|i'      	 => \$in_place,
-			     'out_ext|o=s'     	 => \$out_ext,
-			     'fasta|j=s'       	 => \$FASTA_FILE,
-			     'so_file=s'       	 => \$SO_FILE,
-			     'ids|d=s'	       	 => \$IDS_FILE,
-			     'seqids|d=s'      	 => \$SEQIDS_FILE,
-			     'include|n'       	 => \$include,
-			     'exclude|e'       	 => \$exclude,
-			     'code|c=s'	       	 => \$code,
-			     'filter|t'	       	 => \$filter,
-			     'overlaps=s'      	 => \$overlaps,
-			     'genes'	       	 => \$genes,
-			     'merge|m'	       	 => \$merge,
-			     'blend|b'	       	 => \$blend,
-			     'sort|s'	       	 => \$sort,
-			     'alter|a'	       	 => \$alter,
-			     'hash_ag=s'       	 => \$hash_ag,
-			     'map_seqids=s'    	 => \$map_seqids,
+my $opt_success = GetOptions('help|h'		 => \$help,
+			     'in_place|i'	 => \$in_place,
+			     'out_ext|o=s'	 => \$out_ext,
+			     'fasta|j=s'	 => \$FASTA_FILE,
+			     'so_file=s'	 => \$SO_FILE,
+			     'ids|d=s'		 => \$IDS_FILE,
+			     'seqids|d=s'	 => \$SEQIDS_FILE,
+			     'include|n'	 => \$include,
+			     'exclude|e'	 => \$exclude,
+			     'code|c=s'		 => \$code,
+			     'filter|t'		 => \$filter,
+			     'overlaps=s'	 => \$overlaps,
+			     'genes'		 => \$genes,
+			     'merge|m'		 => \$merge,
+			     'blend|b'		 => \$blend,
+			     'sort|s'		 => \$sort,
+			     'alter|a'		 => \$alter,
+			     'hash_ag=s'	 => \$hash_ag,
+			     'map_seqids=s'	 => \$map_seqids,
 			     'map_feature_ids=s' => \$map_feature_ids,
-			     'validate|v'      	 => \$validate,
-			     'stats|u'	       	 => \$stats,
-			     'sequence|p'      	 => \$sequence,
-			     'splice_sequence' 	 => \$splice_sequence,
-			     'print'	       	 => \$print_gff,
-			     'features|x'      	 => \$features,
-			     'fasta_only|r'    	 => \$fasta_only,
-			     'fasta_no|R'      	 => \$fasta_no,
-			     'fasta_add|q=s'   	 => \$fasta_add,
-			     'meta_only|y'     	 => \$meta_only,
-			     'meta_no|Y'       	 => \$meta_no,
-			     'meta_add|z=s'    	 => \$meta_add,
-			     'pragmas|w=s'     	 => \$pragmas,
-			     'add_ID|v'	       	 => \$add_ID,
-			     'union'	       	 => \$union,
-			     'intersection'    	 => \$intersection,
-			     'lcomplement'     	 => \$lcomplement,
-			     'sdifference'     	 => \$sdifference,
-			     'i_union'	       	 => \$i_union,
-			     'i_intersection'  	 => \$i_intersection,
-			     'i_lcomplement'   	 => \$i_lcomplement,
-			     'i_sdifference'   	 => \$i_sdifference,
-			     'titv'	       	 => \$titv,
-			     'gvf_stats'       	 => \$gvf_stats,
-			     'effect_stats'    	 => \$effect_stats,
-			     'gvf_sets'	       	 => \$gvf_sets,
-			     'fix_gvf'	       	 => \$fix_gvf,
+			     'template=s'        => \$template,
+			     'validate|v'	 => \$validate,
+			     'stats|u'		 => \$stats,
+			     'sequence|p'	 => \$sequence,
+			     'splice_sequence'	 => \$splice_sequence,
+			     'print'		 => \$print_gff,
+			     'features|x'	 => \$features,
+			     'fasta_only|r'	 => \$fasta_only,
+			     'fasta_no|R'	 => \$fasta_no,
+			     'fasta_add|q=s'	 => \$fasta_add,
+			     'meta_only|y'	 => \$meta_only,
+			     'meta_no|Y'	 => \$meta_no,
+			     'meta_add|z=s'	 => \$meta_add,
+			     'pragmas|w=s'	 => \$pragmas,
+			     'add_ID|v'		 => \$add_ID,
+			     'union'		 => \$union,
+			     'intersection'	 => \$intersection,
+			     'lcomplement'	 => \$lcomplement,
+			     'sdifference'	 => \$sdifference,
+			     'i_union'		 => \$i_union,
+			     'i_intersection'	 => \$i_intersection,
+			     'i_lcomplement'	 => \$i_lcomplement,
+			     'i_sdifference'	 => \$i_sdifference,
+			     'titv'		 => \$titv,
+			     'gvf_stats'	 => \$gvf_stats,
+			     'effect_stats'	 => \$effect_stats,
+			     'gvf_sets'		 => \$gvf_sets,
+			     'fix_gvf'		 => \$fix_gvf,
 			    );
 
 if (! $opt_success) {
@@ -498,41 +509,42 @@ my $IDS      = parse_ids($IDS_FILE)     if $IDS_FILE;
 my $SEQIDS   = parse_ids($SEQIDS_FILE)  if $SEQIDS_FILE;
 
 # Move the filter code to the passes_filters sub
-filter(\@files, $code)		  	    if $filter;
-overlaps(\@files, $overlaps)	  	    if $overlaps;
-genes(\@files)			  	    if $genes;
-merge(\@files)			  	    if $merge;
-blend_gff(\@files)		  	    if $blend;
-sort_gff(\@files)		  	    if $sort;
-alter_gff(\@files, $code)	  	    if $alter;
-hash_ag(\@files, $hash_ag, $code) 	    if $hash_ag;
-map_seqids(\@files, $map_seqids)  	    if $map_seqids;
+filter(\@files, $code)			    if $filter;
+overlaps(\@files, $overlaps)		    if $overlaps;
+genes(\@files)				    if $genes;
+merge(\@files)				    if $merge;
+blend_gff(\@files)			    if $blend;
+sort_gff(\@files)			    if $sort;
+alter_gff(\@files, $code)		    if $alter;
+hash_ag(\@files, $hash_ag, $code)	    if $hash_ag;
+map_seqids(\@files, $map_seqids)	    if $map_seqids;
 map_feature_ids(\@files, $map_feature_ids)  if $map_feature_ids;
-validate(\@files)		  	    if $validate;
-stats(\@files)			  	    if $stats;
-sequence(\@files)		  	    if $sequence;
-splice_sequence(\@files)	  	    if $splice_sequence;
-features(\@files)		  	    if $features;
-fasta_only(\@files)		  	    if $fasta_only;
-fasta_no(\@files)		  	    if $fasta_no;
-fasta_add(\@files, $fasta_add)	  	    if $fasta_add;
-meta_only(\@files)		  	    if $meta_only;
-#meta_no(\@files)		  	    if $meta_no;
-meta_add(\@files)		  	    if $meta_add;
-add_ID(\@files)			  	    if $add_ID;
-print_gff(\@files)		  	    if $print_gff;
-union(\@files)			  	    if $union;
-intersection(\@files)		  	    if $intersection;
-lcomplement(\@files)		  	    if $lcomplement;
-sdifference(\@files)		  	    if $sdifference;
-i_union(\@files)		  	    if $i_union;
-i_intersection(\@files)		  	    if $i_intersection;
-i_lcomplement(\@files)		  	    if $i_lcomplement;
-i_sdifference(\@files)		  	    if $i_sdifference;
-calc_titv(\@files)		  	    if $titv;
-gvf_stats(\@files)		  	    if $gvf_stats;
-effect_stats(\@files)		  	    if $effect_stats;
-gvf_sets(\@files)		  	    if $gvf_sets;
+template(\@files, $template)                if $template;
+validate(\@files)			    if $validate;
+stats(\@files)				    if $stats;
+sequence(\@files)			    if $sequence;
+splice_sequence(\@files)		    if $splice_sequence;
+features(\@files)			    if $features;
+fasta_only(\@files)			    if $fasta_only;
+fasta_no(\@files)			    if $fasta_no;
+fasta_add(\@files, $fasta_add)		    if $fasta_add;
+meta_only(\@files)			    if $meta_only;
+#meta_no(\@files)			    if $meta_no;
+meta_add(\@files)			    if $meta_add;
+add_ID(\@files)				    if $add_ID;
+print_gff(\@files)			    if $print_gff;
+union(\@files)				    if $union;
+intersection(\@files)			    if $intersection;
+lcomplement(\@files)			    if $lcomplement;
+sdifference(\@files)			    if $sdifference;
+i_union(\@files)			    if $i_union;
+i_intersection(\@files)			    if $i_intersection;
+i_lcomplement(\@files)			    if $i_lcomplement;
+i_sdifference(\@files)			    if $i_sdifference;
+calc_titv(\@files)			    if $titv;
+gvf_stats(\@files)			    if $gvf_stats;
+effect_stats(\@files)			    if $effect_stats;
+gvf_sets(\@files)			    if $gvf_sets;
 #pragma($pragma)			  if $pragma;
 
 #-----------------------------------------------------------------------------
@@ -631,15 +643,15 @@ sub genes {
 		mRNA		=> 1,
 		ncRNA           => 1,
 		tRNA            => 1,
-		piRNA	  	=> 1,
-		rRNA	  	=> 1,
-		rasiRNA	  	=> 1,
-		scRNA	  	=> 1,
-		siRNA	  	=> 1,
-		snRNA	  	=> 1,
-		snoRNA	  	=> 1,
-		stRNA	  	=> 1,
-		tasiRNA	  	=> 1,
+		piRNA		=> 1,
+		rRNA		=> 1,
+		rasiRNA		=> 1,
+		scRNA		=> 1,
+		siRNA		=> 1,
+		snRNA		=> 1,
+		snoRNA		=> 1,
+		stRNA		=> 1,
+		tasiRNA		=> 1,
 		transcript	=> 1,
 		exon		=> 1,
 		CDS		=> 1,
@@ -1901,6 +1913,47 @@ sub validate {
 }
 
 #-----------------------------------------------------------------------------
+#    template	  Pass a Template Toolkit
+#                 (http://www.template-toolkit.org/) formatted
+#		  template and gff_tool will pass the variant data to
+#		  the templating engine.  See the GAL/templates
+#		  directory for example templates.
+#-----------------------------------------------------------------------------
+
+sub template {
+
+  my ($files, $template) = @_;
+
+  eval{require Template};
+  if ($@) {
+    print "$@\n";
+    handle_message('FATAL', 'failed_to_load_module', 'Template');
+  }
+
+  for my $file (@{$files}) {
+
+    my $tt = Template->new({
+			    INCLUDE_PATH => "$FindBin::RealBin/../../templates",
+			    ABSOLUTE     => 1,
+			    RELATIVE     => 1}) ||
+			      handle_message('FATAL', 'failed_to_initialize_template',
+					     Template->error());
+
+    my @features;
+
+    my $IN = fh_in($file);
+    while (my $f = next_feature_hash($IN)) {
+      push @features, $f;
+    }
+
+    my $rv = $tt->process($template,
+			  {features => \@features},
+			 ) || die Template->error();
+  }
+  exit(0);
+}
+
+#-----------------------------------------------------------------------------
 #  stats|u	  Return simple summary statistics for the given file.
 #		  (Not yet implimented)
 #-----------------------------------------------------------------------------
@@ -2521,25 +2574,25 @@ sub i_sdifference {
 #     my $files = shift;
 #     my (%diff_count, %diff_stash);
 #     for my $file (@files) {
-# 	my $IN = fh_in($file);
-# 	while (my $f = next_feature_hash($IN)) {
-# 	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
-# 	    # if ($set_seq) {
-# 	    #	my $a = $f->{attributes};
-# 	    #	my $ref_seq = $a->{Reference_seq}[0];
-# 	    #	my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
-# 	    #	$loc_id = join ':', ($loc_id, $ref_seq, $var_seq);
-# 	    # }
-# 	    $diff_stash{$loc_id} ||= $f;
-# 	    $diff_count{$loc_id}++;
-# 	}
+#	my $IN = fh_in($file);
+#	while (my $f = next_feature_hash($IN)) {
+#	    my $loc_id  = join ':', @{$f}{qw(seqid start end)};
+#	    # if ($set_seq) {
+#	    #	my $a = $f->{attributes};
+#	    #	my $ref_seq = $a->{Reference_seq}[0];
+#	    #	my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
+#	    #	$loc_id = join ':', ($loc_id, $ref_seq, $var_seq);
+#	    # }
+#	    $diff_stash{$loc_id} ||= $f;
+#	    $diff_count{$loc_id}++;
+#	}
 #     }
 #     my $OUT = fh_out();
 #     for my $loc_id (sort keys %diff_stash) {
-# 	if ($diff_count{$loc_id} == 1) {
-# 	    my $f = $diff_stash{$loc_id};
-# 	    print $OUT to_gff3($f);
-# 	}
+#	if ($diff_count{$loc_id} == 1) {
+#	    my $f = $diff_stash{$loc_id};
+#	    print $OUT to_gff3($f);
+#	}
 #     }
 #     exit;
 }
