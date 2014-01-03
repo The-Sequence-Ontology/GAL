@@ -1924,6 +1924,8 @@ sub template {
 
   my ($files, $template) = @_;
 
+  $meta_no = 1;
+
   eval{require Template};
   if ($@) {
     print "$@\n";
