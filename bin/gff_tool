@@ -374,8 +374,8 @@ to the altered copy of the feature.  All filters given are applied.
 		 file. (Not yet implimented)
   fix_gvf        Fix up some common errors in GVF files.  Currently it
 		 changes Genotype=(hetero|homo)zygous attributes to
-		 Zygosity=(hetero|homo)zygous and uniques the
-		 Variant_seq values.
+		 Zygosity=(hetero|homo)zygous uniques the Variant_seq
+		 values and removes homozygous reference variants.
 
 
 Code References:
@@ -545,6 +545,7 @@ calc_titv(\@files)			    if $titv;
 gvf_stats(\@files)			    if $gvf_stats;
 effect_stats(\@files)			    if $effect_stats;
 gvf_sets(\@files)			    if $gvf_sets;
+fix_gvf(\@files)                            if $fix_gvf;
 #pragma($pragma)			  if $pragma;
 
 #-----------------------------------------------------------------------------
@@ -2634,6 +2635,49 @@ sub gvf_sets {
 #	}
 #     }
   exit;
+}
+
+#-----------------------------------------------------------------------------
+# fix_gvf
+#
+# Fix up some common errors in GVF files.  Currently it changes
+# Genotype=(hetero|homo)zygous attributes to
+# Zygosity=(hetero|homo)zygous uniques the Variant_seq values and
+# removes homozygous reference variants.
+# 
+#-----------------------------------------------------------------------------
+
+sub fix_gvf {
+
+  my $files = shift;
+  my ($ti, $tv);
+
+  for my $file (@files) {
+    my $IN = fh_in($file);
+    my $OUT = fh_out($file);
+    print_pragmas($IN, $OUT);
+  VARIANT:
+    while (my $f = next_feature_hash($IN)) {
+      my $a = $f->{attributes};
+
+      # Fix Genotype
+      my $genotype = $a->{Genotype};
+      if (grep {/zygous$/} @{$genotype}) {
+	$a->{Zygosity} = $a->{Genotype};
+	delete $a->{Genotype};
+      }
+
+      # Unique Variant_seq
+      @{$a->{Variant_seq}} = List::MoreUtils::uniq(@{$a->{Variant_seq}});
+
+      # Remove homozygous reference
+      my $ref_seq = $a->{Reference_seq}[0];
+      my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
+
+      next VARIANT unless $var_seq;
+      print $OUT to_gff3($f);
+    }
+  }
 }
 
 #-----------------------------------------------------------------------------
