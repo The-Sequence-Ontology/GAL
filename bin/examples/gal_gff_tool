@@ -1,0 +1,821 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+gal_example_seq_features feature.gff3 genome.fasta
+
+Description:
+
+A script to do a lot of different operations on a GFF3 file leveraging
+the power of the GAL library to select, iterate, and provide method
+calls for features.
+
+
+Options:
+
+  select_ids
+
+    Given a list of IDs (comma separated on the command-line or
+    space/line separated in a file), exclude all features with the
+    given IDs from the current set of features.
+
+  exclude_ids
+
+    Given a list of IDs (comma separated on the command-line or
+    space/line separated in a file), exclude all features with the
+    given IDs from the current set of features.
+
+  select_seqids
+
+    Given a list of seqid (comma separated on the command-line or
+    space/line separated in a file), select all features one the given
+    seqids from the current set of features.
+
+  exclude_seqids
+
+    Given a list of seqids (comma separated on the command-line or
+    space/line separated in a file), exclude all features on the given
+    seqids from the current set of features.
+
+  select_source
+
+    Given a list of sources (comma separated on the command-line or
+    space/line separated in a file), select all features with the
+    given sources from the current set of features.
+
+  exclude_source
+
+    Given a list of sources (comma separated on the command-line or
+    space/line separated in a file), exclude all features with the
+    given sources  from the current set of features.
+
+  select_type
+
+    Given a list of types (comma separated on the command-line or
+    space/line separated in a file), select all features of the given
+    types from the current set of features.
+
+  exclude_type
+
+    Given a list of types (comma separated on the command-line or
+    space/line separated in a file), exclude all features of the given
+    types from the current set of features.
+
+  select_class
+
+    Select features of a given class.  Classes include:
+
+      coding_genes:     All protein_coding_genes
+      non-coding_genes: All protein_coding_genes
+      valid_proteins:   All transcripts that produce proteins without
+			internal stop codons.
+      invalid_proteins: All transcripts that produce proteins without
+			internal stop codons.
+      roots:            All features who are not part_of child to another
+			feature.
+      leaves:           All features who are not part_of parent to another
+			feature.
+
+  select_abstract
+
+    Method not yet implimented.
+
+  select_sql
+
+    Method not yet implimented.
+
+  select_union
+
+    Method not yet implimented.
+
+  select_intersection
+
+    Method not yet implimented.
+
+  select_lcomplement
+
+    Method not yet implimented.
+
+  select_sdifference
+
+    Method not yet implimented.
+
+  create_union
+
+    Method not yet implimented.
+
+  infer_genes
+
+    Method not yet implimented.
+
+  infer_introns
+
+    Method not yet implimented.
+
+  infer_UTRs
+
+    Method not yet implimented.
+
+  infer_start_stop
+
+    Method not yet implimented.
+
+  compress_genes
+
+    Method not yet implimented.
+
+  create_intersection
+
+    Method not yet implimented.
+
+  create_lcomplement
+
+    Method not yet implimented.
+
+  create_sdifference
+
+    Method not yet implimented.
+
+  apply
+
+    Method not yet implimented.
+
+  grep_features
+
+    Method not yet implimented.
+
+  template
+
+    Method not yet implimented.
+
+  validate
+
+    Method not yet implimented.
+
+  print_features
+
+    Method not yet implimented.
+
+  print_recursive
+
+    Method not yet implimented.
+
+  print_family
+
+    Method not yet implimented.
+
+  print_fasta
+
+    Method not yet implimented.
+
+  print_genomic_fasta
+
+    Method not yet implimented.
+
+  print_summary
+
+    Method not yet implimented.
+
+  print_gvf_summary
+
+    Method not yet implimented.
+
+  print_effect_stats
+
+    Method not yet implimented.
+
+";
+
+my ($help, $select_ids, $exclude_ids, $select_seqids, $exclude_seqids,
+    $select_source, $exclude_source, $select_type, $exclude_type,
+    $select_class, $select_abstract, $select_sql, $select_union,
+    $select_intersection, $select_lcomplement, $select_sdifference,
+    $create_union, $infer_genes, $infer_introns, $infer_UTRs,
+    $infer_start_stop, $compress_genes, $create_intersection,
+    $create_lcomplement, $create_sdifference, $apply, $grep_features,
+    $template, $validate, $print_features, $print_recursive,
+    $print_family, $print_fasta, $print_genomic_fasta, $print_summary,
+    $print_gvf_summary, $print_effect_stats);
+
+my $opt_success = GetOptions('help|h'                 =>  \$help,
+			     'select_ids=s'           =>  \$select_ids,
+			     'exclude_ids=s'          =>  \$exclude_ids,
+			     'select_seqids=s'        =>  \$select_seqids,
+			     'exclude_seqids=s'       =>  \$exclude_seqids,
+			     'select_source=s'        =>  \$select_source,
+			     'exclude_source=s'       =>  \$exclude_source,
+			     'select_type=s'          =>  \$select_type,
+			     'exclude_type=s'         =>  \$exclude_type,
+			     'select_class=s'         =>  \$select_class,
+			     'select_abstract=s'      =>  \$select_abstract,
+			     'select_sql=s'           =>  \$select_sql,
+			     'select_union=s'         =>  \$select_union,
+			     'select_intersection=s'  =>  \$select_intersection,
+			     'select_lcomplement=s'   =>  \$select_lcomplement,
+			     'select_sdifference=s'   =>  \$select_sdifference,
+			     'create_union=s'         =>  \$create_union,
+			     'infer_genes'            =>  \$infer_genes,
+			     'infer_introns'          =>  \$infer_introns,
+			     'infer_UTRs'             =>  \$infer_UTRs,
+			     'infer_start_stop'       =>  \$infer_start_stop,
+			     'compress_genes'         =>  \$compress_genes,
+			     'create_intersection=s'  =>  \$create_intersection,
+			     'create_lcomplement=s'   =>  \$create_lcomplement,
+			     'create_sdifference=s'   =>  \$create_sdifference,
+			     'apply=s'                =>  \$apply,
+			     'grep_features=s'        =>  \$grep_features,
+			     'template=s'             =>  \$template,
+			     'validate'               =>  \$validate,
+			     'print_features'         =>  \$print_features,
+			     'print_recursive'        =>  \$print_recursive,
+			     'print_family'           =>  \$print_family,
+			     'print_fasta'            =>  \$print_fasta,
+			     'print_genomic_fasta'    =>  \$print_genomic_fasta,
+			     'print_summary'          =>  \$print_summary,
+			     'print_gvf_summary'      =>  \$print_gvf_summary,
+			     'print_effect_stats'     =>  \$print_effect_stats,
+			    );
+
+die $usage unless $opt_success;
+if ($help) {
+  print $usage;
+  exit(0);
+}
+
+my ($gff3_file, $fasta_file) = @ARGV;
+
+die "$usage\n\nFATAL : missing_gff3_file : GFF3 file required\n"
+  unless $gff3_file;
+
+my $annotation = GAL::Annotation->new($gff3_file,
+				      $fasta_file);
+
+my $features = $annotation->features;
+
+select_ids(\$features, $select_ids)     if  $select_ids;
+exclude_ids(\$features, $exclude_ids)   if  $exclude_ids;
+select_seqids(\$features)               if  $select_seqids;
+exclude_seqids(\$features)              if  $exclude_seqids;
+select_source(\$features)               if  $select_seqids;
+exclude_source(\$features)              if  $exclude_seqids;
+select_type(\$features)                 if  $select_seqids;
+exclude_type(\$features)                if  $exclude_seqids;
+select_class(\$features, $select_class) if  $select_class;
+select_abstract(\$features)             if  $select_abstract;
+select_sql(\$features)                  if  $select_sql;
+select_union(\$features)                if  $select_union;
+select_intersection(\$features)         if  $select_intersection;
+select_lcomplement(\$features)          if  $select_lcomplement;
+select_sdifference(\$features)          if  $select_sdifference;
+
+infer_genes(\$features)                 if  $infer_genes;
+infer_introns(\$features)               if  $infer_introns;
+infer_UTRs(\$features)                  if  $infer_UTRs;
+infer_start_stop(\$features)            if  $infer_start_stop;
+compress_genes(\$features)              if  $compress_genes;
+
+create_union($features)                if  $create_union;
+create_intersection($features)         if  $create_intersection;
+create_lcomplement($features)          if  $create_lcomplement;
+create_sdifference($features)          if  $create_sdifference;
+
+apply($features)                       if  $apply;
+grep_features($features)               if  $grep_features;
+template($features)                    if  $template;
+validate($features)                    if  $validate;
+print_features($features)              if  $print_features;
+print_recursive($features)             if  $print_recursive;
+print_family($features)                if  $print_family;
+print_fasta($features)                 if  $print_fasta;
+print_genomic_fasta($features)         if  $print_genomic_fasta;
+print_summary($features)               if  $print_summary;
+print_gvf_summary($features)           if  $print_gvf_summary;
+print_effect_stats($features)          if  $print_effect_stats;
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+# select_ids
+#
+#   Given a list of IDs (comma separated on the command-line or
+#   space/line separated in a file), exclude all given feature IDs
+#   from the current set of features.
+#-----------------------------------------------------------------------------
+
+sub select_ids {
+  my ($features, $select_ids) = @_;
+  my @ids;
+
+  if (-e $select_ids) {
+    my $fh = $$features->result_source->schema->annotation->open_file($select_ids);
+    while (<$fh>) {
+      next if /^\#/;
+      my @these_ids = split /\s+/, $_;
+      push @ids, @these_ids;
+    }
+  }
+  else {
+    @ids = split /,/, $select_ids;
+  }
+
+  #Handle large query lists (SQL can't handle large lists with IN)
+  if (scalar @ids > 500) {
+    while (my @these_ids = splice(@ids, 0, 500)) {
+      $$features = $$features->search('feature_id' => {-in => \@these_ids});
+    }
+    print '';
+  }
+  else {
+    $$features = $$features->search({feature_id => { -in => \@ids}});
+  }
+}
+
+#--------------------------------------------------------------------------------
+# exclude_ids
+#
+#   Given a list of IDs (comma separated on the command-line or
+#   space/line separated in a file), exclude all given feature IDs
+#   from the current set of features.
+#-----------------------------------------------------------------------------
+
+sub exclude_ids {
+  my ($features, $select_ids) = @_;
+
+  my @ids;
+
+  if (-e $select_ids) {
+    my $fh = $$features->result_source->schema->annotation->open_file($select_ids);
+    while (<$fh>) {
+      next if /^\#/;
+      my @these_ids = split /\s+/, $_;
+      push @ids, @these_ids;
+    }
+  }
+  else {
+    @ids = split /,/, $select_ids;
+  }
+
+  #Handle large query lists (SQL can't handle large lists with IN)
+  if (scalar @ids > 500) {
+    my @these_ids = @ids;
+    while (my @chunk = splice(@these_ids, 0, 500)) {
+      $$features = $$features->search({feature_id => { -not_in => \@ids}});
+      #$$features = $$features->search_large_list('feature_id', 'in', \@ids);
+    }
+  }
+  else {
+    $$features = $$features->search({feature_id => { -in => \@ids}});
+  }
+}
+
+#--------------------------------------------------------------------------------
+
+sub select_seqids {
+  my ($features, $select_seqids) = @_;
+
+  my @ids;
+
+  if (-e $select_seqids) {
+    my $fh = $$features->result_source->schema->annotation->open_file($select_seqids);
+    while (<$fh>) {
+      next if /^\#/;
+      my @these_ids = split /\s+/, $_;
+      push @ids, @these_ids;
+    }
+  }
+  else {
+    @ids = split /,/, $select_seqids;
+  }
+
+  $$features = $$features->search({feature_id => { -in => \@ids}});
+}
+
+#--------------------------------------------------------------------------------
+
+sub exclude_seqids {
+  my ($features, $exclude_seqids) = @_;
+
+  my @ids;
+
+  if (-e $exclude_seqids) {
+    my $fh = $$features->result_source->schema->annotation->open_file($exclude_seqids);
+    while (<$fh>) {
+      next if /^\#/;
+      my @these_ids = split /\s+/, $_;
+      push @ids, @these_ids;
+    }
+  }
+  else {
+    @ids = split /,/, $exclude_seqids;
+  }
+
+  $$features = $$features->search({feature_id => { -not_in => \@ids}});
+}
+
+#--------------------------------------------------------------------------------
+
+sub select_source {
+  my ($features, $select_source) = @_;
+
+  my @ids;
+
+  if (-e $select_source) {
+    my $fh = $$features->result_source->schema->annotation->open_file($select_source);
+    while (<$fh>) {
+      next if /^\#/;
+      my @these_ids = split /\s+/, $_;
+      push @ids, @these_ids;
+    }
+  }
+  else {
+    @ids = split /,/, $select_source;
+  }
+
+  $$features = $$features->search({feature_id => { -in => \@ids}});
+}
+
+#--------------------------------------------------------------------------------
+
+sub exclude_source {
+  my ($features, $exclude_source) = @_;
+
+  my @ids;
+
+  if (-e $exclude_source) {
+    my $fh = $$features->result_source->schema->annotation->open_file($exclude_source);
+    while (<$fh>) {
+      next if /^\#/;
+      my @these_ids = split /\s+/, $_;
+      push @ids, @these_ids;
+    }
+  }
+  else {
+    @ids = split /,/, $exclude_source;
+  }
+
+  $$features = $$features->search({feature_id => { -not_in => \@ids}});
+}
+
+#--------------------------------------------------------------------------------
+
+sub select_type {
+  my ($features, $select_types) = @_;
+
+  my @ids;
+
+  if (-e $select_types) {
+    my $fh = $$features->result_source->schema->annotation->open_file($select_types);
+    while (<$fh>) {
+      next if /^\#/;
+      my @these_ids = split /\s+/, $_;
+      push @ids, @these_ids;
+    }
+  }
+  else {
+    @ids = split /,/, $select_types;
+  }
+
+  $$features = $$features->search({feature_id => { -in => \@ids}});
+}
+
+#--------------------------------------------------------------------------------
+
+sub exclude_type {
+  my ($features, $exclude_types) = @_;
+
+  my @ids;
+
+  if (-e $exclude_types) {
+    my $fh = $$features->result_source->schema->annotation->open_file($exclude_types);
+    while (<$fh>) {
+      next if /^\#/;
+      my @these_ids = split /\s+/, $_;
+      push @ids, @these_ids;
+    }
+  }
+  else {
+    @ids = split /,/, $exclude_types;
+  }
+
+  $$features = $$features->search({feature_id => { -not_in => \@ids}});
+}
+
+#--------------------------------------------------------------------------------
+# select_class
+#
+#   Select features of a given class.  Classes include:
+#
+#     coding_genes:     All protein_coding_genes
+#     non-coding_genes: All protein_coding_genes
+#     valid_proteins:   All transcripts that produce proteins without
+#                       internal stop codons.
+#     invalid_proteins: All transcripts that produce proteins without
+#                       internal stop codons.
+#     roots:            All features who are not part_of child to another
+#                       feature.
+#     leaves:           All features who are not part_of parent to another
+#                       feature.
+#--------------------------------------------------------------------------------
+
+sub select_class {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'select_class');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub select_abstract {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'select_abstract');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub select_sql {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'select_sql');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub select_union {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'select_union');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub select_intersection {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'select_intersection');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub select_lcomplement {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'select_lcomplement');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub select_sdifference {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'select_sdifference');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub create_union {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'create_union');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub infer_genes {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'infer_genes');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub infer_introns {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'infer_introns');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub infer_UTRs {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'infer_UTRs');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub infer_start_stop {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'infer_start_stop');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub compress_genes {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'compress_genes');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub create_intersection {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'create_intersection');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub create_lcomplement {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'create_lcomplement');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub create_sdifference {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'create_sdifference');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub apply {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'apply');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub grep_features {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'grep_features');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub template {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'template');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub validate {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'validate');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub print_features {
+  my ($features) = @_;
+
+  while (my $feature = $features->next) {
+    print $feature->to_gff3;
+    print "\n";
+  }
+}
+
+#--------------------------------------------------------------------------------
+
+sub print_recursive {
+  my ($features) = @_;
+
+  select_roots(\$features);
+  while (my $feature = $features->next) {
+    print $feature->to_gff3_recursive;
+    print "\n";
+  }
+}
+
+#--------------------------------------------------------------------------------
+
+sub print_family {
+  my ($features) = @_;
+
+  while (my $feature = $features->next) {
+    my $root = $feature->root_ancestor;
+    print $feature->to_gff3_recursive;
+    print "\n";
+  }
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'print_family');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub print_fasta {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'print_fasta');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub print_genomic_fasta {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'print_genomic_fasta');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub print_summary {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'print_summary');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub print_gvf_summary {
+  my ($features) = @_;
+
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'print_gvf_summary');
+
+}
+
+#--------------------------------------------------------------------------------
+
+sub print_effect_stats {
+  my ($features) = @_;
+
+  $features->result_source->schema->annotation->throw('method_not_implimented',
+						      'printy_effect_stats');
+
+}
+
+#--------------------------------------------------------------------------------
