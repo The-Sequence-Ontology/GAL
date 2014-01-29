@@ -80,10 +80,13 @@ sub CDS_seq_genomic {
 
   my $self = shift;
 
-  my $CDS_seq_genomic;
+  my $CDS_seq_genomic = '';
   for my $CDS (sort {$a->start <=> $b->start} $self->CDSs) {
     my $this_seq = $CDS->genomic_seq;
     $CDS_seq_genomic .= $this_seq if $this_seq;
+  }
+  if (! $CDS_seq_genomic) {
+      $self->warn('no_CDS_seq_available', $self->to_gff3);
   }
   return $CDS_seq_genomic;
 }
@@ -129,7 +132,11 @@ sub protein_seq {
 
   my $CDS_seq = $self->CDS_seq;
   my $protein_seq = $self->annotation->translate($CDS_seq);
-  $protein_seq =~ s/\*$//;
+  $protein_seq ||= '';
+  if (! $protein_seq) {
+      $self->warn('no_protein_sequence_available', $self->to_gff3);
+  }
+  $protein_seq =~ s/\*$// if $protein_seq;
   return $protein_seq;
 }
 

@@ -313,8 +313,8 @@ sub minstr {
                                         <pre>
 
 sub shuffle {
-  mu $self = shift;
-  $self->list([$self->shuffle]);
+  return wantarray ? List::Util::shuffle(shift->list) :
+    [List::Util::shuffle(shift->list)];
 }
 </pre></div>
 

@@ -426,8 +426,8 @@ sub category_counts {
                                         <pre>
 
 sub shuffle {
-  mu $self = shift;
-  $self->list([$self->shuffle]);
+  return wantarray ? List::Util::shuffle(shift->list) :
+    [List::Util::shuffle(shift->list)];
 }
 </pre></div>
 
@@ -438,6 +438,16 @@ sub shuffle {
  Args    : N/A
 
 </pre><h2 id="in_place_shuffle">in_place_shuffle</h2>
+
+<p><a href="#" onclick="toggleCode('method_in_place_shuffle');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_in_place_shuffle">
+                                        <pre>
+
+sub in_place_shuffle {
+  my $self = shift;
+  $self->list([$self->shuffle]);
+}
+</pre></div>
 
 <pre> Title   : in_place_shuffle
  Usage   : $list = $self-&gt;in_place_shuffle()

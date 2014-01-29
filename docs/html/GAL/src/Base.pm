@@ -528,7 +528,7 @@ sub debug {
 
 #-----------------------------------------------------------------------------
 
-=Head2 wrap_text
+=head2 wrap_text
 
  Title   : wrap_text
  Usage   : $text = $self->wrap_text($text, 50);
@@ -1395,6 +1395,36 @@ sub float_ge {
 	$A =~ s/\.//;
 	$B =~ s/\.//;
 	return $A >= $B;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 open_file
+
+ Title   : open_file
+ Usage   : $base->open_file($file);
+ Function: Open a given file for reading and return a filehandle.
+ Returns : A filehandle
+ Args    : A file path/name
+
+=cut
+
+sub open_file {
+
+  my ($self, $file) = @_;
+
+  if (! defined $file) {
+    $self->throw('file_does_not_exist', $file);
+  }
+  if (! -e $file) {
+    $self->throw('file_does_not_exist', $file);
+  }
+  if (! -r $file) {
+    $self->throw('cant_read_file', $file);
+  }
+  open(my $FH, '<', $file) || $self->throw('cant_open_file_for_reading', $file);
+
+  return $FH;
 }
 
 #-----------------------------------------------------------------------------
