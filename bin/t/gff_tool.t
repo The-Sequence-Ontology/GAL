@@ -161,12 +161,12 @@ ok($tool->get_stdout =~ /\t401\t439\t/,
 
 ################################################################################
 # Testing gff_tool --template ../../gff_tool_gvf_example.tt \
-#                  10Gen_Chinese_SNV_chr22.gvf
+#                  clinvar_100_rnd_SNV.vat.gvf
 ################################################################################
 
 @cl_args = ('--template',
 	    "$FindBin::RealBin/../../templates/gff_tool_gvf_example.tt",
-	    "$FindBin::RealBin/data/10Gen_Chinese_SNV_chr22.gvf",
+	    "$FindBin::RealBin/data/clinvar_100_rnd_SNV.vat.gvf",
 	   );
 
 ok(! $tool->run(cl_args => \@cl_args), 'gff_tool template runs');
