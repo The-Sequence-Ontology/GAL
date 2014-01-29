@@ -528,7 +528,7 @@ sub debug {
 
 #-----------------------------------------------------------------------------
 
-=Head2 wrap_text
+=head2 wrap_text
 
  Title   : wrap_text
  Usage   : $text = $self->wrap_text($text, 50);
