@@ -170,7 +170,7 @@ ok($tool->get_stdout =~ /\t401\t439\t/,
 	   );
 
 ok(! $tool->run(cl_args => \@cl_args), 'gff_tool template runs');
-ok($tool->get_stdout =~ /chr22\tSNV\t14449341\t14449341\tG\tA,G/,
+ok($tool->get_stdout =~ /chr22:14449341-14449341\tSNV\tG\tA,G/,
    'gff_tool --template has the correct output');
 
 $tool->clean_up;
