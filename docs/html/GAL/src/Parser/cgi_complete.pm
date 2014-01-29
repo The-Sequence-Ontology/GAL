@@ -46,6 +46,8 @@ appropriate attributes:
 
 These attributes are inhereted from L<GAL::Parser>.
 
+=over
+
 =item * C<< file => feature_file.txt >>
 
 This optional parameter provides the filename for the file containing
@@ -57,6 +59,8 @@ the following fh parameter must be set.
 This optional parameter provides a filehandle to read data from. While
 this parameter is optional either it, or the following fh parameter
 must be set.
+
+=back
 
 =cut
 

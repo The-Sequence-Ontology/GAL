@@ -74,6 +74,7 @@
 	<li><a href="#warn">warn</a></li>
 	<li><a href="#info">info</a></li>
 	<li><a href="#debug">debug</a></li>
+	<li><a href="#wrap_text">wrap_text</a></li>
 	<li><a href="#trim_whitespace">trim_whitespace</a></li>
 	<li><a href="#prepare_args">prepare_args</a></li>
 	<li><a href="#set_attributes">set_attributes</a></li>
@@ -90,6 +91,7 @@
 	<li><a href="#float_le">float_le</a></li>
 	<li><a href="#float_gt">float_gt</a></li>
 	<li><a href="#float_ge">float_ge</a></li>
+	<li><a href="#open_file">open_file</a></li>
 	<li><a href="#get_transcript_types">get_transcript_types</a></li>
 </ul>
 </li>
@@ -552,7 +554,7 @@ sub debug {
 
 #-----------------------------------------------------------------------------
 
-=Head2 wrap_text
+=head2 wrap_text
 
  Title   : wrap_text
  Usage   : $text = $self->wrap_text($text, 50);
@@ -591,7 +593,9 @@ sub wrap_text {
            debug message. See the documentation for the method
            handle_message in this module for more details.
 
-</pre></dd><dd><pre> Title   : wrap_text
+</pre></dd><h2 id="wrap_text">wrap_text</h2>
+
+<dd><pre> Title   : wrap_text
  Usage   : $text = $self-&gt;wrap_text($text, 50);
  Function: Wrap text to the specified column width.  Default width is 50
            characters.
@@ -1464,6 +1468,37 @@ sub float_ge {
 	   otherwise 0.
  Args    : The two values to compare and optionally a integer value for
 	   the accuracy.  Accuracy defaults to 6 decimal places.
+
+</pre></dd><h2 id="open_file">open_file</h2>
+
+<p><a href="#" onclick="toggleCode('method_open_file');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_open_file">
+                                        <pre>
+
+sub open_file {
+
+  my ($self, $file) = @_;
+
+  if (! defined $file) {
+    $self->throw('file_does_not_exist', $file);
+  }
+  if (! -e $file) {
+    $self->throw('file_does_not_exist', $file);
+  }
+  if (! -r $file) {
+    $self->throw('cant_read_file', $file);
+  }
+  open(my $FH, '<', $file) || $self->throw('cant_open_file_for_reading', $file);
+
+  return $FH;
+}
+</pre></div>
+
+<dd><pre> Title   : open_file
+ Usage   : $base-&gt;open_file($file);
+ Function: Open a given file for reading and return a filehandle.
+ Returns : A filehandle
+ Args    : A file path/name
 
 </pre></dd><h2 id="get_transcript_types">get_transcript_types</h2>
 

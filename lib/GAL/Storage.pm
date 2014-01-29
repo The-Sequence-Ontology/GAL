@@ -670,12 +670,16 @@ sub create_database {
 
 =head1 DIAGNOSTICS
 
+=over
+
 =item C<subclass_must_override_this_method>
 
 <GAL::Storage> subclasses are required to override a number of methods.  You
 have called one of those methods and the author of the subclass has not
 written a method to override it - you should complain bitterly to the author
 of the subclass.
+
+=back
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
