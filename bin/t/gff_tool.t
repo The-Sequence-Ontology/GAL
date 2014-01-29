@@ -170,7 +170,7 @@ ok($tool->get_stdout =~ /\t401\t439\t/,
 	   );
 
 ok(! $tool->run(cl_args => \@cl_args), 'gff_tool template runs');
-ok($tool->get_stdout =~ /chr22:14449341-14449341\tSNV\tG\tA,G/,
+ok($tool->get_stdout =~ /chr13:32906969-32906969\tSNV\tC\tA,C\tmissense_variant 0 mRNA NM_000059,coding_sequence_variant 0 mRNA NM_000059,amino_acid_substitution 0 polypeptide NM_000059,gene_variant 0 gene BRCA2/,
    'gff_tool --template has the correct output');
 
 $tool->clean_up;
