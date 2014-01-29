@@ -1,0 +1,430 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::List::Categorical</title>
+<link rel="stylesheet" type="text/css" href="../podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="../index.html">GAL</a> &gt; Perl Modules &gt;
+  List-Categorical
+</div>
+<div>
+<a href="../src/List/Categorical.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#CONSTRUCTOR">CONSTRUCTOR</a><br />
+<ul>
+	<li><a href="#new">new</a></li>
+	<li><a href="#count_table">count_table</a></li>
+	<li><a href="#count">count</a></li>
+	<li><a href="#cardinality">cardinality</a></li>
+	<li><a href="#count_uniq">count_uniq</a></li>
+	<li><a href="#category_counts">category_counts</a></li>
+	<li><a href="#maxstr">maxstr</a></li>
+	<li><a href="#minstr">minstr</a></li>
+	<li><a href="#shuffle">shuffle</a></li>
+	<li><a href="#uniq">uniq</a></li>
+	<li><a href="#random_pick">random_pick</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>GAL::List::Categorical - Provide functions for categorical lists</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>This document describes GAL::List::Categorical version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<pre>    use GAL::List::Categorical;
+    my $list = GAL::List::Categorical-&gt;new(list =&gt; [qw(red blue green)];
+    my $count    = $list_catg-&gt;count;
+    $list_ref    = $list_catg-&gt;list;
+    @list_ary    = $list_catg-&gt;list;
+    $class       = $list_catg-&gt;class;
+    $cardinality = $list_catg-&gt;cardinality
+    $count_uniq  = $list_catg-&gt;count_uniq;
+    $max_str     = $list_catg-&gt;maxstr;
+    $min_str     = $list_catg-&gt;minstr;
+    @shff_list   = $list_catg-&gt;shuffle;
+    @uniq_list   = $list_catg-&gt;uniq;
+    $item        = $list_catg-&gt;random_pick;
+
+    # Create a list by passing an iterator that has a 'next' method.
+    # The values of the list will be accessed for each object via the
+    # method passed by the method attribute.
+
+    my $obj_list = GAL::List::Categorical-&gt;new(iterator =&gt; \@objs
+					       method   =&gt; 'type');
+
+    # Create a list by calling the given method on each object in
+    # list.
+
+    my $obj_list = GAL::List::Categorical-&gt;new(list   =&gt; \@objs
+					       method =&gt; 'type');
+
+    # Create a list by getting the value of the given key from each
+    # hash in the list.  This is an alias for the method attribute -
+    # GAL::List::Categorical will check each item in the list to see
+    # if it is an object or a hash reference and do the right thing.
+
+    my $hash_list = GAL::List::Categorical-&gt;new(list =&gt; \@objs
+						key  =&gt; 'type');
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>&lt;GAL::List::Categorical&gt; provides methods to work with list of
+categorical data.</p>
+
+<h1 id="CONSTRUCTOR">CONSTRUCTOR <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>To construct a GAL::List::Categorical simply pass a list as an array
+reference to the list attribute.  See the method and key attributes for
+additional ways to pass a list.</p>
+
+<pre>    my $list = GAL::List::Categorical-&gt;new(list =&gt; [qw(red blue green)];
+
+</pre><h2 id="new">new</h2>
+
+<p><a href="#" onclick="toggleCode('method_new');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_new">
+                                        <pre>
+
+sub new {
+	my ($class, @args) = @_;
+	my $self = $class->SUPER::new(@args);
+	$self->_parse_list;
+	return $self;
+}
+</pre></div>
+
+<pre>     Title   : new
+     Usage   : GAL::List::Categorical-&gt;new()
+     Function: Creates a GAL::List::Categorical object;
+     Returns : A GAL::List::Categorical object
+     Args    : list =&gt; \@list
+	       But see the method, key, and iterator attributes for other
+	       ways to construct a list.
+
+</pre><h2 id="count_table">count_table</h2>
+
+<p><a href="#" onclick="toggleCode('method_count_table');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_count_table">
+                                        <pre>
+
+sub count_table {
+  my ($self, $header) = @_;
+
+  my $table = Text::Table->new('|', $header, '|', 'Count', '|');
+  my @data;
+  my %counts = $self->category_counts();
+  for my $key (sort keys %counts) {
+    push @data, ['|', $key, '|', $counts{$key}, '|'];
+  }
+  $table->load(@data);
+  my $title_rule  = $table->rule('=', '=');
+  my $body_rule   = $table->rule('-', '+');
+  my $bottom_rule = $table->rule('-', '-');
+  my $text_table;
+  $text_table .= $title_rule;
+  $text_table .= $table->title;
+  $text_table .= $title_rule;
+  $text_table .= join $body_rule, $table->body;
+  $text_table .= $bottom_rule;
+  return $text_table;
+}
+</pre></div>
+
+<pre> Title   : count_table
+ Usage   : $a = $self-&gt;count_table()
+ Function: Returns a string with a text based table of the counts of
+           categories.
+ Returns : A string
+ Args    : A scalar containing the name for the list.
+
+</pre><h2 id="count">count</h2>
+
+<p><a href="#" onclick="toggleCode('method_count');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_count">
+                                        <pre>
+
+sub count {
+  my @list = shift->list;
+  return scalar @list;
+}
+</pre></div>
+
+<pre> Title   : count
+ Usage   : $count = $self-&gt;count()
+ Function: Return the count of elements in the list.
+ Returns : A integer
+ Args    : N/A
+
+</pre><h2 id="cardinality">cardinality</h2>
+
+<p><a href="#" onclick="toggleCode('method_cardinality');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_cardinality">
+                                        <pre>
+
+sub cardinality {
+  my $self = shift;
+  my @uniq = $self->uniq;
+  return scalar @uniq;
+}
+</pre></div>
+
+<pre> Title   : cardinality
+ Usage   : $a = $self-&gt;cardinality()
+ Function: Returns the number of uniq elements in the list
+ Returns : An integer
+ Args    : N/A
+
+</pre><h2 id="count_uniq">count_uniq</h2>
+
+<p><a href="#" onclick="toggleCode('method_count_uniq');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_count_uniq">
+                                        <pre>
+
+sub count_uniq {
+    return shift->cardinality;
+}
+</pre></div>
+
+<pre> Title   : count_uniq
+ Usage   : $a = $self-&gt;count_uniq()
+ Function: An alias for cardinality - returns the number of uniq elements in
+	   the list
+ Returns : An integer
+ Args    :
+
+</pre><h2 id="category_counts">category_counts</h2>
+
+<p><a href="#" onclick="toggleCode('method_category_counts');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_category_counts">
+                                        <pre>
+
+sub category_counts {
+    my $self = shift;
+    my %hash = $self->_hash_list;
+    return wantarray ? %hash : \%hash;
+}
+</pre></div>
+
+<pre> Title   : category_counts
+ Usage   : $a = $self-&gt;category_counts()
+ Function: Return a hash(reference) with uniq elements as keys and element
+	   counts as values.
+ Returns : A hash(reference)
+ Args    : N/A
+
+</pre><h2 id="maxstr">maxstr</h2>
+
+<p><a href="#" onclick="toggleCode('method_maxstr');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_maxstr">
+                                        <pre>
+
+sub maxstr {
+  my $self = shift;
+  my @list = $self->list;
+  return List::Util::maxstr(@list);
+}
+</pre></div>
+
+<pre> Title   : maxstr
+ Usage   : $a = $self-&gt;maxstr()
+ Function: Return the max value of the list sorted alphanumerically
+ Returns : Scalar string
+ Args    : N/A
+
+</pre><h2 id="minstr">minstr</h2>
+
+<p><a href="#" onclick="toggleCode('method_minstr');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_minstr">
+                                        <pre>
+
+sub minstr {
+  return List::Util::minstr(shift->list);
+}
+</pre></div>
+
+<pre> Title   : minstr
+ Usage   : $a = $self-&gt;minstr()
+ Function: Return the min value of the list sorted alphanumerically
+ Returns : Scalar string
+ Args    : N/A
+
+</pre><h2 id="shuffle">shuffle</h2>
+
+<p><a href="#" onclick="toggleCode('method_shuffle');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_shuffle">
+                                        <pre>
+
+sub shuffle {
+  mu $self = shift;
+  $self->list([$self->shuffle]);
+}
+</pre></div>
+
+<pre> Title   : shuffle
+ Usage   : $a = $self-&gt;shuffle()
+ Function: Returns the elements of the list in random order
+ Returns : An array/array reference
+ Args    : N/A
+
+</pre><h2 id="uniq">uniq</h2>
+
+<p><a href="#" onclick="toggleCode('method_uniq');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_uniq">
+                                        <pre>
+
+sub uniq {
+  my $self = shift;
+  my @uniq = List::MoreUtils::uniq($self->list);
+  return wantarray ? @uniq : \@uniq;
+}
+</pre></div>
+
+<pre> Title   : uniq
+ Usage   : $a = $self-&gt;uniq()
+ Function: Return the uniq elements in the list
+ Returns : An array/reference
+ Args    :
+
+</pre><h2 id="random_pick">random_pick</h2>
+
+<p><a href="#" onclick="toggleCode('method_random_pick');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_random_pick">
+                                        <pre>
+
+sub random_pick {
+    my ($self, $count) = @_;
+
+    my @random_list;
+    for (1 .. $count) {
+      my $random = int(rand($self->count));
+      push @random_list, $self->{list}[$random];
+    }
+    return wantarray ? @random_list : \@random_list;
+}
+</pre></div>
+
+<pre> Title   : random_pick
+ Usage   : $a = $self-&gt;random_pick()
+ Function: Return and element from the list at random.
+ Returns : A scalar element from the list
+ Args    : N/A
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>&lt;GAL::List::Categorical&gt; currently does not throw any warnings or
+errors.</p>
+
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>&lt;GAL::List::Categorical&gt; requires no configuration files or environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>&lt;BAL::Base&gt;</p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

@@ -1,10 +1,8 @@
 #!/usr/bin/perl
 
+# Interpreted by shell on systems that don't support the shebang...
 eval 'exec /usr/bin/perl  -S $0 ${1+"$@"}'
-    if 0; # not running under some shell
-
-eval 'exec /usr/bin/perl  -S $0 ${1+"$@"}'
-    if 0; # not running under some shell
+  if 0; # ...but perl will ignore the eval
 
 use strict;
 use warnings;
@@ -14,8 +12,6 @@ use lib "$FindBin::Bin/../perl/lib";
 use Getopt::Long;
 use Bio::SeqIO;
 use IO::All;
-
-
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -32,91 +28,130 @@ in a large variety of ways that can prove very very usful.  For options that
 provide the ability to evaluate code, use Perl.
 
 Options:
-  --summary
-      For functions that can report data for every sequence (nt_count),
-      use this flag to report only summary data for all sequences combined.
 
   --chunks <integer>
+
       Break up a single fasta file into the given number of chunks
 
   --split
+
       Split a multi-fasta into individual files.  One for each fasta.
 
   --eval_code <code>
-      Run the given code on (\$seq_obj, \$sequence or \$header).  If the code
-      block returns a positive value then the sequence is printed.  This can be
-      used to build complex and custom filters.
+
+      Run the given code on (\$seq_obj, \$seq or \$header).  If
+      the code block returns a positive value then the sequence is
+      printed.  This can be used to build complex and custom filters.
 
   --eval_all <code>
-      Run the given code on (\$seq_obj, \$sequence or \$header).  Prints all
-      sequences regardless of the return value of the evaled code.  This can
-      but used to perform operations (e.g. soft to hard masking with
-      s/[a-z]/N/g, but still print every sequence even if it's unaltered.
+
+      Run the given code on (\$seq_obj, \$sequence or \$header).
+      Prints all sequences regardless of the return value of the
+      evaled code.  This can but used to perform operations (e.g. soft
+      to hard masking with s/[a-z]/N/g, but still print every sequence
+      even if it's unaltered.
 
   --extract_ids <id_file.txt>
-      Extract all of the sequences who's IDs are found in the given file.
+
+      Extract all of the sequences who's IDs are found in the given
+      file.
 
   --grep_header <pattern>
+
       Grep through a multi fasta file and print out only the fasta
       sequences that have a match in the header. Use grepv_header for
       negation.
 
+  --grepv_header <pattern>
+
+      Grep through a multi fasta file and print out only the fasta
+      sequences that DO NOT have a match in the header.
+
   --grep_seq <pattern>
-      Grep throught a multi fasta file and print out only the fasta
+
+      Grep through a multi fasta file and print out only the fasta
       sequences that have a match in the sequence. Use grepv_seq for
       negation.
 
+  --grepv_seq <pattern>
+
+      Grep through a multi fasta file and print out only the fasta
+      sequences that DO NOT have a match in the sequence.
+
   --wrap <integer>
+
       Wrap the sequence output to a given number of columns.
 
   --translate <string>
+
       Translate a given nucleotide sequence to protein sequence.
       Accepts 0,1,2 (for the phase) or 'maker' if you want to use the
       frame from MAKER produced headers
 
   --trim_maker_utr
-      Prints MAKER produced transcipts without the leading and trailing
-      UTR sequence
+
+      Prints MAKER produced transcipts without the leading and
+      trailing UTR sequence
 
   --seq_only
+
       Print only the sequence (without the header) to STDOUT.  This
       can also be accomplished with grep -v '>' fasta_file.
 
   --nt_count
+
       Print the number and percentage of every nt/aa found in the
       sequence.
 
+  --summary
+
+      For functions that can report data for every sequence
+      (nt_count), use this flag to report only summary data for all
+      sequences combined.
+
   --length
+
       Print the length of each sequence.
 
   --total_length
+
       Print the total length of all sequences.
 
   --n50
+
       Calculate the N-50 (http://en.wikipedia.org/wiki/N50_statistic)
       of the sequences in the file.
 
   --tab
-      Print the header and sequence on the same line separated by a tab.
+
+      Print the header and sequence on the same line separated by a
+      tab.
 
   --table
+
       Print in table format rather than fasta format.
 
   --print
-      Print the sequence.  Use in conjuction with 'wrap' or other formatting
-      commands to reformat the sequence.
+
+      Print the sequence.  Use in conjuction with 'wrap' or other
+      formatting commands to reformat the sequence.
 
   --reverse
+
       Reverse the order of the sequences in a fasta file.
 
   --rev_seq
-      Reverse the order of the nt/aa in each sequence.
+
+      Reverse the sequence (the order of the nt/aa).
 
   --comp_seq
+
       Complement the nucleotide sequence.
 
   --rev_comp
-      Reverse compliment a sequence.  Same as --rev_seq && --comp_seq together.
+
+      Reverse compliment a sequence.  Same as --rev_seq && --comp_seq
+      together.
 
   --uniq
 
@@ -129,38 +164,46 @@ Options:
     are not perfect substrings of longer sequences.
 
   --shuffle_order
-      Randomize the order of sequences in a multi-fasta file.
+
+      Randomize the order of the sequences in a multi-fasta file.
 
   --shuffle_seq
-      Randomize the order of the nt/aa in each sequence.
+
+      Randomize the sequence (the order of the nt/aa).
 
   --shuffle_codon
+
       Randomize the order of the codons in a nucleotide sequence.
 
   --shuffle_pick
+
       Pick a given number of sequences from a multi-fasta file.
 
   --select
+
       Pass in a file with IDs and return sequences with these IDs.
 
   --remove
+
       Pass in a file with IDs and remove sequences with these IDs.
 
   --swap_ids
+
       Pass in a file with two columns of IDs and map the IDs in the
       fasta headers from the first column of the ID file to the second
-      column of the ID file.  If an ID in the fasta header is not found
-      in the first column of the ID file then issue a warning, but leave
-      the ID unmapped.
+      column of the ID file.  If an ID in the fasta header is not
+      found in the first column of the ID file then issue a warning,
+      but leave the ID unmapped.
 
   --fix_prot
+
     Fix protein fasta files for use as blast database.  Removes spaces
     and '*' and replaces any non amino acid codes with C.
 
   --subseq
+
     Grab a sub-sequence from a fasta file based on coordinates.  The
     requested coordinates are in the form seqid:start-end;
-
 
 ";
 
@@ -215,24 +258,24 @@ GetOptions('summary'        => \$summary,
 	  );
 
 my $file = shift;
-unless (($file && -r $file) || ! -t STDIN){
+unless ($file || ! -t STDIN){
     print $usage;
     exit;
 }
 
 if ($rev_comp) {$rev_seq++; $comp_seq++}
 
-my $warning = "\n\n" . ('#' x 40) . "\nThis function is not yet thouroughly tested!!\n" . ('#' x 40) . "\n\n";
+my @warning = ('WARN', 'method_not_thouroughly_tested', $0);
 
-warn $warning if grep {$_} ($extract_ids,
-			    $reverse,
-			    $rev_seq,
-			    $comp_seq,
-			    $shuffle_order,
-			    $shuffle_seq,
-			    $shuffle_codon,
-			    $shuffle_pick,
-			   );
+handle_message(@warning) if grep {$_} ($extract_ids,
+				       $reverse,
+				       $rev_seq,
+				       $comp_seq,
+				       $shuffle_order,
+				       $shuffle_seq,
+				       $shuffle_codon,
+				       $shuffle_pick,
+				      );
 
 # These functions handle their own printing;
 $print++ unless grep {$_} ($chunks,
@@ -277,10 +320,16 @@ if(defined $translate && $translate !~ /^\d+$/ && $translate ne 'maker'){
 
 my $IN;
 if (! $file && ! -t STDIN) {
-	open ($IN, "<&=STDIN") or die "Can't open STDIN\n";
+  open ($IN, "<&=STDIN") or handle_message('FATAL', 'cant_open_stdin');
+}
+elsif (! -e $file) {
+  handle_message('FATAL', 'file_does_not_exist', $file);
+}
+elsif (! -r $file) {
+  handle_message('FATAL', 'file_is_not_readable', $file);
 }
 else {
-	open ($IN, $file) or die "Can't open $file for reading: $!\n";
+	open ($IN, $file) or handle_message('FATAL', 'cant_open_file_for_reading', $file);
 }
 
 #Bioperl object for main fasta input file.
@@ -325,6 +374,15 @@ EST()                       if $EST;
 #-----------------------------------------------------------------------------
 #-------------------------------- SUBROUTINES --------------------------------
 #-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+#
+#  --chunks <integer>
+#
+#      Break up a single fasta file into the given number of chunks
+#
+#-----------------------------------------------------------------------------
+
 sub chunks {
 	my($file, $chunks) = @_;
 
@@ -355,7 +413,9 @@ sub chunks {
 		$out->write_seq($seq);
 	}
 }
+
 #-----------------------------------------------------------------------------
+
 sub get_output_stream{
     my ($outfile_base, $digits, $file_counter) = @_;
     my $file_count = $file_counter->();
@@ -367,7 +427,9 @@ sub get_output_stream{
 			      -format => 'fasta');
     return ($out, $file_name);
 }
+
 #-----------------------------------------------------------------------------
+
 sub make_file_counter {
     #Initialize the counter.
     my $file_counter = 0;
@@ -375,7 +437,15 @@ sub make_file_counter {
     #Increment the counter.
     return sub{$file_counter++}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --split
+#
+#      Split a multi-fasta into individual files.  One for each fasta.
+#
+#-----------------------------------------------------------------------------
+
 sub split_fasta {
 	while ( my $seq = $seq_io->next_seq() ) {
 		my $file_out = $seq->display_id . ".fasta";
@@ -387,7 +457,18 @@ sub split_fasta {
 		$out->write_seq($seq);
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --eval_code <code>
+#
+#      Run the given code on (\$seq_obj, \$seq or \$header).  If the code
+#      block returns a positive value then the sequence is printed.  This can be
+#      used to build complex and custom filters.
+#
+#-----------------------------------------------------------------------------
+
+
 sub eval_code {
 	my ($code) = @_;
 
@@ -396,13 +477,26 @@ sub eval_code {
 		my $seq = $seq_obj->seq;
 
 		my $return_value = eval $code;
-		die "Fatal Error in code ref:\n$@\n" if $@;
+		handle_message('FATAL', 'error_in_code_ref',
+			       "$code : $@") if $@;
 		next unless $return_value;
 		print_this_seq($header, $seq);
 	}
 
 }
-#-----------------------------------------------------------------------------s
+
+#-----------------------------------------------------------------------------
+#
+#  --eval_all <code>
+#
+#      Run the given code on (\$seq_obj, \$sequence or \$header).  Prints all
+#      sequences regardless of the return value of the evaled code.  This can
+#      but used to perform operations (e.g. soft to hard masking with
+#      s/[a-z]/N/g, but still print every sequence even if it's unaltered.
+#
+#-----------------------------------------------------------------------------
+
+
 sub eval_all {
 	my ($code) = @_;
 
@@ -411,17 +505,28 @@ sub eval_all {
 		my $seq = $seq_obj->seq;
 
 		eval $code;
-		die "Fatal Error in code ref:\n$@\n" if $@;
+		handle_message('FATAL', 'error_in_code_ref',
+			       "$code : $@") if $@;
 		print_this_seq($header, $seq);
 	}
-
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --extract_ids <id_file.txt>
+#
+#      Extract all of the sequences who's IDs are found in the given file.
+#
+#-----------------------------------------------------------------------------
+
+
 sub extract_ids {
 
     my $id_file = shift;
 
-    open(my $IN, '<', $id_file) or die "Can't open $id_file for reading\n$!\n";
+    open(my $IN, '<', $id_file) or handle_message('FATAL',
+						  'cant_open_file_for_reading',
+						  $id_file);
 
     my %ids = map {$_ => 1 unless (/^\#/ || ! $_)} (<$IN>);
 
@@ -435,7 +540,17 @@ sub extract_ids {
 	}
     }
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --grep_header <pattern>
+#
+#      Grep through a multi fasta file and print out only the fasta
+#      sequences that have a match in the header. Use grepv_header for
+#      negation.
+#
+#-----------------------------------------------------------------------------
+
 sub grep_header {
 	my ($pattern) = @_;
 
@@ -449,7 +564,16 @@ sub grep_header {
 		}
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --grep_header <pattern>
+#
+#      Grep through a multi fasta file and print out only the fasta
+#      sequences that DO NOT have a match in the header.
+#
+#-----------------------------------------------------------------------------
+
 sub grepv_header {
 	my ($pattern) = @_;
 
@@ -462,7 +586,9 @@ sub grepv_header {
 		}
 	}
 }
+
 #-----------------------------------------------------------------------------
+
 {my $i = 0;
 sub mRNAseq {
     my $size = 50;
@@ -492,7 +618,9 @@ sub mRNAseq {
 	    }
 	}
 }
+
 #-----------------------------------------------------------------------------
+
 sub EST {
 
     while (my $seq_obj = $seq_io->next_seq) {
@@ -536,7 +664,17 @@ sub EST {
     }
 }
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --grep_seq <pattern>
+#
+#      Grep through a multi fasta file and print out only the fasta
+#      sequences that have a match in the sequence. Use grepv_seq for
+#      negation.
+#
+#-----------------------------------------------------------------------------
+
 sub grep_seq {
 	my ($pattern) = @_;
 
@@ -550,7 +688,16 @@ sub grep_seq {
 		}
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --grepv_seq <pattern>
+#
+#      Grep through a multi fasta file and print out only the fasta
+#      sequences that DO NOT have a match in the sequence.
+#
+#-----------------------------------------------------------------------------
+
 sub grepv_seq {
 	my ($pattern) = @_;
 
@@ -564,7 +711,16 @@ sub grepv_seq {
 		}
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --fix_prot
+#
+#    Fix protein fasta files for use as blast database.  Removes spaces
+#    and '*' and replaces any non amino acid codes with C.
+#
+#-----------------------------------------------------------------------------
+
 sub fix_prot {
 	while (my $seq_obj = $seq_io->next_seq) {
 		my $header = get_header($seq_obj);
@@ -575,7 +731,17 @@ sub fix_prot {
 		print_this_seq($header, $seq);
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --translate <string>
+#
+#      Translate a given nucleotide sequence to protein sequence.
+#      Accepts 0,1,2 (for the phase) or 'maker' if you want to use the
+#      frame from MAKER produced headers
+#
+#-----------------------------------------------------------------------------
+
 sub translate {
 	while (my $seq_obj = $seq_io->next_seq) {
 		my $header = get_header($seq_obj);
@@ -596,7 +762,16 @@ sub translate {
 		print_this_seq($header, $pep_seq);
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --trim_maker_utr
+#
+#      Prints MAKER produced transcipts without the leading and
+#      trailing UTR sequence
+#
+#-----------------------------------------------------------------------------
+
 sub trim_maker_utr {
 	while (my $seq_obj = $seq_io->next_seq) {
 		my $header = get_header($seq_obj);
@@ -605,8 +780,8 @@ sub trim_maker_utr {
 
 		$header =~ /offset:(\d+)/;
 
-		die "ERROR: These do not appear to be MAKER produced transcripts\n"
-		    if(! defined $1 || $1 eq '');
+		handle_message('WARN', 'non_maker_transcripts', $header)
+		  if(! defined $1 || $1 eq '');
 		$frame = ($1 % 3);
 		$offset = ($1 - $frame)/3; #peptide offet without frame
 
@@ -624,7 +799,16 @@ sub trim_maker_utr {
 		print_this_seq($header, $tra_seq);
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --seq_only
+#
+#      Print only the sequence (without the header) to STDOUT.  This
+#      can also be accomplished with grep -v '>' fasta_file.
+#
+#-----------------------------------------------------------------------------
+
 sub seq_only {
 	while (my $seq_obj = $seq_io->next_seq) {
 		my $seq = $seq_obj->seq;
@@ -632,7 +816,20 @@ sub seq_only {
 		print $seq . "\n";
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --nt_count
+#
+#      Print the number and percentage of every nt/aa found in the
+#      sequence.
+#
+#  --summary
+#      For functions that can report data for every sequence (nt_count),
+#      use this flag to report only summary data for all sequences combined.
+#
+#-----------------------------------------------------------------------------
+
 sub nt_count {
 	my %all_seq_count;
 	my $total_count;
@@ -726,7 +923,15 @@ sub nt_count {
 	print "\n";
 	print "Total nts\t$total_count\n";
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --length
+#
+#      Print the length of each sequence.
+#
+#-----------------------------------------------------------------------------
+
 sub seq_length {
     my $count = 0;
     my $total;
@@ -739,7 +944,15 @@ sub seq_length {
     }
     print "Total\t$total\n" if $count > 1;
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --total_length
+#
+#      Print the total length of all sequences.
+#
+#-----------------------------------------------------------------------------
+
 sub total_length {
     my $total_length;
     while (my $seq_obj = $seq_io->next_seq) {
@@ -747,7 +960,16 @@ sub total_length {
     }
     print $total_length . "\n";
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --n50
+#
+#      Calculate the N-50 (http://en.wikipedia.org/wiki/N50_statistic)
+#      of the sequences in the file.
+#
+#-----------------------------------------------------------------------------
+
 sub n50 {
     my $total_length;
     my @lengths;
@@ -775,7 +997,16 @@ sub n50 {
     $n50 = int((($n50 + $last_length) / 2) + 0.5);
     print $n50 . "\n";
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --tab
+#
+#      Print the header and sequence on the same line separated by a
+#      tab.
+#
+#-----------------------------------------------------------------------------
+
 sub tab {
     while (my $seq_obj = $seq_io->next_seq) {
 	my $header = get_header($seq_obj);
@@ -784,7 +1015,16 @@ sub tab {
 		print "$header\t$seq\n";
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --print
+#
+#      Print the sequence.  Use in conjuction with 'wrap' or other
+#      formatting commands to reformat the sequence.
+#
+#-----------------------------------------------------------------------------
+
 sub print_seq {
 	while (my $seq_obj = $seq_io->next_seq) {
 		my $header = get_header($seq_obj);
@@ -793,7 +1033,15 @@ sub print_seq {
 
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --reverse
+#
+#      Reverse the order of the sequences in a fasta file.
+#
+#-----------------------------------------------------------------------------
+
 sub reverse_order {
 	my @seqs;
 	while (my $seq_obj = $seq_io->next_seq) {
@@ -810,7 +1058,24 @@ sub reverse_order {
 		print_this_seq($seq->{header}, $seq->{seq});
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --rev_seq
+#
+#      Reverse the sequence (the order of the nt/aa).
+#
+#  --comp_seq
+#
+#      Complement the nucleotide sequence.
+#
+#  --rev_comp
+#
+#      Reverse compliment a sequence.  Same as --rev_seq && --comp_seq
+#      together.
+#
+#-----------------------------------------------------------------------------
+
 sub rev_comp{
 	while (my $seq_obj = $seq_io->next_seq) {
 		my $header = get_header($seq_obj);
@@ -823,7 +1088,16 @@ sub rev_comp{
 		print_this_seq($header, $seq);
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --uniq
+#
+#    Print only uniq sequences.  This method only compares complete
+#    sequences.
+#
+#-----------------------------------------------------------------------------
+
 sub uniq{
   my %seen;
   while (my $seq_obj = $seq_io->next_seq) {
@@ -833,7 +1107,16 @@ sub uniq{
     $seen{$seq}++;
   }
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --uniq_sub
+#
+#    Print only uniq sequences, but also check that shorter sequences
+#    are not perfect substrings of longer sequences.
+#
+#-----------------------------------------------------------------------------
+
 sub uniq_sub {
   my @seqs;
   while (my $seq_obj = $seq_io->next_seq) {
@@ -849,15 +1132,23 @@ sub uniq_sub {
     my $start_idx = $outer_idx + 1;
     for my $inner_idx ($start_idx .. $#seqs) {
       if ($seqs[$inner_idx][1] =~ /$seqs[$outer_idx][1]/) {
-	print STDERR "WARN : skipping_sequence : ($seqs[$outer_idx][0]) " .
-	  "$seqs[$outer_idx][1]\n";
+	handle_message('WARN', 'skipping_sequence', "($seqs[$outer_idx][0]) " .
+	  "$seqs[$outer_idx][1]\n");
 	next OUTER;
       }
     }
     print_this_seq($seqs[$outer_idx][0], $seqs[$outer_idx][1]);
   }
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --shuffle_order
+#
+#      Randomize the order of the sequences in a multi-fasta file.
+#
+#-----------------------------------------------------------------------------
+
 sub shuffle_order {
 	my @seqs;
 	while (my $seq_obj = $seq_io->next_seq) {
@@ -874,7 +1165,16 @@ sub shuffle_order {
 		print_this_seq($seq->{header}, $seq->{seq});
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --shuffle_seq
+#
+#      Randomize the sequence (the order of the nt/aa).
+#
+#
+#-----------------------------------------------------------------------------
+
 sub shuffle_seq {
 	while (my $seq_obj = $seq_io->next_seq) {
 		my $header = get_header($seq_obj);
@@ -884,7 +1184,15 @@ sub shuffle_seq {
 		print_this_seq($header, $seq);
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --shuffle_codon
+#
+#      Randomize the order of the codons in a nucleotide sequence.
+#
+#-----------------------------------------------------------------------------
+
 sub shuffle_codon {
 	while (my $seq_obj = $seq_io->next_seq) {
 		my $header = get_header($seq_obj);
@@ -895,7 +1203,15 @@ sub shuffle_codon {
 		print_this_seq($header, $seq);
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --shuffle_pick
+#
+#      Pick a given number of sequences from a multi-fasta file.
+#
+#-----------------------------------------------------------------------------
+
 sub shuffle_pick {
 	my $shuffle_pick = shift;
 
@@ -917,11 +1233,24 @@ sub shuffle_pick {
 		print_this_seq($pick->{header}, $pick->{seq});
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --remove
+#
+#      Pass in a file with IDs and remove sequences with these IDs.
+#
+#-----------------------------------------------------------------------------
+
 sub remove_ids {
 
 	my $remove_file = shift;
-	open (my $IN, '<', $remove_file) or die "Can't open $remove_file for reading\n";
+
+	open (my $IN, '<', $remove_file) or
+	  handle_message('FATAL',
+			 'cant_open_file_for_reading',
+			 $file);
+
 	my %ids = map {chomp;$_, 1} (<$IN>);
 	while (my $seq_obj = $seq_io->next_seq) {
 		my $id = $seq_obj->display_id;
@@ -931,11 +1260,22 @@ sub remove_ids {
 		print_this_seq($header, $seq);
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --select
+#
+#      Pass in a file with IDs and return sequences with these IDs.
+#
+#-----------------------------------------------------------------------------
+
 sub select_ids {
 
 	my $select_file = shift;
-	open (my $IN, '<', $select_file) or die "Can't open $select_file for reading\n";
+	open (my $IN, '<', $select_file) or
+	  handle_message('FATAL',
+			 'cant_open_file_for_reading',
+			 $file);
 	my %ids = map {chomp;$_, 1} (<$IN>);
 	while (my $seq_obj = $seq_io->next_seq) {
 		my $id = $seq_obj->display_id;
@@ -945,7 +1285,15 @@ sub select_ids {
 		print_this_seq($header, $seq);
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --table
+#
+#      Print in table format rather than fasta format.
+#
+#-----------------------------------------------------------------------------
+
 sub print_this_seq {
 	my ($header, $seq) = @_;
 
@@ -961,7 +1309,15 @@ sub print_this_seq {
 	    print join $join, (">$header", "$seq\n");
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --wrap <integer>
+#
+#      Wrap the sequence output to a given number of columns.
+#
+#-----------------------------------------------------------------------------
+
 sub wrap_seq {
 	my ($seq, $wrap) = @_;
 
@@ -972,13 +1328,17 @@ sub wrap_seq {
 	chomp $seq;
 	return $seq;
 }
+
 #-----------------------------------------------------------------------------
+
 sub get_header {
 	my $seq_obj = shift;
 	return $seq_obj->display_id . " " . $seq_obj->description;
 
 }
+
 #-----------------------------------------------------------------------------
+
 sub shuffle {
 	#Fisher-Yates Shuffle
 	my $array = shift;
@@ -989,11 +1349,26 @@ sub shuffle {
 		($array->[$n], $array->[$k]) = ($array->[$k], $array->[$n]);
 	}
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --swap_ids
+#
+#      Pass in a file with two columns of IDs and map the IDs in the
+#      fasta headers from the first column of the ID file to the second
+#      column of the ID file.  If an ID in the fasta header is not
+#      found in the first column of the ID file then issue a warning,
+#      but leave the ID unmapped.
+#
+#-----------------------------------------------------------------------------
+
 sub swap_ids {
 
     my $id_file = shift;
-    open (my $IN, '<', $id_file) or die "Can't open $id_file for reading\n";
+    open (my $IN, '<', $id_file) or
+	  handle_message('FATAL',
+			 'cant_open_file_for_reading',
+			 $file);
     my %ids;
     while (<$IN>) {
 	chomp;
@@ -1014,7 +1389,16 @@ sub swap_ids {
 	print_this_seq($header, $seq);
     }
 }
+
 #-----------------------------------------------------------------------------
+#
+#  --subseq
+#
+#    Grab a sub-sequence from a fasta file based on coordinates.  The
+#    requested coordinates are in the form seqid:start-end;
+#
+#-----------------------------------------------------------------------------
+
 sub subseq {
 
     my ($file, $coordinates) = @_;
@@ -1027,6 +1411,7 @@ sub subseq {
     print $fasta->seq($seqid, $start, $end);
     print "\n";
 }
+
 #-----------------------------------------------------------------------------
 
 sub tile_seq {
@@ -1051,3 +1436,24 @@ sub tile_seq {
 }
 
 #-----------------------------------------------------------------------------
+
+sub handle_message {
+
+    my ($level, $code, @comments) = @_;
+
+    $level ||= 'FATAL';
+    $code  ||= 'unknown_warning';
+    my $comment = join ' ', @comments;
+
+    my $message = join ' : ', ($level, $code, $comment);
+    chomp $message;
+    $message .= "\n";
+
+    if ($level eq 'FATAL') {
+      print STDERR $message;
+      die;
+    }
+    else {
+      print STDERR $message;
+    }
+  }

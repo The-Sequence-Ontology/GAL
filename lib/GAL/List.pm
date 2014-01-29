@@ -7,52 +7,59 @@ $VERSION = 0.2.0;
 use base qw(GAL::Base);
 use List::Util;
 use List::MoreUtils;
+use Scalar::Util qw(blessed);
+use Text::Table;
 
 =head1 NAME
 
-GAL::List - List aggregation and analysis functions for GAL
+C<GAL::List> - List aggregation and analysis functions for GAL
 
 =head1 VERSION
 
-This document describes GAL::List version 0.2.0
+This document describes C<GAL::List> version 0.2.0
 
 =head1 SYNOPSIS
 
     use GAL::List::Categorical;
-    my $list_catg = GAL::List::Categorical->new(list => [qw(red red red blue blue
-							       green yellow orange orange
-							       purple purple purple purple)]);
-    my $count    = $list_catg->count;
-    $list_ref    = $list_catg->list;
-    @list_ary    = $list_catg->list;
-    $catg_counts = $list_catg->cardinality;
-    $count_uniq  = $list_catg->count_uniq;
-    $max_str     = $list_catg->maxstr;
-    $min_str     = $list_catg->minstr;
-    @shff_list   = $list_catg_shuffle;
-    @uniq_list   = $list_catg_uniq;
-    $item        = $list_catg->random_pick;
+    my $list = GAL::List::Categorical->new(list => [qw(red red red blue blue
+						       green yellow orange orange
+						       purple purple purple purple)]);
+    my $count    = $list->count;
+    $list_ref    = $list->list;
+    @list_ary    = $list->list;
+    $catg_counts = $list->cardinality;
+    $count_uniq  = $list->count_uniq;
+    $max_str     = $list->maxstr;
+    $min_str     = $list->minstr;
+    @shff_list   = $list->shuffle;
+    @uniq_list   = $list->uniq;
+    $item        = $list->random_pick;
 
     use GAL::List::Numric;
-    $list_numeric = GAL::List::Numeric->new(list => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
-    $max = $list_numeric->max;
-    $min = $list_numeric->min;
-    $sum = $list_numeric->sum;
+    $list = GAL::List::Numeric->new(list => [0, 1, 2, 3, 4, 5, 6,
+                                             7, 8, 9]);
+    $max = $list->max;
+    $min = $list->min;
+    $sum = $list->sum;
 
 =head1 DESCRIPTION
 
-<GAL::List> serves as a base class for the modules below it and
+C<GAL::List> serves as a base class for the modules below it and
 provides basic list summarization details.  It is not intended to be
 used on it's own.  You should use it's subclasses instead.
 
 =head1 CONSTRUCTOR
 
-To construct a GAL::List subclass simply pass it an appropriate list.
+To construct a C<GAL::List> subclass simply pass it an appropriate list.
 
-    my $list_catg = GAL::List::Categorical->new(list => [qw(red red red blue blue
-							       green yellow orange orange
-							       purple purple purple purple)]);
-    $list_numeric = GAL::List::Numeric->new(list => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  my $colors = GAL::List::Categorical->new(list => [qw(red red red
+                                                       blue green
+						       yellow orange
+						       orange purple
+						       purple)]);
+
+  my $numbers = GAL::List::Numeric->new(list => [0, 1, 2, 3, 4, 5, 6,
+                                                 7, 8, 9]);
 
 
 =cut
@@ -64,10 +71,10 @@ To construct a GAL::List subclass simply pass it an appropriate list.
 =head2 new
 
      Title   : new
-     Usage   : GAL::List->new()
-     Function: Creates a GAL::List object;
-     Returns : A GAL::List object
-     Args    :
+     Usage   : GAL::List->new(list => $array_ref)
+     Function: Creates a C<GAL::List> object;
+     Returns : A C<GAL::List> object
+     Args    : Any valid attributes as described below.
 
 =cut
 
@@ -88,7 +95,7 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(list);
+	my @valid_attributes = qw(list iterator method);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }
@@ -105,11 +112,19 @@ list (or referenece) of key value pairs.
 =head2 list
 
  Title   : list
- Usage   : $a = $self->list()
- Function: Get/Set the value of list.
- Returns : The value of list.
- Args    : A value to set list to.
-
+ Usage   : $ref   = $self->list();
+           @array = $self->list();
+ Function: Get/Set the contents of the objects list.
+ Returns : The elements of the list as an array or a array reference.
+ Args    : One of the following:
+               - An array reference of scalar values: The values will
+                 be added to the list.
+               - An array reference of hashes: A key name must also be
+                 supplied to L<GAL::List::key|/key> and this key will be used
+                 to retrieve data from each hash reference.
+               - An array reference of objects: A method name must also be
+                 supplied to L<GAL::List::method|/method> and this method will be used
+                 to retrieve data from each hash reference.
 =cut
 
 sub list {
@@ -131,36 +146,43 @@ sub list {
 =head2 method
 
  Title   : method
- Usage   : $a = $self->method()
- Function: Get/Set the value of method.
+ Usage   : my $list = GAL::List(iterator => $features,
+                                method   => 'length');
+ Function: When an iterator object is passed to the C<GAL::List>
+ 	   constructor or object (see the iterator attribute below),
+ 	   this attribute sets the method used to retrieve the
+ 	   appropriate value from the iterator.
  Returns : The value of method.
  Args    : A value to set method to.
 
 =cut
 
- sub method {
-   my ($self, $method) = @_;
-   $self->{method} = $method if $method;
-   return $self->{method};
- }
+sub method {
+  my ($self, $method) = @_;
+  $self->{method} = $method if $method;
+  return $self->{method};
+}
 
 #-----------------------------------------------------------------------------
 
 =head2 key
 
  Title   : key
- Usage   : $a = $self->key()
- Function: Get/Set the value of key.
+ Usage   : my $list = GAL::List(list => $hash_ref,
+                                key  => score)
+ Function: When a hash reference is passed to the list attribute, this
+ 	   attribute sets the key used to retrieve the appropriate
+ 	   value from each hash.
  Returns : The value of key.
  Args    : A value to set key to.
 
 =cut
 
- sub key {
-   my ($self, $key) = @_;
-   $self->{key} = $key if $key;
-   return $self->{key};
- }
+sub key {
+  my ($self, $key) = @_;
+  $self->{key} = $key if $key;
+  return $self->{key};
+}
 
 #-----------------------------------------------------------------------------
 
@@ -186,81 +208,60 @@ sub list {
 
 =head1 METHODS
 
-=head2 _parse_list
-
- Title   : _parse_list
- Usage   : $self->_parse_list()
- Function: Parse the contents of the list and create an array of data if the
-	   data isn't already an array.
- Returns : N/A
- Args    : N/A
-
 =cut
 
 sub _parse_list {
-    my $self = shift;
+  my $self = shift;
 
-    my $list     = $self->list();
-    my $iterator = $self->iterator();
-    my $method   = $self->method();
-    my $key      = $self->method();
+  my $list     = $self->list();
+  my $iterator = $self->iterator();
+  my $method   = $self->method();
+  my $key      = $self->method();
 
-  VALUE:
-    for my $value (@{$list}) {
-      if (! ref $value) {
+ VALUE:
+  for my $value (@{$list}) {
+    if (! ref $value) {
+      next VALUE;
+    }
+    elsif (my $class = Scalar::Util::blessed $value) {
+      if (! $method) {
+	$self->throw('no_method_given_for_objects', "CLASS=$class; METHOD=$method");
+      }
+      if (! defined $method || ! $value->can($method)) {
+	$self->warn('method_does_not_exist', "CLASS=$class; METHOD=$method");
 	next VALUE;
       }
-      elsif (my $class = List::Util::blessed $value) {
-	if (! defined $method || ! $value->can($method)) {
-	  $self->warn('method_does_not_exist', "CLASS=$class; METHOD=$method");
-	  next VALUE;
-	}
-	$value = $value->$method;
-      }
-      elsif (ref $value eq 'HASH') {
-	if (! defined $key || ! exists $value->{$key}) {
-	  $self->warn('key_does_not_exist', ("KEY=$key; " .
-					     join ',', %{$value}));
-	  next VALUE;
-	}
-	$value = $value->{$key};
-      }
+      $value = $value->$method;
     }
+    elsif (ref $value eq 'HASH') {
+      if (! defined $key || ! exists $value->{$key}) {
+	$self->warn('key_does_not_exist', ("KEY=$key; "));
+	next VALUE;
+      }
+      $value = $value->{$key};
+    }
+  }
 
-    my @xtra_values;
-    if ($iterator && (my $class = List::Util::blessed $iterator)) {
-      if (! $iterator->can('next')) {
-	$self->warn('next_method_does_not_exist', "CLASS=$class; METHOD=next");
+  my @xtra_values;
+  if ($iterator) {
+    if (my $class = Scalar::Util::blessed $iterator) {
+      if (! defined $method || ! $iterator->can($method)) {
+	$self->warn('method_does_not_exist', "CLASS=$class; METHOD=$method");
       }
       else {
       ITR_LOOP:
-	while (my $value = $iterator->next) {
-	if (! defined $method || ! $value->can($method)) {
-	  $self->warn('method_does_not_exist', "CLASS=$class; METHOD=$method");
-	  next ITR_LOOP;
-	}
-	else {
-	  push @xtra_values, $value->$method;
-	}
+	while (my $obj = $iterator->next) {
+	  my $value = $obj->method;
+	  push @xtra_values, $value;
 	}
       }
     }
+  }
 
-    push @{$self->{list}}, @xtra_values if @xtra_values;
+  push @{$self->{list}}, @xtra_values if @xtra_values;
 }
 
 #-----------------------------------------------------------------------------
-
-=head2 _hash_list
-
- Title   : _hash_list
- Usage   : $hash = $self->_hash_list()
- Function:
-	   data isn't already an array.
- Returns : N/A
- Args    : N/A
-
-=cut
 
 sub _hash_list {
   my $self = shift;
@@ -278,7 +279,7 @@ sub _hash_list {
 =head2 count
 
  Title   : count
- Usage   : $a = $self->count
+ Usage   : $list = $self->count
  Function: Return the number of elements in the list
  Returns : Integer
  Args    : N/A
@@ -295,7 +296,7 @@ sub count {
 =head2 cardinality
 
  Title   : cardinality
- Usage   : $a = $self->cardinality
+ Usage   : $list = $self->cardinality
  Function: Return the number of uniq elements in the list
  Returns : Integer
  Args    : N/A
@@ -313,7 +314,7 @@ sub cardinality {
 =head2 count_uniq
 
  Title   : count_uniq
- Usage   : $a = $self->count_uniq()
+ Usage   : $list = $self->count_uniq()
  Function: An alias for cardinality
  Returns : Integer
  Args    : N/A
@@ -329,7 +330,7 @@ sub count_uniq {
 =head2 category_counts
 
  Title   : category_counts
- Usage   : $a = $self->category_counts()
+ Usage   : $list = $self->category_counts()
  Function: Return a hash(reference) with uniq elements as keys and element
 	   counts as values.
  Returns : A hash(reference)
@@ -348,7 +349,7 @@ sub category_counts {
 =head2 shuffle
 
  Title   : shuffle
- Usage   : $a = $self->shuffle()
+ Usage   : $list = $self->shuffle()
  Function: Returns the elements of the list in random order
  Returns : An array/array reference
  Args    : N/A
@@ -362,13 +363,30 @@ sub shuffle {
 
 #-----------------------------------------------------------------------------
 
+=head2 in_place_shuffle
+
+ Title   : in_place_shuffle
+ Usage   : $list = $self->in_place_shuffle()
+ Function: Shuffles the elements of a list in place
+ Returns : N/A
+ Args    : N/A
+
+=cut
+
+sub in_place_shuffle {
+  my $self = shift;
+  $self->list([$self->shuffle]);
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 uniq
 
  Title   : uniq
- Usage   : $a = $self->uniq()
- Function:
- Returns :
- Args    :
+ Usage   : $list = $self->uniq()
+ Function: Returns uniq values from the list.
+ Returns : An array (ref) of unique values from the list.
+ Args    : N/A
 
 =cut
 
@@ -383,18 +401,22 @@ sub uniq {
 =head2 random_pick
 
  Title   : random_pick
- Usage   : $a = $self->random_pick()
- Function:
- Returns :
- Args    :
+ Usage   : $list = $self->random_pick(8)
+ Function: Return a random selection from the list of a given length.
+ Returns : An array (ref) of randomly selected values from the list.
+ Args    : An integer for the size of the returned list. Default is one.
 
 =cut
 
 sub random_pick {
-    my $self = shift;
+    my ($self, $count) = @_;
 
-    my $random = int(rand($self->count));
-    return $self->{list}[$random];
+    my @random_list;
+    for (1 .. $count) {
+      my $random = int(rand($self->count));
+      push @random_list, $self->{list}[$random];
+    }
+    return wantarray ? @random_list : \@random_list;
 }
 
 #-----------------------------------------------------------------------------
@@ -405,22 +427,44 @@ sub random_pick {
 
 =item C<< list_or_reference_required >>
 
-GAL::List::list require an array or a reference to any array be passed
-as an argument, but you have passed something else.
+L<GAL::List::list|/list> require an array or a reference to any array
+be passed as an argument, but you have passed something else.
 
-Keep in mind that several of GAL::List's methods are provided by
+Keep in mind that several of C<GAL::List>'s methods are provided by
 List::Util, and errors not found here may be thrown by that module.
+
+=item C<< no_method_given_for_iterator' >>
+
+C<GAL::List> can accept an iterator object that provides a next
+method.  For each object returned by calling next C<GAL::List> will
+call the method provided to L<GAL::List::method|/method>.  A method name
+must be provided to L<GAL::List::method|/method> with an iterator is
+provided to L<GAL::List::iterator|/iterator>.
+
+=item C<< method_does_not_exist >>
+
+An iterator was provided to L<GAL::List::iterator|/iterator> and a
+method was provided to L<GAL::List::method|/method>, but the objects
+returned by the iterator do not impliment the method provided to
+L<GAL::List::method|/method>.
+
+=item C<< key_does_not_exist' >>
+
+If a hash reference is provided as the value for L<GAL::List::list|/list> then
+a key must be provided to L<GAL::List::key|/key>. C<GAL::List> will then use the
+key to retrieve it's value from the hash.  A hash was provided to
+L<GAL::List::list|/list>, but no key was given.
 
 =back
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-<GAL::List> requires no configuration files or environment variables.
+C<GAL::List> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-<GAL::Base>
-<List::Util>
+L<GAL::Base>
+L<List::Util>
 
 =head1 INCOMPATIBILITIES
 
@@ -439,7 +483,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
+Copyright (c) 2010-2013, Barry Moore <barry.moore@genetics.utah.edu>.  All rights reserved.
 
     This module is free software; you can redistribute it and/or
     modify it under the same terms as Perl itself (See LICENSE).

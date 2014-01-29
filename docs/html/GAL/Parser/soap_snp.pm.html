@@ -1,0 +1,309 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::Parser::soap_snp</title>
+<link rel="stylesheet" type="text/css" href="../podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="../index.html">GAL</a> &gt; Perl Modules &gt;
+  Parser-soap_snp
+</div>
+<div>
+<a href="../src/Parser/soap_snp.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#Constructor">Constructor</a><br />
+<ul>
+	<li><a href="#new">new</a></li>
+	<li><a href="#parse_record">parse_record</a></li>
+	<li><a href="#reader">reader</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>GAL::Parser::soap_snp - Parse SOAP_SNP files</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>This document describes GAL::Parser::soap_snp version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<pre>    my $parser = GAL::Parser::soap_snp-&gt;new(file =&gt; 'soap_snp.txt');
+
+    while (my $feature_hash = $parser-&gt;next_feature_hash) {
+	print $parser-&gt;to_gff3($feature_hash) . &quot;\n&quot;;
+    }
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p><a href="Parser/soap_snp.pm.html">GAL::Parser::soap_snp</a> provides a parser for SOAP_SNP data.</p>
+
+<h1 id="Constructor">Constructor <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>New <a href="Parser/soap_snp.pm.html">GAL::Parser::soap_snp</a> objects are created by the class method
+new.  Arguments should be passed to the constructor as a list (or
+reference) of key value pairs.  All attributes of the
+<a href="Parser/soap_snp.pm.html">GAL::Parser::soap_snp</a> object can be set in the call to new. An
+simple example of object creation would look like this:</p>
+
+<pre>    my $parser = GAL::Parser::soap_snp-&gt;new(file =&gt; 'soap_snp.txt');
+
+</pre><p>The constructor recognizes the following parameters which will set the
+appropriate attributes:</p>
+
+<p>This optional parameter provides the filename for the file containing
+the data to be parsed. While this parameter is optional either it, or
+the following fh parameter must be set.</p>
+
+<p>This optional parameter provides a filehandle to read data from. While
+this parameter is optional either it, or the following fh parameter
+must be set.</p>
+
+<h2 id="new">new</h2>
+
+<p><a href="#" onclick="toggleCode('method_new');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_new">
+                                        <pre>
+
+sub new {
+	my ($class, @args) = @_;
+	my $self = $class->SUPER::new(@args);
+	return $self;
+}
+</pre></div>
+
+<pre>     Title   : new
+     Usage   : GAL::Parser::soap_snp-&gt;new();
+     Function: Creates a GAL::Parser::soap_snp object;
+     Returns : A GAL::Parser::soap_snp object
+     Args    : See the attributes described above.
+
+</pre><h2 id="parse_record">parse_record</h2>
+
+<p><a href="#" onclick="toggleCode('method_parse_record');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_parse_record">
+                                        <pre>
+
+sub parse_record {
+	my ($self, $record) = @_;
+
+	# chromosome start reference_seq variant_seq
+	# quality best_base bb_quality bb_uniq_count
+	# bb_all_count second_base sb_quality
+	# sb_uniq_count sb_all_count total_count
+	# p_val copy_num dbsnp nn_bp
+	my $seqid      = $record->{chromosome};
+	my $source     = 'SOAPsnp';
+	my $type       = 'SNV';
+	my $start      = $record->{start};
+	my $end        = $record->{start};
+	my $score      = '.';
+	my $strand     = '+';
+	my $phase      = '.';
+
+	my $feature_id = join ':', ($record->{chromosome},
+				    $source,
+				    $type,
+				    $start,
+				    );
+
+	my $reference_seq = $record->{reference_seq};
+	my @variant_seqs  = $self->expand_iupac_nt_codes($record->{variant_seq});
+	my %var_read_counts = @{$record}{qw(best_base bb_all_count second_base sb_all_count)};
+	my @variant_reads = @var_read_counts{@variant_seqs};
+	my $total_reads = $record->{total_reads};
+	my $zygosity = scalar @variant_seqs > 1 ? 'heterozygous' : 'homozygous';
+
+	my $attributes = {Reference_seq => [$reference_seq],
+			  Variant_seq   => \@variant_seqs,
+			  Zygosity      => [$zygosity],
+			  ID            => [$feature_id],
+			  Total_reads   => [$total_reads],
+			  Variant_reads => \@variant_reads,
+			 };
+
+	my $feature_data = {feature_id => $feature_id,
+			    seqid      => $seqid,
+			    source     => $source,
+			    type       => $type,
+			    start      => $start,
+			    end        => $end,
+			    score      => $score,
+			    strand     => $strand,
+			    phase      => $phase,
+			    attributes => $attributes,
+			   };
+
+	return $feature_data;
+}
+</pre></div>
+
+<pre> Title   : parse_record
+ Usage   : $a = $self-&gt;parse_record();
+ Function: Parse the data from a record.
+ Returns : A hash ref needed by Feature.pm to create a Feature object
+ Args    : A hash ref of fields that this sub can understand (In this case GFF3).
+
+</pre><h2 id="reader">reader</h2>
+
+<p><a href="#" onclick="toggleCode('method_reader');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_reader">
+                                        <pre>
+
+sub reader {
+    my $self = shift;
+
+    if (! $self->{reader}) {
+	# 1)  chromosome    - Chromosome ID
+	# 2)  start         - Coordinate on chromosome, start from 1
+	# 3)  reference_seq - Reference genotype (hg18, Mar. 2006)
+	# 4)  variant_seq   - Consensus diploid genotype of the capture sample. The genotypes reported here are always relative to the forward strand of reference.
+	# 5)  quality       - Quality score of consensus genotype
+	# 6)  best_base     - Best base, which is the most likely allele that the sample will have at the position based on Bayes posterior probability
+	# 7)  bb_quality    - Average quality score of best base
+	# 8)  bb_uniq_count - Count of uniquely mapped best base
+	# 9)  bb_all_count  - Count of all mapped best base
+	# 10) second_base   - Second best base, that is the second likely allele that the sample will have at the position based on Bayes posterior probability.
+	# 11) sb_quality    - Average quality score of second best base
+	# 12) sb_uniq_count - Count of uniquely mapped second best base
+	# 13) sb_all_count  - Count of all mapped second best base
+	# 14) total_reads   - Sequencing depth of the site
+	# 15) p_val         - Rank sum test p_value
+	# 16) copy_num      - Average copy number of nearby region
+	# 17) dbsnp         - Whether the site is a dbSNP.
+	# 18) nn_bp         - the distance (bp) that the SNP site is adjacent to its nearest SNP site.
+
+	my @field_names = qw(chromosome start reference_seq variant_seq
+			     quality best_base bb_quality bb_uniq_count
+			     bb_all_count second_base sb_quality
+			     sb_uniq_count sb_all_count total_reads
+			     p_val copy_num dbsnp nn_bp);
+	my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
+	$self->{reader} = $reader;
+    }
+    return $self->{reader};
+}
+</pre></div>
+
+<pre> Title   : reader
+ Usage   : $a = $self-&gt;reader
+ Function: Return the reader object.
+ Returns : A L&lt;GAL::Reader::DelimitedLine&gt; singleton.
+ Args    : None
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p><a href="Parser/soap_snp.pm.html">GAL::Parser::soap_snp</a> does not throw any warnings or errors.</p>
+
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p><a href="Parser/soap_snp.pm.html">GAL::Parser::soap_snp</a> requires no configuration files or
+environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p><a href="Parser.pm.html">GAL::Parser</a>
+<a href="Reader/DelimitedLine.pm.html">GAL::Reader::DelimitedLine</a></p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All
+rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="../up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT
+WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER
+PARTIES PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND,
+EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME
+THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE
+TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

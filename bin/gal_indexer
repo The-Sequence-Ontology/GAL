@@ -1,0 +1,46 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+gal_indexer file.gff3
+
+Description:
+
+Load GFF3/GVF features into a GAL database and index them.
+
+";
+
+my ($help);
+
+my $opt_success = GetOptions('help|h'            => \$help,
+			      );
+
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+			      'command_line_parse_error',
+			      'Use gff_tool --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
+
+my ($gff3_file) = @ARGV;
+
+die "$usage\n\nFATAL : missing_gff3_file : GFF3 file required\n" unless $gff3_file;
+
+my $annotation = GAL::Annotation->new($gff3_file);
+
+my $features = $annotation->features;

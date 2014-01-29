@@ -1,0 +1,844 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>GAL::Schema::Result::Feature</title>
+<link rel="stylesheet" type="text/css" href="../../podstyle.css" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <script type="text/javascript">
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  </script></head>
+<body>
+<div class="box">
+  <h1 class="t1">GAL</h1>
+  <table>
+    <tr>
+      <td class="label">Description</td>
+      <td class="cell">GAL - The Genome Annotation Library</td>
+    </tr>
+  </table>
+</div>
+<div class="path">
+  <a href="../../index.html">GAL</a> &gt; Perl Modules &gt;
+  Schema-Result-Feature
+</div>
+<div>
+<a href="../../src/Schema/Result/Feature.pm">Source</a>
+</div>
+
+
+<div class="pod">
+<!-- INDEX START -->
+<h3 id="TOP">Index</h3>
+<ul>
+	<li><a href="#NAME">NAME</a></li>
+	<li><a href="#VERSION">VERSION</a></li>
+	<li><a href="#SYNOPSIS">SYNOPSIS</a></li>
+	<li><a href="#DESCRIPTION">DESCRIPTION</a></li>
+	<li><a href="#METHODS">METHODS</a><br />
+<ul>
+	<li><a href="#seqid">seqid</a></li>
+	<li><a href="#source">source</a></li>
+	<li><a href="#type">type</a></li>
+	<li><a href="#start">start</a></li>
+	<li><a href="#end">end</a></li>
+	<li><a href="#score">score</a></li>
+	<li><a href="#strand">strand</a></li>
+	<li><a href="#phase">phase</a></li>
+	<li><a href="#attributes_hash">attributes_hash</a></li>
+	<li><a href="#attribute_value">attribute_value</a></li>
+	<li><a href="#feature_seq">feature_seq</a></li>
+	<li><a href="#seq">seq</a></li>
+	<li><a href="#gc_content">gc_content</a></li>
+	<li><a href="#genomic_seq">genomic_seq</a></li>
+	<li><a href="#length">length</a></li>
+	<li><a href="#my_start">my_start</a></li>
+	<li><a href="#my_end">my_end</a></li>
+	<li><a href="#genomic_length">genomic_length</a></li>
+	<li><a href="#annotation">annotation</a></li>
+	<li><a href="#throw">throw</a></li>
+	<li><a href="#warn">warn</a></li>
+	<li><a href="#to_gff3_recursive">to_gff3_recursive</a></li>
+	<li><a href="#to_gff3">to_gff3</a></li>
+	<li><a href="#get_recursive_children">get_recursive_children</a></li>
+	<li><a href="#locus">locus</a></li>
+	<li><a href="#count_children">count_children</a></li>
+	<li><a href="#get_values">get_values</a></li>
+	<li><a href="#get_transcript_types">get_transcript_types</a></li>
+</ul>
+</li>
+	<li><a href="#DIAGNOSTICS">DIAGNOSTICS</a></li>
+	<li><a href="#CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT</a></li>
+	<li><a href="#DEPENDENCIES">DEPENDENCIES</a></li>
+	<li><a href="#INCOMPATIBILITIES">INCOMPATIBILITIES</a></li>
+	<li><a href="#BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS</a></li>
+	<li><a href="#AUTHOR">AUTHOR</a></li>
+	<li><a href="#LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT</a></li>
+	<li><a href="#DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY</a></li>
+</ul>
+<hr />
+<!-- INDEX END -->
+
+<h1 id="NAME">NAME <a href="#TOP" class="toplink"><img alt="^" src="../../up.gif" /></a></h1>
+
+<p>GAL::Schema::Result::Feature - Base class for all sequence features</p>
+
+<h1 id="VERSION">VERSION <a href="#TOP" class="toplink"><img alt="^" src="../../up.gif" /></a></h1>
+
+<p>This document describes GAL::Schema::Result::Feature version 0.2.0</p>
+
+<h1 id="SYNOPSIS">SYNOPSIS <a href="#TOP" class="toplink"><img alt="^" src="../../up.gif" /></a></h1>
+
+<pre>    use GAL::Annotation;
+    my $feat_store = GAL::Annotation-&gt;new(storage =&gt; $feat_store_args,
+					  parser  =&gt; $parser_args,
+					  fasta   =&gt; $fasta_args,
+					 );
+
+    $feat_store-&gt;load_files(files =&gt; $feature_file,
+			    mode  =&gt; 'overwrite',
+			    );
+
+    my $features = $feat_store-&gt;schema-&gt;resultset('Feature');
+
+    my $mrnas = $features-&gt;search({type =&gt; 'mRNA'});
+    while (my $mrna = $mrnas-&gt;next) {
+      my $cdss = $mrna-&gt;CDSs;
+      while (my $cds = $cdss-&gt;next) {
+	my $cds   = $cds-&gt;feature_id;
+	my $start = $cds-&gt;start;
+	my $end   = $cds-&gt;end;
+      }
+    }
+
+</pre><h1 id="DESCRIPTION">DESCRIPTION <a href="#TOP" class="toplink"><img alt="^" src="../../up.gif" /></a></h1>
+
+<p>&lt;GAL::Schema::Result::Feature&gt; is the base class for all sequence
+feature classes in the GAL's &lt;DBIx::Class&gt; based feature retrival
+system.  You don't instantiate objects from it or any of it's
+subclasses yourself, &lt;DBIx::Class&gt; does that for you, hence there is
+no constructor and there are no attributes available, but you will
+want to have a look at the methods as they provide the base
+functionality for all sequence feature subclasses.  to all subclasses
+as well.  The first 8 methods provide access to the features primary
+data as defined by the first 8 columns of GFF3
+(http://www.sequenceontology.org/).</p>
+
+<h1 id="METHODS">METHODS <a href="#TOP" class="toplink"><img alt="^" src="../../up.gif" /></a></h1>
+
+<h2 id="seqid">seqid</h2>
+
+<pre> Title   : seqid
+ Usage   : $seqid = $self-&gt;seqid
+ Function: Get the features sequence ID (i.e. what chromosome/contig it's on).
+ Returns : The value of the sequence ID as text.
+ Args    : None
+
+</pre><h2 id="source">source</h2>
+
+<pre> Title   : source
+ Usage   : $source = $self-&gt;source
+ Function: Get the features source.
+ Returns : The value of the source as text.
+ Args    : None
+
+</pre><h2 id="type">type</h2>
+
+<pre> Title   : type
+ Usage   : $type = $self-&gt;type
+ Function: Get the features type - a value constrained to be a child of the
+	   SO's sequence feature term.
+ Returns : The value of the type as text.
+ Args    : None
+
+</pre><h2 id="start">start</h2>
+
+<pre> Title   : start
+ Usage   : $start = $self-&gt;start
+ Function: Get the features start on the sequence described by seqid.
+ Returns : The value of the start an integer.
+ Args    : None
+
+</pre><h2 id="end">end</h2>
+
+<pre> Title   : end
+ Usage   : $end = $self-&gt;end
+ Function: Get the features end on the sequence described by seqid.
+ Returns : The value of the end as an integer.
+ Args    : None
+
+</pre><h2 id="score">score</h2>
+
+<pre> Title   : score
+ Usage   : $score = $self-&gt;score
+ Function: Get the features score.
+ Returns : The value of the score as text.
+ Args    : None
+
+</pre><h2 id="strand">strand</h2>
+
+<pre> Title   : strand
+ Usage   : $strand = $self-&gt;strand
+ Function: Get the features strand.
+ Returns : The value of the strand as text.
+ Args    : None
+
+</pre><h2 id="phase">phase</h2>
+
+<pre> Title   : phase
+ Usage   : $phase = $self-&gt;phase
+ Function: Get the features phase.
+ Returns : The value of the phase as text.
+ Args    : None
+
+</pre><h2 id="attributes_hash">attributes_hash</h2>
+
+<p><a href="#" onclick="toggleCode('method_attributes_hash');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_attributes_hash">
+                                        <pre>
+
+sub attributes_hash {
+  my $self = shift;
+
+  if (! $self->{my_attributes}) {
+    map {push @{$self->{my_attributes}{$_->att_key}}, $_->att_value}
+	   $self->attributes->all;
+  }
+  return wantarray ? %{$self->{my_attributes}} :
+      dclone($self->{my_attributes});
+}
+</pre></div>
+
+<pre> Title   : attributes_hash
+ Usage   : $self-&gt;attributes_hash
+ Function: Return the attributes as a hash (or reference) with all values as
+	   array references.  For consistency, even those values, such as ID,
+	   that can have only one value are still returned as array
+	   references.
+ Returns : A hash or hash reference of attribute key/value pairs.
+ Args    : None.
+
+</pre><h2 id="attribute_value">attribute_value</h2>
+
+<p><a href="#" onclick="toggleCode('method_attribute_value');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_attribute_value">
+                                        <pre>
+
+sub attribute_value {
+  my ($self, $tag) = @_;
+
+  my $attributes = $self->attributes_hash;
+  my $values = [];
+  if (exists $attributes->{$tag}) {
+    $values = $attributes->{$tag};
+  }
+  return wantarray ? @{$values} : $values;
+}
+</pre></div>
+
+<pre> Title   : attribute_value
+ Usage   : $self-&gt;attribute_value($tag)
+ Function: Return the value(s) of a particular attribute as an array or
+	   reference.  Note that for consistency, values are always returned
+	   as arrays (or reference) even in cases where only a single value
+	   could exist such as ID.
+ Returns : An array or reference of values.
+ Args    : None
+
+</pre><h2 id="feature_seq">feature_seq</h2>
+
+<pre> Title   : feature_seq
+ Usage   : $self-&gt;feature_seq
+ Function: Returns the features sequence as text 5' to 3' in the context of
+	   the feature, so features on the reverse strand are reverse
+	   complimented.
+ Returns : A text string of the features sequence.
+ Args    : None
+
+</pre><h2 id="seq">seq</h2>
+
+<p><a href="#" onclick="toggleCode('method_seq');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_seq">
+                                        <pre>
+
+sub seq {return shift->feature_seq}
+
+sub feature_seq {
+  my $self = shift;
+
+  my $seq = $self->annotation->fasta->seq($self->seqid,
+					  $self->start,
+					  $self->end
+					 );
+  $self->warn('feature_returned_no_sequence',
+	      "Be sure you passed a fasta file and that this seqid exists")
+    if ! $seq;
+
+  $seq = $self->annotation->revcomp($seq) if
+    $self->strand eq '-';
+
+  return $seq;
+}
+</pre></div>
+
+<p>An alias for feature_seq</p>
+
+<h2 id="gc_content">gc_content</h2>
+
+<p><a href="#" onclick="toggleCode('method_gc_content');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_gc_content">
+                                        <pre>
+
+sub gc_content {
+  my $self = shift;
+
+  my $seq = $self->seq;
+  my $length = length $seq;
+  my $gc = $seq =~ tr/GC/GC/;
+  my $gc_ratio = $gc / $length;
+  return $gc_ratio;
+}
+</pre></div>
+
+<pre> Title   : gc_content
+ Usage   : $self-&gt;gc_content
+ Function: Returns the ratio of the count of G or C nts over the sequence
+	   length.
+ Returns : A fractional value from 0 to 1
+ Args    : None
+
+</pre><h2 id="genomic_seq">genomic_seq</h2>
+
+<p><a href="#" onclick="toggleCode('method_genomic_seq');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_genomic_seq">
+                                        <pre>
+
+sub genomic_seq {
+  my $self = shift;
+
+  my $seq = $self->annotation->fasta->seq($self->seqid,
+					  $self->start,
+					  $self->end
+					 );
+  return $seq;
+}
+</pre></div>
+
+<pre> Title   : genomic_seq
+ Usage   : $self-&gt;genomic_seq
+ Function: Returns the features sequence as text 5' to 3' in the context of
+	   the genome, so features on the reverse strand are not reverse
+	   complimented.
+ Returns : A text string of the features sequence on the genome.
+ Args    : None
+
+</pre><h2 id="length">length</h2>
+
+<p><a href="#" onclick="toggleCode('method_length');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_length">
+                                        <pre>
+
+sub length {
+  my $self = shift;
+
+  return ($self->end - $self->start) + 1;
+}
+</pre></div>
+
+<pre> Title   : length
+ Usage   : $self-&gt;length
+ Function: Returns the features length on the genome.  If a feature is
+	   not contiguous on the genome (i.e. a transcript) then this method
+	   will be (or should be) overridden by that subclass to provide the
+	   'spliced' length of that feature.
+ Returns : An integer.
+ Args    : None
+
+</pre><h2 id="my_start">my_start</h2>
+
+<p><a href="#" onclick="toggleCode('method_my_start');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_my_start">
+                                        <pre>
+
+sub my_start {
+  my $self = shift;
+  return $self->strand eq '-' ? $self->end : $self->start;
+}
+</pre></div>
+
+<pre> Title   : my_start
+ Usage   : $self-&gt;my_start
+ Function: Returns the begin 5' coordinate on the feature's strand
+	    (i.e. this is the same as calling start for a + strand
+	    feature and end for a - strand feature.
+ Returns : An integer.
+ Args    : None
+
+</pre><h2 id="my_end">my_end</h2>
+
+<p><a href="#" onclick="toggleCode('method_my_end');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_my_end">
+                                        <pre>
+
+sub my_end {
+  my $self = shift;
+  return $self->strand eq '-' ? $self->start : $self->end;
+}
+</pre></div>
+
+<pre> Title   : my_end
+ Usage   : $self-&gt;my_end
+ Function: Returns the begin 5' coordinate on the feature's strand
+	    (i.e. this is the same as calling end for a + strand
+	    feature and start for a - strand feature.
+ Returns : An integer.
+ Args    : None
+
+</pre><h2 id="genomic_length">genomic_length</h2>
+
+<p><a href="#" onclick="toggleCode('method_genomic_length');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_genomic_length">
+                                        <pre>
+
+sub genomic_length {
+  my $self = shift;
+
+  return ($self->end - $self->start) + 1;
+}
+</pre></div>
+
+<pre> Title   : genomic_length
+ Usage   : $self-&gt;genomic_length
+ Function: Returns the features genomic_length on the genome.  If a feature is
+	   not contiguous on the genome (i.e. a transcript) then this method
+	   will still provide the genomic length of (end - start + 1)
+ Returns : An integer.
+ Args    : None
+
+</pre><h2 id="annotation">annotation</h2>
+
+<p><a href="#" onclick="toggleCode('method_annotation');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_annotation">
+                                        <pre>
+
+sub annotation {
+  return shift->result_source->schema->annotation;
+}
+</pre></div>
+
+<pre> Title   : annotation
+ Usage   : $self-&gt;annotation
+ Function: Each feature has a weakened reference of the GAL::Annotation
+	   object that created it and this method provides access to that
+	   object.
+ Returns : A GAL::Annotation object.
+ Args    : None
+
+</pre><h2 id="throw">throw</h2>
+
+<p><a href="#" onclick="toggleCode('method_throw');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_throw">
+                                        <pre>
+
+sub throw {
+  return shift->annotation->throw(@_);
+}
+</pre></div>
+
+<pre> Title   : throw
+ Usage   : $self-&gt;throw
+ Function: This is a convinience function that forwards throwings on to the
+	   L&lt;GAL::Annotation&gt; object so that L&lt;GAL::Base&gt; can handle them.
+	   You could get the same behaviour by doing
+	   C&lt;$self-&gt;annotation-&gt;throw(message =&gt; 'throwing'&gt;.
+ Returns : Nothing
+ Args    : The following list: ($code, $message)
+
+</pre><h2 id="warn">warn</h2>
+
+<p><a href="#" onclick="toggleCode('method_warn');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_warn">
+                                        <pre>
+
+sub warn {
+  return shift->annotation->warn(@_);
+}
+</pre></div>
+
+<pre> Title   : warn
+ Usage   : $self-&gt;warn
+ Function: This is a convinience function that forwards warnings on to the
+	   L&lt;GAL::Annotation&gt; object so that L&lt;GAL::Base&gt; can handle them.
+	   You could get the same behaviour by doing
+	   C&lt;$self-&gt;annotation-&gt;warn(message =&gt; 'warning'&gt;.
+ Returns : Nothing
+ Args    : The following list: ($code, $message)
+
+</pre><h2 id="to_gff3_recursive">to_gff3_recursive</h2>
+
+<p><a href="#" onclick="toggleCode('method_to_gff3_recursive');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_to_gff3_recursive">
+                                        <pre>
+
+sub to_gff3_recursive {
+
+  my $self = shift;
+
+  my @gff_lines;
+  my @features;
+
+  $self->get_recursive_children(\@features);
+
+  unshift @features, $self;
+
+  @features = sort {($a->seqid cmp $b->seqid ||
+		     $a->start <=> $b->start ||
+		     $b->end   <=> $a->end)
+		    } @features;
+
+  for my $feature (@features) {
+    push @gff_lines, $feature->to_gff3;
+  }
+  @gff_lines = uniq @gff_lines;
+  return wantarray ? @gff_lines : \@gff_lines;
+}
+</pre></div>
+
+<pre> Title   : to_gff3_recursive
+ Usage   : $self-&gt;to_gff3_recursive
+ Function: Return a list of the string representation of this feature
+	   and all of its part_of children in GFF3 format.
+ Returns : An array or ref
+ Args    : N/A
+
+</pre><h2 id="to_gff3">to_gff3</h2>
+
+<p><a href="#" onclick="toggleCode('method_to_gff3');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_to_gff3">
+                                        <pre>
+
+sub to_gff3 {
+
+  my $self = shift;
+
+  my $seqid      = $self->seqid;
+  my $source     = $self->source;
+  my $type       = $self->type;
+  my $start      = $self->start;
+  my $end        = $self->end;
+  my $score      = $self->score;
+  my $strand     = $self->strand;
+  my $phase      = $self->phase;
+  my $attributes = $self->attributes_hash;
+
+  # Convert attribute values to comma sep list
+  # ->attributes_hash uses dclone to prevent
+  # mapping the actual attributes hash.
+  map {$_ = join ',', @{$_}} values %{$attributes};
+
+  my $attrb_text;
+
+  for my $key (sort {($ATT_ORDER{$a} || $a) cmp ($ATT_ORDER{b} || $b)}
+	       keys %{$attributes}) {
+    $attrb_text .= "$key=" . $attributes->{$key} . ';';
+  }
+
+  $attrb_text ||= '';
+
+  my $gff3_text = join "\t", ($seqid, $source, $type, $start, $end,
+			      $score, $strand, $phase, $attrb_text);
+
+  return $gff3_text;
+}
+</pre></div>
+
+<pre> Title   : to_gff3
+ Usage   : $self-&gt;to_gff3
+ Function: Return a string representation of this feature in GFF3 format.
+ Returns : A string of GFF3 text
+ Args    : N/A
+
+</pre><h2 id="get_recursive_children">get_recursive_children</h2>
+
+<p><a href="#" onclick="toggleCode('method_get_recursive_children');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_get_recursive_children">
+                                        <pre>
+
+sub get_recursive_children {
+
+  my ($self, $list) = @_;
+
+  my $children = $self->children();
+
+  while (my $child = $children->next) {
+    push @{$list}, $child;
+    $child->get_recursive_children($list);
+  }
+  return;
+}
+</pre></div>
+
+<pre> Title   : get_recursive_children
+ Usage   : $self-&gt;get_recursive_children(\@children);
+ Function: Collect all part_of children of an object recursively adding them to
+           the provided array reference.
+ Returns : Fills the supplied array reference.
+ Args    : An array reference.
+
+</pre><h2 id="locus">locus</h2>
+
+<p><a href="#" onclick="toggleCode('method_locus');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_locus">
+                                        <pre>
+
+sub locus {
+  return sprintf('%s:%u-%u', shift->get_values(qw(seqid start end)));
+}
+</pre></div>
+
+<pre> Title   : locus
+ Usage   : $locus = $feature-&gt;locus;
+ Function: Get the locus of a feature formatted as seqid:start-end
+ Returns : A string formatted as seqid:start-end.
+ Args    : None
+
+</pre><h2 id="count_children">count_children</h2>
+
+<p><a href="#" onclick="toggleCode('method_count_children');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_count_children">
+                                        <pre>
+
+sub count_children {
+
+  my $self = shift;
+
+}
+</pre></div>
+
+<pre> Title   : count_children
+ Usage   : @values = $self-&gt;count_children();
+ Function: Get the number of 1st degree children
+ Returns : An array or ref
+ Args : A list of fields to retrieve (seqid source type start end
+        score strand phase).
+
+</pre><h2 id="get_values">get_values</h2>
+
+<p><a href="#" onclick="toggleCode('method_get_values');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_get_values">
+                                        <pre>
+
+sub get_values {
+
+  my ($self, @fields) = @_;
+
+  my %allowed = map {$_ => 1}
+    qw(seqid source type start end score strand phase);
+
+  my @values;
+  for my $field (@fields) {
+    $self->throw('invalid_field_requested', $field)
+      unless $allowed{$field};
+    push @values, $self->$field;
+  }
+  return wantarray ? @values : \@values;
+}
+</pre></div>
+
+<pre> Title   : get_values
+ Usage   : @values = $self-&gt;get_values(qw(seqid start end)
+ Function: Get a list of values as an array(ref).
+ Returns : An array or ref
+ Args : A list of fields to retrieve (seqid source type start end
+        score strand phase).
+
+</pre><h2 id="get_transcript_types">get_transcript_types</h2>
+
+<p><a href="#" onclick="toggleCode('method_get_transcript_types');return false;">[Source]</a></p>
+                                        <div class="method-source-code" id="method_get_transcript_types">
+                                        <pre>
+
+sub get_transcript_types {
+
+  my @transcripts = qw(EST
+		       RNase_MRP_RNA
+		       RNase_P_RNA
+		       SRP_RNA
+		       SRP_RNA_primary_transcript
+		       Y_RNA
+		       aberrant_processed_transcript
+		       alternatively_spliced_transcript
+		       antisense_RNA
+		       antisense_primary_transcript
+		       capped_mRNA
+		       capped_primary_transcript
+		       class_II_RNA
+		       class_I_RNA
+		       consensus_mRNA
+		       dicistronic_mRNA
+		       dicistronic_primary_transcript
+		       dicistronic_transcript
+		       edited_mRNA
+		       edited_transcript
+		       edited_transcript_by_A_to_I_substitution
+		       enhancerRNA
+		       enzymatic_RNA
+		       exemplar_mRNA
+		       guide_RNA
+		       lnc_RNA
+		       mRNA
+		       mRNA_recoded_by_codon_redefinition
+		       mRNA_recoded_by_translational_bypass
+		       mRNA_region
+		       mRNA_with_frameshift
+		       mRNA_with_minus_1_frameshift
+		       mRNA_with_minus_2_frameshift
+		       mRNA_with_plus_1_frameshift
+		       mRNA_with_plus_2_frameshift
+		       mature_transcript
+		       mature_transcript_region
+		       miRNA_primary_transcript
+		       mini_exon_donor_RNA
+		       monocistronic_mRNA
+		       monocistronic_primary_transcript
+		       monocistronic_transcript
+		       ncRNA
+		       nc_primary_transcript
+		       piRNA
+		       polyadenylated_mRNA
+		       polycistronic_mRNA
+		       polycistronic_primary_transcript
+		       polycistronic_transcript
+		       pre_edited_mRNA
+		       primary_transcript
+		       primary_transcript_region
+		       processed_transcript
+		       protein_coding_primary_transcript
+		       pseudogenic_transcript
+		       rRNA
+		       rRNA_cleavage_RNA
+		       rRNA_primary_transcript
+		       rasiRNA
+		       recoded_mRNA
+		       regional_centromere_outer_repeat_transcript
+		       riboswitch
+		       ribozyme
+		       scRNA
+		       scRNA_primary_transcript
+		       siRNA
+		       small_regulatory_ncRNA
+		       snRNA
+		       snRNA_primary_transcript
+		       snoRNA
+		       snoRNA_primary_transcript
+		       spliced_leader_RNA
+		       stRNA
+		       tRNA
+		       tRNA_primary_transcript
+		       tasiRNA
+		       tasiRNA_primary_transcript
+		       telomerase_RNA
+		       tmRNA_primary_transcript
+		       trans_spliced_mRNA
+		       trans_spliced_transcript
+		       transcript
+		       transcript_bound_by_nucleic_acid
+		       transcript_bound_by_protein
+		       transcript_region
+		       transcript_with_translational_frameshift
+		       vault_RNA
+		  );
+  return wantarray ? @transcripts : \@transcripts;
+}
+</pre></div>
+
+<pre> Title   : get_transcript_types
+ Usage   : $transcript_types = $self-&gt;get_transcript_types
+ Function: Get a list of all features that are types of transcripts.
+ Returns : An array or ref
+ Args    : None
+
+</pre><h1 id="DIAGNOSTICS">DIAGNOSTICS <a href="#TOP" class="toplink"><img alt="^" src="../../up.gif" /></a></h1>
+
+
+
+
+<p><a href="Schema/Result/Feature.pm.html">GAL::Schema::Result::Feature</a> does not throw any warnings or errors
+at this time.</p>
+
+</dl>
+<h1 id="CONFIGURATION_AND_ENVIRONMENT">CONFIGURATION AND ENVIRONMENT <a href="#TOP" class="toplink"><img alt="^" src="../../up.gif" /></a></h1>
+
+<p>&lt;GAL::Schema::Result::Feature&gt; requires no configuration files or
+environment variables.</p>
+
+<h1 id="DEPENDENCIES">DEPENDENCIES <a href="#TOP" class="toplink"><img alt="^" src="../../up.gif" /></a></h1>
+
+<p>&lt;DBIx::Class&gt;</p>
+
+<h1 id="INCOMPATIBILITIES">INCOMPATIBILITIES <a href="#TOP" class="toplink"><img alt="^" src="../../up.gif" /></a></h1>
+
+<p>None reported.</p>
+
+<h1 id="BUGS_AND_LIMITATIONS">BUGS AND LIMITATIONS <a href="#TOP" class="toplink"><img alt="^" src="../../up.gif" /></a></h1>
+
+<p>No bugs have been reported.</p>
+
+<p>Please report any bugs or feature requests to:
+barry.moore@genetics.utah.edu</p>
+
+<h1 id="AUTHOR">AUTHOR <a href="#TOP" class="toplink"><img alt="^" src="../../up.gif" /></a></h1>
+
+<p>Barry Moore &lt;barry.moore@genetics.utah.edu&gt;</p>
+
+<h1 id="LICENCE_AND_COPYRIGHT">LICENCE AND COPYRIGHT <a href="#TOP" class="toplink"><img alt="^" src="../../up.gif" /></a></h1>
+
+<p>Copyright (c) 2012, Barry Moore &lt;barry.moore@genetics.utah.edu&gt;.  All
+rights reserved.</p>
+
+<pre>    This module is free software; you can redistribute it and/or
+    modify it under the same terms as Perl itself (See LICENSE).
+
+</pre><h1 id="DISCLAIMER_OF_WARRANTY">DISCLAIMER OF WARRANTY <a href="#TOP" class="toplink"><img alt="^" src="../../up.gif" /></a></h1>
+
+<p>BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
+FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN
+OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
+PROVIDE THE SOFTWARE &quot;AS IS&quot; WITHOUT WARRANTY OF ANY KIND, EITHER
+EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE
+ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH
+YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL
+NECESSARY SERVICING, REPAIR, OR CORRECTION.</p>
+
+<p>IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
+WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
+REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE
+LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL,
+OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE
+THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
+SUCH DAMAGES.</p>
+
+
+</div><div class="footer">generated by <a href="http://search.cpan.org/perldoc?Pod/ProjectDocs">Pod::ProjectDocs</a></div></body>
+</html>

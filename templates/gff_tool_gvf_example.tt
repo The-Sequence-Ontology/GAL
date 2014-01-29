@@ -1,0 +1,9 @@
+#Locus	Type	Ref	Var	Effect
+[% FOR feature = features %]
+[%- feature.seqid %]:[% feature.start %]-[% feature.end %]	
+[%- feature.type %]	
+[%- attrb = feature.attributes -%]
+[%- attrb.Reference_seq.0 %]	
+[%- attrb.Variant_seq.join(',') %]	
+[%- attrb.Variant_effect.join(',') %]
+[% END %]

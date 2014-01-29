@@ -1,0 +1,12 @@
+[% FOR feature = features %]
+[%- attrb = feature.attributes -%]
+Locus:	[% feature.seqid %]:[% feature.start %]-[% feature.end %]	
+Type:	[% feature.type %]	
+Ref:	[%- attrb.Reference_seq.0 %]	
+Var:	[%- attrb.Variant_seq.join(',') %]	
+Effects:
+[% FOR effect = attrb.Variant_effect -%]
+  	[% effect %]
+[% END -%]
+--------------------------------------------------------------------------------
+[% END %]

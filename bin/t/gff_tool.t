@@ -159,12 +159,21 @@ ok($tool->get_stdout =~ /\t1\t39\t/,
 ok($tool->get_stdout =~ /\t401\t439\t/,
    'gff_tool --i_lcomplement has the correct output');
 
+################################################################################
+# Testing gff_tool --template ../../gff_tool_gvf_example.tt \
+#                  clinvar_100_rnd_SNV.vat.gvf
+################################################################################
 
+@cl_args = ('--template',
+	    "$FindBin::RealBin/../../templates/gff_tool_gvf_example.tt",
+	    "$FindBin::RealBin/data/clinvar_100_rnd_SNV.vat.gvf",
+	   );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gff_tool template runs');
+ok($tool->get_stdout =~ /chr13:32906969-32906969\tSNV\tC\tA,C\tmissense_variant 0 mRNA NM_000059,coding_sequence_variant 0 mRNA NM_000059,amino_acid_substitution 0 polypeptide NM_000059,gene_variant 0 gene BRCA2/,
+   'gff_tool --template has the correct output');
 
 $tool->clean_up;
-
-
-
 
 done_testing();
 

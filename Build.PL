@@ -78,7 +78,6 @@ my $builder = $class->new(
 			  test_files => [qw(
 					    lib/GAL/t/001_annotation.t
 					    lib/GAL/t/001_base.t
-					    lib/GAL/t/001_index.t
 					    lib/GAL/t/001_pod_coverage.t
 					    lib/GAL/t/001_test_template.t
 					    lib/GAL/t/200_parser.t
@@ -132,7 +131,6 @@ my $builder = $class->new(
 					    lib/GAL/t/600_list.t
 					    lib/GAL/t/600_list_categorical.t
 					    lib/GAL/t/600_list_numeric.t
-					    lib/GAL/t/700_interval_span.t
 					    bin/t/add_reference_seq.t
 					    bin/t/annotation_summary.t
 					    bin/t/build_genes.t
@@ -144,6 +142,7 @@ my $builder = $class->new(
 					    bin/t/gal_example_parser.t
 					    bin/t/gal_example_seq_features.t
 					    bin/t/gal_feature_overlaps.t
+					    bin/t/gal_remove_transcripts.t
 					    bin/t/gal_protein_genes.t
 					    bin/t/gal_splice_complexity.t
 					    bin/t/gal_validate_proteins.t
