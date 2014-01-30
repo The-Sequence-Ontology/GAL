@@ -43,6 +43,8 @@ new. An simple example of object creation would look like this:
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
 
+=over
+
 =item * C<< file => feature_file.txt >>
 
 This optional parameter provides the filename for the file containing
@@ -54,6 +56,8 @@ the following fh parameter must be set.
 This optional parameter provides a filehandle to read data from. While
 this parameter is optional either it, or the following fh parameter
 must be set.
+
+=back
 
 =cut
 

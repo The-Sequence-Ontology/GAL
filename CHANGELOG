@@ -1,5 +1,25 @@
-13-10-28_Version_0.2.1 (Revision: 411)
-Mon Oct 28 12:55:29 MDT 2013
+14-01-28_Version_0.2.2 (Revision 441)
+Wed Jan 29 12:06:32 MST 2014
+
+-Adding bin/footprint from Seq_Analysis
+-Adding gal_indexer
+-Adding bin/gene_CDS_footprint
+-New CPAN style html docs for GAL
+-Library cleanup, documentation updates and various other changes
+-Updates to gtf2gff3
+-Adding warnings when mrna.pm can not return CDS or protein sequence
+-Added progress counter to Storage::SQLite::load_files
+-Adding --template option to gff_tool
+-Adding templates/gff_tool_gvf_example2.tt
+-Adding gal_remove_transcripts and gal_gff_tool
+-adding fix_gvf function to bin/gff_tool
+-Added --clean to gal_protein_genes
+-Adding GAL::Base::open_file
+
+--------------------------------------------------------------------------------
+
+13-10-25_Version_0.2.1 (Revision: 399)
+Fri Oct 25 14:30:53 MDT 2013
 
 -Addition of HTML documentation pages GAL/docs/html/GAL.html
 -Many updates to docs library-wide
@@ -54,5 +74,3 @@ Tue Dec 11 14:11:56 MST 2012
  refers to the ID of a missing feature
 -Adding strand based sorting for feature retrival methods
  (i.e. $transcript->exons)
-
---------------------------------------------------------------------------------
