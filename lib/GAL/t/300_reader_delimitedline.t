@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 9;
+use Test::More tests => 25;
 
 BEGIN {
 	use lib '../../';
@@ -14,31 +14,80 @@ $path =~ s/[^\/]+$//;
 $path ||= '.';
 chdir($path);
 
-# TEST 2
 my $reader = GAL::Reader::DelimitedLine->new();
 isa_ok($reader, 'GAL::Reader::DelimitedLine');
 
-# TEST 3
-ok($reader->file('./data/soap_snp.gff'), '$reader->file');
+can_ok($reader, qw(
+		    new
+		    _initialize_args
+		    field_names
+		    field_separator
+		    end_of_data
+		    comment_pattern
+		    metadata_pattern
+		    header_count
+		    next_record
+		    headers
+		    current_line
+		    comments
+		    metadata
+		 ));
 
-# TEST 4
+ok($reader->file('./data/delimitedline_test.txt'), '$reader->file');
+
 ok($reader->field_names(qw(seqid source type start end score strand phase
 			   attributes)), '$reader->field_names');
 
-# TEST 5
+ok($reader->end_of_data(qr/^\#\#FASTA/), '$reader->end_of_data(qr//)');
+
+ok($reader->comment_pattern(qr/^\#[^\#]/),  '$reader->comment_pattern(qr/^\#[^\#]/');
+
+ok($reader->comment_parser(sub {my ($r, $p, $l) = @_;
+				$l =~ s/^\#\s*//g;
+				$l =~ s/\s/_/g;
+				return $l}),
+  '$reader->comment_parser(sub{})');
+
+ok($reader->metadata_pattern(qr/^\#\#/), '$reader->metadata_pattern(qr//, sub{}');
+
+ok($reader->metadata_parser(   sub {my ($r, $p, $l) = @_;
+					       $l =~ s/^\#\#//;
+					       my %h = split(/\s+/, $l, 2);
+					       return \%h
+					     }),
+  '$reader->metadata_parser(sub{})');
+
+ok($reader->header_count(1), '$reader->header_count = 1');
+
 ok($reader->next_record, '$reader->next_record');
 
-# TEST 6
+ok($reader->current_line =~ /^chr22\t/, '$reader->current_line');
+
+ok(grep({$_->{metadata} eq 'value'} $reader->metadata), 'Recovered in-file metadata');
+ok(grep({/^\#This_is_an_in-file_comment$/} $reader->comments), 'Recovered in-file comments');
+ok(grep({/^seqid\tsource\ttype\tstart\tend\tscore\tstrand\tphase\tattributes$/}
+	$reader->headers),
+   'Recovered in-file headers');
+
 ok($reader->comments('This is a comment'), '$reader->comments');
 
-# TEST 7
-ok(my @comments = $reader->comments, '$reader->comments');
+ok((my @comments = $reader->comments), '$reader->comments');
 
-# TEST 8
+ok(grep({/^This is a comment$/} @comments), 'Recovered the given comment');
+
+ok($reader->metadata('key value'), '$reader->metadata($metadata)');
+
+ok(my @metadata = $reader->metadata, '$reader->metadata');
+
+ok(grep({$_->{key} eq 'value'} @metadata), 'Recovered the given metadata');
+
 ok($reader->headers('This is a header'), '$reader->headers');
 
-# TEST 9
 ok(my @headers = $reader->headers, '$reader->headers');
+
+ok(grep({/^This is a header$/} @headers), 'Recovered the given header');
+
+done_testing();
 
 
 ################################################################################
@@ -71,4 +120,5 @@ pass($test_name);
 fail($test_name);
 
 BAIL_OUT($why);
+
 =cut
