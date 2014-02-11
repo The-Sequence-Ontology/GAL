@@ -61,18 +61,63 @@ This optional attribute provides a regular expression that will be used
 to split the fields in each line of data.  The default is "\t" - a
 tab.
 
-=item * C<< comment_pattern => "^\s*#" >>
+=item * C<< comment_pattern => "^\s*#", \&comment_parser >>
 
-This optional attribute provides a regular expression that will be
-used to skip comment lines.  The default is "^\s*#" - lines whos first
-non-whitespace charachter is a '#'.
+This optional attribute gets/sets a regular expression, passed as a
+string or a compiled (qr//) regular expression, that will be used to
+detect comment lines.  The comment lines will be stored as a string,
+or if the comment_parser attribute has been set, they will be passed
+to that code reference and the return value from the code reference
+will be stored.  The stored comment lines can be accessed by the
+L</comments> method.
+
+=item * C<< comment_parser => "^\s*#" >>
+
+This optional attribute gets/sets a code reference that will be used
+to parse comment lines.  This option takes a code reference as an
+argurment and the code reference will be used to parse the comment
+line.  The code reference will be passed the current GAL::Reader
+object, the comment_pattern regular expression, and the current line
+of text.  The code reference should return a single scalar value (a
+string of text or a data structure) and this value will be stored as
+is by the reader.  There is no default comment parser and thus in
+the absence of a comment_parser code reference the comment text will
+be stored as a string. The stored comment lines can be accessed by
+the L</comments> method.
+
+
+=item * C<< metadata_pattern => "^\s*#" >>
+
+This optional attribute gets/sets a regular expression, passed as a
+string or a compiled (qr//) regular expression, that will be used to
+detect metadata lines.  The metadata lines will be stored as a string,
+or if the metadata_parser attribute has been set, they will be passed
+to that code reference and the return value from the code reference
+will be stored.  The stored metadata lines can be accessed by the
+L</metadata> method.
+
+=item * C<< metadata_parser => "^\s*#" >>
+
+This optional attribute gets/sets a code reference that will be used
+to parse metadata lines.  This option takes a code reference as an
+argurment and the code reference will be used to parse the metadata
+line.  The code reference will be passed the current GAL::Reader
+object, the metadata_pattern regular expression, and the current line
+of text.  The metadata parser should return a single scalar value (a
+string of text or a data structure) and this value will be stored as
+is by the reader.  There is not default metadata parser and thus in
+the absence of a metadata_parser code reference the metadata text will
+be stored as a string. The stored metadata lines can be accessed by
+the L</metadata> method.
+
 
 =item * C<< header_count => 1 >>
 
 This optional attribute provides the ability to instruct the parser to
 skip header lines.  An integer i<n> value is provided that will cause
 the parser to skip the first i<n> lines of the file.  The skipped
-lines will be added to the L</"headers"> stack.
+lines will be added to the L</"headers"> stack and can be accessed
+from the reader by the L<headers/headers> method.
 
 The following attributes are inhereted from L<GAL::Reader>:
 
@@ -126,8 +171,10 @@ sub _initialize_args {
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
 	# Set valid class attributes here
-	my @valid_attributes = qw(field_names field_separator end_of_data
-                                  comment_pattern header_count);
+	my @valid_attributes = qw(field_names field_separator
+				  end_of_data comment_pattern
+				  comment_parser metadata_pattern
+				  metadata_parser header_count);
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 	return $args;
@@ -170,7 +217,7 @@ sub field_names {
  Title   : field_separator
  Usage   : $self->field_separator("\t");
  Function: Set the field separator for spliting lines of data.  Default
-           is "\t" (tab).
+	   is "\t" (tab).
  Returns : The field separator as a complied regular expression.
  Args    : A string or complied regular expression pattern.
 
@@ -218,10 +265,16 @@ sub end_of_data {
 =head2 comment_pattern
 
  Title   : comment_pattern
- Usage   : $self->comment_pattern("^\#");
- Function: Set the field separator for spliting lines of data.  Default
-           is "\t" (tab).
- Returns : The field separator as a complied regular expression.
+ Usage   : $self->comment_pattern("^\#\#");
+	   $self->comment_pattern("^\#\#", \&comment_parser);
+ Function: This optional attribute gets/sets a regular expression, passed as a
+	   string or a compiled (qr//) regular expression, that will be used to
+	   detect comment lines.  The comment lines will be stored as a string,
+	   or if the comment_parser attribute has been set, they will be passed
+	   to that code reference and the return value from the code reference
+	   will be stored.  The stored comment lines can be accessed by the
+	   L</comment> method.
+ Returns : The comment pattern as a complied regular expression.
  Args    : A string or complied regular expression pattern.
 
 =cut
@@ -231,12 +284,51 @@ sub comment_pattern {
   my ($self, $comment_pattern) = @_;
 
   if ($comment_pattern) {
-    $comment_pattern = qr/$comment_pattern/
-      unless ref $comment_pattern eq 'Regexp';
+    if (! ref $comment_pattern eq 'Regexp') {
+      $comment_pattern = qr/$comment_pattern/
+    }
+    $self->{comment_pattern} = $comment_pattern;
   }
-  $self->{comment_pattern} = $comment_pattern if $comment_pattern;
   $self->{comment_pattern} ||= qr/^\s*\#[^\#]/;
+
   return $self->{comment_pattern};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 comment_parser
+
+ Title   : comment_parser
+ Usage   : $self->comment_parser(\&comment_parser);
+ Function: This optional attribute gets/sets a code reference that
+	   will be used to parse comment lines.  This option takes a
+	   code reference as an argurment and the code reference will
+	   be used to parse the comment line.  The code reference
+	   will be passed the current GAL::Reader object, the
+	   comment_pattern regular expression, and the current line
+	   of text.  The comment parser should return a single scalar
+	   value (a string of text or a data structure) and this value
+	   will be stored as-is by the reader.  There is not a default
+	   comment parser and thus in the absence of a code reference
+	   the comment text will be stored as a string. The stored
+	   comment lines can be accessed by the L</comment> method.
+ Returns : The comment parser as a complied regular expression.
+ Args    : A string or complied regular expression parser.
+
+=cut
+
+sub comment_parser {
+
+  my ($self, $comment_parser) = @_;
+
+  if (! ref $comment_parser eq 'Code') {
+    $self->throw('comment_parser_must_be_code_ref', $comment_parser);
+  }
+  $self->{comment_parser} = $comment_parser if $comment_parser;
+
+  $self->{comment_parser} ||= qr/^\s*\#\#/;
+
+  return $self->{comment_parser};
 }
 
 #-----------------------------------------------------------------------------
@@ -244,10 +336,16 @@ sub comment_pattern {
 =head2 metadata_pattern
 
  Title   : metadata_pattern
- Usage   : $self->metadata_pattern("^\#");
- Function: Set the field separator for spliting lines of data.  Default
-           is "\t" (tab).
- Returns : The field separator as a complied regular expression.
+ Usage   : $self->metadata_pattern("^\#\#");
+	   $self->metadata_pattern("^\#\#", \&metadata_parser);
+ Function: This optional attribute gets/sets a regular expression, passed as a
+	   string or a compiled (qr//) regular expression, that will be used to
+	   detect metadata lines.  The metadata lines will be stored as a string,
+	   or if the metadata_parser attribute has been set, they will be passed
+	   to that code reference and the return value from the code reference
+	   will be stored.  The stored metadata lines can be accessed by the
+	   L</metadata> method.
+ Returns : The metadata pattern as a complied regular expression.
  Args    : A string or complied regular expression pattern.
 
 =cut
@@ -257,24 +355,63 @@ sub metadata_pattern {
   my ($self, $metadata_pattern) = @_;
 
   if ($metadata_pattern) {
-    $metadata_pattern = qr/$metadata_pattern/
-      unless ref $metadata_pattern eq 'Regexp';
+    if (! ref $metadata_pattern eq 'Regexp') {
+      $metadata_pattern = qr/$metadata_pattern/
+    }
+    $self->{metadata_pattern} = $metadata_pattern;
   }
-  $self->{metadata_pattern} = $metadata_pattern if $metadata_pattern;
   $self->{metadata_pattern} ||= qr/^\s*\#\#/;
+
   return $self->{metadata_pattern};
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 header_count
+=head2 metadata_parser
+
+ Title   : metadata_parser
+ Usage   : $self->metadata_parser(\&metadata_parser);
+ Function: This optional attribute gets/sets a code reference that
+	   will be used to parse metadata lines.  This option takes a
+	   code reference as an argurment and the code reference will
+	   be used to parse the metadata line.  The code reference
+	   will be passed the current GAL::Reader object, the
+	   metadata_pattern regular expression, and the current line
+	   of text.  The metadata parser should return a single scalar
+	   value (a string of text or a data structure) and this value
+	   will be stored as-is by the reader.  There is not a default
+	   metadata parser and thus in the absence of a code reference
+	   the metadata text will be stored as a string. The stored
+	   metadata lines can be accessed by the L</metadata> method.
+ Returns : The metadata parser as a complied regular expression.
+ Args    : A string or complied regular expression parser.
+
+=cut
+
+sub metadata_parser {
+
+  my ($self, $metadata_parser) = @_;
+
+  if (! ref $metadata_parser eq 'Code') {
+    $self->throw('metadata_parser_must_be_code_ref', $metadata_parser);
+  }
+  $self->{metadata_parser} = $metadata_parser if ($metadata_parser);
+
+  $self->{metadata_parser} ||= qr/^\s*\#\#/;
+
+  return $self->{metadata_parser};
+}
+
+#-----------------------------------------------------------------------------
+
+=Head2 header_count
 
  Title   : header_count
  Usage   : $self->header_count(1);
  Function: Set an value for files containing headers.  Default is undef.
-           If the header attribute is set to a positive integer value then
-           that many lines will be skipped from the top of the file and
-           those lines will be added to the L</"headers"> stack.
+	   If the header attribute is set to a positive integer value then
+	   that many lines will be skipped from the top of the file and
+	   those lines will be added to the L</"headers"> stack.
  Returns : The current value of header_count
  Args    : An integer 0 or greater.
 
@@ -316,10 +453,10 @@ sub next_record {
     my $self = shift;
     my $fh = $self->fh;
     my $line;
-    my $comment_pattern  = $self->comment_pattern;
-    my $metadata_pattern = $self->metadata_pattern;
+    my ($comment_pattern)  = $self->comment_pattern;
+    my ($metadata_pattern) = $self->metadata_pattern;
     my $field_separator  = $self->field_separator;
-    my $end_of_data     = $self->end_of_data;
+    my $end_of_data      = $self->end_of_data;
   LINE:
     while ($line = <$fh>) {
       if ($end_of_data && $line =~ $end_of_data) {
@@ -361,7 +498,7 @@ sub next_record {
  Title   : headers
  Usage   : @headers = $reader->headers($line);
  Function: Add a line of data to the headers stack and/or return all the
-           headers in the stack.
+	   headers in the stack.
  Returns : An array or array reference of headers.
  Args    : A header.
 
@@ -395,16 +532,27 @@ sub current_line {
 =head2 comments
 
  Title   : comments
- Usage   : $commnet = $reader->comments($line);
+ Usage   : $comments = $reader->comments($line);
  Function: Add a comment (as defined by L</"comment_pattern">) to the
-           comments stack or return all the comments in the stack.
+	   comments stack and/or return all the comments in the stack.
  Returns : An array or array reference of comments.
- Args    : A comment.
+ Args    : A scalar value (string or data structure) of comment.
 
 =cut
 
 sub comments {
 	my ($self, $comment) = @_;
+
+	my ($comment_pattern, $comment_parser) = $self->comment_pattern;
+
+	if (ref $comment_parser eq 'CODE') {
+	  eval {
+	    $comment = &{$comment_parser}($self, $comment_pattern, $comment);
+	  };
+	  if ($@) {
+	    $self->warn('error_parsing_comment', $@);
+	  }
+	}
 
 	push @{$self->{comments}}, $comment if $comment;
 	return wantarray ? @{$self->{comments}} : $self->{comments};
@@ -415,18 +563,30 @@ sub comments {
 =head2 metadata
 
  Title   : metadata
- Usage   : $commnet = $reader->metadata($line);
- Function: Add a comment (as defined by L</"comment_pattern">) to the
-           metadata stack or return all the metadata in the stack.
+ Usage   : $metadata = $reader->metadata($line);
+ Function: Add a metadata (as defined by L</"metadata_pattern">) to the
+	   metadata stack and/or return all the metadata in the stack.
  Returns : An array or array reference of metadata.
- Args    : A comment.
+ Args    : A scalar value (string or data structure) of metadata.
 
 =cut
 
 sub metadata {
-	my ($self, $comment) = @_;
+	my ($self, $metadata) = @_;
 
-	push @{$self->{metadata}}, $comment if $comment;
+	my $metadata_pattern = $self->metadata_pattern;
+	my $metadata_parser  = $self->metadata_parser;
+
+	if (ref $metadata_parser eq 'CODE') {
+	  eval {
+	    $metadata = &{$metadata_parser}($self, $metadata_pattern, $metadata);
+	  };
+	  if ($@) {
+	    $self->throw('error_parsing_metadata', $@);
+	  }
+	}
+
+	push @{$self->{metadata}}, $metadata if $metadata;
 	return wantarray ? @{$self->{metadata}} : $self->{metadata};
 }
 
