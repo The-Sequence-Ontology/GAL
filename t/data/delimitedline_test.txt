@@ -1,0 +1,15 @@
+##metadata value
+#This_is_an_in-file_comment
+seqid	source	type	start	end	score	strand	phase	attributes
+chr22	protein_coding	gene	16256441	16287937	.	-	.	ID=ENSG00000198062;Name=POTEH;
+chr22	protein_coding	mRNA	16256441	16287937	.	-	.	ID=ENST00000343518;Name=POTEH-001;Parent=ENSG00000198062;parent_name=POTEH;
+chr22	protein_coding	exon	16256441	16256677	.	-	.	ID=exon:ENST00000343518:11;Parent=ENST00000343518;exon_id=ENSE00001732273;exon_number=11;gene_biotype=protein_coding;gene_name=POTEH;transcript_name=POTEH-001;
+chr22	protein_coding	three_prime_UTR	16256441	16256677	.	-	.	ID=three_prime_UTR:ENST00000343518:2;Parent=ENST00000343518;
+chr22	protein_coding	exon	16258185	16258303	.	-	.	ID=exon:ENST00000343518:10;Parent=ENST00000343518;exon_id=ENSE00003563151;exon_number=10;gene_biotype=protein_coding;gene_name=POTEH;transcript_name=POTEH-001;
+chr22	protein_coding	three_prime_UTR	16258185	16258185	.	-	.	ID=three_prime_UTR:ENST00000343518:1;Parent=ENST00000343518;
+chr22	protein_coding	CDS	16258186	16258303	.	-	1	ID=CDS:ENST00000343518:10;Parent=ENST00000343518;exon_number=10;gene_biotype=protein_coding;gene_name=POTEH;protein_id=ENSP00000340610;transcript_name=POTEH-001;
+chr22	protein_coding	stop_codon	16258186	16258188	.	-	0	ID=stop_codon:ENST00000343518:1;Parent=ENST00000343518;exon_number=10;gene_biotype=protein_coding;gene_name=POTEH;transcript_name=POTEH-001;
+chr22	protein_coding	CDS	16266929	16267095	.	-	0	ID=CDS:ENST00000343518:9;Parent=ENST00000343518;exon_number=9;gene_biotype=protein_coding;gene_name=POTEH;protein_id=ENSP00000340610;transcript_name=POTEH-001;
+chr22	protein_coding	exon	16266929	16267095	.	-	.	ID=exon:ENST00000343518:9;Parent=ENST00000343518;exon_id=ENSE00003523951;exon_number=9;gene_biotype=protein_coding;gene_name=POTEH;transcript_name=POTEH-001;
+chr22	protein_coding	CDS	16268137	16268181	.	-	0	ID=CDS:ENST00000343518:8;Parent=ENST00000343518;exon_number=8;gene_biotype=protein_coding;gene_name=POTEH;protein_id=ENSP00000340610;transcript_name=POTEH-001;
+chr22	protein_coding	exon	16268137	16268181	.	-	.	ID=exon:ENST00000343518:8;Parent=ENST00000343518;exon_id=ENSE00003539333;exon_number=8;gene_biotype=protein_coding;gene_name=POTEH;transcript_name=POTEH-001;
