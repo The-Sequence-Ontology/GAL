@@ -179,6 +179,7 @@ sub parse_vcf_info {
     my ($key, $value) = split /=/, $pair;
     $value = defined $value ? $value : '';
     my @values = split /,/, $value;
+    # Add lower case vcf to make attributes valid GFF3
     $key = 'vcf' . $key;
     push @{$info{$key}}, @values;
   }
