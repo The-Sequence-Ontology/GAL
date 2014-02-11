@@ -423,7 +423,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All
+Copyright (c) 2010-2014, Barry Moore <barry.moore@genetics.utah.edu>.  All
 rights reserved.
 
     This module is free software; you can redistribute it and/or
