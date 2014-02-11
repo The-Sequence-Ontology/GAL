@@ -9,7 +9,7 @@ use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::VCFv4_0 - <One line description of module's purpose here>
+GAL::Parser::VCFv4_0 - A GAL parser class for VCF version 4_0
 
 =head1 VERSION
 
@@ -95,7 +95,7 @@ sub header_count {
 sub parse_record {
     my ($self, $data) = @_;
 
-    ##fileformat=VCFv4.0
+    ##fileformat=VCFv4_0
     ##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
     ##INFO=<ID=HM2,Number=0,Type=Flag,Description="HapMap2 membership">
     ##INFO=<ID=HM3,Number=0,Type=Flag,Description="HapMap3 membership">
@@ -133,7 +133,7 @@ sub parse_record {
     my @all_seqs = ($reference_seq, @variant_seqs);
 
     # INFO Column Keys
-    # VFC 4.0
+    # VFC 4_0
     # AA ancestral allele
     # AC allele count in genotypes, for each ALT allele, in the same order as listed
     # AF allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes
@@ -159,9 +159,6 @@ sub parse_record {
       my @values = split /,/, $value;
       push @{$info{$key}}, @values;
     }
-
-
-
 
     my @format_order = split /:/, $record{format};
 

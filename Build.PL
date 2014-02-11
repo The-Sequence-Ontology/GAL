@@ -106,6 +106,7 @@ my $builder = $class->new(
 					    lib/GAL/t/200_parser_template_sequence_alteration.t
 					    lib/GAL/t/200_parser_trait_o_matic.t
 					    lib/GAL/t/200_parser_vcfv4_0.t
+					    lib/GAL/t/200_parser_vcfv4_1.t
 					    lib/GAL/t/200_parser_venter_indel.t
 					    lib/GAL/t/200_parser_venter_snp.t
 					    lib/GAL/t/200_parser_watson_cshl.t
