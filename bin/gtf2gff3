@@ -194,7 +194,7 @@ our $ATTRB_REGEX = ($config{MISC}{ATTRB_REGEX}     ?
 		    qr{$config{MISC}{ATTRB_REGEX}} :
 		    qr{^\s*(\S+)\s+(\"?[^\"]*\"?)\s*$});
 # If CDSs are annotated in the GTF file, are the start codons already included (1=yes 0=no)
-our $START_IN_CDS   = $config{MISC}{START_IN_CDS}    || 1;
+our $START_IN_CDS   = exists $config{MISC}{START_IN_CDS} ? $config{MISC}{START_IN_CDS} : 1;
 # If CDSs are annotated in the GTF file, are the stop codons already included (1=yes 0=no)
 our $STOP_IN_CDS    = $config{MISC}{STOP_IN_CDS}     || 0;
 # Use the following value (+ or -) for a features strand as the default if an invalid value is passed.
@@ -610,7 +610,7 @@ sub process_stop {
 	my $last_CDS = $CDSs->[-1];
 
 	$exons = sort_features($exons, $strand);
-	my $last_exon = $exons->[0];
+	my $last_exon = $exons->[-1];
 
 	if ($strand == 1) {
 	    if ($last_exon->{end} > $last_CDS->{end}) {
@@ -632,7 +632,7 @@ sub process_stop {
 	}
 
 	$stop_codon_end   = $stop_codon_start + 2
-	    if defined $stop_codon_end;
+	    if defined $stop_codon_start;
     }
     elsif (scalar @{$CDSs} && scalar @{$three_UTRs}) {
 
