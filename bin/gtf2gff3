@@ -853,15 +853,15 @@ sub evaluate_exon {
 	    }
 	}
 	#Exon stradles stop codon
-	elsif (defined $stop->{end}              &&
-	       $exon->{start} <  $stop->{end}    &&
-	       $exon->{end}   >  $stop->{end}        ) {
-	    $three_UTR{start} = $stop->{end} + 1;
-	    $three_UTR{end}   = $exon->{end};
-	    if (defined $start->{start}) {
-		$CDS{start}       = $exon->{start};
-		$CDS{end}         = $stop->{end};
-	    }
+	if (defined $stop->{end}              &&
+	    $exon->{start} <  $stop->{end}    &&
+	    $exon->{end}   >  $stop->{end}        ) {
+	  $three_UTR{start} = $stop->{end} + 1;
+	  $three_UTR{end}   = $exon->{end};
+	  if (defined $start->{start}) {
+	    $CDS{start}       = $exon->{start};
+	    $CDS{end}         = $stop->{end};
+	  }
 	}
 	#Exon is fully 3' UTR
 	elsif (defined $stop->{end} &&
@@ -906,7 +906,7 @@ sub evaluate_exon {
 	    }
 	}
 	#Exon stradles stop codon
-	elsif (defined $stop->{start}           &&
+	if (defined $stop->{start}           &&
 	       $exon->{end}   > $stop->{start}  &&
 	       $exon->{start} < $stop->{start}     ) {
 	    $three_UTR{start} = $exon->{start};
@@ -963,9 +963,9 @@ sub build_exons {
 
     #Make an exon for every 3' UTR
     for my $three_UTR (@{$three_UTRs}) {
-	push @exons, {start => $three_UTR->{start},
-		      end   => $three_UTR->{end},
-		      type  => 'exon',
+	push @exons, {start 	 => $three_UTR->{start},
+		      end   	 => $three_UTR->{end},
+		      type  	 => 'exon',
 		      score      => '.',
 		      strand     => $strand,
 		      phase      => '.'};
