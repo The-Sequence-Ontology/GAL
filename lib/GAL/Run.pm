@@ -119,9 +119,9 @@ sub command {
 
  Title   : stdout
  Usage   : $a = $self->stdout();
- Function: Get/Set the value of stdout.
- Returns : Value of stdout.
- Args    : A value to set for stdout.
+ Function: Get/Set the path of the file where STDOUT is redirected.
+ Returns : The path of the file where STDOUT is redirected.
+ Args    : The path of the file where STDOUT is redirected.
 
 =cut
 
@@ -140,9 +140,9 @@ sub stdout {
 
  Title   : stderr
  Usage   : $a = $self->stderr();
- Function: Get/Set the value of stderr.
- Returns : Value of stderr.
- Args    : A value to set for stderr.
+ Function: Get/Set the path of the file where STDERR is redirected.
+ Returns : The path of the file where STDERR is redirected.
+ Args    : The path of the file where STDERR is redirected.
 
 =cut
 
