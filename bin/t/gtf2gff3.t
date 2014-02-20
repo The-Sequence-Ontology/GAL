@@ -22,36 +22,43 @@ $tool->verbosity('debug');
 ################################################################################
 
 ok(! $tool->run(cl_args => '--help'), 'gtf2gff3 complies');
-like($tool->get_stdout, qr/Synopsis/, 'gtf2gff3 prints usage statement');
+like($tool->get_stdout, qr/This script will convert GTF formatted files to valid GFF3/, 'gtf2gff3 prints usage statement');
 
-# ~/GAL/bin/gtf2gff3  data/augustus_short.gtf           >  augustus_short.gff3           2>  augustus_short.err           &
-# ~/GAL/bin/gtf2gff3  data/cufflinks_short.gtf          >  cufflinks_short.gff3          2>  cufflinks_short.err          &
-# ~/GAL/bin/gtf2gff3  data/Danio.short.gtf              >  Danio.short.gff3              2>  Danio.short.err              &
-# ~/GAL/bin/gtf2gff3  data/ensemble_01_short.gtf        >  ensemble_01_short.gff3        2>  ensemble_01_short.err        &
-# ~/GAL/bin/gtf2gff3  data/exon_hunter.short.gtf        >  exon_hunter.short.gff3        2>  exon_hunter.short.err        &
-# ~/GAL/bin/gtf2gff3  data/gencode_short.gtf            >  gencode_short.gff3            2>  gencode_short.err            &
-# ~/GAL/bin/gtf2gff3  data/Homo_sapiens_1005.short.gtf  >  Homo_sapiens_1005.short.gff3  2>  Homo_sapiens_1005.short.err  &
-# ~/GAL/bin/gtf2gff3  data/hsap_hg18.short.gtf          >  hsap_hg18.short.gff3          2>  hsap_hg18.short.err          &
-# ~/GAL/bin/gtf2gff3  data/refgene_short.gtf            >  refgene_short.gff3            2>  refgene_short.err            &
-# ~/GAL/bin/gtf2gff3  data/twinscan_chr1.short.gtf      >  twinscan_chr1.short.gff3      2>  twinscan_chr1.short.err      &
-# ~/GAL/bin/gtf2gff3  data/unknown_01_short.gtf         >  unknown_01_short.gff3         2>  unknown_01_short.err         &
+my @gtf_files = qw(
+		    augustus_short.gtf
+		    cufflinks_short.gtf
+		    Danio.short.gtf
+		    ensemble_01_short.gtf
+		    exon_hunter.short.gtf
+		    gencode_short.gtf
+		    Homo_sapiens_1005.short.gtf
+		    hsap_hg18.short.gtf
+		    refgene_short.gtf
+		    twinscan_chr1.short.gtf
+		    unknown_01_short.gtf
+		 );
 
-my $file;
 ################################################################################
-# Testing gtf2gff3
+# Testing gtf2gff3 on GTF files
 ################################################################################
+$path = "$FindBin::Bin/data/";
 
-$file = "$FindBin::Bin/data/data/augustus_short.gtf";
-my @cl_args = ($file,
-	      );
+for my $gtf_file (@gtf_files) {
+  $gtf_file = $path . $gtf_file;
+  my ($gff_file, $vld_file);
+  ($gff_file = $gtf_file) =~ s/gtf$/gff3/;
+  ($vld_file = $gff_file) =~ s/\.gff3$/.valid.gff3/;
 
-ok(! $tool->run(cl_args => \@cl_args), 'gtf2gff3 augustus_short.gtf');
+  my @cl_args = ($gtf_file,
+		);
 
-my $md5_sum = `md5sum $file`;
-chomp $md5_sum;
-$md5_sum =~ s/(\S+).*/$1/;
-ok($valid_md5{$file} eq $md5_sum, "gtf2gff3 --split produces valid output for $file");
-$tool->clean_up($file);
+  ok(! $tool->run(cl_args => \@cl_args,
+		  stdout => $gff_file), 'gtf2gff3 augustus_short.gtf');
+
+  ok(! `diff $gff_file $vld_file`, "gtf2gff3 produces valid output for $gtf_file");
+  $tool->clean_up($gff_file);
+}
+
 
 $tool->clean_up;
 done_testing();
