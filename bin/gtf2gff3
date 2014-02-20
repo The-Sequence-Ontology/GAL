@@ -32,20 +32,29 @@ came with the script for more info.
 
 Options:
 
-  --cfg   Provide the filename for a config file.  See the configuration
-	  file provided with this script for format details.  Use this
-	  configuration file to modify the behavior of the script. If no config
-	  file is given it looks for ./gtf2gff3.cfg, ~/gtf2gff3.cfg or
-	  /etc/gtf2gff3.cfg in that order.
+  --cfg
+
+    Provide the filename for a config file.  See the configuration
+    file provided with this script for format details.  Use this
+    configuration file to modify the behavior of the script. If no
+    config file is given it looks for ./gtf2gff3.cfg, ~/gtf2gff3.cfg
+    or /etc/gtf2gff3.cfg in that order.
+
+  --print_cfg
+
+    Print a copy of the config variables as currently set (including
+    those set by --cfg) to STDOUT.  This output can be used as the
+    starting point for creating a custom config file.
 
   --help  Provide a more detailed help message.
 
 ";
 
-my ($help, $cfg_file);
+my ($help, $cfg_file, $print_cfg);
 my $opt_success;
-eval{$opt_success = GetOptions('help'  => \$help,
-			       'cfg=s' => \$cfg_file)};
+eval{$opt_success = GetOptions('help'      => \$help,
+			       'cfg=s'     => \$cfg_file,
+                               'print_cfg' => \$print_cfg)};
 
 handle_message('FATAL', 'invalid_options', $@) unless $opt_success;
 
@@ -55,14 +64,16 @@ if ($help) {
 }
 
 my $file = shift;
-if (! defined $file) {
-    handle_message('FATAL', 'missing_gtf_file');
-}
-elsif (! -e $file) {
-    handle_message('FATAL', 'file_does_not_exist', $file);
-}
-elsif (! -r $file) {
-    handle_message('FATAL', 'file_not_readable', $file);
+if (! $print_cfg) {
+    if (! defined $file) {
+	handle_message('FATAL', 'missing_gtf_file');
+    }
+    elsif (! -e $file) {
+	handle_message('FATAL', 'file_does_not_exist', $file);
+    }
+    elsif (! -r $file) {
+	handle_message('FATAL', 'file_not_readable', $file);
+    }
 }
 
 my $home = $ENV{HOME} || '.'; #Apache has no home, so avoid the error.
@@ -99,109 +110,112 @@ if ($cfg_file) {
 # Don't edit the SO terms below. Mapping must be many to one.  That means that
 # exon_this and exon_that could both map to the SO term exon, but exon_this
 # could not map to multiple SO terms.
+#                               GTF Term     (maps to)       #SO Term
+$config{INPUT_FEATURE_MAP} ||= {"3'-UTR"                   =>  'three_prime_UTR',
+				'3UTR'                     =>  'three_prime_UTR',
+				"5'-UTR"                   =>  'five_prime_UTR',
+				'5UTR'                     =>  'five_prime_UTR',
+				ARS                        =>  'ARS',
+				binding_site               =>  'binding_site',
+				BLASTN_HIT                 =>  'nucleotide_match',
+				CDS                        =>  'CDS',
+				CDS_motif                  =>  'nucleotide_motif',
+				CDS_parts                  =>  'mRNA_region',
+				centromere                 =>  'centromere',
+				chromosome                 =>  'chromosome',
+				conflict                   =>  'conflict',
+				Contig                     =>  'contig',
+				exon                       =>  'exon',
+				five_prime_utr             =>  'five_prime_UTR',
+				five_prime_UTR             =>  'five_prime_UTR',
+				gene                       =>  'gene',
+				insertion                  =>  'insertion',
+				intron                     =>  'intron',
+				LTR                        =>  'long_terminal_repeat',
+				misc_feature               =>  'sequence_feature',
+				misc_RNA                   =>  'transcript',
+				mRNA                       =>  'mRNA',
+				nc_primary_transcript      =>  'nc_primary_transcript',
+				ncRNA                      =>  'ncRNA',
+				nucleotide_match           =>  'nucleotide_match',
+				polyA_signal               =>  'polyA_signal_sequence',
+				polyA_site                 =>  'polyA_site',
+				promoter                   =>  'promoter',
+				pseudogene                 =>  'pseudogene',
+				real_mRNA                  =>  'mRNA',
+				region                     =>  'region',
+				repeat_family              =>  'repeat_family',
+				repeat_region              =>  'repeat_region',
+				repeat_unit                =>  'repeat_region',
+				rep_origin                 =>  'origin_of_replication',
+				rRNA                       =>  'rRNA',
+				snoRNA                     =>  'snoRNA',
+				snRNA                      =>  'snRNA',
+				source                     =>  'sequence_feature',
+				start_codon                =>  'start_codon',
+				start_codon                =>  'start_codon',
+				stop_codon                 =>  'stop_codon',
+				stop_codon                 =>  'stop_codon',
+				telomere                   =>  'telomere',
+				three_prime_utr            =>  'three_prime_UTR',
+				three_prime_UTR            =>  'three_prime_UTR',
+				transcript_region          =>  'transcript_region',
+				transcript                 =>  'transcript',
+				transposable_element_gene  =>  'transposable_element',
+				transposable_element       =>  'transposable_element',
+				tRNA                       =>  'tRNA',
+				tss                        =>  'TSS',
+				TSS                        =>  'TSS',
+				tts                        =>  'transcription_end_site',
+				TTS                        =>  'transcription_end_site'};
+
 our $INPUT_FEATURE_MAP = $config{INPUT_FEATURE_MAP};
-#GTF Term     (maps to)       #SO Term
-$INPUT_FEATURE_MAP ||= {"3'-UTR"	  => 'three_prime_UTR',
-			'3UTR'	  => 'three_prime_UTR',
-			"5'-UTR"                  => 'five_prime_UTR',
-			'5UTR'	  => 'five_prime_UTR',
-			ARS                       => 'ARS',
-			binding_site              => 'binding_site',
-			BLASTN_HIT                => 'nucleotide_match',
-			CDS	  => 'CDS',
-			CDS_motif                 => 'nucleotide_motif',
-			CDS_parts                 => 'mRNA_region',
-			centromere                => 'centromere',
-			chromosome                => 'chromosome',
-			conflict                  => 'conflict',
-			Contig                    => 'contig',
-			exon	  => 'exon',
-			five_prime_utr	  => 'five_prime_UTR',
-			five_prime_UTR	  => 'five_prime_UTR',
-			gene	  => 'gene',
-			insertion                 => 'insertion',
-			intron                    => 'intron',
-			LTR                       => 'long_terminal_repeat',
-			misc_feature              => 'sequence_feature',
-			misc_RNA                  => 'transcript',
-			mRNA	  => 'mRNA',
-			nc_primary_transcript     => 'nc_primary_transcript',
-			ncRNA                     => 'ncRNA',
-			nucleotide_match          => 'nucleotide_match',
-			polyA_signal              => 'polyA_signal_sequence',
-			polyA_site                => 'polyA_site',
-			promoter                  => 'promoter',
-			pseudogene                => 'pseudogene',
-			real_mRNA                 => 'mRNA',
-			region                    => 'region',
-			repeat_family             => 'repeat_family',
-			repeat_region             => 'repeat_region',
-			repeat_unit               => 'repeat region',
-			rep_origin                => 'origin_of_replication',
-			rRNA                      => 'rRNA',
-			snoRNA                    => 'snoRNA',
-			snRNA                     => 'snRNA',
-			source                    => 'sequence_feature',
-			start_codon	  => 'start_codon',
-			start_codon		  => 'start_codon',
-			stop_codon	  => 'stop_codon',
-			stop_codon		  => 'stop_codon',
-			telomere                  => 'telomere',
-			three_prime_utr	  => 'three_prime_UTR',
-			three_prime_UTR	  => 'three_prime_UTR',
-			transcript_region         => 'transcript_region',
-			transcript                => 'transcript',
-			transposable_element_gene => 'transposable_element',
-			transposable_element      => 'transposable_element',
-			tRNA                      => 'tRNA',
-			tss                       => 'TSS',
-			TSS                       => 'TSS',
-			tts                       => 'transcription_end_site',
-			TTS                       => 'transcription_end_site',
-		    };
 
 # Maps tags used internally to tags found in your GTF file
 # Don't edit the code tags.
 # Note that the gene_id and transcript_id tags tell the script
 # who the parents of a feature are.
-our $GTF_ATTRB_MAP  = $config{GTF_ATTRB_MAP};
-#Code Tag  (comes from)  #GTF Tag
-$GTF_ATTRB_MAP ||= {gene_id		  => 'gene_id',
-		    gene_name		  => 'gene_name',
-		    trnsc_id		  => 'transcript_id',
-		    trnsc_name		  => 'transcript_name'};
+#                           Code Tag  (comes from)  #GTF Tag
+$config{GTF_ATTRB_MAP} ||= {gene_id		  => 'gene_id',
+			    gene_name		  => 'gene_name',
+			    trnsc_id		  => 'transcript_id',
+			    trnsc_name		  => 'transcript_name'};
 
+our $GTF_ATTRB_MAP  = $config{GTF_ATTRB_MAP};
 # Maps tags used internally to output GFF3 attribute tags.
 # Also, when LIMIT_ATTRB is set to 1 only these tags will be
 # Output to the GFF3 attributes column.
+#                            Code Tag      #GFF3 Tag
+$config{GFF3_ATTRB_MAP} ||= {gene_id    => 'gene_id',
+			     gene_name  => 'gene_name',
+			     trnsc_id   => 'transcript_id',
+			     trnsc_name => 'transcript_name',
+			     id         => 'ID',
+			     parent     => 'Parent',
+			     name       => 'Name'};
 our $GFF3_ATTRB_MAP = $config{GFF3_ATTRB_MAP};
-#Code Tag      #GFF3 Tag
-$GFF3_ATTRB_MAP ||= {gene_id    => 'gene_id',
-		     gene_name  => 'gene_name',
-		     trnsc_id   => 'transcript_id',
-		     trnsc_name => 'transcript_name',
-		     id         => 'ID',
-		     parent     => 'Parent',
-		     name       => 'Name'};
 
 # Limit the attribute tags printed to only those in the GFF3_ATTRB_MAP
-our $LIMIT_ATTRB     = $config{MISC}{LIMIT_ATTRB} || 0;
+$config{MISC}{LIMIT_ATTRB} ||= 0;
+our $LIMIT_ATTRB     = $config{MISC}{LIMIT_ATTRB};
 # A perl regexp that splits the attributes column into seperate attributes.
-our $ATTRB_DELIMITER = $config{MISC}{ATTRB_DELIMITER} ? qr{$config{MISC}{ATTRB_DELIMITER}}
-: qr{\s*;\s*};
+$config{MISC}{ATTRB_DELIMITER} ||= qr{\s*;\s*};
+our $ATTRB_DELIMITER = $config{MISC}{ATTRB_DELIMITER};
 # A perl regexp that captures the tag value pairs.
-our $ATTRB_REGEX = ($config{MISC}{ATTRB_REGEX}     ?
-		    qr{$config{MISC}{ATTRB_REGEX}} :
-		    qr{^\s*(\S+)\s+(\"?[^\"]*\"?)\s*$});
+$config{MISC}{ATTRB_REGEX} ||= qr{^\s*(\S+)\s+(\"?[^\"]*\"?)\s*$};
+our $ATTRB_REGEX = $config{MISC}{ATTRB_REGEX};
 # If CDSs are annotated in the GTF file, are the start codons already included (1=yes 0=no)
-our $START_IN_CDS   = exists $config{MISC}{START_IN_CDS} ? $config{MISC}{START_IN_CDS} : 1;
+$config{MISC}{START_IN_CDS} = defined $config{MISC}{START_IN_CDS} ? $config{MISC}{START_IN_CDS} : 1;
+our $START_IN_CDS   = $config{MISC}{START_IN_CDS};
 # If CDSs are annotated in the GTF file, are the stop codons already included (1=yes 0=no)
-our $STOP_IN_CDS    = $config{MISC}{STOP_IN_CDS}     || 0;
+$config{MISC}{STOP_IN_CDS} = defined $config{MISC}{STOP_IN_CDS} ? $config{MISC}{STOP_IN_CDS} : 0;
+our $STOP_IN_CDS    = $config{MISC}{STOP_IN_CDS};
 # Use the following value (+ or -) for a features strand as the default if an invalid value is passed.
-our $DEFAULT_STRAND = (exists $config{MISC}{DEFAULT_STRAND} ?
-		       $config{MISC}{DEFAULT_STRAND} : '+');
+$config{MISC}{DEFAULT_STRAND} = defined $config{MISC}{DEFAULT_STRAND} ? $config{MISC}{DEFAULT_STRAND} : '+';
+our $DEFAULT_STRAND = $config{MISC}{DEFAULT_STRAND};
 ################################################################################
 
+print_config(\%config) if $print_cfg;
 
 my @META_DATA;
 my ($genes, $features) = parse_gtf($file);
@@ -1547,6 +1561,77 @@ sub handle_message {
 
 #-----------------------------------------------------------------------------
 
+sub print_config {
+
+    my $config = shift;
+
+    my $config_text = "#This config file allows the user to customize the gtf2gff3
+#converter.
+
+[INPUT_FEATURE_MAP]
+#Use INPUT_FEATURE_MAP to map your GTF feature types (column 3 in GTF) to valid SO types.
+#Don't edit the SO terms below.
+#Mapping must be many to one.  That means that exon_this and exon_that could both
+#map to the SO term exon, but exon_this could not map to multiple SO terms.
+
+#GTF Term                  #SO Term
+";
+
+    for my $key (sort keys %{$config{INPUT_FEATURE_MAP}}) {
+        my $value = $config{INPUT_FEATURE_MAP}{$key};
+        $config_text .= "$key = $value\n";
+    }   
+
+    $config_text .= "\n[GTF_ATTRB_MAP]
+#Maps tags used internally to tags found in your GTF file
+#Don't edit the code tags.
+#Note that the gene_id and transcript_id tags tell the script
+#who the parents of a feature are.
+
+#Code Tag    #GTF Tag
+";
+
+    for my $key (sort keys %{$config{GTF_ATTRB_MAP}}) {
+        my $value = $config{GTF_ATTRB_MAP}{$key};
+        $config_text .= "$key = $value\n";
+    }   
+
+    $config_text .= "\n[GFF3_ATTRB_MAP]
+#Maps tags used internally to output GFF3 attribute tags.
+#Also, when LIMIT_ATTRB is set to 1 only these tags will be
+#Output to the GFF3 attributes column.
+
+#Code Tag  #GFF3 Tag
+";
+
+    for my $key (sort keys %{$config{GFF3_ATTRB_MAP}}) {
+        my $value = $config{GFF3_ATTRB_MAP}{$key};
+        $config_text .= "$key = $value\n";
+    }   
+
+    $config_text .= "\n[MISC]
+# Limit the attribute tags printed to only those in the GFF3_ATTRB_MAP
+LIMIT_ATTRB     = $config{MISC}{LIMIT_ATTRB}
+#A perl regexp that splits the attributes column into seperate attributes.
+ATTRB_DELIMITER = $config{MISC}{ATTRB_DELIMITER};
+#A perl regexp that captures the tag value pairs.
+ATTRB_REGEX     = $config{MISC}{ATTRB_REGEX};
+#If CDSs are annotated in the GTF file, are the start codons already included (1=yes 0=no)
+START_IN_CDS    = $config{MISC}{START_IN_CDS};
+#If CDSs are annotated in the GTF file, are the stop codons already included (1=yes 0=no)
+STOP_IN_CDS     = $config{MISC}{STOP_IN_CDS};
+#Use the following value (+ or -) for a features strand as the default if an invalid value is passed.
+#DEFAULT_STRAND  = $config{MISC}{DEFAULT_STRAND};
+
+";
+
+    print $config_text;
+    exit(0);
+
+}
+
+#-----------------------------------------------------------------------------
+
 =head1 NAME
 
 gtf2gff3
@@ -1584,6 +1669,12 @@ provided with this script for format details.  Use this configuration
 file to modify the behavior of the script. If no config file is given
 it looks for ./gtf2gff3.cfg, ~/gtf2gff3.cfg or /etc/gtf2gff3.cfg in
 that order.
+
+=item --print_cfg
+
+Print a copy of the config variables as currently set (including those
+set by --cfg) to STDOUT.  This output can be used as the starting
+point for creating a custom config file.
 
 =item --help
 
