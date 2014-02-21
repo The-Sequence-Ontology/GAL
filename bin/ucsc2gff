@@ -17,7 +17,10 @@ ucsc2gff --table knownGene knownGene.txt
 Description:
 
 This script will take knownGene or refGene tables from UCSC and build
-GFF files from them.
+GFF files from them.  The GFF file will not contain gene features
+because these are not available from the UCSC GTF (but see the
+--build_genes option below).  To create a valid GFF3 that contain
+genes, pass the output from this program into build_genes.
 
 Options:
 
@@ -58,7 +61,7 @@ Options:
     CDSs because gene IDs are not always mapped accurately in the UCSC
     tables.  Another script build_genes is then used to cluster the
     transcripts and create genes for the resulting clusters.  However
-    ins some datasets such as Ensembl (ensGene) the transcript to gene
+    in some datasets such as Ensembl (ensGene) the transcript to gene
     mapping given in the table data is sufficient to build the genes
     directly.  This option will create gene features and parent the
     transcripts to those genes.  The genes will all be at the end of

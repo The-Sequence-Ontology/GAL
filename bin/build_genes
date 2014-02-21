@@ -16,7 +16,15 @@ Description:
 
 This script will take a GFF3 file that has transcripts, exons and
 CDSs, but no gene features and build gene features by single-linkage
-clustering of transcripts based on exonic overlap.
+clustering of transcripts based on exonic overlap.  All transcripts
+that are on the same strand and which share >= 1 nucleotide of exonic
+overlap will be merged into a gene group and a gene will be created.
+If transcripts have Alias attributes containing gene name then the
+most common Alias is used as the new gene ID, otherwise an
+incrementing numeric ID is assigned.
+
+This script provides a simple way to create valid GFF3 files from UCSC
+based gene/transcript tables (i.e. knownGene and refGene).
 
 ";
 
