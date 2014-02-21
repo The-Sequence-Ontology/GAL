@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+use Time::HiRes qw(tv_interval gettimeofday);
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+gal_benchmark_recursion feature.gff3
+
+Description:
+
+Recusrively getting children is currently a pretty slow operation in
+for GAL.  This script exercises that behavior for use in benchmarking.
+
+";
+
+my ($help);
+
+my $opt_success = GetOptions('help|h' => \$help,
+			      );
+
+die $usage unless $opt_success;
+if ($help) {
+  print $usage;
+  exit(0);
+}
+
+
+my ($gff3_file) = @ARGV;
+
+die "$usage\n\nFATAL : missing_gff3_file : GFF3 file required\n" unless $gff3_file;
+
+my $t0 = [gettimeofday];
+
+my $annotation = GAL::Annotation->new($gff3_file);
+
+my $elapsed = tv_interval ( $t0, [gettimeofday]);
+print "Loading time: $elapsed\n\n";
+
+my $features = $annotation->features->search({type => 'gene'});
+
+my $count;
+# Iterate over the features
+my $total_time;
+while (my $feature = $features->next) {
+  my $t0 = [gettimeofday];
+  my @feats = $feature->to_gff3_recursive;
+  #print join "\n", @feats;
+  #print "\n";
+  my $elapsed = tv_interval ( $t0, [gettimeofday]);
+  $total_time += $elapsed;
+  my $relative = $total_time/++$count;
+  print "$count\t$elapsed\t$relative\n";
+  print '-' x 80;
+  print "\n";
+}

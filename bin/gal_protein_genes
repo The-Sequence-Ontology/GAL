@@ -1,0 +1,84 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+protein_genes --clean feature.gff3 sequence.fasta
+
+Description:
+
+Pint the protein coding genes in a GFF3 file.
+
+Options:
+
+  clean    Only print transcripts that do not contain any
+           internal stops and only genes that contain at least one
+           such transcript.
+
+";
+
+my ($help, $clean);
+my $opt_success = GetOptions('help'          => \$help,
+			     'clean'         => \$clean,
+			      );
+
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gal_protein_genes --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
+
+my ($gff3, $fasta) = @ARGV;
+
+die $usage unless $fasta && $gff3;
+
+my $annotation = GAL::Annotation->new($gff3,
+				      $fasta);
+
+my $features = $annotation->features;
+
+my $genes = $features->search({type => 'gene'});
+GENE:
+while (my $gene = $genes->next) {
+  next GENE unless $gene->is_coding;
+  my $mrnas = $gene->mRNAs;
+  if ($clean) {
+    my $gene_text = $gene->to_gff3 . "\n";
+    my $gene_flag;
+  MRNA:
+    while (my $mrna = $mrnas->next) {
+      my $mrna_id = $mrna->feature_id;
+      my $prot = $mrna->protein_seq;
+      if ($prot =~ /\*/) {
+	$mrna->warn('transcript_produces_invalid_protein',
+		    'Skipping ' . $mrna->feature_id);
+	next MRNA;
+      }
+      print $gene_text unless $gene_flag++;
+      print join "\n", $mrna->to_gff3_recursive;
+      print "\n";
+    }
+    $gene->warn('gene_has_no_valid_protiens',
+		'Skipping ' . $gene->feature_id)
+      unless $gene_flag;
+  }
+  else {
+    print join "\n", $gene->to_gff3_recursive;
+    print "\n";
+  }
+}
