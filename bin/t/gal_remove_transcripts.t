@@ -10,7 +10,7 @@ use lib "$FindBin::RealBin/../../lib/cpan";
 use GAL::Run;
 
 chdir $FindBin::Bin;
-my $path = "$FindBin::Bin/../examples";
+my $path = "$FindBin::Bin/..";
 
 my $tool = GAL::Run->new(path => $path,
 			 command => 'gal_remove_transcripts');
