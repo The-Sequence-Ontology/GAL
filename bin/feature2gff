@@ -18,7 +18,7 @@ feature2gff --parser gigabayes --fasta /path/to/reference gigabayes_output.gff
 
 Description:
 
-Convert various sequence feature formats to GFF3.
+Convert various sequence feature formats to GFF3/GVF.
 
 Options:
 
