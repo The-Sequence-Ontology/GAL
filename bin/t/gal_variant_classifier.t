@@ -13,17 +13,17 @@ chdir $FindBin::Bin;
 my $path = "$FindBin::Bin/..";
 
 my $tool = GAL::Run->new(path => $path,
-			 command => 'variant_classifier');
+			 command => 'gal_variant_classifier');
 
 ################################################################################
-# Testing that variant_classifier compiles and returns usage statement
+# Testing that gal_variant_classifier compiles and returns usage statement
 ################################################################################
 
-ok(! $tool->run(cl_args => '--help'), 'variant_classifier complies');
-like($tool->get_stdout, qr/Synopsis/, 'variant_classifier prints usage statement');
+ok(! $tool->run(cl_args => '--help'), 'gal_variant_classifier complies');
+like($tool->get_stdout, qr/Synopsis/, 'gal_variant_classifier prints usage statement');
 
 ################################################################################
-# Testing that variant_classifier does something else
+# Testing that gal_variant_classifier does something else
 ################################################################################
 
 # my $gff_file = "$FindBin::Bin/data/file.gff";
@@ -33,9 +33,9 @@ like($tool->get_stdout, qr/Synopsis/, 'variant_classifier prints usage statement
 #	         $gff_file,
 #	        );
 #
-# ok($tool->run(cl_args => \@cl_args), 'variant_classifier does something');
+# ok($tool->run(cl_args => \@cl_args), 'gal_variant_classifier does something');
 # ok($tool->get_stdout =~ /match something/,
-#    'variant_classifier has the correct output');
+#    'gal_variant_classifier has the correct output');
 
 $tool->clean_up;
 done_testing();

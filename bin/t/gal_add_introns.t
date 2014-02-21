@@ -10,13 +10,14 @@ use lib "$FindBin::RealBin/../../lib/cpan";
 use GAL::Run;
 
 chdir $FindBin::Bin;
-my $path = "$FindBin::Bin/../examples";
+my $path = "$FindBin::Bin/..";
 my $command;
 my ($sto_text, $ste_text);
 
 my $tool = GAL::Run->new(path => $path,
 			 command => 'gal_add_introns');
 
+$tool->verbosity('debug');
 ################################################################################
 # Testing that gal_add_introns compiles and returns usage statement
 ################################################################################

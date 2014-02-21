@@ -159,8 +159,8 @@ my $builder = $class->new(
 					    bin/t/sam_inspector.t
 					    bin/t/script_test_template.t
 					    bin/t/ucsc2gff.t
-					    bin/t/ucsc_gtf2gff3.t
-					    bin/t/variant_classifier.t
+                                            bin/t/gtf2gff3.t
+					    bin/t/gal_variant_classifier.t
 					  )],
 			 );
 

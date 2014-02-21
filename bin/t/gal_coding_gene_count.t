@@ -10,7 +10,7 @@ use lib "$FindBin::RealBin/../../lib/cpan";
 use GAL::Run;
 
 chdir $FindBin::Bin;
-my $path = "$FindBin::Bin/../examples";
+my $path = "$FindBin::Bin/..";
 my $command;
 my ($sto_text, $ste_text);
 
