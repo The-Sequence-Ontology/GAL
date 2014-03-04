@@ -141,6 +141,8 @@ sub build_attributes {
   #map {$_ = 'vcf' . $_} keys %{$vcf_info_attributes};
 
   my %attributes = (%{$vcf_info_attributes}, %{$vcf_format_attributes});
+  $attributes{Reference_seq} = [$record->{ref}];
+  $attributes{Variant_seq} = [split /,/, $record->{alt}];
 
   return wantarray ? %attributes : \%attributes;
 
@@ -178,12 +180,22 @@ sub parse_vcf_info {
   for my $pair (@pairs) {
     my ($key, $value) = split /=/, $pair;
     $value = defined $value ? $value : '';
-    my @values = split /,/, $value;
-    # Add lower case vcf to make attributes valid GFF3
-    $key = 'vcf' . $key;
-    push @{$info{$key}}, @values;
+    ($key, $value) = $self->parse_vcf_info_key_value($record, $key, $value);
+    push @{$info{$key}}, @{$value};
   }
   return wantarray ? %info : \%info;
+}
+
+#-----------------------------------------------------------------------------
+
+sub parse_vcf_info_key_value {
+
+  my ($self, $key, $value) = @_;
+
+  $key = 'vcf_' . $key;
+  my @values = split /,/, $value;
+
+  return $key, \@values;
 }
 
 #-----------------------------------------------------------------------------
@@ -307,7 +319,7 @@ sub _parse_vcf_metadata {
 
     %data = ($key => \@values);
   }
-  elsif ($key eq '') {
+  elsif ($key eq 'FILTER') {
     # FILTERs that have been applied to the data should be described as follows:
     #
     # ##FILTER=<ID=ID,Description=”description”>
@@ -325,7 +337,7 @@ sub _parse_vcf_metadata {
     # INFO field).
     %data = ($key => \@values);
   }
-  elsif ($key eq '') {
+  elsif ($key eq 'ALT') {
 
     # Symbolic alternate alleles for imprecise structural variants:
     #
@@ -358,7 +370,7 @@ sub _parse_vcf_metadata {
     #
     %data = ($key => \@values);
   }
-  elsif ($key eq '') {
+  elsif ($key eq 'assembly') {
     # ##assembly=url
     #
     # The URL field specifies the location of a fasta file containing
@@ -367,7 +379,7 @@ sub _parse_vcf_metadata {
     #
     %data = ($key => \@values);
   }
-  elsif ($key eq '') {
+  elsif ($key eq 'contig') {
 
     # As with chromosomal sequences it is highly recommended (but not
     # required) that the header include tags describing the contigs
@@ -380,14 +392,14 @@ sub _parse_vcf_metadata {
     #
     %data = ($key => \@values);
   }
-  elsif ($key eq '') {
+  elsif ($key eq 'SAMPLE') {
     # As explained below it is possible to define sample to genome mappings:
     #
     # ##SAMPLE=<ID=S_ID,Genomes=G1_ID;G2_ID; ...;GK_ID,Mixture=N1;N2; ...;NK,Description=S1;S2; ...; SK >
     #
     %data = ($key => \@values);
   }
-  elsif ($key eq '') {
+  elsif ($key eq 'PEDIGREE' || $key eq 'pedigreeDB') {
 
     # As well as derivation relationships between genomes using the
     # following syntax:
@@ -426,6 +438,8 @@ sub _parse_vcf_header {
 sub parse_vcf_format {
 
   my ($self, $record, $data) = @_;
+
+
 
   my %format_attributes = (Individual_format => [$record->{format}],
 			   Individual_data   => $data,
