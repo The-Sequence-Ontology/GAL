@@ -336,9 +336,9 @@ that document for details on constrants for each value and attribute.
 
 sub next_feature_hash {
   my $self = shift;
-  
+
   my $feature;
-  
+
   # If a previous record has returned multiple features then
   # grab them off the stack first instead of reading a new one
   # from the file.
@@ -347,17 +347,17 @@ sub next_feature_hash {
     $feature = shift @{$self->{_feature_stack}};
     return wantarray ? %{$feature} : $feature;
   }
-  
+
   # Allow parse_record to return undef to ignore a record, but
   # still keep parsing the file.
   until ($feature) {
     # Get the next record from the file.
     my $record = $self->next_record;
     return undef if ! defined $record;
-    
+
     # Parser the record - probably overridden by a subclass.
     $feature = $self->parse_record($record);
-    
+
     # Allow parsers to return more than one feature.
     # This allows the parser to expand a single record into
     # multiple features.
@@ -367,9 +367,9 @@ sub next_feature_hash {
       $feature = $this_feature;
     }
   }
-  
+
   $self->validate_feature($feature);
-  
+
   return wantarray ? %{$feature} : $feature;
 }
 
@@ -387,27 +387,27 @@ sub next_feature_hash {
 
 sub to_gff3 {
   my ($self, $feature) = @_;
-  
-  my %ATTRB_ORDER = (ID	 => 1,
-		     Name	 => 2,
-		     Alias	 => 3,
-		     Parent	 => 3,
-		     Target	 => 4,
-		     Gap	 => 5,
-		     Derives_from	 => 6,
-		     Note	 => 7,
-		     Dbxref	 => 8,
-		     Ontology_term	 => 9,
-		     Variant_seq	 => 10,
-		     Reference_seq	 => 11,
-		     Variant_reads	 => 12,
-		     Total_reads	 => 13,
-		     Genotype	 => 14,
-		     Variant_effect	 => 15,
-		     Variant_copy_number   => 16,
-		     Reference_copy_number => 17,
+
+  my %ATTRB_ORDER = (
+		     ID                   =>  1,
+		     Name                 =>  2,
+		     Alias                =>  3,
+		     Parent               =>  3,
+		     Target               =>  4,
+		     Gap                  =>  5,
+		     Derives_from         =>  6,
+		     Note                 =>  7,
+		     Dbxref               =>  8,
+		     Ontology_term        =>  9,
+		     Variant_seq          =>  10,
+		     Reference_seq        =>  11,
+		     Variant_reads        =>  12,
+		     Total_reads          =>  13,
+		     Genotype             =>  14,
+		     Variant_effect       =>  15,
+		     Variant_copy_number  =>  16,
 		    );
-  
+
   my $attribute_text;
   for my $key (sort {($ATTRB_ORDER{$a} || 99) <=> ($ATTRB_ORDER{$b} || 99) ||
 		       $a cmp $b}
@@ -415,7 +415,7 @@ sub to_gff3 {
     my $value_text = join ',', @{$feature->{attributes}{$key}};
     $attribute_text .= "$key=$value_text;";
   }
-  
+
   my $gff3_text = join "\t", ($feature->{seqid},
 			      $feature->{source},
 			      $feature->{type},
@@ -426,7 +426,7 @@ sub to_gff3 {
 			      $feature->{phase},
 			      $attribute_text,
 			     );
-  
+
   return $gff3_text;
 }
 
@@ -444,7 +444,7 @@ sub to_gff3 {
 
 sub parse_metadata {
   my $self = shift;
-  
+
   my $raw_data = $self->reader->metadata;
   # Subclasses can override and do something here.
   $self->{metadata} = $raw_data;
@@ -465,9 +465,9 @@ sub parse_metadata {
 
 sub parse_record {
   my ($self, $record) = @_;
-  
+
   my $attributes = $self->parse_attributes($record->{attributes});
-  
+
   my %feature = (seqid      => $record->{seqid},
 		 source     => $record->{source},
 		 type       => $record->{type},
@@ -478,7 +478,7 @@ sub parse_record {
 		 phase      => $record->{phase},
 		 attributes => $attributes,
 		);
-  
+
   if (exists $attributes->{ID}         &&
       ref $attributes->{ID} eq 'ARRAY' &&
       $attributes->{ID}[0]) {
@@ -488,7 +488,7 @@ sub parse_record {
     $feature{feature_id} =  $self->create_unique_id(\%feature);
     $attributes->{ID}[0] = $feature{feature_id}
   }
-  
+
   return wantarray ? %feature : \%feature;
 }
 
@@ -535,12 +535,12 @@ sub parse_attributes {
 
 sub create_unique_id {
   my ($self, $feature, $pad) = @_;
-  
+
   $pad ||= 8;
   my $type = $feature->{type};
-  
+
   my $id = "${type}_" . sprintf("%0${pad}s", ++$self->{id_counter}{$type});
-  
+
   return $id;
 }
 
