@@ -47,9 +47,10 @@ $tool->clean_up;
 
 #../feature2gff
 
-my @cl_args = ('--parser VCFv4_0',
-	       'data/test.vcf',
-	      );
+@cl_args = ('--parser VCFv4_0',
+	    '--fasta data/hg19_chr22.fa',
+	    'data/test.vcf',
+	   );
 
 ok(! $tool->run(cl_args => \@cl_args), 'feature2gff runs');
 ok($tool->get_stdout =~ /ID=22:HG00096:16052513;Variant_seq=C,G;Reference_seq=G;/,
