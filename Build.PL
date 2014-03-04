@@ -137,6 +137,8 @@ my $builder = $class->new(
 					    lib/GAL/t/600_list.t
 					    lib/GAL/t/600_list_categorical.t
 					    lib/GAL/t/600_list_numeric.t
+					    lib/GAL/t/700_writer.t
+					    lib/GAL/t/700_writer_gff3.t
 					    bin/t/add_reference_seq.t
 					    bin/t/annotation_summary.t
 					    bin/t/build_genes.t
@@ -154,12 +156,12 @@ my $builder = $class->new(
 					    bin/t/gal_validate_proteins.t
 					    bin/t/gff3_validator.t
 					    bin/t/gff_tool.t
+					    bin/t/gtf2gff3.t
 					    bin/t/gvf_validator.t
 					    bin/t/map_seqids.t
 					    bin/t/sam_inspector.t
 					    bin/t/script_test_template.t
 					    bin/t/ucsc2gff.t
-                                            bin/t/gtf2gff3.t
 					    bin/t/gal_variant_classifier.t
 					  )],
 			 );
