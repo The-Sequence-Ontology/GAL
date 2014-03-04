@@ -106,7 +106,7 @@ A more complex object creation might look like this:
 
     my $feat_store = GAL::Annotation->new(parser  => {class => gff3},
 					  storage => {class => mysql,
-						      dsn   => 'dbi:mysql:database'
+						      dsn   => 'dbi:SQLite:database'
 						      user  => 'me',
 						      password => 'secret'
 					  fasta   =>  '/path/to/fasta/files/'
@@ -197,8 +197,8 @@ sub _check_for_simple_args {
 
     return {} unless @args;
 
-    # If one or two files are passed in along
-    # we'll assume they are a GFF3 and Fasta file
+    # If one or two files are passed in we'll assume they are a GFF3
+    # and Fasta file.
     my ($args, $feature_file, $fasta_file);
     # If one or two args
     if (@args <= 2) {
