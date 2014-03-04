@@ -303,7 +303,9 @@ sub feature_seq {
 					  $self->end
 					 );
   $self->warn('feature_returned_no_sequence',
-	      "Be sure you passed a fasta file and that this seqid exists")
+	      "Be sure you passed a fasta file and that this seqid exists" .
+	      "If all else fails, delete the fasta sequence .index file "  .
+	      "and try again.")
     if ! $seq;
 
   $seq = $self->annotation->revcomp($seq) if
