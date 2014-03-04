@@ -189,8 +189,10 @@ sub annotation {
 sub dsn {
 	my ($self, $dsn) = @_;
 
-	if ($self->{dsn} && ! $dsn) {
-		return $self->{dsn};
+	if (exists  $self->{dsn} &&
+	    defined $self->{dsn} &&
+	    ! defined $dsn) {
+	  return $self->{dsn};
 	}
 
 	# If we don't have a dsn, then create one
@@ -206,7 +208,7 @@ sub dsn {
 	$driver = $self->driver($driver);
 
 	my ($database, %attributes);
-	if ($driver_dsn =~ /=/) {
+	if ($driver_dsn && $driver_dsn =~ /=/) {
 	  my %attributes = map {split /=/} split /;/, $driver_dsn;
 	  $database = $attributes{dbname} || $attributes{database};
 	}
@@ -322,7 +324,6 @@ sub password {
 sub _load_schema {
   my ($self, $dbh) = @_;
 
-  my $self = shift;
   $self->throw('subclass_must_override_this_method',
 	       ('Method _load_schema must be implimented by ' .
 		'subclass'),
