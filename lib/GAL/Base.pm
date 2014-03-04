@@ -302,6 +302,11 @@ list (or referenece) of key value pairs.
      my $fasta = Bio::DB::Fasta->new($fasta_path);
      $self->{fasta} = $fasta;
    }
+   if (! $self->{fasta}) {
+     $self->throw('missing_fasta_datasource', 'Your code has requested ' .
+		 'access to fasta sequence data, but no fasta ' .
+		 'file has been provided');
+   }
    return $self->{fasta};
  }
 
