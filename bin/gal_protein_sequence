@@ -1,0 +1,62 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+gal_protein_sequence feature.gff3 sequence.fasta
+
+Description:
+
+Pint the protein sequence of protein coding genes.
+
+";
+
+my ($help, $clean);
+my $opt_success = GetOptions('help'          => \$help,
+			     'clean'         => \$clean,
+			      );
+
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gal_protein_genes --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
+
+my ($gff3, $fasta) = @ARGV;
+
+die $usage unless $fasta && $gff3;
+
+my $annotation = GAL::Annotation->new($gff3,
+				      $fasta);
+
+my $features = $annotation->features;
+
+my $genes = $features->search({type => 'gene'});
+GENE:
+while (my $gene = $genes->next) {
+  next GENE unless $gene->is_coding;
+  my $mrnas = $gene->mRNAs;
+ MRNA:
+  while (my $mrna = $mrnas->next) {
+    my $mrna_id = $mrna->feature_id;
+    my $prot_seq = $annotation->wrap_text($mrna->protein_seq);
+    print ">$mrna_id (protein translation)\n";
+    print $prot_seq;
+    print "\n";
+  }
+}
