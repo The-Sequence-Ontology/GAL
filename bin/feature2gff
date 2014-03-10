@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use GAL::Parser;
+use GAL::Writer::GFF3;
 use Bio::DB::Fasta;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
@@ -103,13 +104,14 @@ if ($pragma && -r $pragma) {
 
 for my $file (@files) {
 
-	my $parser = $class->new(file  => $file,
-				 fasta => $fasta);
+  my $parser = $class->new(file  => $file,
+			   fasta => $fasta);
 
-	while (my $feature = $parser->next_feature_hash) {
-		print $parser->to_gff3($feature);
-		print "\n";
-	}
+  my $writer = GAL::Writer::GFF3->new();
+
+  while (my $feature = $parser->next_feature_hash) {
+    $writer->write_feature($feature);
+  }
 }
 
 #-----------------------------------------------------------------------------
