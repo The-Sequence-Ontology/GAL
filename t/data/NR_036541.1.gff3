@@ -1,0 +1,8 @@
+##gff-version 3
+# NR_036541.1.gff3 – 2nd and 3rd rows don’t add up right. Also note
+# the consecutive Match values in Gap, which I don’t think
+# are prohibited, but they’re unnecessary.
+NW_001838504.2	RefSeq	match	5717	5727	.	-	.	ID=aln1;Target=NR_036541.1 1058 1068 +
+NW_001838504.2	RefSeq	match	5845	5913	.	-	.	ID=aln1;Target=NR_036541.1 1069 1183 +;Gap=M4 M2 M1 M2 I1 M5 I42 M8 I1 M3 I2 M1 M1 M5 M2
+NW_001838504.2	RefSeq	match	7369	7447	.	-	.	ID=aln1;Target=NR_036541.1 1276 1355 +;Gap=M2 M4 M2 I1 M67
+NW_001838504.2	RefSeq	match	7591	8221	.	-	.	ID=aln1;Target=NR_036541.1 1356 1986 +

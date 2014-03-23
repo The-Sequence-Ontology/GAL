@@ -1,0 +1,5 @@
+##gff-version 3
+# NG_027806.1.gff3 – Both the landmark range and the target range
+# don’t match the length of the gap string.
+NW_001838594.1	RefSeq	match	1	44806	44738	+	.	ID=aln0;Target=NG_027806.1 20100 24720 +;Gap=M2148 I1 M2788 I1 M736 I1 M7 I1 M32 I1 M14 I1 M135 D1 M1432 D1 M2821 I1 M28 I1 M34 I1 M19428 D1 M2132 I3 M10502 I1 M2566
+
