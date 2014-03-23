@@ -66,11 +66,15 @@ ok($tool->get_stdout =~ /Target_and_Gap_attribute_lengths_dont_match\s+2[^\d]/,
    'Target_and_Gap_attribute_lengths_dont_match errors caught');
 ok($tool->get_stdout =~ /Gap_attribute_length_does_not_match_feature_length\s+2[^\d]/,
    'Gap_attribute_length_does_not_match_feature_length errors caught');
+ok($tool->get_stdout =~ /consecutive_CIGAR_operators_should_be_collapsed\s+8[^\d]/,
+   'consecutive_CIGAR_operators_should_be_collapsed errors caught');
 
 ok($tool->get_stderr =~ /Target_and_Gap_attribute_lengths_dont_match/,
    'Target_and_Gap_attribute_lengths_dont_match errors caught');
 ok($tool->get_stderr =~ /Gap_attribute_length_does_not_match_feature_length/,
    'Gap_attribute_length_does_not_match_feature_length errors caught');
+ok($tool->get_stderr =~ /consecutive_CIGAR_operators_should_be_collapsed/,
+   'consecutive_CIGAR_operators_should_be_collapsed errors caught');
 
 $tool->clean_up;
 
