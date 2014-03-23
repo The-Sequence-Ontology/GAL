@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+fix_gff3_tabs file_with_spaces.gff3
+
+Description:
+
+This script will TRY to fix a GFF3 file that has had it's tabs
+replaced by spaces.  This should work, but if the file is badly
+mangled this script may just mangle it more - you've been warned!  It
+does no validation of the GFF3 format whatsoever, use the
+gff3_validator for that.
+
+";
+
+
+my ($help);
+my $opt_success = GetOptions('help'    => \$help,
+			      );
+
+if ($help) {
+    print $usage;
+    exit(0);
+}
+die $usage if ! $opt_success;
+
+my $file = shift;
+handle_message('FATAL', 'missing_file', "$file\n\n$usage\n") unless $file;
+open (my $IN, '<', $file) or
+    handle_message('FATAL', 'cant_open_file_for_reading', $file);
+
+while (<$IN>) {
+  if (/^\#/) {
+    print;
+    next;
+  }
+  my @columns = split /\t/, $_;
+  if (scalar @columns == 9) {
+    print;
+    next;
+  }
+  @columns = split /\s+/, $_;
+  if (scalar @columns < 9) {
+    handle_message('FATAL', 'gff3_line_has_too_few_columns', $_);
+  }
+  else {
+    print join "\t", splice(@columns, 0, 8);
+    print "\t";
+    print join ' ', @columns;
+    print "\n";
+  }
+}
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+#sub {
+#
+#}
+
+#-----------------------------------------------------------------------------
+
+sub handle_message {
+
+  my ($level, $code, $message) = @_;
+
+  $level   ||= 'FATAL';
+  $code    ||= 'unkown_error';
+  $message ||= 'No additional information';
+
+  print STDERR join ' : ', ($level, $code, $message);
+  print STDERR "\n";
+
+  die  if $level eq 'FATAL';
+}
+
+#-----------------------------------------------------------------------------
+
