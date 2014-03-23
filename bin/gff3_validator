@@ -4,6 +4,7 @@ use warnings;
 use Getopt::Long;
 use List::Util;
 use List::MoreUtils;
+#$DB::deep = 10000;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -258,6 +259,7 @@ sub validate_gff3 {
 	my @values = split /,/, $value;
 	push @{$attributes{$key}}, @values;
       }
+      my ($target_length, $target_gapped_length);
       for my $key (sort keys %attributes) {
 	my @values = @{$attributes{$key}};
 	# ID
@@ -300,7 +302,15 @@ sub validate_gff3 {
 	    handle_message('ERROR', $error_code, "($all_values) $line");
 	  }
 	  my $value = $values[0];
-	  if ($value !~ /\S+\s+\d+\s+\d+\s*[\-+]*/) {
+	  if (my ($id, $target_start, $target_end, $strand) = $value =~ /(\S+)\s+(\d+)\s+(\d+)\s*([\-+])*/) {
+	    $target_length = $target_end - $target_start + 1;
+	    if ($target_start > $target_end) {
+	      my $error_code = 'invalid_Target_attribute_start_greater_than_end';
+	      push @{$errors{$error_code}}, [$line_count, $line];
+	      handle_message('ERROR', $error_code, "($value) $line");
+	    }
+	  }
+	  else {
 	    my $error_code = 'invalid_Target_attribute_value';
 	    push @{$errors{$error_code}}, [$line_count, $line];
 	    handle_message('ERROR', $error_code, "($value) $line");
@@ -315,7 +325,42 @@ sub validate_gff3 {
 	    handle_message('ERROR', $error_code, "($all_values) $line");
 	  }
 	  my $value = $values[0];
-	  # TODO: Validate the CIGAR format
+	  my @operations = split /\s/, $value;
+	  my %operations_hash;
+	  for my $operation (@operations) {
+	    my ($operator, $length) = $operation =~ /([MIDFR])(\d+)/;
+	    if (! defined $operator || ! defined $length) {
+	      my $error_code = 'invalid_Gap_attribute_CIGAR_operatoion';
+	      push @{$errors{$error_code}}, [$line_count, $line];
+	      handle_message('ERROR', $error_code, "($operation) $line");
+	    }
+	    push @{$operations_hash{$operator}}, $length;
+	  }
+	  my $feature_gapped_length;
+	  my $feature_length = $end - $start + 1;
+	  map {$feature_gapped_length += $_;
+	       $target_gapped_length += $_}  @{$operations_hash{M}};
+	  map {$feature_gapped_length += $_} @{$operations_hash{D}};
+	  map {$target_gapped_length += $_}  @{$operations_hash{I}};
+	  if (exists $operations_hash{F} || exists $operations_hash{R}) {
+	    $feature_gapped_length *= 3;
+	    map {$feature_gapped_length += $_} @{$operations_hash{F}};
+	    map {$feature_gapped_length -= $_} @{$operations_hash{R}};
+	    map {$target_gapped_length -= $_} @{$operations_hash{F}};
+	    map {$target_gapped_length += $_} @{$operations_hash{R}};
+	  }
+	  elsif ($feature_gapped_length * 3 eq $feature_length) {
+	    my $error_code = 'assuming_Gap_attribute_is_protein_match';
+	    push @{$errors{$error_code}}, [$line_count, $line];
+	    handle_message('WARN', $error_code, "$line");
+	    $feature_gapped_length *= 3;
+	  }
+	  if ($feature_gapped_length != $feature_length) {
+	    my $error_code = 'Gap_attribute_length_does_not_match_feature_length';
+	    push @{$errors{$error_code}}, [$line_count, $line];
+	    handle_message('WARN', $error_code, "(CIGAR length: $feature_gapped_length, " .
+			   "Feature length: $feature_length) $line");
+	  }
 	}
 	# Derives_from
 	elsif ($key eq 'Derives_from') {
@@ -356,6 +401,15 @@ sub validate_gff3 {
 	  }
 	  my $value = $values[0];
 	  # TODO: Validate Is_circular
+	}
+      }
+      # If both Target && Gap attributes exist validate 
+      if (defined $target_length && defined $target_gapped_length) {
+	if ($target_length != $target_gapped_length) {
+	  my $error_code = 'Target_and_Gap_attribute_lengths_dont_match';
+	  push @{$errors{$error_code}}, [$line_count, $line];
+	  handle_message('ERROR', $error_code, "(Target length: $target_length, " .
+			 "Target gapped length: $target_gapped_length) $line");
 	}
       }
     }
