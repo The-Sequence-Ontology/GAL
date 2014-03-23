@@ -36,6 +36,62 @@ ok($tool->get_stderr =~ /invalid_end_not_contained_within_sequence_region/,
    'gff3_validator has the correct error output');
 
 $tool->clean_up;
+
+################################################################################
+# Testing that gff3_validator validates Target attribute
+################################################################################
+
+@cl_args = ('data/NM_001033828.1.gff3',
+	        );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gff3_validator does something');
+ok($tool->get_stdout =~ /invalid_Target_attribute_start_greater_than_end\s+13[^\d]/,
+   'invalid_Target_attribute_start_greater_than_end errors caught');
+ok($tool->get_stderr =~ /invalid_Target_attribute_start_greater_than_end/,
+   'invalid_Target_attribute_start_greater_than_end errors caught');
+
+$tool->clean_up;
+
+################################################################################
+# Testing that gff3_validator validates Target Gap and feature lengths
+# are in sync for matches that have both Target and Gap attributes
+################################################################################
+
+@cl_args = ('data/NR_036541.1.gff3',
+	        );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gff3_validator does something');
+
+ok($tool->get_stdout =~ /Target_and_Gap_attribute_lengths_dont_match\s+2[^\d]/,
+   'Target_and_Gap_attribute_lengths_dont_match errors caught');
+ok($tool->get_stdout =~ /Gap_attribute_length_does_not_match_feature_length\s+2[^\d]/,
+   'Gap_attribute_length_does_not_match_feature_length errors caught');
+
+ok($tool->get_stderr =~ /Target_and_Gap_attribute_lengths_dont_match/,
+   'Target_and_Gap_attribute_lengths_dont_match errors caught');
+ok($tool->get_stderr =~ /Gap_attribute_length_does_not_match_feature_length/,
+   'Gap_attribute_length_does_not_match_feature_length errors caught');
+
+$tool->clean_up;
+
+################################################################################
+# Testing that gff3_validator validates Target Gap and feature lengths
+# are in sync for matches that have both Target and Gap attributes
+################################################################################
+
+@cl_args = ('data/NG_027806.1.gff3',
+	        );
+
+ok(! $tool->run(cl_args => \@cl_args), 'gff3_validator does something');
+
+ok($tool->get_stdout =~ /Target_and_Gap_attribute_lengths_dont_match\s+1[^\d]/,
+   'Target_and_Gap_attribute_lengths_dont_match errors caught');
+
+ok($tool->get_stderr =~ /Target_and_Gap_attribute_lengths_dont_match/,
+   'Target_and_Gap_attribute_lengths_dont_match errors caught');
+
+$tool->clean_up;
+
 done_testing();
 
 ################################################################################
