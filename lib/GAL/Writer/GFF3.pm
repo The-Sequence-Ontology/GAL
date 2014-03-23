@@ -128,12 +128,16 @@ list (or referenece) of key value pairs.
 sub get_metadata_text {
   my ($self) = @_;
 
-	my $err_code = 'method_must_be_overridden : GAL::Writer::GFF3::get_metadata_text';
-	my $caller = ref $self;
-	my $err_msg  = ("The method GAL::Writer::GFF3::metadata_text must be "       .
-			"overridden by subclasses of GAL::Writer::GFF3.  Send an " .
-			"angry e-mail to the author of $caller!");
-	$self->throw($err_code, $err_msg);
+  my $err_code = 'method_not_fully_implimented';
+  my $caller = ref $self;
+  my $err_msg = ("The method GAL::Writer::GFF3::get_metadata_text " .
+		 "is not fully implimented yet.  Send an "          .
+		 "angry e-mail to the author of $caller!");
+
+  $self->warn($err_code, $err_msg);
+
+  return '##gff-version 3';
+
 }
 
 #--------------------------------------------------------------------------------
@@ -151,12 +155,13 @@ sub get_metadata_text {
 sub get_comment_text {
   my ($self) = @_;
 
-	my $err_code = 'method_must_be_overridden : GAL::Writer::GFF3::get_comment_text';
-	my $caller = ref $self;
-	my $err_msg  = ("The method GAL::Writer::GFF3::comment_text must be "       .
-			"overridden by subclasses of GAL::Writer::GFF3.  Send an " .
-			"angry e-mail to the author of $caller!");
-	$self->throw($err_code, $err_msg);
+  my $err_code = 'method_not_fully_implimented';
+  my $caller = ref $self;
+  my $err_msg = ("The method GAL::Writer::GFF3::get_comment_text " .
+		 "is not fully implimented yet.  Send an "         .
+		 "angry e-mail to the author of $caller!");
+  $self->warn($err_code, $err_msg);
+  return;
 }
 
 #--------------------------------------------------------------------------------
