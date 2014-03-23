@@ -4,7 +4,7 @@ use warnings;
 use Getopt::Long;
 use List::Util;
 use List::MoreUtils;
-#$DB::deep = 10000;
+$DB::deep = 10000;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -327,6 +327,7 @@ sub validate_gff3 {
 	  my $value = $values[0];
 	  my @operations = split /\s/, $value;
 	  my %operations_hash;
+	  my $last_operator = '';
 	  for my $operation (@operations) {
 	    my ($operator, $length) = $operation =~ /([MIDFR])(\d+)/;
 	    if (! defined $operator || ! defined $length) {
@@ -334,6 +335,13 @@ sub validate_gff3 {
 	      push @{$errors{$error_code}}, [$line_count, $line];
 	      handle_message('ERROR', $error_code, "($operation) $line");
 	    }
+	    if ($last_operator eq $operator) {
+	      my $error_code = 'consecutive_CIGAR_operators_should_be_collapsed';
+	      push @{$errors{$error_code}}, [$line_count, $line];
+	      handle_message('ERROR', $error_code, "(Last operator: " .
+			     "$last_operator, This operator: $operator) $line");
+	    }
+	    $last_operator = $operator;
 	    push @{$operations_hash{$operator}}, $length;
 	  }
 	  my $feature_gapped_length;
