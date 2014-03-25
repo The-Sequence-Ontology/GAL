@@ -840,6 +840,7 @@ sub translate {
   my $genetic_code = $self->genetic_code;
 
   $offset ||= 0;
+  $sequence =~ s/\s+|\d+//g;
   $length ||= length($sequence);
 
   my $polypeptide;

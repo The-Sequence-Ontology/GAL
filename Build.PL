@@ -152,6 +152,8 @@ my $builder = $class->new(
 					    bin/t/gal_feature_overlaps.t
 					    bin/t/gal_remove_transcripts.t
 					    bin/t/gal_protein_genes.t
+					    bin/t/gal_protein_sequence.t
+					    bin/t/gal_CDS_sequence.t
 					    bin/t/gal_splice_complexity.t
 					    bin/t/gal_validate_proteins.t
 					    bin/t/gff3_validator.t

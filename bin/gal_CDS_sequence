@@ -1,0 +1,71 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+gal_protein_sequence feature.gff3 sequence.fasta
+
+Description:
+
+Pint the CDS sequence of protein coding genes.
+
+Options:
+
+  --translate, -t
+
+    Translate the CDS sequence to peptide sequence.
+
+";
+
+my ($help, $clean, $translate);
+my $opt_success = GetOptions('help'          => \$help,
+			     'clean'         => \$clean,
+			     'translate|t'   => \$translate);
+
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gal_protein_genes --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
+
+my ($gff3, $fasta) = @ARGV;
+
+die $usage unless $fasta && $gff3;
+
+my $annotation = GAL::Annotation->new($gff3,
+				      $fasta);
+
+my $features = $annotation->features;
+
+my $genes = $features->search({type => 'gene'});
+GENE:
+while (my $gene = $genes->next) {
+  next GENE unless $gene->is_coding;
+  my $mrnas = $gene->mRNAs;
+ MRNA:
+  while (my $mrna = $mrnas->next) {
+    my $mrna_id = $mrna->feature_id;
+    my $sequence = $mrna->CDS_seq;
+    $sequence = $annotation->translate($sequence) if $translate;
+    $sequence = $annotation->wrap_text($sequence);
+    my $header = ($translate                               ?
+		  ">$mrna_id (CDS sequence translation)" :
+		  ">$mrna_id (CDS sequence)");
+    print "$header\n$sequence\n";
+  }
+}
