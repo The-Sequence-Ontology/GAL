@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+gal_start_stop feature.gff3 sequence.fasta
+
+Description:
+
+For all mRNAs in the file print a tab-separated list of feature_id, 5'
+terminal codon (start_codon) and three prime terminal codon
+(stop_codon).
+
+";
+
+my ($help, $clean);
+my $opt_success = GetOptions('help'          => \$help,
+			     'clean'         => \$clean,
+			      );
+
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gal_protein_genes --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
+
+my ($gff3, $fasta) = @ARGV;
+
+die $usage unless $fasta && $gff3;
+
+my $annotation = GAL::Annotation->new($gff3,
+				      $fasta);
+
+my $features = $annotation->features;
+
+my $genes = $features->search({type => 'gene'});
+GENE:
+while (my $gene = $genes->next) {
+  next GENE unless $gene->is_coding;
+  my $mrnas = $gene->mRNAs;
+ MRNA:
+  while (my $mrna = $mrnas->next) {
+    my $mrna_id = $mrna->feature_id;
+    my $cds_seq = $mrna->CDS_seq;
+    my $five_term_codon = substr($cds_seq, 0, 3);
+    my $three_term_codon = substr($cds_seq, -3, 3);
+    print join "\t", ($mrna_id, $five_term_codon, $three_term_codon);
+    print "\n";
+  }
+}
