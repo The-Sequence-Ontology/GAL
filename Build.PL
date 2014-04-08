@@ -155,6 +155,7 @@ my $builder = $class->new(
 					    bin/t/gal_protein_sequence.t
 					    bin/t/gal_CDS_sequence.t
 					    bin/t/gal_splice_complexity.t
+					    bin/t/gal_start_stop.t
 					    bin/t/gal_validate_proteins.t
 					    bin/t/gff3_validator.t
 					    bin/t/gff_tool.t
