@@ -1348,13 +1348,13 @@ sub make_attribute_text {
 	grep {exists $GFF3_ATTRB_MAP->{$_}} keys %{$attributes} :
 	keys %{$attributes};
 
-    my %order = (id     => 1,
-		 name   => 2,
-		 parent => 3,
+    my %order = (id     => 'A',
+		 name   => 'B',
+		 parent => 'C',
 		 );
 
     my @pairs;
-    for my $tag (sort {($order{$a} || 999) <=> ($order{$b} || 999)} @tags) {
+    for my $tag (sort {($order{$a} || $a) cmp ($order{$b} || $b)} @tags) {
 	next if $tag eq 'gene_id';
 	next if $tag eq 'transcript_id';
 	next unless $attributes->{$tag};
