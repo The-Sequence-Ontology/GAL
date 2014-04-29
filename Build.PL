@@ -60,6 +60,7 @@ my $builder = $class->new(
 				       'URI::Escape'			   => 0,
 				       'Text::RecordParser'	           => 0,
 				       'Template'                          => 0,
+				       'Config::Std'                       => 0,
 				      },
 			  build_requires => {
 					     'TAP::Harness' 	=> 0,
