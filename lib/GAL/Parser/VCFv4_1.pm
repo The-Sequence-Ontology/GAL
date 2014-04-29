@@ -93,7 +93,7 @@ sub header_count {
 =cut
 
 sub parse_record {
-  my ($self, $data) = @_;
+  my ($self, $record) = @_;
 
   my %record;
 
