@@ -29,7 +29,7 @@ my $opt_success = GetOptions('help|h'            => \$help,
 if (! $opt_success) {
     print STDERR join ' : ', ('FATAL',
                               'command_line_parse_error',
-                              'Use gff_tool --help to see correct usage');
+                              'Use gff_transcript_count --help to see correct usage');
 }
 
 if ($help) {

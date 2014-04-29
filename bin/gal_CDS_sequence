@@ -35,7 +35,7 @@ my $opt_success = GetOptions('help'          => \$help,
 if (! $opt_success) {
     print STDERR join ' : ', ('FATAL',
                               'command_line_parse_error',
-                              'Use gal_protein_genes --help to see correct usage');
+                              'Use gal_CDS_sequence --help to see correct usage');
 }
 
 if ($help) {
