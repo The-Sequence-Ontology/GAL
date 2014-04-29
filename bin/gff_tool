@@ -12,6 +12,7 @@ use Template;
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
 #-----------------------------------------------------------------------------
+
 my $usage = '
 
 Synopsis:
@@ -50,11 +51,11 @@ parsed and operated on.
 		  Provide the path to a fasta file or a directory
 		  containing the fasta file(s) associated with a given
 		  feature file.  This argument is required by some
-		  (but not all) of the other commands.  Bio::DB::Fasta
+		  (but not all) gff_tool sunctions.  Bio::DB::Fasta
 		  is used to index the fasta file.  The sequence of
 		  each feature is made available to any code reference
 		  given via the code argument.  See below for details
-		  of code references.  Not yet implimented.
+		  of code references.
 
   so_file
 
@@ -377,6 +378,20 @@ to the altered copy of the feature.  All filters given are applied.
 		 Zygosity=(hetero|homo)zygous uniques the Variant_seq
 		 values and removes homozygous reference variants.
 
+  add_ref_seq    Add the value for the Reference_seq attribute.  This
+		 option requires a numerical value which indicates the
+		 length of sequence to be represented.  Any sequence
+		 longer than the given value will be represented by ~#
+		 where # will be the length of the sequence.  If a
+		 value of 0 is provided then all sequences will be
+		 reporesented full length.  The add_ref_seq function
+		 requires that a FASTA formatted sequence file be
+		 passed to the --fasta argument.  This function will
+		 read seqeunce from the fasta file for the range
+		 specified by start and end (columns 4 and 5) and will
+		 add or update the Reference_seq attribute to contain
+		 that sequence, representing longer sequences with ~
+		 as described above.
 
 Code References:
 
@@ -431,7 +446,7 @@ my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
     $meta_only, $meta_no, $meta_add, $add_ID, $pragmas, $features,
     $union, $intersection, $lcomplement, $sdifference, $i_union,
     $i_intersection, $i_lcomplement, $i_sdifference, $titv,
-    $gvf_stats, $effect_stats, $gvf_sets, $fix_gvf,);
+    $gvf_stats, $effect_stats, $gvf_sets, $fix_gvf, $add_ref_seq,);
 
 my $opt_success = GetOptions('help|h'		 => \$help,
 			     'in_place|i'	 => \$in_place,
@@ -481,6 +496,7 @@ my $opt_success = GetOptions('help|h'		 => \$help,
 			     'effect_stats'	 => \$effect_stats,
 			     'gvf_sets'		 => \$gvf_sets,
 			     'fix_gvf'		 => \$fix_gvf,
+			     'add_ref_seq'       => \$add_ref_seq,
 			    );
 
 if (! $opt_success) {
@@ -546,6 +562,7 @@ gvf_stats(\@files)			    if $gvf_stats;
 effect_stats(\@files)			    if $effect_stats;
 gvf_sets(\@files)			    if $gvf_sets;
 fix_gvf(\@files)                            if $fix_gvf;
+add_ref_seq(\@files, $add_ref_seq)          if defined $add_ref_seq;
 #pragma($pragma)			  if $pragma;
 
 #-----------------------------------------------------------------------------
@@ -2644,7 +2661,7 @@ sub gvf_sets {
 # Genotype=(hetero|homo)zygous attributes to
 # Zygosity=(hetero|homo)zygous uniques the Variant_seq values and
 # removes homozygous reference variants.
-# 
+#
 #-----------------------------------------------------------------------------
 
 sub fix_gvf {
@@ -2675,6 +2692,68 @@ sub fix_gvf {
       my ($var_seq) = grep {$_ ne $ref_seq} @{$a->{Variant_seq}};
 
       next VARIANT unless $var_seq;
+      print $OUT to_gff3($f);
+    }
+  }
+}
+
+#-----------------------------------------------------------------------------
+#  add_ref_seq
+#
+# Add the value for the Reference_seq attribute.  This option requires
+# a numerical value which indicates the length of sequence to be
+# represented.  Any sequence longer than the given value will be
+# represented by ~# where '\#' will be the length of the sequence.  If
+# a value of 0 is provided then all sequences will be reporesented
+# full length.  The add_ref_seq function requires that a FASTA
+# formatted sequence file be passed to the --fasta argument.  This
+# function will read seqeunce from the fasta file for the range
+# specified by start and end (columns 4 and 5) and will add or update
+# the Reference_seq attribute to contain that sequence, representing
+# longer sequences with ~ as described above.
+#-----------------------------------------------------------------------------
+
+sub add_ref_seq {
+
+  my ($files, $add_ref_seq) = @_;
+
+  for my $file (@files) {
+    my $IN = fh_in($file);
+    my $OUT = fh_out($file);
+    print_pragmas($IN, $OUT);
+
+    my %zero_length = map {$_ => 1} qw(
+					insertion
+					duplication
+					distal_duplication
+					tandem_duplication
+					direct_tandem_duplication
+					inverted_tandem_duplication
+					mobile_element_insertion
+					novel_sequence_insertion
+					transgenic_insertion
+					rearrangement_breakpoint
+					interchromosomal_breakpoint
+					intrachromosomal_breakpoint
+				     );
+
+  VARIANT:
+    while (my $f = next_feature_hash($IN)) {
+      my $a = $f->{attributes};
+
+      my $type = $f->{type};
+
+      my $ref_seq;
+      if (exists $zero_length{$type}) {
+	$ref_seq = '-';
+      }
+      else {
+	$ref_seq = uc $FASTA_DB->seq(@{$f}{qw(seqid start end)});
+      }
+
+      $ref_seq ||= '.';
+      $a->{Reference_seq} = [$ref_seq];
+
       print $OUT to_gff3($f);
     }
   }
