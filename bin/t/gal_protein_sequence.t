@@ -13,7 +13,9 @@ chdir $FindBin::Bin;
 my $path = "$FindBin::Bin/..";
 
 my $tool = GAL::Run->new(path => $path,
-			 command => 'gal_protein_sequence');
+			 command => 'gal_protein_sequence',
+			);
+$tool->verbosity('DEBUG');
 
 ################################################################################
 # Testing that gal_protein_sequence compiles and returns usage statement
@@ -26,7 +28,10 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_protein_sequence prints usage stateme
 # Testing that gal_protein_sequence does something else
 ################################################################################
 
-my @cl_args = ('data/Homo_sapiens.GRCh37.73.chr22.short.gff3',
+my $gff3_file = 'data/Homo_sapiens.GRCh37.73.chr22.short.gff3';
+ok(! `gunzip $gff3_file.gz`, "Unzipping file: $gff3_file.gz");
+
+my @cl_args = ($gff3_file,
 	       'data/hg19_chr22.fa',
 	      );
 
@@ -35,6 +40,8 @@ ok($tool->get_stdout =~ /GYKKDKKKKADDKSCPSTPSSGATVDSGKHRVLPVVRAELQLRRQLSFSE\n
                          DSDLSSDDVLEKSSQKSRREPRTYTEEELNAKLTRRVQKAARRQAKQEEL\n
                          KRLHRAQIIQRQLQQVEERQRRLEERGVAVEKALRGEAVEPSGGTPRRRP\n
                          LSFCPCCVQEGMGKKDDPKLMQE/x, 'gal_protein_sequence has correct output');
+
+ok(! `gzip $gff3_file`, "Zipping file: $gff3_file.gz");
 
 $tool->clean_up;
 done_testing();

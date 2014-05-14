@@ -4,8 +4,9 @@ use strict;
 use Test::More;
 
 BEGIN {
-	use lib '../../';
-	use_ok('GAL::Parser::hapmap_genotypes');
+  use FindBin;
+  use lib "$FindBin::RealBin/../../";
+  use_ok('GAL::Parser::hapmap_genotypes');
 }
 
 my $path = $0;

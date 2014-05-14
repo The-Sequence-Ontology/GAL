@@ -3,8 +3,12 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use GAL::Annotation;
 use Set::IntSpan::Fast;
+
+use FindBin;
+use lib "$FindBin::RealBin/../lib";
+
+use GAL::Annotation;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------

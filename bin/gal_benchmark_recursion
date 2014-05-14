@@ -3,8 +3,12 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use GAL::Annotation;
 use Time::HiRes qw(tv_interval gettimeofday);
+
+use FindBin;
+use lib "$FindBin::RealBin/../lib";
+
+use GAL::Annotation;
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
