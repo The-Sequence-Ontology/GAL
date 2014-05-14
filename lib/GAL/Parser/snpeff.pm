@@ -4,7 +4,7 @@ use strict;
 use vars qw($VERSION);
 $VERSION = 0.2.0;
 
-use base qw(GAL::Parser);
+use base qw(GAL::Parser::VCFv4_1);
 use GAL::Reader::DelimitedLine;
 
 =head1 NAME
@@ -36,504 +36,265 @@ This document describes GAL::Parser::snpeff version 0.2.0
 
 #-----------------------------------------------------------------------------
 
-=head2 new
-
-     Title   : new
-     Usage   : GAL::Parser::snpeff->new();
-     Function: Creates a GAL::Parser::snpeff object;
-     Returns : A GAL::Parser::snpeff object
-     Args    :
-
 =cut
 
-sub new {
-	my ($class, @args) = @_;
-	my $self = $class->SUPER::new(@args);
-	return $self;
-}
+sub parse_vcf_info {
 
-#-----------------------------------------------------------------------------
-
-sub _initialize_args {
-	my ($self, @args) = @_;
-
-	######################################################################
-	# This block of code handels class attributes.  Use the
-	# @valid_attributes below to define the valid attributes for
-	# this class.  You must have identically named get/set methods
-	# for each attribute.  Leave the rest of this block alone!
-	######################################################################
-	my $args = $self->SUPER::_initialize_args(@args);
-	my @valid_attributes = qw(file fh header_count); # Set valid class attributes here
-	$self->set_attributes($args, @valid_attributes);
-	######################################################################
-}
-
-#-----------------------------------------------------------------------------
-
-sub header_count {
-    my ($self, $header_count) = @_;
-
-    if ($header_count) {
-	$self->{header_count} = $header_count;
-    }
-    return $self->{header_count};
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 parse_record
-
- Title   : parse_record
- Usage   : $a = $self->parse_record();
- Function: Parse the data from a record.
- Returns : A hash ref needed by Feature.pm to create a Feature object
- Args    : A hash ref of fields that this sub can understand (In this case GFF3).
-
-=cut
-
-sub parse_record {
-    my ($self, $data) = @_;
-
-    ##fileformat=VCFv4.0
-    ##INFO=<ID=DP,Number=1,Type=Integer,Description="Total Depth">
-    ##INFO=<ID=HM2,Number=0,Type=Flag,Description="HapMap2 membership">
-    ##INFO=<ID=HM3,Number=0,Type=Flag,Description="HapMap3 membership">
-    ##reference=human_b36_both.fasta
-    ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
-    ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read Depth">
-    ##FORMAT=<ID=CB,Number=1,Type=String,Description="Called by S(Sanger), M(UMich), B(BI)">
-    ##rsIDs=dbSNP b129 mapped to NCBI 36.3, August 10, 2009
-    ##INFO=<ID=AC,Number=.,Type=Integer,Description="Allele count in genotypes">
-    ##INFO=<ID=AN,Number=1,Type=Integer,Description="Total number of alleles in called genotypes">
-    #CHROM POS ID REF ALT QUAL FILTER INFO FORMAT SAMPLE1
-
-    my %record;
-
-    # We didn't get $data as a hash because we didn't give field names to the reader.
-    # This allows us to get the data as an array and deal with multiple genotypes per line.
-    @record{qw(chrom pos id ref alt qual filter info format)} = splice(@{$data}, 0, 9);
-
-    my $seqid      = $record{chrom}; # =~ /^chr/ ? $record{chrom} : 'chr' . $record{chrom};
-    my $source     = '.';
-    my $type       = 'SNV';
-    my $start      = $record{pos};
-    my $end        = $start;
-    my $score      = $record{qual};
-    my $strand     = '+',
-    my $phase      = '.';
-    my $feature_id = $record{id};
-
-    #Validate var
-    my $reference_seq = uc $record{ref};
-
-    my @variant_seqs = split /,/, $record{alt};
-
-    map {$_ = uc $_} @variant_seqs;
-
-    my @all_seqs = ($reference_seq, @variant_seqs);
-
-
-
-
-    # INFO Column Keys
-    # VFC 4.0
-    # AA ancestral allele
-    # AC allele count in genotypes, for each ALT allele, in the same order as listed
-    # AF allele frequency for each ALT allele in the same order as listed: use this when estimated from primary data, not called genotypes
-    # AN total number of alleles in called genotypes
-    # BQ RMS base quality at this position
-    # CIGAR cigar string describing how to align an alternate allele to the reference allele
-    # DB dbSNP membership
-    # DP combined depth across samples, e.g. DP=154
-    # END end position of the variant described in this record (esp. for CNVs)
-    # H2 membership in hapmap2
-    # MQ RMS (root mean square) mapping quality, e.g. MQ=52
-    # MQ0 Number of MAPQ == 0 reads covering this record
-    # NS Number of samples with data
-    # SB strand bias at this position
-    # SOMATIC indicates that the record is a somatic mutation, for cancer genomics
-    # VALIDATED validated by follow-up experiment
-
-    #INFO=<ID=EFF,Number=.,Type=String,Description="Predicted effects for this variant.Format:
-
-    # Effect
-    # 	    CODON_CHANGE_PLUS_CODON_DELETION
-    # 	    CODON_CHANGE_PLUS_CODON_INSERTION
-    # 	    CODON_DELETION
-    # 	    CODON_INSERTION
-    # 	    DOWNSTREAM
-    # 	    EXON
-    # 	    FRAME_SHIFT
-    # 	    INTERGENIC
-    # 	    INTRON
-    # 	    NON_SYNONYMOUS_CODING
-    # 	    START_GAINED
-    # 	    START_LOST
-    # 	    STOP_GAINED
-    # 	    SYNONYMOUS_CODING
-    # 	    UPSTREAM
-    # 	    UTR_3_PRIME
-    # 	    UTR_5_PRIME
-    # Effect_Impact
-    #       HIGH
-    #	    LOW
-    #	    MODERATE
-    #	    MODIFIER
-    # Functional_Class
-    #       NONE
-    #       MISSENSE
-    #	    NONSENSE
-    #	    SILENT
-    # Codon_Change |
-    # Amino_Acid_change|
-    # Amino_Acid_length |
-    # Gene_Name |
-    # Transcript_BioType |
-    #       antisense
-    #	    IG_V_gene
-    #	    lincRNA
-    #	    miRNA
-    #	    misc_RNA
-    #	    nonsense_mediated_decay
-    #	    processed_pseudogene
-    #	    processed_transcript
-    #	    protein_coding
-    #	    pseudogene
-    #	    retained_intron
-    #	    rRNA
-    #	    scRNA_pseudogene
-    #	    sense_intronic
-    #	    snoRNA
-    #	    snoRNA_pseudogene
-    #	    snRNA
-    #	    snRNA_pseudogene
-    #	    transcribed_unprocessed_pseudogene
-    #	    tRNA_pseudogene
-    #	    unprocessed_pseudogene
-    # Gene_Coding |
-    # Transcript_ID |
-    # Exon |
-    # GenotypeNum |
-    # [ERRORS | WARNINGS ]
+    my ($self, $record) = @_;
 
     my %info;
-    my @pairs = split /;/, $record{info};
+    my @pairs = split /;/, $record->{info};
     for my $pair (@pairs) {
 	my ($key, $value) = split /=/, $pair;
 	$value = defined $value ? $value : '';
-	my @values = split /,/, $value;
-	push @{$info{$key}}, @values;
+	($key, $value) = $self->parse_vcf_info_key_value($record, $key, $value);
+        push @{$info{$key}}, @{$value};
+    }
+    return wantarray ? %info : \%info;
+}
+
+=cut
+
+#-----------------------------------------------------------------------------
+
+sub parse_vcf_info_key_value {
+
+  my ($self, $record, $key, $value) = @_;
+
+  my %effects;
+  my @all_effects;
+  my %effect_map;
+  my @var_effects;
+#  my $ensembl_ids = [];
+  my @ensembl_ids;
+
+  if ($key eq 'EFF') {
+    my @annotations = split /,/, $value;
+    foreach my $annotation (@annotations) {
+    #  my $effect =~ /EFF=(\w+)/g;
+    #  push (@var_effects, $1);
+    #  my @var_effects =~ s/\)$//; 
+      my @values = split /\||\(/, $annotation;
+      push (@var_effects, $values[0]);
+      push (@ensembl_ids, $values[9]);
+    }  
+
+    $key = 'Variant_effect';
+
+    %effect_map = (
+      'INTERGENIC' => {
+        effect => ['intergenic_variant'],
+        feature => 'intergenic_region',
+      },
+      'UPSTREAM' => {
+        effect => ['upstream_gene_variant'],
+        feature => 'gene',
+      },
+      'UTR_5_PRIME' => {
+        effect => ['5_prime_UTR_variant'],
+        feature => 'five_prime_UTR',
+      },
+      'UTR_5_DELETED' => {
+        effect => ['5_prime_UTR_truncation'],
+        feature => 'five_prime_UTR',
+      },
+      'START_GAINED' => {
+        effect => ['5_prime_UTR_premature_start_codon_gain_variant'],
+        feature => 'five_prime_UTR',
+      },
+      'SPLICE_SITE_ACCEPTOR' => {
+        effect => ['splice_acceptor_variant'],
+        feature => 'splice_acceptor',
+      }, 
+      'SPLICE_SITE_DONOR' => {
+        effect => ['splice_donor_variant'],
+        feature => 'splice_donor',
+      },
+      'START_LOST' => {
+        effect => ['start_lost'],
+        feature => 'mRNA',
+      },
+      'SYNONYMOUS_START' => {
+        effect => ['start_retained_variant'],
+        feature => 'mRNA',
+      },
+      'CDS' => {
+        effect => ['coding_sequence_variant'],
+        feature => 'mRNA',
+      },
+      'GENE' => {
+        effect => ['gene_variant'],
+        feature => 'gene',
+      },
+      'TRANSCRIPT' => {
+        effect => ['transcript_variant'],
+        feature => 'transcript',
+      },
+      'EXON' => {
+        effect => ['exon_variant'],
+        feature => 'exon',
+      },
+      'EXON_DELETED' => {
+        effect => ['exon_loss_variant'],
+        feature => 'exon',
+      },
+      'NON_SYNONYMOUS_CODING' => {
+        effect => ['missense_variant'],
+        feature => 'mRNA',
+      },
+      'SYNONYMOUS_CODING' => {
+        effect => ['synonymous_variant'],
+        feature => 'mRNA',
+      },
+      'FRAME_SHIFT' => {
+        effect => ['frameshift_variant'],
+        feature => 'mRNA',
+      },
+      'CODON_CHANGE' => {
+        effect => ['coding_sequence_variant'],
+        feature => 'mRNA',
+      },
+      'CODON_INSERTION' => {
+        effect => ['inframe_insertion'],
+        feature => 'mRNA',
+      },
+      'CODON_CHANGE_PLUS_CODON_INSERTION' => {
+        effect => ['disruptive_inframe_insertion'],
+        feature => 'mRNA',
+      },
+      'CODON_DELETION' => {
+        effect => ['inframe_deletion'],
+        feature => 'mRNA',
+      },
+      'CODON_CHANGE_PLUS_CODON_DELETION' => {
+        effect => ['disruptive_inframe_deletion'],
+        feature => 'mRNA',
+      },
+      'STOP_GAINED' => {
+        effect => ['stop_gained'],
+        feature => 'mRNA',
+      },
+      'SYNONYMOUS_STOP' => {
+        effect => ['stop_retained_variant'],
+        feature => 'mRNA',
+      },
+      'STOP_LOST' => {
+        effect => ['stop_lost'],
+        feature => 'mRNA',
+      },
+      'INTRON' => {
+        effect => ['intron_variant'],
+        feature => 'intron',
+      },
+      'UTR_3_PRIME' => {
+        effect => ['3_prime_UTR_variant'],
+        feature => 'three_prime_UTR',
+      },
+      'UTR_3_DELETED' => {
+        effect => ['3_prime_UTR_truncation'],
+        feature => 'three_prime_UTR',
+      },
+      'DOWNSTREAM' => {
+        effect => ['downstream_gene_variant'],
+        feature => 'gene',
+      }, 
+      'INTRON_CONSERVED' => {
+        effect => ['conserved_intron_variant'],
+        feature => 'intron',
+      },
+      'INTERGENIC_CONSERVED' => {
+        effect => ['conserved_intergenic_variant'],
+        feature => 'intergenic_region',
+      },
+      'INTRAGENIC' => {
+        effect => ['intragenic_variant'],
+        feature => 'gene',
+      }
+    );
+
+    my $so_var_effects;
+    my $so_feature_type;
+
+    if (scalar @ensembl_ids > 1) {
+      if (scalar @ensembl_ids == scalar @var_effects) {
+        for my $idx (0..$#ensembl_ids) {
+          my $var_effect = $var_effects[$idx];
+          my $ensembl_id = $ensembl_ids[$idx];
+          if (exists $effect_map{$var_effect}) {
+            $so_var_effects = $effect_map{$var_effect}{effect};
+            $so_feature_type = $effect_map{$var_effect}{feature};
+            for my $so_var_effect (@{$so_var_effects}) {
+              push @{$effects{$so_var_effect}{$so_feature_type}}, $ensembl_id;
+            }
+          }
+          else {
+            $self->warn('unknown_effect_type', "$var_effect cannot be mapped to Sequence Ontology");
+            push @{$effects{$var_effect}{'sequence_feature'}}, $ensembl_id;
+          }
+        }
+      }
+      else {
+        my $locus = join':', (@{$record}{qw(CHROM POS ID)});
+        $self->throw('effect_id_list_mismatch', $locus, "Different number of variant effects compared to accession IDs");
+      }
+    }
+    else {
+      for my $so_var_effect (@{$so_var_effects}) {
+        push @{$effects{$so_var_effect}{$so_feature_type}}, @ensembl_ids;
+      }
     }
 
-    my @variant_effects;
-    if (exists $info{EFF}) {
-	my $effects = $info{EFF};
-	for my $effect (@{$effects}) {
-	    $effect =~ s/\)$//;
-	    my @value_list = split /\||\(/, $effect, 13;
-	    my %effect_hash;
-	    @effect_hash{qw(
-			   Effect
-		       	   Effect_impact
-		       	   Functional_class
-		       	   Codon_Change
-		       	   Amino_Acid_change
-		       	   Amino_Acid_length
-		       	   Gene_name
-		       	   Transcript_bioType
-		       	   Gene_Coding
-		       	   Transcript_ID
-		       	   Exon
-		       	   Genotype
-		       	   Warnings_Errors
-		       	   )} = @value_list;
+=cut
 
-	    if ($effect_hash{Effect} eq 'INTERGENIC') {
-		# intergenic_variant
-		my $sequence_variant = 'intergenic_variant';
-		my $sequence_feature = 'intergenic_region';
+    for my $effect (keys %effects) {
+      for my $so_var_effect (keys %{$effects{$effect}}) {
+        for my $so_feature_type (keys %{$effects{$so_var_effect}{$so_feature_type}}) {
+          my $this_effect = "$so_var_effects . $so_feature_type ";
+          $this_effect .= join ' ', @{$effects{$so_var_effect}{$so_feature_type}};
+          push @all_effects, $this_effect;
+        }
+      }
+    }
+
+=cut
+
+    for my $effect (keys %effects) {
+      for my $so_feature_type (keys %{$effects{$effect}}) {
+        my $this_effect = "$effect . $so_feature_type ";
+          $this_effect .= join ' ', @{$effects{$effect}{$so_feature_type}};
+          push @all_effects, $this_effect;
+        }
+      }
+    
+    $value = \@all_effects;
+  }
+  else {
+    $key = 'vcf_' . $key;
+    my @values = split /,/, $value;
+    $value = \@values;
+  }
+  return $key, $value;
+}
+
+#--------------------------------------------------------------------------------- 
+
+=cut
+
 		my $variant_effect = join ' ', ($sequence_variant,
 						$effect_hash{Genotype} - 1,
 						$sequence_feature);
 		push @variant_effects, $variant_effect;
 	    }
-	    elsif ($effect_hash{Effect} eq 'UPSTREAM') {
-		# 'upstream_gene_variant'
-		my $sequence_variant = 'upstream_gene_variant';
-		my $sequence_feature = 'gene';
 		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Gene_name});
 		push @variant_effects, $variant_effect;
 	    }
-	    elsif ($effect_hash{Effect} eq 'UTR_5_PRIME') {
-		# '5_prime_UTR_variant'
-		my $sequence_variant = '5_prime_UTR_variant';
-		my $sequence_feature = 'five_prime_UTR';
 		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
 		push @variant_effects, $variant_effect;
 	    }
-	    elsif ($effect_hash{Effect} eq 'UTR_5_DELETED') {
-		# '5_prime_UTR_variant'
-		my $sequence_variant = '5_prime_UTR_variant';
-		my $sequence_feature = 'five_prime_UTR';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-
-		# feature_ablation
-		$sequence_variant = 'feature_ablation';
-		$sequence_feature = 'five_prime_UTR';
-		$variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'START_GAINED') {
-		# '5_prime_UTR_premature_start_codon_variant'
-		my $sequence_variant = '5_prime_UTR_premature_start_codon_variant';
-		my $sequence_feature = 'five_prime_UTR';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'SPLICE_SITE_ACCEPTOR') {
-		# 'splice_acceptor_variant'
-		my $sequence_variant = 'splice_acceptor_variant';
-		my $sequence_feature = 'splice_acceptor';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'SPLICE_SITE_DONOR') {
-		# 'splice_donor_variant'
-		my $sequence_variant = 'splice_donor_variant';
-		my $sequence_feature = 'splice_donor';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'START_LOST') {
-		# initiator_codon_variant
-		my $sequence_variant = 'initiator_codon_variant';
-		my $sequence_feature = 'mRNA';
 		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
 		push @variant_effects, $variant_effect;
 		
-		# missense_variant
-		$sequence_variant = 'missense_variant';
-		$sequence_feature = 'mRNA';
-		$variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
 	    }
-	    elsif ($effect_hash{Effect} eq 'SYNONYMOUS_START') {
-		# initiator_codon_variant
-		my $sequence_variant = 'initiator_codon_variant';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-		
-		# synonymous_variant
-		$sequence_variant = 'synonymous_variant';
-		$sequence_feature = 'mRNA';
-		$variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'CDS') {
-		# 'coding_sequence_variant'
-		my $sequence_variant = 'coding_sequence_variant';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'GENE') {
-		# 'gene_variant'
-		my $sequence_variant = 'gene_variant';
-		my $sequence_feature = 'gene';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'TRANSCRIPT') {
-		# 'transcript_variant'
-		my $sequence_variant = 'transcript_variant';
-		my $sequence_feature = 'transcript';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'EXON') {
-		# 'exon_variant'
-		my $sequence_variant = 'exon_variant';
-		my $sequence_feature = 'exon';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'EXON_DELETED') {
-		# feature_ablation
-		my $sequence_variant = 'feature_ablation';
-		my $sequence_feature = 'exon';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-		
-		# exon_variant
-		$sequence_variant = 'exon_variant';
-		$sequence_feature = 'exon';
-		$variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'NON_SYNONYMOUS_CODING') {
-		# 'missense_variant'
-		my $sequence_variant = 'missense_variant';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'SYNONYMOUS_CODING') {
-		# 'synonymous_variant'
-		my $sequence_variant = 'synonymous_variant';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'FRAME_SHIFT') {
-		# 'frameshift_variant'
-		my $sequence_variant = 'frameshift_variant';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'CODON_CHANGE') {
-		# 'inframe_variant'
-		my $sequence_variant = 'inframe_variant';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'CODON_INSERTION') {
-		# 'conservative_inframe_insertion'
-		my $sequence_variant = 'conservative_inframe_insertion';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'CODON_CHANGE_PLUS_CODON_INSERTION') {
-		# 'disruptive_inframe_insertion'
-		my $sequence_variant = 'disruptive_inframe_insertion';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'CODON_DELETION') {
-		# 'conservative_inframe_deletion'
-		my $sequence_variant = 'conservative_inframe_deletion';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'CODON_CHANGE_PLUS_CODON_DELETION') {
-		# 'disruptive_inframe_deletion'
-		my $sequence_variant = 'disruptive_inframe_deletion';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'STOP_GAINED') {
-		# 'stop_gained'
-		my $sequence_variant = 'stop_gained';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'SYNONYMOUS_STOP') {
-		# 'stop_retained_variant'
-		my $sequence_variant = 'stop_retained_variant';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'STOP_LOST') {
-		# 'stop_lost'
-		my $sequence_variant = 'stop_lost';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'INTRON') {
-		# 'intron_variant'
-		my $sequence_variant = 'intron_variant';
-		my $sequence_feature = 'intron';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'UTR_3_PRIME') {
-		# '3_prime_UTR_variant'
-		my $sequence_variant = '3_prime_UTR_variant';
-		my $sequence_feature = 'three_prime_UTR';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'UTR_3_DELETED') {
-		# '3_prime_UTR_variant'
-		my $sequence_variant = '3_prime_UTR_variant';
-		my $sequence_feature = 'three_prime_UTR';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-		
-		# feature_ablation
-		my $sequence_variant = 'feature_ablation';
-		my $sequence_feature = 'three_prime_UTR';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'DOWNSTREAM') {
-		# 'downstream_gene_variant'
-		my $sequence_variant = 'downstream_gene_variant';
-		my $sequence_feature = 'gene';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Gene_name});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'INTRON_CONSERVED') {
-		# 'intron_variant'
-		my $sequence_variant = 'intron_variant';
-		my $sequence_feature = 'intron';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-		
-		# conserved_region
-		my $sequence_variant = 'sequence_variant';
-		my $sequence_feature = 'conserved_region';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature);
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'INTERGENIC_CONSERVED') {
-		# 'intergenic_region'
-		my $sequence_variant = 'intergenic_region_variant';
-		my $sequence_feature = 'intergenic_region';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature);
-		push @variant_effects, $variant_effect;
-		
-		# conserved_region
-		my $sequence_variant = 'sequence_variant';
-		my $sequence_feature = 'conserved_region';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature);
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'INTRAGENIC') {
-		# 'gene_variant'
-		my $sequence_variant = 'gene_variant';
-		my $sequence_feature = 'gene';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Gene_name});
-		push @variant_effects, $variant_effect;
-	    }
-	    elsif ($effect_hash{Effect} eq 'NON_SYNONYMOUS_START') {
-		# initiator_codon_variant
-		my $sequence_variant = 'initiator_codon_variant';
-		my $sequence_feature = 'mRNA';
-		my $variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-		push @variant_effects, $variant_effect;
-		
-		# missense_variant
-		$sequence_variant = 'missense_variant';
-		$sequence_feature = 'mRNA';
-		$variant_effect   = join ' ', ($sequence_variant, $effect_hash{Genotype} - 1, $sequence_feature, $effect_hash{Transcript_ID});
-	    }
-	    else {
-		$self->warn('unknown_variant_type', $effect_hash{Effect});
-	    }
-	}
-    }
-    
     my @all_seqs = ($reference_seq, @variant_seqs);
     my @lengths = map {length($_)} @all_seqs;
 
