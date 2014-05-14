@@ -4,7 +4,7 @@ use strict;
 use vars qw($VERSION);
 $VERSION = 0.2.0;
 
-use base qw(GAL::Parser);
+use base qw(GAL::Parser::VCFv4_1);
 use GAL::Reader::DelimitedLine;
 
 =head1 NAME
@@ -56,86 +56,12 @@ must be set.
 
 #-----------------------------------------------------------------------------
 
-=head2 new
-
-     Title   : new
-     Usage   : GAL::Parser::annovar_exonic->new();
-     Function: Creates a GAL::Parser::annovar_exonic object;
-     Returns : A GAL::Parser::annovar_exonic object
-     Args    : See the attributes described above.
-
-=cut
-
-sub new {
-	my ($class, @args) = @_;
-	my $self = $class->SUPER::new(@args);
-	return $self;
-}
-
-#-----------------------------------------------------------------------------
-
-sub _initialize_args {
-	my ($self, @args) = @_;
-
-	######################################################################
-	# This block of code handels class attributes.  Use the
-	# @valid_attributes below to define the valid attributes for
-	# this class.  You must have identically named get/set methods
-	# for each attribute.  Leave the rest of this block alone!
-	######################################################################
-	my $args = $self->SUPER::_initialize_args(@args);
-	my @valid_attributes = qw(file fh); # Set valid class attributes here
-	$self->set_attributes($args, @valid_attributes);
-	######################################################################
-}
-
-#-----------------------------------------------------------------------------
-
-=head2 parse_record
-
- Title   : parse_record
- Usage   : $a = $self->parse_record();
- Function: Parse the data from a record.
- Returns : A hash ref needed by Feature.pm to create a Feature object
- Args    : A hash ref of fields that this sub can understand (In this case GFF3).
-
-=cut
-
-sub parse_record {
-    my ($self, $record) = @_;
-    
-    # $record is a hash reference that contains the keys assigned
-    # in the $self->fields call in _initialize_args above
-    
-    # Fill in the first 8 columns for GFF3
-    # See http://www.sequenceontology.org/gff3.html for details.
-    my $seqid      = $record->{chrom};
-    my $source     = '.';
-    my $start      = $record->{start};
-    my $end        = $record->{end};
-    my $score      = $record->{score};
-    my $strand     = '.';
-    my $phase      = '.';
-    
-
-    #my ($effect, $type) = split /\s+/, $record->{effect_type};
-    #$type = 'sequence_alteration' if $type eq 'unknown';
-    #$type ||= 'sequence_alteration';
-    
-
-#    my %effect_map = (
-#	'frameshift insertion' 		   => 'frameshift_elongation',
-#	'frameshift deletion' 		   => 'frameshift_truncation',
-#	'frameshift block substitution'    => 'frameshift_variant',
-#	'stopgain' 			   => 'stop_gained',
-#	'stoploss' 			   => 'stop_lost',
-#	'nonframeshift insertion' 	   => 'inframe_insertion',
-#	'nonframeshift deletion' 	   => 'inframe_deletion',
-#	'nonframeshift block substitution' => 'inframe_variant',
-#	'nonsynonymous SNV' 		   => 'missense_variant',
-#	'synonymous SNV' 		   => 'synonymous_variant',
-#	'unknown'       		   => 'sequence_variant',
-#	);
+sub parse_vcf_info_key_value {
+  
+  my ($self, $record, $key, $value) = @_;
+  my %feature_map = (Transcript => 'transcript');
+  my %allele_map;
+  my @alleles = split /,/, $record->{alt};       
 
     my $reference_seq = $record->{ref_seq};
     my $variant_seq = $record->{var_seq};
