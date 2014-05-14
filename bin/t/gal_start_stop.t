@@ -26,12 +26,17 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_start_stop prints usage statement');
 # Testing that gal_start_stop does something else
 ################################################################################
 
-my @cl_args = ('data/Homo_sapiens.GRCh37.73.chr22.short.gff3',
+my $gff3_file = 'data/Homo_sapiens.GRCh37.73.chr22.short.gff3';
+ok(! `gunzip $gff3_file.gz`, "Unzipping file: $gff3_file.gz");
+
+my @cl_args = ($gff3_file,
 	       'data/hg19_chr22.fa',
 	      );
 
 ok(! $tool->run(cl_args => \@cl_args), 'gal_start_stop runs');
 ok($tool->get_stdout =~ /ENST00000400585\tATG\tTAG/x, 'gal_start_stop has correct output');
+
+ok(! `gzip $gff3_file`, "Zipping file: $gff3_file.gz");
 
 $tool->clean_up;
 done_testing();

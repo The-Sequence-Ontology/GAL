@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 
-use Test::More tests => 1001;
+use Test::More tests => 1003;
 
 BEGIN {
 	use lib '../../';
@@ -33,7 +33,9 @@ can_ok($writer, qw(file
 		   write_file
 		 ));
 
-my $parser = GAL::Parser::gff3->new(file => 'data/Homo_sapiens.GRCh37.73.chr22.short.gff3');
+my $gff3_file = 'data/Homo_sapiens.GRCh37.73.chr22.short.gff3';
+ok(! `gunzip $gff3_file.gz`, "Unzipping file: $gff3_file.gz");
+my $parser = GAL::Parser::gff3->new(file => $gff3_file);
 
 isa_ok($parser, 'GAL::Parser::gff3');
 
@@ -52,6 +54,7 @@ while (my $feature = $parser->next_feature_hash) {
   ok($writer->write_feature($feature), '$writer->write_feature($feature)');
 }
 
+ok(! `gzip $gff3_file`, "Zipping file: $gff3_file.gz");
 
 
 ################################################################################

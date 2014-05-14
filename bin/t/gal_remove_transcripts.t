@@ -28,9 +28,10 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_remove_transcripts prints usage state
 # Testing that gal_remove_transcripts does something else
 ################################################################################
 
-ok(! `gunzip data/Homo_sapiens.GRCh37.73.final.chr22.gff3.gz`, 'Unzip data file: data/Homo_sapiens.GRCh37.73.final.chr22.gff3.gz');
-
 my $gff3_file = 'data/Homo_sapiens.GRCh37.73.chr22.short.gff3';
+
+ok(! `gunzip $gff3_file . '.gz'`, "Unzip data file: data/${gff3_file}.gz");
+
 
 my @cl_args = ('-ids data/remove_ids.txt',
 	       $gff3_file,
@@ -39,11 +40,12 @@ my @cl_args = ('-ids data/remove_ids.txt',
 ok(! $tool->run(cl_args => \@cl_args), 'gal_remove_transcripts runs');
 ok($tool->get_stderr =~ /INFO : total_transcript_skipped : 20/, 'STDERR correct for gal_remove_transcripts');
 
-ok(! `gzip data/Homo_sapiens.GRCh37.73.final.chr22.gff3`, 'Zip data file: data/Homo_sapiens.GRCh37.73.final.chr22.gff3');
 my $stdout = $tool->stdout;
-my $pre_count = `grep -cP '\tmRNA\t' $gff3_file`;
-my $count     = `grep -cP '\tmRNA\t' $stdout`;
+my $pre_count = `grep -c 'mRNA' $gff3_file`;
+my $count     = `grep -c 'mRNA' $stdout`;
 ok($pre_count - $count == 20, 'Correct number of transcripts removed');
+
+ok(! `gzip $gff3_file`, 'Zip data file: data/Homo_sapiens.GRCh37.73.final.chr22.gff3');
 $tool->clean_up('data/Homo_sapiens.GRCh37.73.chr22.short.sqlite');
 done_testing();
 

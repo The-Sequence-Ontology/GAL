@@ -337,12 +337,12 @@ chr1	hg18_knownGene	mRNA	610959	611897	.	-	.	ID=uc001abd.1;Parent=uc001abd.1
 chr1	hg18_knownGene	start_codon	611895	611897	0.000000	-	.	ID=start_codon:uc001abd.1:1;Parent=uc001abd.1
 chr1	hg18_knownGene	exon	610959	611897	0.000000	-	.	ID=exon:uc001abd.1:1;Parent=uc001abd.1
 chr1	hg18_knownGene	CDS	610959	611897	0.000000	-	0	ID=CDS:uc001abd.1:1;Parent=uc001abd.1
-chr1	hg18_knownGene	gene	558707	558776	.	+	.	ID=uc001abb.1;Name=uc001abb.1
-chr1	hg18_knownGene	transcript	558707	558776	.	+	.	ID=uc001abb.1;Parent=uc001abb.1
-chr1	hg18_knownGene	exon	558707	558776	0.000000	+	.	ID=exon:uc001abb.1:1;Parent=uc001abb.1
 chr1	hg18_knownGene	gene	654964	654995	.	-	.	ID=uc001abh.1;Name=uc001abh.1
 chr1	hg18_knownGene	transcript	654964	654995	.	-	.	ID=uc001abh.1;Parent=uc001abh.1
 chr1	hg18_knownGene	exon	654964	654995	0.000000	-	.	ID=exon:uc001abh.1:1;Parent=uc001abh.1
+chr1	hg18_knownGene	gene	558707	558776	.	+	.	ID=uc001abb.1;Name=uc001abb.1
+chr1	hg18_knownGene	transcript	558707	558776	.	+	.	ID=uc001abb.1;Parent=uc001abb.1
+chr1	hg18_knownGene	exon	558707	558776	0.000000	+	.	ID=exon:uc001abb.1:1;Parent=uc001abb.1
 chr1	hg18_knownGene	gene	1007068	1041332	.	-	.	ID=uc001act.1;Name=uc001act.1
 chr1	hg18_knownGene	mRNA	1007068	1041332	.	-	.	ID=uc001act.1;Parent=uc001act.1
 chr1	hg18_knownGene	exon	1007068	1008230	0.000000	-	.	ID=exon:uc001act.1:12;Parent=uc001act.1

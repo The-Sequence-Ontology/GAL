@@ -4,9 +4,9 @@ use strict;
 use warnings;
 
 use Test::More;
+
 use FindBin;
 use lib "$FindBin::RealBin/../../lib";
-use lib "$FindBin::RealBin/../../lib/cpan";
 use GAL::Run;
 
 chdir $FindBin::Bin;
@@ -28,7 +28,10 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_CDS_sequence prints usage statement')
 # Testing that gal_CDS_sequence gets correct CDS sequence
 ################################################################################
 
-my @cl_args = ('data/Homo_sapiens.GRCh37.73.chr22.short.gff3',
+my $gff3_file = 'data/Homo_sapiens.GRCh37.73.chr22.short.gff3';
+ok(! `gunzip $gff3_file.gz`, "Unzipping file: $gff3_file.gz");
+
+my @cl_args = ($gff3_file,
 	       'data/hg19_chr22.fa',
 	      );
 
@@ -54,7 +57,7 @@ $tool->clean_up;
 ################################################################################
 
 @cl_args = ('--translate',
-	    'data/Homo_sapiens.GRCh37.73.chr22.short.gff3',
+	    $gff3_file,
 	    'data/hg19_chr22.fa',
 	   );
 
@@ -63,6 +66,8 @@ ok($tool->get_stdout =~ /MALLLSDWCPDGDADTHTGTDPGRTTHRLCARERGVRGTQPCPRIYLRLP\n
 			 AQNCEETRFCCASPGSVVLGHGAPRTASPPSALSHPSPLEGLSFSPFPPS\n
 			 VLSHPSPPEGLSFSLFHCLCSGKLSESPGCFWNSLGWSFSVLTEPGVWKV\n
 			 GEAIWVAENLAQPLTSPCAC\*/x, 'gal_CDS_sequence has correct output');
+
+ok(! `gzip $gff3_file`, "Zipping file: $gff3_file.gz");
 
 $tool->clean_up;
 done_testing();

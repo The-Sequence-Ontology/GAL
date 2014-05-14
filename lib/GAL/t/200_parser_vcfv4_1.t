@@ -4,8 +4,9 @@ use strict;
 use Test::More;
 
 BEGIN {
-	use lib '../../';
-	use_ok('GAL::Parser::VCFv4_1');
+  use FindBin;
+  use lib "$FindBin::RealBin/../../";
+  use_ok('GAL::Parser::VCFv4_1');
 }
 
 my $path = $0;

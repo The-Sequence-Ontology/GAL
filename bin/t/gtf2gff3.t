@@ -4,18 +4,70 @@ use strict;
 use warnings;
 
 use Test::More;
+use Getopt::Long;
+
 use FindBin;
 use lib "$FindBin::RealBin/../../lib";
 use GAL::Run;
+
+my $usage = "
+
+Synopsis:
+
+gtf2gff3.t
+gtf2gff3.t --verbosity debug
+gtf2gff3.t --create_valid
+
+Description:
+
+A test script to test the functionality of vaast_converter
+
+Options:
+
+  --help, h
+
+    Print this usage statement and exit.
+
+  --verbosity, v [fatal|info|debug]
+
+    Control the level of output from the test script.  Default is
+    'info' which will cause the test script to print all test
+    messages, error messages and executed command lines.  Specifying
+    'debug' will cause the test script to print all the same messages
+    as 'info' and will also print the STDOUT and STDERR from all
+    commands run.  Specifying 'fatal' will cause the test script to
+    print only fatal messages.  Messages from the underlying test code
+    will always be printed.
+
+  --create_valid
+
+    The create_valid option will cause the test script to overwrite
+    the validated output files for all tests that have output
+    validation using the current output as the new valid output.
+
+";
+
+my ($help, $verbosity, $no_clean, $dry_run, $create_valid);
+
+my $opt_success = GetOptions('help|h'        => \$help,
+			     'verbosity|v=s' => \$verbosity,
+			     'no_clean|n'    => \$no_clean,
+			     'dry_run|d'     => \$dry_run,
+			     'create_valid'  => \$create_valid,
+			     );
+$verbosity ||= 'info';
+
 
 chdir $FindBin::RealBin;
 my $path = "$FindBin::RealBin/../";
 my $command;
 
+
+
 my $tool = GAL::Run->new(path => $path,
 			 command => 'gtf2gff3');
 
-$tool->verbosity('debug');
+$tool->verbosity($verbosity);
 
 ################################################################################
 # Testing that gtf2gff3 compiles and returns usage statement
@@ -54,6 +106,11 @@ for my $gtf_file (@gtf_files) {
 
   ok(! $tool->run(cl_args => \@cl_args,
 		  stdout => $gff_file), 'gtf2gff3 augustus_short.gtf');
+
+  if ($create_valid) {
+    $tool->warn('creating_validated_output', "cp $gff_file $vld_file");
+    `cp $gff_file $vld_file`;
+  }
 
   ok(! `diff $gff_file $vld_file`, "gtf2gff3 produces valid output for $gtf_file");
   $tool->clean_up($gff_file);
