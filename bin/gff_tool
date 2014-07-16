@@ -275,6 +275,27 @@ to the altered copy of the feature.  All filters given are applied.
   print           Just print the features - applying any include/exclude
 		  along the way.
 
+  print_data      Print a subset of the data for each feature in GFF file.
+		  This option takes a comma separated list of
+		  feilds/attributes and prints just those values for
+		  each feature.  Values to this option include:
+		      seqid, source, type, start, end, strand, phase,
+		      attributes.
+
+		  In addition to these there are a few keywords that
+		  will print calculated values:
+		      locus (seqid:start-end), length (start - end + 1),
+		      genotype (locus:nt,nt)
+
+		  Finally, any attribute can be printed by passing its
+		  key, for example:
+		      ID, Name, Reference_seq, etc.
+
+		  If you have an attribute that shares one of the
+		  reserved names above (e.g. an attribute named
+		  length) simply prepend a + to the attribute name and
+		  it will be recognized as an attribute.
+
   sequence|p      Print a fasta sequence for each feature instead of
 		  the feature. Requires the fasta argument (Not yet
 		  implimented)
@@ -442,10 +463,10 @@ my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
     $SEQIDS_FILE, $include, $exclude, $code, $filter, $overlaps,
     $genes, $merge, $blend, $sort, $alter, $hash_ag, $map_seqids,
     $map_feature_ids, $template, $validate, $stats, $print_gff,
-    $sequence, $splice_sequence, $fasta_only, $fasta_no, $fasta_add,
-    $meta_only, $meta_no, $meta_add, $add_ID, $pragmas, $features,
-    $union, $intersection, $lcomplement, $sdifference, $i_union,
-    $i_intersection, $i_lcomplement, $i_sdifference, $titv,
+    $print_data, $sequence, $splice_sequence, $fasta_only, $fasta_no,
+    $fasta_add, $meta_only, $meta_no, $meta_add, $add_ID, $pragmas,
+    $features, $union, $intersection, $lcomplement, $sdifference,
+    $i_union, $i_intersection, $i_lcomplement, $i_sdifference, $titv,
     $gvf_stats, $effect_stats, $gvf_sets, $fix_gvf, $add_ref_seq,);
 
 my $opt_success = GetOptions('help|h'		 => \$help,
@@ -474,6 +495,7 @@ my $opt_success = GetOptions('help|h'		 => \$help,
 			     'sequence|p'	 => \$sequence,
 			     'splice_sequence'	 => \$splice_sequence,
 			     'print'		 => \$print_gff,
+			     'print_data=s'      => \$print_data,
 			     'features|x'	 => \$features,
 			     'fasta_only|r'	 => \$fasta_only,
 			     'fasta_no|R'	 => \$fasta_no,
@@ -549,6 +571,7 @@ meta_only(\@files)			    if $meta_only;
 meta_add(\@files)			    if $meta_add;
 add_ID(\@files)				    if $add_ID;
 print_gff(\@files)			    if $print_gff;
+print_data(\@files, $print_data)            if $print_data;
 union(\@files)				    if $union;
 intersection(\@files)			    if $intersection;
 lcomplement(\@files)			    if $lcomplement;
@@ -3120,6 +3143,99 @@ sub print_gff {
 
 #-----------------------------------------------------------------------------
 
+sub print_data {
+
+  my ($files, $data) = @_;
+
+  my @data_keys = split ',', $data;
+  my %valid_columns = (seqid  => 1,
+		       source => 1,
+		       type   => 1,
+		       start  => 1,
+		       end    => 1,
+		       score  => 1,
+		       strand => 1,
+		       phase  => 1,
+		       attributes => 1,
+		       #length     => 1,
+		       #locus      => 1,
+		       #genotype   => 1
+		      );
+
+  my %calculate = (length   => 1,
+		   locus    => 1,
+		   genotype => 1,
+		  );
+
+  map {$calculate{$_}++ if exists $calculate{$_}} @data_keys;
+
+  for my $file (@files) {
+    my $IN = fh_in($file);
+    my $OUT = fh_out($file);
+    while (my $f = next_feature_hash($IN)) {
+      next if fails_filters($f);
+      my @this_data;
+      for my $data_key (@data_keys) {
+	# Handle standard columns
+	if (exists $valid_columns{$data_key}) {
+	  push @this_data, $f->{$data_key};
+	}
+	# Create calculated fields
+	elsif (exists $calculate{$data_key}) {
+	  # Create length
+	  if ($data_key eq 'length') {
+	    push @this_data, $f->{end} - $f->{start} + 1;
+	  }
+	  # Create locus
+	  elsif ($data_key eq 'locus') {
+	    push @this_data, ($f->{seqid} . ':' . $f->{start} . '-'
+			      . $f->{end});
+	  }
+	  # Create genotype
+	  elsif ($data_key eq 'genotype') {
+	    # Warn of missing Variant_seq
+	    if (! exists $f->{attributes}{Variant_seq} ||
+		ref $f->{attributes}{Variant_seq} ne 'ARRAY') {
+	      print STDERR "WARN : skipping_missing_or_invalid_variant_seq : to_gff3($f) : $data_key\n";
+	    }
+	    # Create genotype
+	    else {
+	      my $var_seq = $f->{attributes}{Variant_seq};
+	      $var_seq->[1] = $var_seq->[0] unless $var_seq->[1];
+	      my $value = join ',', @{$var_seq};
+	      push @this_data, $value;
+	    }
+	  }
+	  else {
+	    print STDERR "FATAL : invalid_key_value : " . to_gff3($f);
+	  }
+	}
+	# Handle attributes
+	else {
+	  my $key_copy = $data_key;
+	  $key_copy =~ s/^\+//;
+	    if (! exists $f->{attributes}{$key_copy} ||
+		ref $f->{attributes}{$key_copy} ne 'ARRAY') {
+	      print STDERR ("WARN : skipping_missing_or_invalid_attribute_key : " .
+			    "($data_key) " . to_gff3($f) . "\n");
+	      push @this_data, '';
+	    }
+	  else {
+	    my $value = join ',', @{$f->{attributes}{$key_copy}};
+	    push @this_data, $value;
+	  }
+	}
+      }
+      print join "\t", @this_data;
+      print "\n";
+    }
+    print '';
+  }
+  print '';
+}
+
+#-----------------------------------------------------------------------------
+
 sub fh_in {
 
     my $file = shift;
@@ -3176,7 +3292,7 @@ sub read_pragmas {
     until ($line !~ /^(\#.*|\s+)$/) {
 	next PRAGMA unless $line =~ /^\#/;
 	chomp $line;
-	if ($line =~ /^\#\#FASTA/) {
+	if ($line = /^\#\#FASTA/) {
 	    handle_fasta($fh);
 	    return undef;
 	}
