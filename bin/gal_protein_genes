@@ -59,7 +59,11 @@ my $features = $annotation->features;
 my $genes = $features->search({type => 'gene'});
 GENE:
 while (my $gene = $genes->next) {
-  next GENE unless $gene->is_coding;
+    unless ($gene->is_coding) {
+	$gene->warn('gene_has_no_mRNA',
+		    'Skipping ' . $gene->feature_id);
+	    next GENE;
+    }
   my $mrnas = $gene->mRNAs;
   if ($clean) {
     my $gene_text = $gene->to_gff3 . "\n";
