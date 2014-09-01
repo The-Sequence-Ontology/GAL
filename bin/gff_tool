@@ -323,7 +323,7 @@ to the altered copy of the feature.  All filters given are applied.
   meta_only|y     Print only the meta-data lines (pragmas, comments and
 		  empty lines) from a GFF file.
 
-  meta_no|Y       Print only the meta-data lines (pragmas, comments and
+  meta_no|Y       Do not print the meta-data lines (pragmas, comments and
 		  empty lines) from a GFF file.
 
   meta_add|z      Add the meta-data contained in the given file to the
@@ -420,6 +420,11 @@ to the altered copy of the feature.  All filters given are applied.
 		 that sequence, representing longer sequences with ~
 		 as described above.
 
+  gvf2vcf        Convert single GVF files to VCF format.  This is a
+		 minimal converter that will convert SNVs and simple
+		 indels with minimal support for extended VCF options.
+		 Only variant lines are printed, no meta-data.
+
 Code References:
 
 All code refs have available to them the current feature as a hash
@@ -473,7 +478,8 @@ my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
     $fasta_add, $meta_only, $meta_no, $meta_add, $add_ID, $pragmas,
     $features, $union, $intersection, $lcomplement, $sdifference,
     $i_union, $i_intersection, $i_lcomplement, $i_sdifference, $titv,
-    $gvf_stats, $effect_stats, $gvf_sets, $fix_gvf, $add_ref_seq,);
+    $gvf_stats, $effect_stats, $gvf_sets, $fix_gvf, $add_ref_seq,
+    $gvf2vcf);
 
 my $opt_success = GetOptions('help|h'		 => \$help,
 			     'in_place|i'	 => \$in_place,
@@ -526,6 +532,7 @@ my $opt_success = GetOptions('help|h'		 => \$help,
 			     'gvf_sets'		 => \$gvf_sets,
 			     'fix_gvf'		 => \$fix_gvf,
 			     'add_ref_seq'       => \$add_ref_seq,
+			     'gvf2vcf'           => \$gvf2vcf,
 			    );
 
 if (! $opt_success) {
@@ -594,6 +601,8 @@ effect_stats(\@files)			    if $effect_stats;
 gvf_sets(\@files)			    if $gvf_sets;
 fix_gvf(\@files)                            if $fix_gvf;
 add_ref_seq(\@files, $add_ref_seq)          if defined $add_ref_seq;
+gvf2vcf(\@files)                            if $gvf2vcf;
+
 #pragma($pragma)			  if $pragma;
 
 #-----------------------------------------------------------------------------
@@ -2824,6 +2833,71 @@ sub add_ref_seq {
 }
 
 #-----------------------------------------------------------------------------
+#  gvf2vcf        Convert single GVF files to VCF format.  This is a
+#                 minimal converter that will convert SNVs and simple
+#                 indels with minimal support for extended VCF options.
+#-----------------------------------------------------------------------------
+
+sub gvf2vcf {
+
+  $meta_no = 1;
+
+  my ($files) = @_;
+
+  for my $file (@files) {
+    my $IN = fh_in($file);
+    my $OUT = fh_out($file);
+
+  VARIANT:
+    while (my $f = next_feature_hash($IN)) {
+
+      # chr7 HGMD SNV 117149137 117149137 . + . ID=HGMD_SNV_012309;Variant_seq=A,G;Reference_seq=G;Genotype=0:1;
+      # chrY 28725875 . G . . PASS END=28725892;BLOCKAVG_min30p3a GT:DP:GQX:MQ 0/0:25:75:60
+
+      my ($seqid, $type, $start) = @{$f}{qw(seqid type start)};
+      my $a = $f->{attributes};
+      my $ref = $a->{Reference_seq}[0];
+      my @var_seqs = @{$a->{Variant_seq}};
+
+      if (grep {$_ eq '-'} ($ref, @var_seqs)) {
+	my $xtra = uc $FASTA_DB->seq($seqid, $start - 1, $start - 1);
+	map {$_ = $xtra . $_;$_ =~ s/-//g} ($ref, @var_seqs);
+	$start--;
+      }
+
+      my $alt = join ',', grep {$_ ne $ref} @var_seqs;
+
+      my $attribute_text;
+      for my $key (sort keys %{$a}) {
+	my $value_text = join ',', @{$a->{$key}};
+	$attribute_text .= "$key=$value_text;";
+      }
+
+      my $info = "SO_TYPE=$type;$attribute_text";
+      my @genotypes;
+
+      push @var_seqs, $var_seqs[0] if scalar @var_seqs == 1;
+      for my $count (0 .. $#var_seqs) {
+	push @genotypes, ($var_seqs[$count] eq $ref ? 0 : $count + 1);
+      }
+      my $genotype = join '/', (sort @genotypes);
+
+      print $OUT join "\t", ($seqid,
+			     $start,
+			     $a->{ID}[0],
+			     $ref,
+			     $alt,
+			     $f->{score},
+			     '.',
+			     $info,
+			     'GT',
+			     $genotype);
+      print $OUT "\n";
+    }
+  }
+}
+
+#-----------------------------------------------------------------------------
 #  titv           Calculate transition/transversion ratio.
 #-----------------------------------------------------------------------------
 
@@ -2852,7 +2926,7 @@ sub calc_titv {
 		}
 		else {
 		    my $line = to_gff3($f);
-		    warn "WARNING : variant_seq_not_handled: $line";
+ 		    warn "WARNING : variant_seq_not_handled: $line";
 		}
 	    }
 	    elsif ($ref_seq eq 'C') {
