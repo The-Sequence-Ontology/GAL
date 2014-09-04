@@ -3407,7 +3407,7 @@ sub read_pragmas {
     until ($line !~ /^(\#.*|\s+)$/) {
 	next PRAGMA unless $line =~ /^\#/;
 	chomp $line;
-	if ($line = /^\#\#FASTA/) {
+	if ($line =~ /^\#\#FASTA/) {
 	    handle_fasta($fh);
 	    return undef;
 	}

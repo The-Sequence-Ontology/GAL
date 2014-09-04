@@ -15,6 +15,8 @@ my $path = "$FindBin::Bin/..";
 my $tool = GAL::Run->new(path    => $path,
 			 command => 'gff_tool');
 
+$tool->verbosity('debug');
+
 ################################################################################
 # Testing that gff_tool compiles and returns usage statement
 ################################################################################

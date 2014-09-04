@@ -5,8 +5,9 @@ use Getopt::Long;
 use GAL::Parser;
 use GAL::Writer::GFF3;
 use Bio::DB::Fasta;
+
 use FindBin;
-use lib "$FindBin::Bin/../lib";
+use lib "$FindBin::RealBin/../lib";
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
