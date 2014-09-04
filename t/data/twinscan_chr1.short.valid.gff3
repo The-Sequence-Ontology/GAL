@@ -1,3 +1,4 @@
+##gff-version 3
 chr1	iscan	gene	4559	19046	.	-	.	ID=chr1.1.001;Name=chr1.1.001
 chr1	iscan	mRNA	4559	19046	.	-	.	ID=chr1.1.001.a;Parent=chr1.1.001
 chr1	iscan	CDS	4559	4692	309	-	2	ID=CDS:chr1.1.001.a:7;Parent=chr1.1.001.a
@@ -1841,4 +1842,3 @@ chr1	iscan	exon	2567043	2567053	.	-	.	ID=exon:chr1.3.022.a:1;Parent=chr1.3.022.a
 chr1	iscan	CDS	2567043	2567045	-13	-	0	ID=CDS:chr1.3.022.a:1;Parent=chr1.3.022.a
 chr1	iscan	start_codon	2567043	2567045	0	-	0	ID=start_codon:chr1.3.022.a:1;Parent=chr1.3.022.a
 chr1	iscan	five_prime_UTR	2567046	2567053	-77	-	0	ID=five_prime_UTR:chr1.3.022.a:1;Parent=chr1.3.022.a
-##gff-version 3
