@@ -1613,15 +1613,15 @@ sub print_config {
 # Limit the attribute tags printed to only those in the GFF3_ATTRB_MAP
 LIMIT_ATTRB     = $config{MISC}{LIMIT_ATTRB}
 #A perl regexp that splits the attributes column into seperate attributes.
-ATTRB_DELIMITER = $config{MISC}{ATTRB_DELIMITER};
+ATTRB_DELIMITER = $config{MISC}{ATTRB_DELIMITER}
 #A perl regexp that captures the tag value pairs.
-ATTRB_REGEX     = $config{MISC}{ATTRB_REGEX};
+ATTRB_REGEX     = $config{MISC}{ATTRB_REGEX}
 #If CDSs are annotated in the GTF file, are the start codons already included (1=yes 0=no)
-START_IN_CDS    = $config{MISC}{START_IN_CDS};
+START_IN_CDS    = $config{MISC}{START_IN_CDS}
 #If CDSs are annotated in the GTF file, are the stop codons already included (1=yes 0=no)
-STOP_IN_CDS     = $config{MISC}{STOP_IN_CDS};
+STOP_IN_CDS     = $config{MISC}{STOP_IN_CDS}
 #Use the following value (+ or -) for a features strand as the default if an invalid value is passed.
-#DEFAULT_STRAND  = $config{MISC}{DEFAULT_STRAND};
+#DEFAULT_STRAND  = $config{MISC}{DEFAULT_STRAND}
 
 ";
 

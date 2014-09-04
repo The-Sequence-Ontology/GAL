@@ -1,3 +1,4 @@
+##gff-version 3
 chr1	refGene	gene	207262584	207271609	.	+	.	ID=C4BPB;Name=C4BPB
 chr1	refGene	mRNA	207262584	207271609	.	+	.	ID=NM_001017364;Parent=C4BPB;parent_name=C4BPB
 chr1	refGene	exon	207262584	207262934	.	+	.	ID=exon:NM_001017364:1;Parent=NM_001017364;exon_id=NM_001017364.1;exon_number=1;gene_name=C4BPB
@@ -12,4 +13,3 @@ chr1	refGene	CDS	207269867	207269960	.	+	2	ID=CDS:NM_001017364:4;Parent=NM_00101
 chr1	refGene	exon	207269867	207269960	.	+	.	ID=exon:NM_001017364:4;Parent=NM_001017364;exon_id=NM_001017364.4;exon_number=4;gene_name=C4BPB
 chr1	refGene	CDS	207271495	207271609	.	+	1	ID=CDS:NM_001017364:5;Parent=NM_001017364;exon_id=NM_001017364.5;exon_number=5;gene_name=C4BPB
 chr1	refGene	exon	207271495	207271609	.	+	.	ID=exon:NM_001017364:5;Parent=NM_001017364;exon_id=NM_001017364.5;exon_number=5;gene_name=C4BPB
-##gff-version 3

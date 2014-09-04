@@ -1,3 +1,4 @@
+##gff-version 3
 1	transcribed_unprocessed_pseudogene	exon	3044314	3044814	.	+	.	ID=exon:ENSMUST00000160944:1;Parent=ENSMUST00000160944;exon_number=1;gene_biotype=pseudogene;gene_name=Gm16088;transcript_name=Gm16088-001;tss_id=TSS72726
 1	transcribed_unprocessed_pseudogene	gene	3044314	3044814	.	+	.	ID=ENSMUSG00000090025;Name=Gm16088
 1	transcribed_unprocessed_pseudogene	transcript	3044314	3044814	.	+	.	ID=ENSMUST00000160944;Name=Gm16088-001;Parent=ENSMUSG00000090025;parent_name=Gm16088
@@ -1229,4 +1230,3 @@
 1	protein_coding	three_prime_UTR	6848682	6849551	.	+	.	ID=three_prime_UTR:ENSMUST00000150761:1;Parent=ENSMUST00000150761
 1	protein_coding	three_prime_UTR	6848682	6848894	.	+	.	ID=three_prime_UTR:ENSMUST00000151281:1;Parent=ENSMUST00000151281
 1	processed_transcript	exon	6849069	6849685	.	+	.	ID=exon:ENSMUST00000130338:2;Parent=ENSMUST00000130338;exon_number=2;gene_biotype=protein_coding;gene_name=St18;transcript_name=St18-014;tss_id=TSS80025
-##gff-version 3

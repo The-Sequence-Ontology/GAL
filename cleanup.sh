@@ -32,3 +32,4 @@ rm -f t/data/test_storage.sqlite
 rm -f t/data/Homo_sapiens.GRCh37.73.chr22.short.sqlite
 rm -f bin/t/gal_run_stdout*
 rm -f bin/t/gal_run_stderr*
+rm -f t/data/fasta_hg18/directory.index

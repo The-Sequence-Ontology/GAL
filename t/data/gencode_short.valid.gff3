@@ -1,3 +1,9 @@
+##gff-version 3
+#contact: gencode@sanger.ac.uk
+#date: 2013-09-02
+#description: evidence-based annotation of the human genome (GRCh37), version 18 (Ensembl 73) - long non-coding RNAs
+#format: gtf
+#provider: GENCODE
 chr1	.	gene	29554	31109	.	+	.	ID=ENSG00000243485.2;Name=MIR1302-11
 chr1	HAVANA	transcript	29554	31097	.	+	.	ID=ENST00000473358.1;Name=MIR1302-11-001;Parent=ENSG00000243485.2;parent_name=MIR1302-11
 chr1	HAVANA	transcript	29554	31097	.	+	.	ID=transcript:ENST00000473358.1:1;Parent=ENST00000473358.1;gene_name=MIR1302-11;gene_status=NOVEL;gene_type=lincRNA;havana_gene=OTTHUMG00000000959.2;havana_transcript=OTTHUMT00000002840.1;level=2;tag=not_best_in_genome_evidence;transcript_name=MIR1302-11-001;transcript_status=KNOWN;transcript_type=lincRNA
@@ -1221,9 +1227,3 @@ chr1	HAVANA	transcript	15653176	15670372	.	-	.	ID=ENST00000428747.1;Name=RP3-467
 chr1	HAVANA	transcript	15653176	15670372	.	-	.	ID=transcript:ENST00000428747.1:1;Parent=ENST00000428747.1;gene_name=RP3-467K16.2;gene_status=NOVEL;gene_type=antisense;havana_gene=OTTHUMG00000002089.1;havana_transcript=OTTHUMT00000005880.1;level=2;tag=basic;transcript_name=RP3-467K16.2-001;transcript_status=KNOWN;transcript_type=antisense
 chr1	HAVANA	exon	15653176	15656179	.	-	.	ID=exon:ENST00000428747.1:2;Parent=ENST00000428747.1;exon_id=ENSE00001753630.1;exon_number=2;gene_name=RP3-467K16.2;gene_status=NOVEL;gene_type=antisense;havana_gene=OTTHUMG00000002089.1;havana_transcript=OTTHUMT00000005880.1;level=2;tag=basic;transcript_name=RP3-467K16.2-001;transcript_status=KNOWN;transcript_type=antisense
 chr1	HAVANA	exon	15670272	15670372	.	-	.	ID=exon:ENST00000428747.1:1;Parent=ENST00000428747.1;exon_id=ENSE00001730079.1;exon_number=1;gene_name=RP3-467K16.2;gene_status=NOVEL;gene_type=antisense;havana_gene=OTTHUMG00000002089.1;havana_transcript=OTTHUMT00000005880.1;level=2;tag=basic;transcript_name=RP3-467K16.2-001;transcript_status=KNOWN;transcript_type=antisense
-#contact: gencode@sanger.ac.uk
-#date: 2013-09-02
-#description: evidence-based annotation of the human genome (GRCh37), version 18 (Ensembl 73) - long non-coding RNAs
-#format: gtf
-##gff-version 3
-#provider: GENCODE
