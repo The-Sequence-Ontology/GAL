@@ -15,6 +15,8 @@ my $path = "$FindBin::Bin/..";
 my $tool = GAL::Run->new(path => $path,
 			 command => 'gal_feature_overlaps');
 
+$tool->verbosity('debug');
+
 ################################################################################
 # Testing that gal_feature_overlaps compiles and returns usage statement
 ################################################################################
@@ -27,7 +29,7 @@ like($tool->get_stdout, qr/Synopsis/, 'gal_feature_overlaps prints usage stateme
 ################################################################################
 
 ok(! $tool->run(cl_args => ['data/interval_*.gff']), 'gal_feature_overlaps runs');
-ok($tool->get_stdout =~ /chr12:3000510:3000658\s+3\s+data\/interval_2.gff,data\/interval_1.gff,data\/interval_3.gff/,
+ok($tool->get_stdout =~ /chr12:3000510:3000658\t3\tdata\/interval_1.gff,data\/interval_2.gff,data\/interval_3.gff/,
    'gal_feature_overlaps has the correct output');
 
 $tool->clean_up;

@@ -69,11 +69,11 @@ for my $file (@files) {
 }
 
 my %data;
-for my $seqid (keys %merged_set) {
+for my $seqid (sort keys %merged_set) {
     my $iterator = $merged_set{$seqid}->iterate_runs();
     while (my ( $start, $end ) = $iterator->()) {
 	my $locus = join ':', ($seqid, $start, $end);
-	for my $file (keys %file_sets) {
+	for my $file (sort keys %file_sets) {
 	    my $set = $file_sets{$file}{$seqid};
 	    next unless $set;
 	    if ($set->contains_any($start .. $end)) {
@@ -83,7 +83,7 @@ for my $seqid (keys %merged_set) {
     }
 }
 
-for my $locus (keys %data) {
+for my $locus (sort keys %data) {
     my $count = scalar @{$data{$locus}};
     my $list = join ',', @{$data{$locus}};
     print join "\t", $locus, $count, $list;

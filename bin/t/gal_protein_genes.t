@@ -15,6 +15,8 @@ my $path = "$FindBin::Bin/..";
 my $tool = GAL::Run->new(path => $path,
 			 command => 'gal_protein_genes');
 
+$tool->verbosity('debug');
+
 ################################################################################
 # Testing that gal_protein_genes compiles and returns usage statement
 ################################################################################
@@ -31,7 +33,7 @@ my @cl_args = ('data/dmel-4-r5.46.genes.partial.gff',
 	      );
 
 ok(! $tool->run(cl_args => \@cl_args), 'gal_protein_genes runs');
-ok($tool->get_stdout =~ /ID=three_prime_UTR_FBgn0017545:1_1580;Name=RpS3A\-u3;Parent=FBtr0308296;/,
+ok($tool->get_stdout =~ /ID=three_prime_UTR_FBgn0017545:1_1580/,
    'gal_protein_genes has the correct output');
 
 $tool->clean_up;

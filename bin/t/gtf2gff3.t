@@ -112,6 +112,10 @@ for my $gtf_file (@gtf_files) {
     `cp $gff_file $vld_file`;
   }
 
+  `sort -k1,1 -k4,4n -k5,5nr $gff_file > $gff_file.bak`;
+  `mv $gff_file.bak $gff_file`;
+  `sort -k1,1 -k4,4n -k5,5nr $vld_file > $vld_file.bak`;
+  `mv $vld_file.bak $vld_file`;
   ok(! `diff $gff_file $vld_file`, "gtf2gff3 produces valid output for $gtf_file");
   $tool->clean_up($gff_file);
 }

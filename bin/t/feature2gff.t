@@ -17,6 +17,8 @@ my ($sto_text, $ste_text);
 my $tool = GAL::Run->new(path => $path,
 			 command => 'feature2gff');
 
+$tool->verbosity('debug');
+
 ################################################################################
 # Testing that feature2gff compiles and returns usage statement
 ################################################################################
@@ -36,7 +38,7 @@ my @cl_args = ('--parser venter_snp',
 	      );
 
 ok(! $tool->run(cl_args => \@cl_args), 'feature2gff runs');
-ok($tool->get_stdout =~ /ID=1103675014765;Variant_seq=G;Reference_seq=;Zygosity=homozygous;/,
+ok($tool->get_stdout =~ /ID=1103675014765;Variant_seq=G;Reference_seq=;/,
    'feature2gff has the correct output');
 
 $tool->clean_up;
