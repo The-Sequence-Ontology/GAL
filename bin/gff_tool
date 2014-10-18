@@ -579,7 +579,6 @@ sequence(\@files)			    if $sequence;
 splice_sequence(\@files)		    if $splice_sequence;
 features(\@files)			    if $features;
 fasta_only(\@files)			    if $fasta_only;
-fasta_no(\@files)			    if $fasta_no;
 fasta_add(\@files, $fasta_add)		    if $fasta_add;
 meta_only(\@files)			    if $meta_only;
 #meta_no(\@files)			    if $meta_no;
@@ -602,6 +601,7 @@ gvf_sets(\@files)			    if $gvf_sets;
 fix_gvf(\@files)                            if $fix_gvf;
 add_ref_seq(\@files, $add_ref_seq)          if defined $add_ref_seq;
 gvf2vcf(\@files)                            if $gvf2vcf;
+fasta_no(\@files)			    if $fasta_no;
 
 #pragma($pragma)			  if $pragma;
 
@@ -3347,6 +3347,7 @@ sub print_data {
     print '';
   }
   print '';
+  exit(0);
 }
 
 #-----------------------------------------------------------------------------
