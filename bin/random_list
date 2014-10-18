@@ -1,0 +1,66 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+random_list file.txt
+cat file.txt | random_list
+random_list --permute 1000 --pick 11 file.txt | histogram
+
+
+Description:
+
+This script will take a text file as input and print out the file in
+random order.  It uses the Fisher-Yates Shuffle to randomize the list.
+With the options described below you can pick a given number of values
+from the list and print just those, and you can permute the shuffle
+pick sequence a given number of times.
+
+";
+
+my ($help, $permute, $pick);
+my $opt_success = GetOptions('help'      => \$help,
+			     'permute=i' => \$permute,
+			     'pick=i'    => \$pick,
+			      );
+
+die $usage if $help || ! $opt_success;
+
+my $file = shift;
+die $usage unless $file || ! -t;
+
+$permute ||= 1;
+
+my $IN;
+if (! -t STDIN) {
+	open ($IN, "<&=STDIN") or die "Can't open STDIN\n";
+}
+else {
+	open ($IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
+}
+
+my @list = <$IN>;
+chomp @list;
+
+$pick ||= scalar @list;
+$pick = $pick > scalar @list ? scalar @list : $pick;
+
+for (1 .. $permute) {
+	#Fisher-Yates Shuffle
+	my $n = scalar @list;
+	while ($n > 1) {
+
+		my $k = int rand($n--);
+		($list[$n], $list[$k]) = ($list[$k], $list[$n]);
+	}
+
+	print join "\n", @list[0 .. $pick - 1];
+	print "\n";
+}
