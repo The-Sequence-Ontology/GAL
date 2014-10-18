@@ -22,20 +22,26 @@ Synopsis:
 
 fasta_tool [-options] fasta_file
 
-Description:
-The script takes a fasta file and can search it, reformat it, and manipulate it
-in a large variety of ways that can prove very very usful.  For options that
-provide the ability to evaluate code, use Perl.
+Description: The script takes a fasta file and can search it, reformat
+it, and manipulate it in a variety of ways that can prove very usful.
+For options that provide the ability to evaluate code, use Perl.
 
 Options:
 
   --chunks <integer>
 
-      Break up a single fasta file into the given number of chunks
+      Split a single multi-fasta file into the given number of sub
+      files specified by chunks.
 
   --split
 
       Split a multi-fasta into individual files.  One for each fasta.
+
+
+  --break <integer>
+
+    Break a the sequence from a single-fasta file into a multi-fasta
+    file with subsequences of the given size.
 
   --eval_code <code>
 
@@ -207,17 +213,19 @@ Options:
 
 ";
 
-my ($summary, $chunks, $split, $eval_code, $eval_all, $extract_ids,
-    $grep_header, $grepv_header, $grep_seq, $grepv_seq, $wrap, $count,
-    $translate, $seq_only, $nt_count, $length, $total_length, $n50,
-    $tab, $reverse, $rev_seq, $comp_seq, $rev_comp, $uniq, $uniq_sub,
-    $shuffle_order, $shuffle_seq, $shuffle_codon, $shuffle_pick,
-    $select_file, $remove_file, $print, $mRNAseq, $EST,
-    $trim_maker_utr, $table, $swap_ids, $fix_prot, $subseq, $tile);
+my ($summary, $chunks, $split, $break, $eval_code, $eval_all,
+    $extract_ids, $grep_header, $grepv_header, $grep_seq, $grepv_seq,
+    $wrap, $count, $translate, $seq_only, $nt_count, $length,
+    $total_length, $n50, $tab, $reverse, $rev_seq, $comp_seq,
+    $rev_comp, $uniq, $uniq_sub, $shuffle_order, $shuffle_seq,
+    $shuffle_codon, $shuffle_pick, $select_file, $remove_file, $print,
+    $mRNAseq, $EST, $trim_maker_utr, $table, $swap_ids, $fix_prot,
+    $subseq, $tile);
 
 GetOptions('summary'        => \$summary,
 	   'chunks=i'       => \$chunks,
 	   'split'          => \$split,
+	   'break=i'        => \$break,
 	   'eval_code=s'    => \$eval_code,
 	   'eval_all=s'     => \$eval_all,
 	   'extract_ids=s'  => \$extract_ids,
@@ -280,6 +288,7 @@ handle_message(@warning) if grep {$_} ($extract_ids,
 # These functions handle their own printing;
 $print++ unless grep {$_} ($chunks,
 			   $split,
+			   $break,
 			   $eval_code,
 			   $eval_all,
 			   $extract_ids,
@@ -338,6 +347,7 @@ my $seq_io  = Bio::SeqIO->new(-fh => $IN,
 
 chunks($file, $chunks)	    if $chunks;
 split_fasta()	            if $split;
+break_fasta($break)         if $break;
 eval_code($eval_code)       if $eval_code;
 eval_all($eval_all)         if $eval_all;
 extract_ids($extract_ids)   if $extract_ids;
@@ -379,7 +389,7 @@ EST()                       if $EST;
 #
 #  --chunks <integer>
 #
-#      Break up a single fasta file into the given number of chunks
+#      Split a single multi-fasta file into the given number of sub files.
 #
 #-----------------------------------------------------------------------------
 
@@ -394,11 +404,11 @@ sub chunks {
 	#How many chunks should the input file be split into?
 	my $chunk_size = int($file_size/$chunks) + ($file_size % $chunks);
 
-	#How many digits should the output file interations be sprintf'ed to=?
+	#How many digits should the output file iterations be sprintf'ed to=?
 	my $digits = int(log($chunks)/log(10)) + 1;
 
 	#I felt like using a closure today.
-	my $file_counter = make_file_counter();
+	my $file_counter = make_counter();
 
 	my $out;
 	my $file_name;
@@ -430,7 +440,7 @@ sub get_output_stream{
 
 #-----------------------------------------------------------------------------
 
-sub make_file_counter {
+sub make_counter {
     #Initialize the counter.
     my $file_counter = 0;
 
@@ -456,6 +466,40 @@ sub split_fasta {
 		#Write it to the file.
 		$out->write_seq($seq);
 	}
+}
+
+#-----------------------------------------------------------------------------
+#
+#   --break <integer>
+#
+#     Break a the sequences from a fasta file into subsequences of the
+#     given size.
+#
+#-----------------------------------------------------------------------------
+
+sub break_fasta {
+
+  my ($break) = @_;
+
+ SEQ:
+  while ( my $seq_obj = $seq_io->next_seq() ) {
+
+    my $header = get_header($seq_obj);
+    my $seq    = $seq_obj->seq;
+    my $length = length($seq);
+
+    my $start = 0;
+    my $counter;
+    while ($start < $length) {
+      $break = $length - $start if $start + $break > $length;
+      my $sub_seq = substr($seq, $start, $break);
+      #print join("\t", $start, $break, $length);
+      #print "\n";
+      print_this_seq($header, $sub_seq);
+      $start += $break;
+    }
+  }
+  exit(0);
 }
 
 #-----------------------------------------------------------------------------
