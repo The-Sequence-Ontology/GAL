@@ -149,6 +149,7 @@ $config{INPUT_FEATURE_MAP} ||= {"3'-UTR"                   =>  'three_prime_UTR'
 				repeat_unit                =>  'repeat_region',
 				rep_origin                 =>  'origin_of_replication',
 				rRNA                       =>  'rRNA',
+				Selenocysteine             =>  'selenocysteine',
 				snoRNA                     =>  'snoRNA',
 				snRNA                      =>  'snRNA',
 				source                     =>  'sequence_feature',
@@ -167,7 +168,9 @@ $config{INPUT_FEATURE_MAP} ||= {"3'-UTR"                   =>  'three_prime_UTR'
 				tss                        =>  'TSS',
 				TSS                        =>  'TSS',
 				tts                        =>  'transcription_end_site',
-				TTS                        =>  'transcription_end_site'};
+				TTS                        =>  'transcription_end_site',
+				UTR                        =>  'UTR',
+                               };
 
 our $INPUT_FEATURE_MAP = $config{INPUT_FEATURE_MAP};
 
@@ -319,6 +322,10 @@ sub parse_gtf {
 		#}
 		push @{$genes{$seqname}{$gene_id}{$trnsc_id}{$feature_type}},
 		$feature;
+	    }
+	    # Feature is a gene
+	    elsif ($feature->{type} eq 'gene') {
+		# Do nothing
 	    }
 	    else {
 		push @{$genes{$seqname}{$gene_id}{other}{$feature}},

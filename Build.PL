@@ -42,6 +42,7 @@ my $builder = $class->new(
 				       'perl'		                   => '5.6.1',
 				       'Bio::DB::Fasta'		           => 0,
 				       'Carp'				   => 0,
+				       'Config::Std'                       => 0,
 				       'Cwd'				   => 0,
 				       'DBI'				   => 0,
 				       'DBIx::Class'		           => 0,
