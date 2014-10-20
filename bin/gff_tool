@@ -234,11 +234,10 @@ to the altered copy of the feature.  All filters given are applied.
 		  Map the feature IDs values forward using the given
 		  mapping file.  The argument to this option is a
 		  tab-delimited text file with two columns, the first
-		  column being the current feature ID as found in the
-		  GFF3 ID attribute file, and the second value being
-		  associated the new feature ID that will replace the
-		  old one.  This will map the IDs in both ID and
-		  parent attributes.
+		  column is the current feature ID as found in the
+		  GFF3 ID attribute and the second value is the new
+		  feature ID that will replace the old one.  This will
+		  map the IDs in both ID and Parent attributes.
 
 --Reporting Options--
 

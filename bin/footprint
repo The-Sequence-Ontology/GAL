@@ -23,7 +23,7 @@ This scirpt will determine the footprint of a series of coordinate pairs.
 Options:
 
   gff:    Assume input is in GFF/GTF format.
-  zero:   Coordinates are zero based (Bed files, UCSC tables etc).
+  zero:   Coordinates are zero based (BED files, UCSC tables etc).
   type:   Valid only with the gff flag.  Report footprint by type.  May
           be given multiple times.
   id:     A column number of an ID that the coordinates are relative to
@@ -50,7 +50,7 @@ die $usage if $help || ! $opt_success;
 
 my @files = @ARGV;
 die $usage unless (@files || ! -t STDIN);
-push @files, 'STDIN' if ! -t STDIN;
+#push @files, 'STDIN' if ! -t STDIN;
 
 $id_col    ||= 0;
 $start_col ||= 1;
@@ -66,12 +66,12 @@ map {$types{$_}++} @types if @types;
 
 for my $file (@files) {
     my $IN;
-    if (! -t STDIN) {
-	open ($IN, "<&=STDIN") or die "Can't open STDIN\n";
-    }
-    else {
-	open ($IN, $file) or die "Can't open $file for reading: $!\n";
-    }
+    #if (! -t STDIN) {
+    #	open ($IN, "<&=STDIN") or die "Can't open STDIN\n";
+    #}
+    #else {
+    	open ($IN, $file) or die "Can't open $file for reading: $!\n";
+    #}
     
     my %data;
     while (<$IN>) {
