@@ -51,7 +51,7 @@ subclass for gene specific behavior.
 
  Title   : transcripts
  Usage   : $transcripts = $self->transcripts
- Function: Get the gene's transcript sorted by start with the longest
+ Function: This method will get the gene's transcript sorted by start with the longest
 	   transcripts first when start locations are equal.
  Returns : A DBIx::Class::Result object loaded up with transcripts.
  Args    : None
