@@ -18,7 +18,8 @@ This document describes GAL::Parser::venter_snp version 0.2.0
 =head1 SYNOPSIS
 
     use GAL::Parser::venter_snp
-    my $parser = GAL::Parser::venter_snp->new(file => 'venter_snp.gff');
+    my $parser = GAL::Parser::venter_snp->new(file  => 'venter_snp.gff', 
+                                              fasta => 'chrY_hg18.fa');
 
     while (my $feature_hash = $parser->next_feature_hash) {
 	print $parser->to_gff3($feature_hash) . "\n";
