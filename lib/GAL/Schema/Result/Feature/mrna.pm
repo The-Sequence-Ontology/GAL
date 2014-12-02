@@ -6,8 +6,7 @@ use base qw(GAL::Schema::Result::Feature::transcript);
 
 =head1 NAME
 
-GAL::Schema::Result::Feature::mrna - <One line description of module's
-purpose here>
+GAL::Schema::Result::Feature::mrna - A mRNA object for the GAL Library 
 
 =head1 VERSION
 
@@ -15,18 +14,26 @@ This document describes GAL::Schema::Result::Feature::mrna version 0.2.0
 
 =head1 SYNOPSIS
 
-     use GAL::Schema::Result::Feature::mrna;
+    use GAL::Annotation;
+    my $feat_store = GAL::Annotation->new(storage => $feat_store_args,
+					  parser  => $parser_args,
+					  fasta   => $fasta_args,
+					 );
 
-=for author to fill in:
-     Brief code example(s) here showing commonest usage(s).
-     This section will be as far as many users bother reading
-     so make it as educational and exemplary as possible.
+    $feat_store->load_files(files => $feature_file,
+			    mode  => 'overwrite',
+			    );
 
+    my $features = $feat_store->schema->resultset('Feature');
+
+    my $mrnas = $features->search({type => 'mRNA'});
+	
 =head1 DESCRIPTION
 
-=for author to fill in:
-     Write a full description of the module and its features here.
-     Use subsections (=head2, =head3) as appropriate.
+<GAL::Schema::Result::Feature::mrna> provides a <GAL::Schema::Result::Feature>
+subclass for mRNA specific behavior. mRNA, messenger RNA is the intermediate 
+molecule between DNA and protein. It includes UTR and coding sequences, but not
+introns.
 
 =head1 METHODS
 
@@ -38,8 +45,8 @@ This document describes GAL::Schema::Result::Feature::mrna version 0.2.0
 
  Title   : CDSs
  Usage   : $CDSs = $self->CDSs
- Function: Get the mRNA's CDSs sorted in the order of the mRNA's strand.
- Returns : A DBIx::Class::Result object loaded up with exons
+ Function: Get the mRNA's coding sequeces sorted in the order of the mRNA's strand.
+ Returns : A DBIx::Class::Result object loaded up with CDSs
  Args    : None
 
 =cut
@@ -97,7 +104,8 @@ sub CDS_seq_genomic {
 
  Title   : CDS_seq
  Usage   : $seq = $self->CDS_seq
- Function: Return the sequence of the full CDS for this mRNA.
+ Function: Return the genomic sequence (on the coding direction) 
+	of the full CDS for this mRNA.
  Returns : A DNA sequence
  Args    : None
 
@@ -267,7 +275,7 @@ sub CDS_length {
 
  Title   : protein_length
  Usage   : $length = $self->protein_length
- Function: Return the length of the protein for this mRNA.  If the CDS length
+ Function: Return the length of the protein for this mRNA. If the CDS length
 	   is not divisable by three this method will truncate the integral
 	   portion of the protein length.
  Returns : An integer

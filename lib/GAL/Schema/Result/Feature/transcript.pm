@@ -42,7 +42,9 @@ version 0.2.0
 =head1 DESCRIPTION
 
 <GAL::Schema::Result::Feature::transcript> provides a <GAL::Schema::Result::Feature>
-subclass for transcript specific behavior.
+subclass for transcript specific behavior. A transcript is an RNA synthesized on a 
+DNA or RNA template by an RNA polymerase, and processed to a functional mature 
+transcript after many modifications.  
 
 =head1 METHODS
 

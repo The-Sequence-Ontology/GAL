@@ -26,7 +26,7 @@ This document describes GAL::Parser::korean_snp version 0.2.0
 
 =head1 DESCRIPTION
 
-L<GAL::Parser::korean_snp> provides a parser for SNP files from the
+L<GAL::Parser::korean_snp> provides a parser for SNV files from the
 first Korean genome published by Ahn, et al. 2009
 (http://www.ncbi.nlm.nih.gov/pubmed/19470904).
 
@@ -43,7 +43,7 @@ would look like this:
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
 
-=over
+=over 4
 
 =item * C<< file => feature_file.txt >>
 
@@ -105,7 +105,7 @@ sub _initialize_args {
  Usage   : $a = $self->parse_record();
  Function: Parse the data from a record.
  Returns : A hash ref needed by Feature.pm to create a Feature object
- Args    : A hash ref of fields that this sub can understand.
+ Args    : A hash ref of fields that this sub can understand (In this case GFF3).
 
 =cut
 
@@ -191,7 +191,7 @@ sub parse_record {
  Title   : reader
  Usage   : $a = $self->reader
  Function: Return the reader object.
- Returns : A L<GAL::Reader::DelimitedLine> singleton.
+ Returns : A GAL::Reader::DelimitedLine singleton.
  Args    : None
 
 =cut

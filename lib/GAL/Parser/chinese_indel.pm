@@ -46,7 +46,7 @@ simple example of object creation would look like this:
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
 
-=over
+=over 4
 
 =item * C<< file => feature_file.txt >>
 
@@ -185,7 +185,7 @@ sub parse_record {
  Title   : reader
  Usage   : $a = $self->reader
  Function: Return the reader object.
- Returns : A L<GAL::Reader::DelimitedLine> singleton.
+ Returns : A GAL::Reader::DelimitedLine singleton.
  Args    : None
 
 =cut

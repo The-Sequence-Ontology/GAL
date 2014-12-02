@@ -10,7 +10,8 @@ use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::korean_indel - Parse Illumina indel variant files
+GAL::Parser::korean_indel - Parse indel files from the first Korean
+genome
 
 =head1 VERSION
 
@@ -21,7 +22,7 @@ This document describes GAL::Parser::korean_indel version 0.2.0
     my $parser = GAL::Parser::korean_indel->new(file => 'korean_indel.gff');
 
     while (my $feature_hash = $parser->next_feature_hash) {
-	print $parser->to_korean_indel($feature_hash) . "\n";
+	print $parser->to_gff3($feature_hash) . "\n";
     }
 
 =head1 DESCRIPTION
@@ -43,7 +44,7 @@ new. An simple example of object creation would look like this:
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
 
-=over
+=over 4
 
 =item * C<< file => feature_file.txt >>
 
@@ -209,7 +210,7 @@ sub parse_record {
  Title   : reader
  Usage   : $a = $self->reader
  Function: Return the reader object.
- Returns : A L<GAL::Reader::DelimitedLine> singleton.
+ Returns : A GAL::Reader::DelimitedLine singleton.
  Args    : None
 
 =cut
