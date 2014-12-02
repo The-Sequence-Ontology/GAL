@@ -216,7 +216,7 @@ sub parse_record {
  Title   : reader
  Usage   : $a = $self->reader
  Function: Return the reader object.
- Returns : A L<GAL::Reader::DelimitedLine> singleton.
+ Returns : A GAL::Reader::DelimitedLine singleton.
  Args    : None
 
 =cut

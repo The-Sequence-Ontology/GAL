@@ -39,7 +39,9 @@ This document describes GAL::Schema::Result::Feature::gene version 0.2.0
 =head1 DESCRIPTION
 
 <GAL::Schema::Result::Feature::gene> provides a <GAL::Schema::Result::Feature>
-subclass for gene specific behavior.
+subclass for gene specific behavior. A gene is comprised all of the sequence 
+elements necessary to encode a function transcritp, including regulatory regions, 
+transcribed regions and/or other functional sequence regions.
 
 =head1 METHODS
 

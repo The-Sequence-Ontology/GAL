@@ -42,7 +42,9 @@ version 0.2.0
 
 <GAL::Schema::Result::Feature::three_prime_utr> provides a
 <GAL::Schema::Result::Feature> subclass for three_prime_utr specific
-behavior.
+behavior. A three_prime_utr is a region at the 3' end of a mature 
+transcript (following the stop codon) that is not translated into a 
+protein.
 
 =head1 METHODS
 
