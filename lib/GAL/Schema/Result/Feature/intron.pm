@@ -41,9 +41,9 @@ subclass for intron specific behavior.
 
 =head1 METHODS
 
-There are currenlty no intron specific methods implimented for
+There are currently no intron specific methods implemented for
 <GAL::Schema::Result::Feature::intron>.  See <GAL::Schema::Result::Feature>
-for inhereted methods.
+for inherited methods.
 
 =cut
 

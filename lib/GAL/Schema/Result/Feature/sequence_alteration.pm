@@ -167,6 +167,8 @@ sub genotype {
  Returns : An array or reference of sequences.
  Args    : None
 
+variant_effect describes the effect of that sequence variation.
+
 =cut
 
 sub variant_effect {
@@ -184,6 +186,8 @@ sub variant_effect {
  Function: Get the value(s) for the features Variant_copy_number attribute.
  Returns : An array or reference of sequences.
  Args    : None
+
+"A copy number variation (CNV) is when the number of copies of a particular gene varies from one individual to the next. Following the completion of the Human Genome Project, it became apparent that the genome experiences gains and losses of genetic material." (NHGRI, 2014)
 
 =cut
 

@@ -39,10 +39,13 @@ This document describes GAL::Schema::Result::Feature::gene version 0.2.0
 =head1 DESCRIPTION
 
 <GAL::Schema::Result::Feature::gene> provides a <GAL::Schema::Result::Feature>
-subclass for gene specific behavior. A gene is comprised all of the sequence 
-elements necessary to encode a function transcritp, including regulatory regions, 
+subclass for gene specific behavior.A gene is comprised all of the sequence 
+elements necessary to encode a function transcript, including regulatory regions, 
 transcribed regions and/or other functional sequence regions.
 
+
+Gene= "The functional and physical unit of heredity passed from parent to offspring. Genes are pieces of DNA, and most genes contain the information for making a specific protein." (UMLS-NLM, 2014)
+Through this class many methods offers information about the selected gene such as: returning the transcripts and their types; infer introns within the gene; alternative splicing; and may check if the gene has mRNA or not 
 =head1 METHODS
 
 =cut

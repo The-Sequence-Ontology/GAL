@@ -48,9 +48,9 @@ protein.
 
 =head1 METHODS
 
-There are currenlty no three_prime_utr specific methods implimented
+There are currenlty no three_prime_utr specific methods implemented
 for <GAL::Schema::Result::Feature::three_prime_utr>.  See
-<GAL::Schema::Result::Feature> for inhereted methods.
+<GAL::Schema::Result::Feature> for inherited methods.
 
 =cut
 
