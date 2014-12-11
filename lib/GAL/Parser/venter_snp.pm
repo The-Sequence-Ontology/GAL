@@ -1,6 +1,7 @@
 package GAL::Parser::venter_snp;
 
 use strict;
+use warnings;
 use vars qw($VERSION);
 
 $VERSION = 0.2.0;
@@ -18,8 +19,8 @@ This document describes GAL::Parser::venter_snp version 0.2.0
 =head1 SYNOPSIS
 
     use GAL::Parser::venter_snp
-    my $parser = GAL::Parser::venter_snp->new(file  => 'venter_snp.gff', 
-                                              fasta => 'chrY_hg18.fa');
+    #my $parser = GAL::Parser::venter_snp->new(file => 'venter_snp.gff');
+    my $parser = GAL::Parser::venter_snp->new(file => $venter_snp_gff3_file, fasta => $fasta_file);
 
     while (my $feature_hash = $parser->next_feature_hash) {
 	print $parser->to_gff3($feature_hash) . "\n";
@@ -30,6 +31,10 @@ This document describes GAL::Parser::venter_snp version 0.2.0
 L<GAL::Parser::venter_snp> parses SNP files from the Craig Venter
 genome published by Levy, et al. 2007
 (http://www.ncbi.nlm.nih.gov/pubmed/17803354).
+
+SNP stands for single nucleotide polymorphism
+
+The file mentioned is tab-delimited file of the following fileds:(Chromosome; Variant identifier; Variant Type; Chromosome start position; Chromosome end position; Not used; strand; (alleles, RepeatMasker status, TandemRepeat status); post processing status)
 
 =head1 Constructor
 
@@ -309,7 +314,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2010-2014, Barry Moore <barry.moore@genetics.utah.edu>.  All
+Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All
 rights reserved.
 
     This module is free software; you can redistribute it and/or
