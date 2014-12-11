@@ -1,4 +1,4 @@
-package GAL::Parser::template;
+package GAL::Parser::Blastn_hittable_parser;
 
 use strict;
 use warnings;
@@ -11,15 +11,15 @@ use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::template - Parse TEMPLATE files
+GAL::Parser::Blastn_hittable_parser - Parse Blastn_hittable files
 
 =head1 VERSION
 
-This document describes GAL::Parser::template version 0.2.0
+This document describes GAL::Parser::Blastn_hittable_parser version 0.2.0
 
 =head1 SYNOPSIS
 
-    my $parser = GAL::Parser::template->new(file => 'template.txt');
+    my $parser = GAL::Parser::Blastn_hittable_parser->new(file => 'Blastn_hittable.txt');
 
     while (my $feature_hash = $parser->next_feature_hash) {
 	print $parser->to_gff3($feature_hash) . "\n";
@@ -27,17 +27,17 @@ This document describes GAL::Parser::template version 0.2.0
 
 =head1 DESCRIPTION
 
-<GAL::Parser::template> provides a parser for TEMPLATE data.
+<GAL::Parser::Blastn_hittable_parser> provides a parser for Blastn_hittable data.
 
 =head1 Constructor
 
-New <GAL::Parser::template> objects are created by the class method
+New <GAL::Parser::Blastn_hittable_parser> objects are created by the class method
 new.  Arguments should be passed to the constructor as a list (or
 reference) of key value pairs.  All attributes of the
-<GAL::Parser::template> object can be set in the call to new. An
+<GAL::Parser::Blastn_hittable_parser> object can be set in the call to new. An
 simple example of object creation would look like this:
 
-    my $parser = GAL::Parser::template->new(file => 'template.txt');
+    my $parser = GAL::Parser::Blastn_hittable_parser->new(file => 'Blastn_hittable.txt');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
@@ -63,9 +63,9 @@ this parameter is optional either it, or the file option should be sued
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::template->new();
-     Function: Creates a GAL::Parser::template object;
-     Returns : A GAL::Parser::template object
+     Usage   : GAL::Parser::Blastn_hittable_parser->new();
+     Function: Creates a GAL::Parser::Blastn_hittable_parser object;
+     Returns : A GAL::Parser::Blastn_hittable_parser object
      Args    : See the attributes described above.
 
 =cut
@@ -88,7 +88,7 @@ sub _initialize_args {
 	# for each attribute.  Leave the rest of this block alone!
 	######################################################################
 	my $args = $self->SUPER::_initialize_args(@args);
-	my @valid_attributes = qw(); # Set valid class attributes here
+	my @valid_attributes = qw(file fh); # Set valid class attributes here
 	$self->set_attributes($args, @valid_attributes);
 	######################################################################
 }
@@ -113,15 +113,29 @@ sub parse_record {
 
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
-	my $id         = 
-	my $seqid      = $record->{seqid};
-	my $source     = $record->{source};
-	my $type       = $record->{type};
-	my $start      = $record->{start};
-	my $end        = $record->{end};
-	my $score      = $record->{score}  || '.';
-	my $strand     = $record->{strand} || '.';
-	my $phase      = $record->{phase}  || '.';;
+	my $id         = $record->{query_id}
+	my $seqid      = $record->{subject_ids};
+	my $source     = "blastn";
+	my $type       = "match_part";
+	my $start      = $record->{s_start};
+	my $end        = $record->{s_start};
+	my $score      = $record->{evalue}  || '.';
+	my $strand;    # = $record->{strand} || '.';
+	my $phase      = $record->{phase}  || '.';
+	
+		if ($end > $start) {
+	    $strand = '+';
+	}
+	else {
+	    ($start, $end) = ($end, $start);
+	    $strand = '-';
+	}
+	
+		my $target = join ' ', @{$record}{qw(query_id q_start q_end)};
+
+	my $attributes = {ID     => [$id],
+			  Target => [$target],
+			 };
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -134,8 +148,7 @@ sub parse_record {
 	# letter are reserved for later use. Attributes that begin
 	# with a lowercase letter can be used freely by applications.
 
-	my $attributes = {ID     => [$id],
-			 };
+
 
 	my $feature_data = {feature_id => $id,
 			    seqid      => $seqid,
@@ -168,7 +181,7 @@ sub reader {
   my $self = shift;
 
   if (! $self->{reader}) {
-    my @field_names = qw(seqid source type start end score strand phase attributes);
+    my @field_names = qw(query_id subject_ids percent_identity alignment_length mismatches gap_opens q_start q_end s_start s_end evalue bit_score);
     my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
     $self->{reader} = $reader;
   }
@@ -179,11 +192,11 @@ sub reader {
 
 =head1 DIAGNOSTICS
 
-L<GAL::Parser::template> does not throw any warnings or errors.
+L<GAL::Parser::Blastn_hittable_parser> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<GAL::Parser::template> requires no configuration files or environment variables.
+L<GAL::Parser::Blastn_hittable_parser> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
@@ -203,7 +216,7 @@ barry.moore@genetics.utah.edu
 
 =head1 AUTHOR
 
-Barry Moore <barry.moore@genetics.utah.edu>
+Based on code made by Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 

@@ -1,6 +1,7 @@
 package GAL::Parser::venter_indel;
 
 use strict;
+use warnings;
 use vars qw($VERSION);
 
 $VERSION = 0.2.0;
@@ -20,6 +21,7 @@ This document describes GAL::Parser::venter_indel version 0.2.0
 
     use GAL::Parser::venter_indel;
     my $parser = GAL::Parser::venter_indel->new(file => 'venter_indel.gff');
+    #my $parser = GAL::Parser::venter_indel->new(file => $venter_indel_gff3_file, fasta => $fasta_file);
     while (my $feature_hash = $parser->next_feature_hash) {
 	print $parser->to_gff3($feature_hash) . "\n";
     }
@@ -29,6 +31,10 @@ This document describes GAL::Parser::venter_indel version 0.2.0
 L<GAL::Parser::venter_indel> parses indel files from the Craig Venter
 genome published by Levy, et al. 2007
 (http://www.ncbi.nlm.nih.gov/pubmed/17803354)
+
+indel is the insertion or deletion changes of sequences
+
+The file mentioned is tab-delimited file of the following fileds: (chromosome; variant_id; variant_type; start; end; score; strand; phase; null; seq; zygosity)
 
 =head1 Constructor
 
@@ -273,7 +279,7 @@ Barry Moore <barry.moore@genetics.utah.edu>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2010-2014, Barry Moore <barry.moore@genetics.utah.edu>.  All
+Copyright (c) 2012, Barry Moore <barry.moore@genetics.utah.edu>.  All
 rights reserved.
 
     This module is free software; you can redistribute it and/or
