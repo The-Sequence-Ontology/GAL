@@ -43,9 +43,9 @@ subclass for protein specific behavior.
 
 =head1 METHODS
 
-There are currenlty no protein specific methods implimented for
+There are currently no protein specific methods implemented for
 <GAL::Schema::Result::Feature::protein>.  See <GAL::Schema::Result::Feature>
-for inhereted methods.
+for inherited methods.
 
 =cut
 
@@ -57,7 +57,7 @@ for inhereted methods.
 
 =head1 DIAGNOSTICS
 
-<GAL::Schema::Result::Feature::prtein> throws no warning or error
+<GAL::Schema::Result::Feature::protein> throws no warning or error
 messages.
 
 =head1 CONFIGURATION AND ENVIRONMENT

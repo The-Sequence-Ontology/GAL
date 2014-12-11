@@ -45,8 +45,8 @@ introns.
 
  Title   : CDSs
  Usage   : $CDSs = $self->CDSs
- Function: Get the mRNA's coding sequeces sorted in the order of the mRNA's strand.
- Returns : A DBIx::Class::Result object loaded up with CDSs
+ Function: Get the mRNA's coding sequences sorted in the order of the mRNA's strand.
+ Returns : A DBIx::Class::Result object loaded up with CDS's
  Args    : None
 
 =cut
@@ -276,7 +276,7 @@ sub CDS_length {
  Title   : protein_length
  Usage   : $length = $self->protein_length
  Function: Return the length of the protein for this mRNA. If the CDS length
-	   is not divisable by three this method will truncate the integral
+	   is not divisible by three this method will truncate the integral
 	   portion of the protein length.
  Returns : An integer
  Args    : None
@@ -298,7 +298,7 @@ sub protein_length {
 	   a given genomic coordinate or undef if the coordinate does not overlap
 	   the CDS of this mRNA.
  Returns : An integer
- Args    : An intger (genomic coordinate).
+ Args    : An integer (genomic coordinate).
 
 =cut
 
@@ -380,7 +380,7 @@ sub codon_at_location {
 
  Title   : translation_start
  Usage   : $tans_start = $mrna->translation_start;
- Function: Get the coordiante of the first nt of the start codon.
+ Function: Get the coordinate of the first nt of the start codon.
  Returns : An integer
  Args    : None
 
@@ -404,7 +404,7 @@ sub translation_start {
 
  Title   : translation_end
  Usage   : $tans_end = $mrna->translation_end;
- Function: Get the coordiante of the last nt of the stop codon.
+ Function: Get the coordinate of the last nt of the stop codon.
  Returns : An integer
  Args    : None
 
