@@ -1,4 +1,3 @@
-##gff-version 3
 1	unknown	gene	3204563	3661579	.	-	.	ID=Xkr4;Name=Xkr4
 1	unknown	mRNA	3204563	3661579	.	-	.	ID=NM_001011874.1;Parent=Xkr4;parent_name=Xkr4
 1	unknown	exon	3204563	3207049	.	-	.	ID=exon:NM_001011874.1:3;Parent=NM_001011874.1;gene_name=Xkr4;p_id=P11095;tss_id=TSS12555
@@ -1130,3 +1129,4 @@
 1	unknown	stop_codon	11287832	11287834	.	+	.	ID=stop_codon:NM_029525.1:1;Parent=NM_029525.1;gene_name=Prex2;p_id=P14674;tss_id=TSS27340
 1	unknown	three_prime_UTR	11287835	11293763	.	+	.	ID=three_prime_UTR:NM_001033636.4:1;Parent=NM_001033636.4
 1	unknown	three_prime_UTR	11287835	11293763	.	+	.	ID=three_prime_UTR:NM_029525.1:1;Parent=NM_029525.1
+##gff-version 3

@@ -93,6 +93,7 @@ my $builder = $class->new(
 					    lib/GAL/t/200_parser_complete_genomics.t
 					    lib/GAL/t/200_parser_complete_genomics_new.t
 					    lib/GAL/t/200_parser_cosmic.t
+					    lib/GAL/t/200_parser_cuffdiff_gene_exp.t
 					    lib/GAL/t/200_parser_dbsnp_flat.t
 					    lib/GAL/t/200_parser_gff3.t
 					    lib/GAL/t/200_parser_hapmap_genotypes.t
