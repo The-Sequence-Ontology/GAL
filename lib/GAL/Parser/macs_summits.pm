@@ -1,4 +1,4 @@
-package GAL::Parser::template;
+package GAL::Parser::macs_summits;
 
 use strict;
 use warnings;
@@ -11,15 +11,16 @@ use GAL::Reader::DelimitedLine;
 
 =head1 NAME
 
-GAL::Parser::template - Parse TEMPLATE files
+GAL::Parser::macs_summits - Parse L<MACS|http://liulab.dfci.harvard.edu/MACS/> 'summits' files
+
 
 =head1 VERSION
 
-This document describes GAL::Parser::template version 0.2.0
+This document describes GAL::Parser::macs_summits version 0.2.0
 
 =head1 SYNOPSIS
 
-    my $parser = GAL::Parser::template->new(file => 'template.txt');
+    my $parser = GAL::Parser::macs_summits->new(file => 'macs_summits.txt');
 
     while (my $feature_hash = $parser->next_feature_hash) {
 	print $parser->to_gff3($feature_hash) . "\n";
@@ -27,17 +28,17 @@ This document describes GAL::Parser::template version 0.2.0
 
 =head1 DESCRIPTION
 
-<GAL::Parser::template> provides a parser for TEMPLATE data.
+<GAL::Parser::macs_summits> provides a parser for MACS_SUMMITS data.
 
 =head1 Constructor
 
-New <GAL::Parser::template> objects are created by the class method
+New <GAL::Parser::macs_summits> objects are created by the class method
 new.  Arguments should be passed to the constructor as a list (or
 reference) of key value pairs.  All attributes of the
-<GAL::Parser::template> object can be set in the call to new. An
+<GAL::Parser::macs_summits> object can be set in the call to new. An
 simple example of object creation would look like this:
 
-    my $parser = GAL::Parser::template->new(file => 'template.txt');
+    my $parser = GAL::Parser::macs_summits->new(file => 'macs_summits.txt');
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
@@ -63,9 +64,9 @@ this parameter is optional either it, or the file option should be sued
 =head2 new
 
      Title   : new
-     Usage   : GAL::Parser::template->new();
-     Function: Creates a GAL::Parser::template object;
-     Returns : A GAL::Parser::template object
+     Usage   : GAL::Parser::macs_summits->new();
+     Function: Creates a GAL::Parser::macs_summits object;
+     Returns : A GAL::Parser::macs_summits object
      Args    : See the attributes described above.
 
 =cut
@@ -113,15 +114,20 @@ sub parse_record {
 
 	# Fill in the first 8 columns for GFF3
 	# See http://www.sequenceontology.org/resources/gff3.html for details.
-	my $id         = 
+
+	# seqid start end id log10pvalue
+	# 1 8686662 8686663 HumanFB_Caper_peak_1 5.55225
+
+
+	my $id         = $record->{id};
 	my $seqid      = $record->{seqid};
-	my $source     = $record->{source};
-	my $type       = $record->{type};
+	my $source     = 'MACS';
+	my $type       = 'experimental_feature';
 	my $start      = $record->{start};
 	my $end        = $record->{end};
-	my $score      = $record->{score}  || '.';
-	my $strand     = $record->{strand} || '.';
-	my $phase      = $record->{phase}  || '.';
+	my $score      = $record->{log10pvalue};
+	my $strand     = '.';
+	my $phase      = '.';
 
 	# Create the attribute hash reference.  Note that all values
 	# are array references - even those that could only ever have
@@ -168,7 +174,7 @@ sub reader {
   my $self = shift;
 
   if (! $self->{reader}) {
-    my @field_names = qw(seqid source type start end score strand phase attributes);
+    my @field_names = qw(seqid start end id log10pvalue);
     my $reader = GAL::Reader::DelimitedLine->new(field_names => \@field_names);
     $self->{reader} = $reader;
   }
@@ -179,11 +185,11 @@ sub reader {
 
 =head1 DIAGNOSTICS
 
-L<GAL::Parser::template> does not throw any warnings or errors.
+L<GAL::Parser::macs_summits> does not throw any warnings or errors.
 
 =head1 CONFIGURATION AND ENVIRONMENT
 
-L<GAL::Parser::template> requires no configuration files or environment variables.
+L<GAL::Parser::macs_summits> requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
