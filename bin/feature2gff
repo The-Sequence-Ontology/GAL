@@ -105,8 +105,9 @@ if ($pragma && -r $pragma) {
 
 for my $file (@files) {
 
-  my $parser = $class->new(file  => $file,
-			   fasta => $fasta);
+    my $parser = $class->new(file  => $file);
+
+    $parser->fasta($fasta) if $fasta;
 
   my $writer = GAL::Writer::GFF3->new();
 

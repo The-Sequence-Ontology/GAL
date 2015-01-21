@@ -50,7 +50,7 @@ This optional parameter provides the filename for the file containing
 the data to be parsed. While this parameter is optional either it, or
 the following fh parameter must be set.
 
-=item * C<< fh => feature_file.txt >>
+=item * C<< fh => $fh >>
 
 This optional parameter provides a filehandle to read data from. While
 this parameter is optional either it, or the file option should be sued

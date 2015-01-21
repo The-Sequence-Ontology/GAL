@@ -1,4 +1,3 @@
-##gff-version 3
 1	protein_coding	gene	37799	52330	.	+	.	ID=ENSDARG00000012184;Name=ENSDARG00000012184
 1	protein_coding	mRNA	37799	52330	.	+	.	ID=ENSDART00000014875;Parent=ENSDARG00000012184
 1	protein_coding	CDS	37799	37822	.	+	0	ID=CDS:ENSDART00000014875:1;Parent=ENSDART00000014875;exon_number=1;protein_id=ENSDARP00000005208
@@ -957,3 +956,4 @@
 1	protein_coding	exon	1896934	1896953	.	-	.	ID=exon:ENSDART00000103780:1;Parent=ENSDART00000103780;exon_number=1;gene_name=wu:fc18f06;transcript_name=wu:fc18f06
 1	protein_coding	exon	1938980	1939126	.	-	.	ID=exon:ENSDART00000061416:1;Parent=ENSDART00000061416;exon_number=1;gene_name=wu:fc18f06;transcript_name=wu:fc18f06
 1	protein_coding	five_prime_UTR	1938980	1939126	.	-	.	ID=five_prime_UTR:ENSDART00000061416:1;Parent=ENSDART00000061416
+##gff-version 3
