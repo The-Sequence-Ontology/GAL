@@ -99,6 +99,7 @@ my $builder = $class->new(
 					    lib/GAL/t/200_parser_hapmap_genotypes.t
 					    lib/GAL/t/200_parser_korean_indel.t
 					    lib/GAL/t/200_parser_korean_snp.t
+					    lib/GAL/t/200_parser_macs_summits.t
 					    lib/GAL/t/200_parser_maq_cns2snp.t
 					    lib/GAL/t/200_parser_na18507_sanger_indel.t
 					    lib/GAL/t/200_parser_quake_snp.t

@@ -1,3 +1,4 @@
+##gff-version 3
 chr1	hg18_knownGene	exon	310947	310977	0.000000	+	.	ID=exon:uc001aaq.1:1;Parent=uc001aaq.1
 chr1	hg18_knownGene	gene	310947	310977	.	+	.	ID=uc001aaq.1;Name=uc001aaq.1
 chr1	hg18_knownGene	transcript	310947	310977	.	+	.	ID=uc001aaq.1;Parent=uc001aaq.1
@@ -868,4 +869,3 @@ chr1	hg18_knownGene	exon	1122681	1123176	0.000000	+	.	ID=exon:uc001acy.1:16;Pare
 chr1	hg18_knownGene	CDS	1122681	1123093	0.000000	+	2	ID=CDS:uc001acy.1:13;Parent=uc001acy.1
 chr1	hg18_knownGene	stop_codon	1123091	1123093	.	+	0	ID=stop_codon:uc001acy.1:1;Parent=uc001acy.1
 chr1	hg18_knownGene	three_prime_UTR	1123094	1123176	.	+	.	ID=three_prime_UTR:uc001acy.1:1;Parent=uc001acy.1
-##gff-version 3
