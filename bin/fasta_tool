@@ -211,6 +211,14 @@ Options:
     Grab a sub-sequence from a fasta file based on coordinates.  The
     requested coordinates are in the form seqid:start-end;
 
+  --filter_horter
+    Filter (remove) entries shorter than the filter. IE \"--filter_shorter 800\"
+    will filter all sequences <= 800 basepairs long.
+
+  --filter_longer
+    Filter (remove entries longer than the filter. IE \"--filter_longer 800\" 
+    will filter all sequences > 800 basepairs long.
+
 ";
 
 my ($summary, $chunks, $split, $break, $eval_code, $eval_all,
@@ -220,7 +228,7 @@ my ($summary, $chunks, $split, $break, $eval_code, $eval_all,
     $rev_comp, $uniq, $uniq_sub, $shuffle_order, $shuffle_seq,
     $shuffle_codon, $shuffle_pick, $select_file, $remove_file, $print,
     $mRNAseq, $EST, $trim_maker_utr, $table, $swap_ids, $fix_prot,
-    $subseq, $tile);
+    $subseq, $tile, $filter_shorter, $filter_longer);
 
 GetOptions('summary'        => \$summary,
 	   'chunks=i'       => \$chunks,
@@ -263,6 +271,8 @@ GetOptions('summary'        => \$summary,
 	   'swap_ids=s'     => \$swap_ids,
 	   'subseq=s'       => \$subseq,
 	   'tile=s'         => \$tile,
+	   'filter_shorter=i' => \$filter_shorter,
+	   'filter_longer=i' => \$filter_longer
 	  );
 
 my $file = shift;
@@ -319,6 +329,8 @@ $print++ unless grep {$_} ($chunks,
 			   $swap_ids,
 			   $subseq,
 			   $tile,
+			   $filter_shorter,
+			   $filter_longer
 			  );
 
 $nt_count++ if $summary;
@@ -380,6 +392,10 @@ fix_prot()                  if $fix_prot;
 print_seq()                 if $print;
 mRNAseq()                   if $mRNAseq;
 EST()                       if $EST;
+filter_shorter($filter_shorter) if $filter_shorter;
+filter_longer($filter_longer) if $filter_longer;
+
+
 
 #-----------------------------------------------------------------------------
 #-------------------------------- SUBROUTINES --------------------------------
@@ -1501,3 +1517,26 @@ sub handle_message {
       print STDERR $message;
     }
   }
+
+sub filter_shorter {
+        my $shorter = shift;
+
+        while (my $seq_obj = $seq_io->next_seq) {
+                if($seq_obj->length > $shorter){
+                        print_this_seq(get_header($seq_obj),$seq_obj->seq);
+                }
+        }
+
+}
+
+sub filter_longer {
+        my $longer = shift;
+
+        while(my $seq_obj = $seq_io->next_seq) {
+                if($seq_obj->length <= $longer){
+                        print_this_seq(get_header($seq_obj),$seq_obj->seq);
+                }
+        }
+}
+
+
