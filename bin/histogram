@@ -52,10 +52,15 @@ Options:
      Determines the accuracy at which to compare floating point numbers.  Integers
      are converted to floating point.  Default is 6 digits after the decimal place.
 
+  --graph
+     Print a ASCII graph of the histogram.
+
 ";
 
 my $bin_auto = 10;
-my ($bin_range, $bin_range_log, $bin_file, $col_string, $find, $accuracy);
+
+my ($bin_range, $bin_range_log, $bin_file, $col_string, $find,
+    $accuracy, $graph);
 
 my $opt_results = GetOptions('bin_auto=i'      => \$bin_auto,
 			     'bin_range=s'     => \$bin_range,
@@ -63,7 +68,9 @@ my $opt_results = GetOptions('bin_auto=i'      => \$bin_auto,
 			     'bin_file=s'      => \$bin_file,
 			     'col=s'           => \$col_string,
 			     'find=s'          => \$find,
-			     'accuracy=i'      => \$accuracy);
+			     'accuracy=i'      => \$accuracy,
+			     'graph'           => \$graph,
+			     );
 
 #Split column values from the argument
 my @cols;
@@ -91,7 +98,13 @@ die "Can't specify multiple files and multiple columns at the same time\n"
 my ($data, $data_min, $data_max) = parse_data(@files);
 my $bin = build_bin($data_min, $data_max, $bin_auto, $bin_range, $bin_file);
 my $histogram = build_histogram($bin, $data, @files);
-print_histogram($histogram);
+
+if ($graph) {
+    print_graph($histogram, $bin_range);
+}
+else {
+    print_histogram($histogram);
+}
 
 #-----------------------------------------------------------------------------
 #----------------------------------- SUBS ------------------------------------
@@ -185,6 +198,7 @@ sub build_bin {
 		for ($i = $data_min; $i < $data_max; $i += $step) {
 			push @bin, $i;
 		}
+		$bin_range = "$data_min $data_max $step";
 	}
 	return \@bin;
 }
@@ -234,6 +248,57 @@ sub print_histogram {
 	for my $row (@$histogram) {
 		print join "\t", @$row;
 		print "\n";
+	}
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_graph {
+	my ($histogram, $bin_range) = @_;
+
+	my ($bin_min, $bin_max, $step);
+	if ($bin_range) {
+	    ($bin_min, $bin_max, $step) = split'\s+', $bin_range;
+	}
+	else {
+	    $bin_min = $data_min;
+	    $bin_max = $data_max;
+	    $step = ($data_max - $data_min) / $bin_auto;
+	}
+
+	my $max = 0;
+	for my $row (@{$histogram}) {
+	    my ($bin, $count) = @{$row};
+	    next if $bin eq 'Bin';
+	    next if $bin > $bin_max;
+	    my $length = $row->[1];
+	    $max = $length > $max ? $length : $max;
+	}
+	$max++;
+
+      ROW:
+	for my $row (@{$histogram}) {
+	    my ($bin, $count) = @{$row};
+	    if ($bin eq 'Bin') {
+		print "$bin\t$count\n";
+		next ROW;
+	    }
+
+	    my $width = 80;
+	    my $points = int($count / $max * $width); # - length($count);
+	    my $bar;
+	    if ($points >= $width) {
+		$points = $width - 1;
+		$bar = '=' x $points;
+		$bar .= '+';
+		$bar .= ' ' x ($width + 9 - $points - length($count) - 1);
+	    }
+	    else {
+		$bar = '=' x $points;
+		$bar .= ' ' x ($width + 10 - $points - length($count) - 1);
+	    }
+	    $bar .= " $count";
+	    print "$bin\t$bar\n";
 	}
 }
 

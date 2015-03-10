@@ -29,8 +29,8 @@ Distance Metrics:
 Let i be all of the SNV locations in genome i.
 Let j be all of the SNV locations in genome j.
 
-Ci = i-j # SNVs unique to i (compliment)
-Cj = j-i # SNVs unique to j (compliment)
+Ci = i-j # SNVs unique to i (complement)
+Cj = j-i # SNVs unique to j (complement)
 Cm = max{Ci,Cj} # maximum of Ci, Cj
 
 I = i ∩ j # Intersection of i, j
