@@ -3328,20 +3328,23 @@ sub print_data {
 	else {
 	  my $key_copy = $data_key;
 	  $key_copy =~ s/^\+//;
-	    if (! exists $f->{attributes}{$key_copy} ||
-		ref $f->{attributes}{$key_copy} ne 'ARRAY') {
-	      print STDERR ("WARN : skipping_missing_or_invalid_attribute_key : " .
-			    "($data_key) " . to_gff3($f) . "\n");
-	      push @this_data, '';
+	    if (! exists $f->{attributes}{$key_copy}) {
+		push @this_data, '';
 	    }
+	  elsif (ref $f->{attributes}{$key_copy} ne 'ARRAY') {
+	      die STDERR ("FATAL : skipping_invalid_attribute_value : " .
+			  "($data_key) " . to_gff3($f) . "\n");
+	  }
 	  else {
 	    my $value = join ',', @{$f->{attributes}{$key_copy}};
 	    push @this_data, $value;
 	  }
 	}
       }
-      print join "\t", @this_data;
-      print "\n";
+      if (grep {length} @this_data) {
+	  print join "\t", @this_data;
+	  print "\n";
+      }
     }
     print '';
   }
