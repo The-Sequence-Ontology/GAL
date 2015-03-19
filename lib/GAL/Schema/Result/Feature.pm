@@ -697,6 +697,34 @@ sub get_values {
 
 #-----------------------------------------------------------------------------
 
+=head2 as_hash
+
+ Title   : as_hash
+ Usage   : $feature_hash = $self->as_hash
+           %feature_hash = $self->as_hash;
+ Function: Get feature values as a hash(ref)
+ Returns : A hash or ref
+ Args    : NA 
+
+=cut
+
+sub as_hash {
+
+  my $self = shift;
+
+  my %feature_hash;
+  @feature_hash{qw(seqid source type start end score strand phase)} = 
+      $self->get_values(qw(seqid source type start end score strand phase));
+
+  my $attributes = $self->attributes_hash;
+
+  $feature_hash{attributes} = $attributes;
+
+  return wantarray ? %feature_hash : \%feature_hash;
+}
+
+#-----------------------------------------------------------------------------
+
 ##############################################################################
 ## Consolidate three copies of this method 1) Here 2) Feature/gene.pm and
 ## 3) Base.pm
