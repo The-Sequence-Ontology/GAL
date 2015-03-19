@@ -219,6 +219,9 @@ Options:
     Filter (remove entries longer than the filter. IE \"--filter_longer 800\" 
     will filter all sequences > 800 basepairs long.
 
+  --mask_fasta
+    Masks the genome using coordinates from a gff3 file
+
 ";
 
 my ($summary, $chunks, $split, $break, $eval_code, $eval_all,
@@ -228,7 +231,7 @@ my ($summary, $chunks, $split, $break, $eval_code, $eval_all,
     $rev_comp, $uniq, $uniq_sub, $shuffle_order, $shuffle_seq,
     $shuffle_codon, $shuffle_pick, $select_file, $remove_file, $print,
     $mRNAseq, $EST, $trim_maker_utr, $table, $swap_ids, $fix_prot,
-    $subseq, $tile, $filter_shorter, $filter_longer);
+    $subseq, $tile, $filter_shorter, $filter_longer,$mask_fasta);
 
 GetOptions('summary'        => \$summary,
 	   'chunks=i'       => \$chunks,
@@ -272,7 +275,8 @@ GetOptions('summary'        => \$summary,
 	   'subseq=s'       => \$subseq,
 	   'tile=s'         => \$tile,
 	   'filter_shorter=i' => \$filter_shorter,
-	   'filter_longer=i' => \$filter_longer
+	   'filter_longer=i' => \$filter_longer,
+	   'mask_fasta=s'   => \$mask_fasta
 	  );
 
 my $file = shift;
@@ -293,6 +297,7 @@ handle_message(@warning) if grep {$_} ($extract_ids,
 				       $shuffle_seq,
 				       $shuffle_codon,
 				       $shuffle_pick,
+				       $mask_fasta
 				      );
 
 # These functions handle their own printing;
@@ -330,7 +335,8 @@ $print++ unless grep {$_} ($chunks,
 			   $subseq,
 			   $tile,
 			   $filter_shorter,
-			   $filter_longer
+			   $filter_longer,
+			   $mask_fasta
 			  );
 
 $nt_count++ if $summary;
@@ -394,7 +400,7 @@ mRNAseq()                   if $mRNAseq;
 EST()                       if $EST;
 filter_shorter($filter_shorter) if $filter_shorter;
 filter_longer($filter_longer) if $filter_longer;
-
+mask_fasta($mask_fasta)		if $mask_fasta;
 
 
 #-----------------------------------------------------------------------------
@@ -1537,6 +1543,67 @@ sub filter_longer {
                         print_this_seq(get_header($seq_obj),$seq_obj->seq);
                 }
         }
+}
+
+#-------------------------------------------------------------------------------
+sub mask_fasta {
+
+	my ($gff3_file) = @_;
+	
+	#load the coordinates from the gff3 file into a map
+	#the map is seqid->list of (start,end) coords
+	
+	my %coord_map;
+	open(GFF3, $gff3_file);
+	while(<GFF3>){
+		unless(/^\#/) {
+		my ($seqID, $source, $type, $start, $end, @other_stuff)=split(/\t/);
+		if(!defined($coord_map{$seqID})) {
+			if($start > $end) {
+				my $tmp = $start;
+				$start = $end;
+				$end = $tmp;
+			}
+
+			my @curr_list = ();
+			my @tmp_list = ($start,$end);
+			$coord_map{$seqID} = \@curr_list;
+		}
+		else {
+			my @curr_list = @{ $coord_map{$seqID}};
+			my @tmp_list = ($start,$end);
+			push(@curr_list, \@tmp_list);
+			$coord_map{$seqID} = \@curr_list;
+		}
+
+		}
+
+	}
+	close GFF3;
+
+	#go through the sequences in seqIO
+	while (my $seq_obj = $seq_io->next_seq) {
+		my $id = $seq_obj->display_id;
+		my $header = get_header($seq_obj);
+		my $curr_seq = $seq_obj->seq;
+	
+		if($coord_map{$id}) {
+			#mask that substring
+			my @curr_list = @{ $coord_map{$id}};
+			foreach my $tmp_list_ptr (@curr_list) {
+				my ($start,$end) = @{ $tmp_list_ptr};
+				#The way I determine begin and offset was copied from
+				#Michael Campbell's gene_masker.pl script
+				#DE 06/19/2014
+				my $begin = $start - 1;
+				my $offset = $end - $begin;
+				substr($curr_seq, $begin, $offset, "N" x $offset);
+			}
+			$header = $header . " masked ";
+		}
+
+		print_this_seq($header, $curr_seq);
+	}
 }
 
 
