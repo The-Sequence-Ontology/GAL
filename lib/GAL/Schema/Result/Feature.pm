@@ -251,6 +251,28 @@ sub attributes_hash {
 
 #-----------------------------------------------------------------------------
 
+=head2 attribute_exists
+
+ Title   : attribute_exists
+ Usage   : $self->attribute_exists($tag)
+ Function: Return the value(s) of a particular attribute as an array or
+	   reference.  Note that for consistency, values are always returned
+	   as arrays (or reference) even in cases where only a single value
+	   could exist such as ID.
+ Returns : An array or reference of values.
+ Args    : None
+
+=cut
+
+sub attribute_exists {
+  my ($self, $tag) = @_;
+
+  my $attributes = $self->attributes_hash;
+  return 1 if exists $attributes->{$tag};
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 attribute_value
 
  Title   : attribute_value
@@ -273,6 +295,41 @@ sub attribute_value {
     $values = $attributes->{$tag};
   }
   return wantarray ? @{$values} : $values;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 as_fasta
+
+ Title   : as_fasta
+ Usage   : $self->as_fasta
+ Function: Returns a string of the feature formatted as a fasta
+           sequence.
+ Returns : A text string of the features sequence formated as
+           fasta.
+ Args    : None
+
+=head2 seq
+
+An alias for feature_seq
+
+=cut
+
+sub as_fasta {
+  my $self = shift;
+  my $header = '>' . $self->feature_id . ' ';
+  $header .= 'locus='     . $self->locus  . ';';
+  $header .= 'strand='    . $self->strand . ';';
+  $header .= 'type='      . $self->type   . ';';
+  $header .= 'parent='    . join(',', ($self->attribute_value('Parent'))) . ';' 
+    if $self->attribute_exists('Parent');
+  $header .= 'sib_count=' . join(':', ($self->sibling_part_of)) . ';'
+    if $self->count_siblings;
+
+  my $seq = $self->seq;
+  $seq = $self->annotation->wrap_text($seq);
+  my $fasta = "$header\n$seq";
+  return $fasta;
 }
 
 #-----------------------------------------------------------------------------
@@ -525,10 +582,11 @@ sub get_feature_bins {
 
 #-----------------------------------------------------------------------------
 
-=head2 to_gff3_recursive
+=head2 as_gff3_recursive
 
- Title   : to_gff3_recursive
- Usage   : $self->to_gff3_recursive
+ Title   : as_gff3_recursive
+ Alias   : to_gff3_recursive
+ Usage   : $self->as_gff3_recursive
  Function: Return a list of the string representation of this feature
 	   and all of its part_of children in GFF3 format.
  Returns : An array or ref
@@ -536,7 +594,9 @@ sub get_feature_bins {
 
 =cut
 
-sub to_gff3_recursive {
+sub to_gff3f_recursive {shift->as_gff3_recursive(@_)}
+
+sub as_gff3_recursive {
 
   my $self = shift;
 
@@ -553,7 +613,7 @@ sub to_gff3_recursive {
 		    } @features;
 
   for my $feature (@features) {
-    push @gff_lines, $feature->to_gff3;
+    push @gff_lines, $feature->as_gff3;
   }
   @gff_lines = uniq @gff_lines;
   return wantarray ? @gff_lines : \@gff_lines;
@@ -561,17 +621,20 @@ sub to_gff3_recursive {
 
 #-----------------------------------------------------------------------------
 
-=head2 to_gff3
+=head2 as_gff3
 
- Title   : to_gff3
- Usage   : $self->to_gff3
+ Title   : as_gff3
+ Alias   : to_gff3
+ Usage   : $self->as_gff3
  Function: Return a string representation of this feature in GFF3 format.
  Returns : A string of GFF3 text
  Args    : N/A
 
 =cut
 
-sub to_gff3 {
+sub to_gff3 {shift->as_gff3(@_)}
+
+sub as_gff3 {
 
   my $self = shift;
 
@@ -649,14 +712,108 @@ sub locus {
 
 #-----------------------------------------------------------------------------
 
+=head2 siblings
+
+ Title   : siblings
+ Usage   : $sibs = $self->siblings;
+ Function: Get an interator of all sibling features (from the first parent if
+           there are multiple).
+ Returns : A GAL::Schema::ResultSet object or a list of features in
+           list context
+ Args    : N/A
+
+=cut
+
+sub siblings {
+
+  my $self = shift;
+
+  my $parents = $self->parents;
+  return $parents unless $parents->count;
+  my $sibs = $parents->first->children->search(type => $self->type);
+  return wantarray ? $sibs->all : $sibs;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 sibling_part_of
+
+ Title   : sibling_part_of
+ Usage   : ($part, $of) = $self->sibling_part_of;
+ Function: Return an array (ref) of the location in the list of sibs
+           and the number of sibs that a given feature has.
+ Returns : A GAL::Schema::ResultSet object or a list of features in
+           list context
+ Args    : N/A
+
+=cut
+
+sub sibling_part_of {
+
+  my $self = shift;
+
+  my $sibs  = $self->siblings;
+  my $sibling_part_of = $sibs->count;
+  my %part;
+  my $part_count = 0;
+  while (my $sib = $sibs->next) {
+    $part_count++;
+    last if $sib->feature_id eq $self->feature_id;
+  }
+
+  return wantarray ? ($part_count, $sibling_part_of) :
+    [$part_count, $sibling_part_of];
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 count_parents
+
+ Title   : count_parents
+ Usage   : @values = $self->count_parents();
+ Function: Count the number of parents.
+ Returns : An integer as a scalar.
+ Args    : N/A
+
+=cut
+
+sub count_parents {
+
+  my $self = shift;
+
+  return $self->parents->count;
+
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 count_siblings
+
+ Title   : count_siblings
+ Usage   : @values = $self->count_siblings();
+ Function: Count the number of siblings.
+ Returns : An integer as a scalar.
+ Args    : N/A
+
+=cut
+
+sub count_siblings {
+
+  my $self = shift;
+
+  return $self->siblings->count;
+
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 count_children
 
  Title   : count_children
  Usage   : @values = $self->count_children();
  Function: Get the number of 1st degree children
  Returns : An array or ref
- Args : A list of fields to retrieve (seqid source type start end
-        score strand phase).
+ Args    : N/A
 
 =cut
 
@@ -664,6 +821,32 @@ sub count_children {
 
   my $self = shift;
 
+  return $self->children->count;
+
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 get_children_IDs
+
+ Title   : get_children_IDs
+ Usage   : @IDs = $self->get_children_IDs();
+ Function: Get a list of IDs of first degree children
+ Returns : An array or ref
+ Args    : N/A
+
+=cut
+
+sub get_children_IDs {
+
+  my $self = shift;
+
+  my @ids;
+  my $children = $self->children;
+  while (my $child = $children->next) {
+    push @ids, $child->feature_id;
+  }
+  return wantarray ? @ids : \@ids;
 }
 
 #-----------------------------------------------------------------------------
