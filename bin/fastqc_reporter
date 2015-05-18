@@ -35,9 +35,9 @@ Options:
     reports are:
 	* summary : Generate a summary table of the module status for
 	  all FastQC output files.  This is the default report.
-        * basic : Generate a table of the basic stats for all FastQC
-          output files.  These include read count, read length, base
-          count, depth, % GC and quality.
+	* basic : Generate a table of the basic stats for all FastQC
+	  output files.  These include read count, read length, base
+	  count, depth, % GC and quality.
 
 
   --format, -f [tab]
@@ -48,19 +48,20 @@ Options:
       * text: A pretty-printed formatted text table.
       * html: An HTML formated table.
 
-  --zip, -z
+  --trim_name, -t
 
-    Files are zip archives of FastQC output (these archives are often
-    the output from FastQ).  This option allows fastqc_reporter will
-    extract only the needed fastqc_data.txt file it needs and leave
-    the rest of the zip archive zipped.
+    Trim the filenames to remove path and fastqc_data.txt so that we
+    have a shorter core name that is likely to still have the relevant
+    IDs.
+
 ";
 
 
-my ($help, $report, $format, $is_zipped);
+my ($help, $report, $format, $TRIM_NAME);
 my $opt_success = GetOptions('help'        => \$help,
 			     'report|r=s'  => \$report,
 			     'format|f=s'  => \$format,
+                             'trim_name|t' => \$TRIM_NAME,
 			     );
 
 die $usage if $help || ! $opt_success;
