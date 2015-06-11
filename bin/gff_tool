@@ -163,7 +163,7 @@ to the altered copy of the feature.  All filters given are applied.
 
   blend|b
 
-		  Blend takes a feature file(s) and uniquely blends
+		  Blend takes two or more feature files and uniquely blends
 		  the attributes for features that share the same ID.
 		  If two features have the same ID, but conflict in
 		  ways other than the attributes (i.e. seqid, source,
@@ -174,6 +174,23 @@ to the altered copy of the feature.  All filters given are applied.
 		  reference is available then blend will keep the
 		  values from the first feature encountered, then
 		  blend the attributes and issue a warning.
+
+  l_blend
+
+		  The l_blend function takes two or more feature files
+		  and uniquely blends the attributes for features that
+		  share the same locus and type (i.e. if seqid start
+		  end strand and type are identical the records are
+		  blended).  If two features have the same locus, but
+		  conflict in ways other than the attributes
+		  (i.e. seqid, source, type, start, end, strand, phase
+		  values) then blend will use any code reference
+		  provided to the code argument to resolve which
+		  feature to save as described above for the merge
+		  command.  If no code reference is available then
+		  blend will keep the values from the first feature
+		  encountered, then blend the attributes and issue a
+		  warning.
 
   sort|s
 
@@ -470,15 +487,15 @@ gff_tool --hash_ag "push @{$h{$f->{type}}}, $f"          \
 ';
 
 my ($help, $in_place, $out_ext, $FASTA_FILE, $SO_FILE, $IDS_FILE,
-    $SEQIDS_FILE, $include, $exclude, $code, $do_stuff, $filter, $overlaps,
-    $genes, $merge, $blend, $sort, $alter, $hash_ag, $map_seqids,
-    $map_feature_ids, $template, $validate, $stats, $print_gff,
-    $print_data, $sequence, $splice_sequence, $fasta_only, $fasta_no,
-    $fasta_add, $meta_only, $meta_no, $meta_add, $add_ID, $pragmas,
-    $features, $union, $intersection, $lcomplement, $sdifference,
-    $i_union, $i_intersection, $i_lcomplement, $i_sdifference, $titv,
-    $gvf_stats, $effect_stats, $gvf_sets, $fix_gvf, $add_ref_seq,
-    $gvf2vcf);
+    $SEQIDS_FILE, $include, $exclude, $code, $do_stuff, $filter,
+    $overlaps, $genes, $merge, $blend, $l_blend, $sort, $alter,
+    $hash_ag, $map_seqids, $map_feature_ids, $template, $validate,
+    $stats, $print_gff, $print_data, $sequence, $splice_sequence,
+    $fasta_only, $fasta_no, $fasta_add, $meta_only, $meta_no,
+    $meta_add, $add_ID, $pragmas, $features, $union, $intersection,
+    $lcomplement, $sdifference, $i_union, $i_intersection,
+    $i_lcomplement, $i_sdifference, $titv, $gvf_stats, $effect_stats,
+    $gvf_sets, $fix_gvf, $add_ref_seq, $gvf2vcf);
 
 my $opt_success = GetOptions('help|h'		 => \$help,
 			     'in_place|i'	 => \$in_place,
@@ -496,6 +513,7 @@ my $opt_success = GetOptions('help|h'		 => \$help,
 			     'genes'		 => \$genes,
 			     'merge|m'		 => \$merge,
 			     'blend|b'		 => \$blend,
+			     'l_blend'		 => \$l_blend,
 			     'sort|s'		 => \$sort,
 			     'alter|a'		 => \$alter,
 			     'hash_ag=s'	 => \$hash_ag,
@@ -566,6 +584,7 @@ do_stuff(\@files, $code)                    if $do_stuff;
 genes(\@files)				    if $genes;
 merge(\@files)				    if $merge;
 blend_gff(\@files)			    if $blend;
+l_blend_gff(\@files)			    if $l_blend;
 sort_gff(\@files)			    if $sort;
 alter_gff(\@files, $code)		    if $alter;
 hash_ag(\@files, $hash_ag, $code)	    if $hash_ag;
@@ -805,10 +824,10 @@ sub merge_gff {
 #
 #  Examples:
 #
-#  Blend two GFF files always keeping the last feature encountered if two
-#  features share the same ID.
+#  Blend two GFF files blending the attributes of two features that
+#  share the same ID.
 #
-#  gff_tool --blend --code 'return $bf'
+#  gff_tool --blend --code 'return $bf' file1.gff file2.gff
 #-----------------------------------------------------------------------------
 
 sub blend_gff {
@@ -860,6 +879,86 @@ sub blend_gff {
 		    @values = grep {/:\d+$/} @values if $tag eq 'Variant_seq';
 		    ##########################################################
 		    ##########################################################
+
+		    my @new_values = grep {! $seen_atts{$tag}{$_}++} @values;
+		    push @{$blend_attributes{$tag}}, @new_values;
+		}
+	    }
+	    $base_feature{attributes} = \%blend_attributes;
+	}
+	print $OUT to_gff3(\%base_feature);
+    }
+    exit;
+}
+
+#-----------------------------------------------------------------------------
+#  l_blend
+#
+#		  The l_blend function takes two or more feature files
+#		  and uniquely blends the attributes for features that
+#		  share the same locus and type (i.e. if seqid start
+#		  end strand and type are identical the records are
+#		  blended).  If two features have the same locus, but
+#		  conflict in ways other than the attributes
+#		  (i.e. seqid, source, type, start, end, strand, phase
+#		  values) then blend will use any code reference
+#		  provided to the code argument to resolve which
+#		  feature to save as described above for the merge
+#		  command.  If no code reference is available then
+#		  blend will keep the values from the first feature
+#		  encountered, then blend the attributes and issue a
+#		  warning.
+#
+#  Examples:
+#
+#  Blend two GFF files blending the attributes of two features that
+#  share the same locus.
+#
+#  gff_tool --l_blend file1.gff file2.gff
+#-----------------------------------------------------------------------------
+
+sub l_blend_gff {
+
+    my $files = shift;
+
+    send_message ('WARN',
+		  'l_blend_gff_not_thouroughly_tested',
+		  'blend has not been thouroughly tested.  Please help',
+		  'us improve gff_tool by carefully evaluating your',
+		  'output and contacting us if you find errors.  Thanks',
+		  );
+
+    my %features;
+    for my $file (@files) {
+	my $IN  = fh_in($file);
+	my $count = 0;
+	while (my $feature = next_feature_hash($IN)) {
+	    my $locus = join ':', @{$feature}{qw(seqid start end strand type)};
+	    $feature->{count} = $count++;
+	    push @{$features{$locus}}, $feature;
+	}
+    }
+
+    my $OUT = fh_out();
+
+    for my $locus (sort {$features{$a}[0]{count} <=>
+			      $features{$b}[0]{count}} keys %features) {
+	my @feature_group = @{$features{$locus}};
+	my %blend_attributes;
+	my %base_feature;
+	my %seen_atts;
+	if (scalar @feature_group == 1) {
+	    %base_feature = %{$feature_group[0]};
+	}
+	else {
+	    for my $feature (@feature_group) {
+		my $attributes = $feature->{attributes};
+		if (! %base_feature) {
+		    @base_feature{qw(feature_id seqid source type start end score strand phase)} =
+			@{$feature}{qw(feature_id seqid source type start end score strand phase)};
+		}
+		for my $tag (keys %{$attributes}) {
+		    my @values = @{$attributes->{$tag}};
 
 		    my @new_values = grep {! $seen_atts{$tag}{$_}++} @values;
 		    push @{$blend_attributes{$tag}}, @new_values;
