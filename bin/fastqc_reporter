@@ -96,6 +96,7 @@ sub build_basic_report {
 		my @parts = split m|/|, $file;
 		pop @parts if scalar @parts > 1;
 		my $path = join '/', @parts;
+		$path =~ s/\.zip$//;
 		my $name = $parts[-1];
 		$data{files}{$file}{path} = $path;
 		$data{files}{$file}{name} = $name;
@@ -160,6 +161,7 @@ sub build_summary_report {
 		my @parts = split m|/|, $file;
 		pop @parts if scalar @parts > 1;
 		my $path = join '/', @parts;
+		$path =~ s/\.zip$//;
 		my $name = $parts[-1];
 		$data{files}{$file}{path} = $path;
 		$data{files}{$file}{name} = $name;

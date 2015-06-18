@@ -166,6 +166,7 @@ my $builder = $class->new(
 					    bin/t/gtf2gff3.t
 					    bin/t/gvf_validator.t
 					    bin/t/map_seqids.t
+					    bin/t/merge_data.t
 					    bin/t/sam_inspector.t
 					    bin/t/script_test_template.t
 					    bin/t/ucsc2gff.t

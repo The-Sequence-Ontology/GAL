@@ -23,6 +23,20 @@ With the options described below you can pick a given number of values
 from the list and print just those, and you can permute the shuffle
 pick sequence a given number of times.
 
+Options:
+
+  --permute, -m 1
+
+    Lists are randomized by a Fisher-Yates shuffle.  The permute
+    option describes how many rounds of shuffling are done.  The
+    default is 1 which is sufficient for most purposes.
+
+  --pick, -p 100
+
+    Provide an integer value to --print and the script will print only
+    that given number of values from the top of the shuffled list.
+    Default is to print the entire shuffled list.
+
 ";
 
 my ($help, $permute, $pick);
