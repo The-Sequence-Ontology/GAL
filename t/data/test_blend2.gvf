@@ -1,0 +1,4 @@
+chr22	.	SNV	14432513	14432513	.	+	.	ID=1;Variant_seq=C,G;Variant_effect=exon_variant;
+chr22	.	SNV	14433409	14433409	.	+	.	ID=2;Variant_seq=C,T;Variant_effect=exon_variant,transcript_variant;
+chr22	.	SNV	14433624	14433624	.	+	.	ID=3;Variant_seq=A,G;
+chr22	.	SNV	14433863	14433863	.	+	.	ID=4;Variant_seq=A,G;Variant_effect=gene_variant;

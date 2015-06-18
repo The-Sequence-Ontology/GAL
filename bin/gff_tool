@@ -838,7 +838,7 @@ sub blend_gff {
 		  'blend_gff_not_thouroughly_tested',
 		  'blend has not been thouroughly tested.  Please help',
 		  'us improve gff_tool by carefully evaluating your',
-		  'output and contacting us if you find errors.  Thanks',
+		  'output and contacting us if you find errors.',
 		  );
 
     my %features;
@@ -3821,6 +3821,8 @@ sub send_message {
     my $comment = join ' ', @comments;
 
     my $message = join ' : ', ($class, $code, $comment);
+    $message .= "\n";
+    $message =~ s/\n+$/\n/;
 
     print STDERR $message;
 
