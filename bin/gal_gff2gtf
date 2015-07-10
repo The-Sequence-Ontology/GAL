@@ -1,0 +1,75 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+gal_gff2gtf genes.gff3
+
+Description:
+
+This script will convert a GFF3 file to GTF format.  It only
+converters gene based features.
+
+";
+
+my ($help);
+
+my $opt_success = GetOptions('help|h'            => \$help,
+			      );
+
+die $usage unless $opt_success;
+if ($help) {
+  print $usage;
+  exit(0);
+}
+
+
+my ($gff3_file) = @ARGV;
+
+die "$usage\n\nFATAL : missing_gff3_file : GFF3 file required\n" unless $gff3_file;
+
+my $annotation = GAL::Annotation->new($gff3_file);
+
+my $features = $annotation->features;
+
+# Do the search and get an interator for all matching features
+my $genes = $features->search({type => 'gene'});
+
+# Iterate over the features
+while (my $gene = $genes->next) {
+  # Get the feature ID
+  my $gene_id = $gene->feature_id;
+  my @columns = $gene->get_values(qw(seqid source type start end score strand phase));
+  my $attributes = "gene_id \"$gene_id\";";
+  print join "\t", @columns, $attributes;
+  print "\n";
+  print '';
+
+  my $transcripts = $gene->transcripts();
+  while (my $transcript = $transcripts->next) {
+    my $transcript_id = $transcript->feature_id;
+    my @columns = $transcript->get_values(qw(seqid source type start end score strand phase));
+    my $attributes = "gene_id \"$gene_id\"; transcript_id \"$transcript_id\";";
+    print join "\t", @columns, $attributes;
+    print "\n";
+
+    my @children;
+    $transcript->get_recursive_children(\@children);
+    for my $child (@children) {
+      my @columns = $child->get_values(qw(seqid source type start end score strand phase));
+      my $attributes = "gene_id \"$gene_id\"; transcript_id \"$transcript_id\";";
+      print join "\t", @columns, $attributes;
+      print "\n";
+    }
+  }
+}
