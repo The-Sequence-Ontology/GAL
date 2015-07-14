@@ -120,9 +120,9 @@ sub parse_record {
 
 
 	my ($seqid, $start, $end) = split /:|-/, $record->{locus};
-	my $id         = $record->{test_id};
+	my $id         = $record->{gene};
 	my $source     = 'cuffdiff';
-	my $type       = 'experimental_feature';
+	my $type       = 'gene';
 	my $score      = $record->{test_stat};
 	my $strand     = '.';
 	my $phase      = '.';
