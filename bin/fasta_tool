@@ -51,7 +51,7 @@ Options:
 
   --eval_all <code>
 
-      Run the given code on (\$seq_obj, \$sequence or \$header).
+      Run the given code on (\$seq_obj, \$seq or \$header).
       Prints all sequences regardless of the return value of the
       evaled code.  This can but used to perform operations (e.g. soft
       to hard masking with s/[a-z]/N/g, but still print every sequence
@@ -555,7 +555,7 @@ sub eval_code {
 #
 #  --eval_all <code>
 #
-#      Run the given code on (\$seq_obj, \$sequence or \$header).  Prints all
+#      Run the given code on (\$seq_obj, \$seq or \$header).  Prints all
 #      sequences regardless of the return value of the evaled code.  This can
 #      but used to perform operations (e.g. soft to hard masking with
 #      s/[a-z]/N/g, but still print every sequence even if it's unaltered.
