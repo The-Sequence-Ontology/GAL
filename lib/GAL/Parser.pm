@@ -375,6 +375,33 @@ sub next_feature_hash {
 
 #-----------------------------------------------------------------------------
 
+=head2  all_feature_hashes
+
+ Title   : all_feature_hashes
+ Alias   : all
+ Usage   : $self->all_feature_hashes();
+ Function: Returns an array(ref) of all (remaining) features (as hashes) 
+           available via the current filehandle.
+ Returns : An array (or array reference) 
+ Args    : N/A
+
+=cut
+
+sub all {shift->all_feature_hashes()};
+
+sub all_feature_hashes {
+
+    my $self = shift;
+
+    my @features;
+    while (my $feature = $self->next_feature_hash) {
+	push @features, $feature if $feature;
+    }
+    return wantarray ? @features : \@features;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2  to_gff3
 
  Title   : to_gff3
