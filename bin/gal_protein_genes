@@ -25,15 +25,31 @@ Pint the protein coding genes in a GFF3 file.
 
 Options:
 
-  clean    Only print transcripts that do not contain any
-           internal stops and only genes that contain at least one
-           such transcript.
+  --internal_stops, -i n
+
+    Filter transcripts that have more than n internal stop codons.
+
+  --no_start, -a
+
+    Filter transcripts that do not have an AUG start codon. 
+
+  --no_stop, -o
+
+    Filter transcripts that do not have a canonical stop codon.
+
+  --verbose, -v
+
+    Report verbose details on genes that are skipped.
 
 ";
 
-my ($help, $clean);
-my $opt_success = GetOptions('help'          => \$help,
-			     'clean'         => \$clean,
+my ($help, $clean, $verbose, $internal_stops, $no_start, $no_stop);
+
+my $opt_success = GetOptions('help|h'             => \$help,
+			     'internal_stops|i=i' => \$internal_stops,
+			     'no_start|a'         => \$no_start,
+			     'no_stop|o'          => \$no_stop,
+			     'verbose|v'          => \$verbose,
 			      );
 
 if (! $opt_success) {
@@ -71,12 +87,44 @@ while (my $gene = $genes->next) {
   MRNA:
     while (my $mrna = $mrnas->next) {
       my $mrna_id = $mrna->feature_id;
-      my $prot = $mrna->protein_seq;
-      if ($prot =~ /\*/) {
-	$mrna->warn('transcript_produces_invalid_protein',
-		    'Skipping ' . $mrna->feature_id);
-	next MRNA;
+      
+      my $prot_seq = $mrna->protein_seq;
+      my $stop_count = $prot_seq =~ tr/\*/\*/;
+
+      my $skip;
+      # Internal Stops
+      if (defined $internal_stops && $stop_count > $internal_stops) {
+	  $mrna->warn('protein_has_internal_stops',
+		      "Stops=$stop_count " . $mrna->feature_id);
+	  $skip++;
       }
+
+      # No Start
+      if ($no_start && $mrna->start_codon ne 'ATG') {
+	$mrna->warn('mRNA_has_no_start_codon',
+		    $mrna->feature_id);
+	$skip++;
+      }
+
+      # No Stop
+      if ($no_start && $mrna->start_codon !~ /^(TAG|TGA|TAA)$/) {
+	$mrna->warn('mRNA_has_no_stop_codon',
+		    $mrna->feature_id);
+	$skip++;
+      }
+
+      if ($skip) {
+	  if ($verbose) {
+	      print STDERR "mRNA Sequence:\n";
+	      print STDERR $mrna->CDS_seq;
+	      print STDERR "\n";
+	      print STDERR "Protein Sequence:\n";
+	      print STDERR $mrna->protein_seq;
+	      print STDERR "\n";
+	  }
+	  next MRNA;
+      }
+
       print $gene_text unless $gene_flag++;
       print join "\n", $mrna->to_gff3_recursive;
       print "\n";
