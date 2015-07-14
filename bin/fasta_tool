@@ -119,6 +119,10 @@ Options:
 
       Print the length of each sequence.
 
+  --mapable_length
+
+      Print the mapable length (remove all Ns) of each sequence.
+
   --total_length
 
       Print the total length of all sequences.
@@ -227,56 +231,58 @@ Options:
 my ($summary, $chunks, $split, $break, $eval_code, $eval_all,
     $extract_ids, $grep_header, $grepv_header, $grep_seq, $grepv_seq,
     $wrap, $count, $translate, $seq_only, $nt_count, $length,
-    $total_length, $n50, $tab, $reverse, $rev_seq, $comp_seq,
-    $rev_comp, $uniq, $uniq_sub, $shuffle_order, $shuffle_seq,
-    $shuffle_codon, $shuffle_pick, $select_file, $remove_file, $print,
-    $mRNAseq, $EST, $trim_maker_utr, $table, $swap_ids, $fix_prot,
-    $subseq, $tile, $filter_shorter, $filter_longer,$mask_fasta);
+    $mapable_length, $total_length, $n50, $tab, $reverse, $rev_seq,
+    $comp_seq, $rev_comp, $uniq, $uniq_sub, $shuffle_order,
+    $shuffle_seq, $shuffle_codon, $shuffle_pick, $select_file,
+    $remove_file, $print, $mRNAseq, $EST, $trim_maker_utr, $table,
+    $swap_ids, $fix_prot, $subseq, $tile, $filter_shorter,
+    $filter_longer,$mask_fasta);
 
-GetOptions('summary'        => \$summary,
-	   'chunks=i'       => \$chunks,
-	   'split'          => \$split,
-	   'break=i'        => \$break,
-	   'eval_code=s'    => \$eval_code,
-	   'eval_all=s'     => \$eval_all,
-	   'extract_ids=s'  => \$extract_ids,
-	   'grep_header=s'  => \$grep_header,
-	   'grep_seq=s'     => \$grep_seq,
-	   'grepv_header=s' => \$grepv_header,
-	   'grepv_seq=s'    => \$grepv_seq,
-	   'wrap=i'         => \$wrap,
-	   'count'          => \$count,
-	   'translate=s'    => \$translate,
-	   'trim_maker_utr' => \$trim_maker_utr,
-	   'seq_only'       => \$seq_only,
-	   'nt_count'       => \$nt_count,
-	   'length'         => \$length,
-	   'total_length'   => \$total_length,
-	   'n50'            => \$n50,
-	   'tab'            => \$tab,
-	   'table'          => \$table,
-	   'print'          => \$print,
-	   'reverse'        => \$reverse,
-	   'rev_seq'        => \$rev_seq,
-	   'comp_seq'       => \$comp_seq,
-	   'rev_comp'       => \$rev_comp,
-	   'uniq'           => \$uniq,
-	   'uniq_sub'       => \$uniq_sub,
-	   'shuffle_order'  => \$shuffle_order,
-	   'shuffle_seq'    => \$shuffle_seq,
-	   'shuffle_codon'  => \$shuffle_codon,
-	   'shuffle_pick=i' => \$shuffle_pick,
-	   'remove=s'       => \$remove_file,
-	   'select=s'       => \$select_file,
-	   'fix_prot'       => \$fix_prot,
-	   'mRNAseq'        => \$mRNAseq,
-	   'EST'            => \$EST,
-	   'swap_ids=s'     => \$swap_ids,
-	   'subseq=s'       => \$subseq,
-	   'tile=s'         => \$tile,
+GetOptions('summary'          => \$summary,
+	   'chunks=i'         => \$chunks,
+	   'split'            => \$split,
+	   'break=i'          => \$break,
+	   'eval_code=s'      => \$eval_code,
+	   'eval_all=s'       => \$eval_all,
+	   'extract_ids=s'    => \$extract_ids,
+	   'grep_header=s'    => \$grep_header,
+	   'grep_seq=s'       => \$grep_seq,
+	   'grepv_header=s'   => \$grepv_header,
+	   'grepv_seq=s'      => \$grepv_seq,
+	   'wrap=i'           => \$wrap,
+	   'count'            => \$count,
+	   'translate=s'      => \$translate,
+	   'trim_maker_utr'   => \$trim_maker_utr,
+	   'seq_only'         => \$seq_only,
+	   'nt_count'         => \$nt_count,
+	   'length'           => \$length,
+	   'mapable_length'   => \$mapable_length,
+	   'total_length'     => \$total_length,
+	   'n50'              => \$n50,
+	   'tab'              => \$tab,
+	   'table'            => \$table,
+	   'print'            => \$print,
+	   'reverse'          => \$reverse,
+	   'rev_seq'          => \$rev_seq,
+	   'comp_seq'         => \$comp_seq,
+	   'rev_comp'         => \$rev_comp,
+	   'uniq'             => \$uniq,
+	   'uniq_sub'         => \$uniq_sub,
+	   'shuffle_order'    => \$shuffle_order,
+	   'shuffle_seq'      => \$shuffle_seq,
+	   'shuffle_codon'    => \$shuffle_codon,
+	   'shuffle_pick=i'   => \$shuffle_pick,
+	   'remove=s'         => \$remove_file,
+	   'select=s'         => \$select_file,
+	   'fix_prot'         => \$fix_prot,
+	   'mRNAseq'          => \$mRNAseq,
+	   'EST'              => \$EST,
+	   'swap_ids=s'       => \$swap_ids,
+	   'subseq=s'         => \$subseq,
+	   'tile=s'           => \$tile,
 	   'filter_shorter=i' => \$filter_shorter,
-	   'filter_longer=i' => \$filter_longer,
-	   'mask_fasta=s'   => \$mask_fasta
+	   'filter_longer=i'  => \$filter_longer,
+	   'mask_fasta=s'     => \$mask_fasta
 	  );
 
 my $file = shift;
@@ -316,6 +322,7 @@ $print++ unless grep {$_} ($chunks,
 			   $seq_only,
 			   $nt_count,
 			   $length,
+			   $mapable_length,
 			   $total_length,
 			   $n50,
 			   $reverse,
@@ -378,6 +385,7 @@ trim_maker_utr()            if $trim_maker_utr;
 seq_only()                  if $seq_only;
 nt_count()	            if $nt_count;
 seq_length()                if $length;
+mapable_length()            if $mapable_length;
 total_length()              if $total_length;
 n50()                       if $n50;
 tab()	                    if $tab;
@@ -1007,6 +1015,29 @@ sub seq_length {
 	$total += $length;
 	$count++;
 	print "$id\t$length\n";
+    }
+    print "Total\t$total\n" if $count > 1;
+}
+
+#-----------------------------------------------------------------------------
+#
+#  --mapable_length
+#
+#      Print the mapable length (all sequence not N) of each sequence.
+#
+#-----------------------------------------------------------------------------
+
+sub mapable_length {
+    my $count = 0;
+    my $total;
+    while (my $seq_obj = $seq_io->next_seq) {
+	my $id = $seq_obj->display_id;
+	my $seq = $seq_obj->seq;
+	$seq =~ s/N+//gi;
+	my $mapable_length = length($seq);
+	$total += $mapable_length;
+	$count++;
+	print "$id\t$mapable_length\n";
     }
     print "Total\t$total\n" if $count > 1;
 }
