@@ -748,27 +748,32 @@ sub genes {
 
   my ($files, $code) = @_;
 
-  my %accept = (gene		=> 1,
-		mRNA		=> 1,
-		ncRNA           => 1,
-		tRNA            => 1,
-		piRNA		=> 1,
-		rRNA		=> 1,
-		rasiRNA		=> 1,
-		scRNA		=> 1,
-		siRNA		=> 1,
-		snRNA		=> 1,
-		snoRNA		=> 1,
-		stRNA		=> 1,
-		tasiRNA		=> 1,
-		transcript	=> 1,
-		exon		=> 1,
-		CDS		=> 1,
-		start_codon     => 1,
-		stop_codon      => 1,
-		three_prime_UTR => 1,
-		five_prime_UTR  => 1,
-	       );
+  my %accept = (
+      gene                =>  1,
+      mRNA                =>  1,
+      ncRNA               =>  1,
+      tRNA                =>  1,
+      piRNA               =>  1,
+      rRNA                =>  1,
+      rasiRNA             =>  1,
+      scRNA               =>  1,
+      siRNA               =>  1,
+      snRNA               =>  1,
+      snoRNA              =>  1,
+      stRNA               =>  1,
+      tasiRNA             =>  1,
+      transcript          =>  1,
+      primary_transcript  =>  1,
+      exon                =>  1,
+      CDS                 =>  1,
+      start_codon         =>  1,
+      stop_codon          =>  1,
+      three_prime_UTR     =>  1,
+      five_prime_UTR      =>  1,
+      );
+
+  # Make filehandles autoflush
+  $|++;
 
   for my $file (@files) {
     my $IN  = fh_in($file);
@@ -1145,6 +1150,10 @@ sub map_seqids {
 	}
 	$map{$old} = $new;
     }
+
+    
+    # Make the file handles autoflush.
+    $|++;
 
     for my $file (@{$files}) {
 	my $OUT = fh_out();
