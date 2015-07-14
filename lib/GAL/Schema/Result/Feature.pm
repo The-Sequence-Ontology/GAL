@@ -908,6 +908,24 @@ sub as_hash {
 
 #-----------------------------------------------------------------------------
 
+=head2 overlaps
+
+ Title   : overlaps
+ Usage   : $rv = $feature->overlaps($another_feature);
+ Function: Returns true if the two features overlap (share any
+           nucleotide in common).
+ Returns : 1 if the two features overlap, otherwise undef
+ Args    : A GAL::Schema::Result::Feature object
+
+=cut
+
+sub overlaps {
+    my ($self, $feature) = @_;
+    return 1 if $feature->start <= $self->end && $feature->end >= $self->start;
+}
+
+#-----------------------------------------------------------------------------
+
 ##############################################################################
 ## Consolidate three copies of this method 1) Here 2) Feature/gene.pm and
 ## 3) Base.pm
