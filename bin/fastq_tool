@@ -25,6 +25,8 @@ Options:
   --count	  Return the count of reads in the file.
   --lengths	  Print a summary of the read lengths.
   --seq           Print only the sequences.
+  --clean         Print only valid records. Currenlty requires seq and
+                  qual to be of equal length.
   --fasta         Print the sequences in fasta format.
   --extract_ids   Extract the records who's IDs are in the given file.
   --quals	  Print a summary of quality values.
@@ -44,7 +46,7 @@ Options:
 ";
 
 
-my ($help, $count, $lengths, $seq, $id_file, $quals, $summary, $total, $ill2sanger,
+my ($help, $count, $lengths, $seq, $clean, $id_file, $quals, $summary, $total, $ill2sanger,
     $sol2sanger, $fastq2fasta, $trim_qual, $guess_format, $grep_seq,
     $verbose);
 
@@ -52,6 +54,7 @@ my $opt_success = GetOptions('help'          => \$help,
 			     'count'	     => \$count,
 			     'lengths'	     => \$lengths,
 			     'seq'           => \$seq,
+			     'clean'         => \$clean,
 			     'extract_ids=s' => \$id_file,
 			     'quals'	     => \$quals,
 			     'summary'       => \$summary,
@@ -78,8 +81,11 @@ if ($help) {
 
 my $file = shift;
 
-die "FATAL : missing_required_input_fastq_file\n" unless -e $file;
-die "FATAL : cant_read_fastq_file : $file\n"      unless -r $file;
+die "FATAL : missing_required_input_fastq_file\n" unless $file;
+unless ($file eq '-') {
+    die "FATAL : file_does_not_exist\n"               unless -e $file;
+    die "FATAL : cant_read_fastq_file : $file\n"      unless -r $file;
+}
 
 if ($count) {
     read_count($file);
@@ -89,6 +95,9 @@ elsif ($lengths) {
 }
 elsif ($seq) {
     seq_only($file);
+}
+elsif ($clean) {
+    clean($file);
 }
 elsif ($id_file) {
     extract_ids($id_file, $file);
@@ -176,6 +185,20 @@ sub seq_only {
 
     while (my $read = &$iterator) {
 	print $read->[1] . "\n";
+    }
+}
+
+#-----------------------------------------------------------------------------
+
+sub clean {
+    my $file = shift;
+
+    my $iterator = make_read_iterator($file);
+
+    while (my $read = &$iterator) {
+	next if length $read->[1] != length $read->[3];
+	print join "\n", @{$read};
+	print "\n";
     }
 }
 
