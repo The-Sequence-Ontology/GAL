@@ -641,7 +641,7 @@ sub do_stuff {
     for my $file (@files) {
 	my $IN  = fh_in($file);
 	my $OUT = fh_out($file);
-	while (my $f_original = next_feature_hash($IN)) {
+	while (my $f_original = next_feature_hash($IN, $OUT)) {
 
 	    my $f  = $f_original;
 	    my $t  = $f->{attributes};
@@ -676,7 +676,7 @@ sub filter {
     for my $file (@files) {
 	my $IN  = fh_in($file);
 	my $OUT = fh_out($file);
-	while (my $f_original = next_feature_hash($IN)) {
+	while (my $f_original = next_feature_hash($IN, $OUT)) {
 
 	    my $f  = $f_original;
 	    my $t  = $f->{attributes};
@@ -722,7 +722,7 @@ sub overlaps {
     for my $file (@files) {
 	my $IN  = fh_in($file);
 	my $OUT = fh_out($file);
-	while (my $f = next_feature_hash($IN)) {
+	while (my $f = next_feature_hash($IN, $OUT)) {
 
 	    next if $l_seqid ne $f->{seqid};
 	    next unless $l_start <= $f->{end};
@@ -774,7 +774,7 @@ sub genes {
     my $IN  = fh_in($file);
     my $OUT = fh_out($file);
     print_pragmas($IN, $OUT);
-    while (my $f = next_feature_hash($IN)) {
+    while (my $f = next_feature_hash($IN, $OUT)) {
       next unless defined $accept{$f->{type}};
       print $OUT to_gff3($f);
     }
@@ -988,7 +988,7 @@ sub sort_gff {
 
     my $IN = fh_in($file);
     my $OUT = fh_out($file);
-    while (my $f = next_feature_hash($IN)) {
+    while (my $f = next_feature_hash($IN, $OUT)) {
 
 	my $t = $f->{attributes};
 	my $i = $IDS;
@@ -1016,7 +1016,7 @@ sub alter_gff {
     for my $file (@files) {
 	my $IN = fh_in($file);
 	my $OUT = fh_out($file);
-	while (my $f = next_feature_hash($IN)) {
+	while (my $f = next_feature_hash($IN, $OUT)) {
 
 	    my $t = $f->{attributes};
 	    my $i = $IDS;
@@ -1148,7 +1148,7 @@ sub map_seqids {
 
     for my $file (@{$files}) {
 	my $OUT = fh_out();
-	my $IN = fh_in($file);
+	my $IN  = fh_in($file);
 
 	# Map pragmas
 	my @pragmas = read_pragmas($IN);
@@ -1171,7 +1171,7 @@ sub map_seqids {
 	}
 
 	# Map features
-	while (my $f = next_feature_hash($IN)) {
+	while (my $f = next_feature_hash($IN, $OUT)) {
 	    my $seqid = $f->{seqid};
 	    my $new_seqid;
 	    if (exists $map{$seqid}) {
@@ -1249,7 +1249,7 @@ sub map_feature_ids {
     my $IN = fh_in($file);
 
     # Map features
-    while (my $f = next_feature_hash($IN)) {
+    while (my $f = next_feature_hash($IN, $OUT)) {
       my $attributes = $f->{attributes};
       my $feature_id = $attributes->{ID}[0];
       my $new_feature_id = $feature_id;
@@ -2168,7 +2168,7 @@ sub sequence {
   for my $file (@{$files}) {
     my $IN  = fh_in($file);
     my $OUT = fh_out($file);
-    while (my $f = next_feature_hash($IN)) {
+    while (my $f = next_feature_hash($IN, $OUT)) {
 
       my ($seqid, $start, $end) = @{$f}{qw(seqid start end)};
 
@@ -2197,7 +2197,7 @@ sub splice_sequence {
     my $OUT = fh_out($file);
 
     my %spliced_seq;
-    while (my $f = next_feature_hash($IN)) {
+    while (my $f = next_feature_hash($IN, $OUT)) {
 
       my $a = $f->{attributes};
 
@@ -2845,7 +2845,7 @@ sub fix_gvf {
     my $OUT = fh_out($file);
     print_pragmas($IN, $OUT);
   VARIANT:
-    while (my $f = next_feature_hash($IN)) {
+    while (my $f = next_feature_hash($IN, $OUT)) {
       my $a = $f->{attributes};
 
       # Fix Genotype
@@ -2909,7 +2909,7 @@ sub add_ref_seq {
 				     );
 
   VARIANT:
-    while (my $f = next_feature_hash($IN)) {
+    while (my $f = next_feature_hash($IN, $OUT)) {
       my $a = $f->{attributes};
 
       my $type = $f->{type};
@@ -2947,7 +2947,7 @@ sub gvf2vcf {
     my $OUT = fh_out($file);
 
   VARIANT:
-    while (my $f = next_feature_hash($IN)) {
+    while (my $f = next_feature_hash($IN, $OUT)) {
 
       # chr7 HGMD SNV 117149137 117149137 . + . ID=HGMD_SNV_012309;Variant_seq=A,G;Reference_seq=G;Genotype=0:1;
       # chrY 28725875 . G . . PASS END=28725892;BLOCKAVG_min30p3a GT:DP:GQX:MQ 0/0:25:75:60
@@ -3347,7 +3347,7 @@ sub print_gff {
     for my $file (@files) {
 	my $IN = fh_in($file);
 	my $OUT = fh_out($file);
-	while (my $f = next_feature_hash($IN)) {
+	while (my $f = next_feature_hash($IN, $OUT)) {
 	    next if fails_filters($f);
 	    print $OUT to_gff3($f);
 	}
@@ -3385,7 +3385,7 @@ sub print_data {
   for my $file (@files) {
     my $IN = fh_in($file);
     my $OUT = fh_out($file);
-    while (my $f = next_feature_hash($IN)) {
+    while (my $f = next_feature_hash($IN, $OUT)) {
       next if fails_filters($f);
       my @this_data;
       for my $data_key (@data_keys) {
@@ -3555,14 +3555,14 @@ sub print_pragmas {
 
 sub next_feature_hash {
 
-    my $fh = shift;
+    my ($IN, $OUT) = @_;
 
-    my $line = <$fh>;
+    my $line = <$IN>;
     return undef unless defined $line;
 
     until ($line !~ /^(\#.*|\s+)$/) {
-	handle_header_line($line, $fh);
-	$line = <$fh>;
+	handle_header_line($line, $IN, $OUT);
+	$line = <$IN>;
 	return undef unless defined $line;
     }
     chomp $line;
@@ -3598,10 +3598,10 @@ sub next_feature_hash {
 
 sub handle_header_line {
 
-    my ($line, $fh) = @_;
+    my ($line, $IN, $OUT) = @_;
 
     if ($line =~ /^\#\#FASTA/) {
-	handle_fasta($fh);
+	handle_fasta($IN, $OUT);
 	return undef;
     }
 
@@ -3616,19 +3616,19 @@ sub handle_header_line {
 	    return if $SEQIDS->{$1};
 	}
     }
-    print $line;
+    print $OUT $line;
 }
 
 #-----------------------------------------------------------------------------
 
 sub handle_fasta {
 
-    my $fh = shift;
+    my ($IN, $OUT) = @_;
 
     if ($fasta_no) {
-      my $line = <$fh>;
+      my $line = <$IN>;
       print STDERR "WARN : skipping_fasta_sequence : $line\n";
-      while (my $line = <$fh>) {
+      while (my $line = <$IN>) {
 	next unless $line;
 	chomp $line;
 	if ($line =~ /^>/) {
@@ -3644,10 +3644,10 @@ sub handle_fasta {
 
     require Bio::SeqIO;
 
-    my $seq_io  = Bio::SeqIO->new(-fh => $fh,
+    my $seq_io  = Bio::SeqIO->new(-fh => $IN,
 				  -format => 'Fasta');
 
-    print "\n##FASTA\n";
+    print $OUT "\n##FASTA\n";
     while (my $seq_obj = $seq_io->next_seq) {
 	my $id = $seq_obj->display_id;
 	if ($include && scalar keys %{$SEQIDS} ) {
@@ -3659,9 +3659,9 @@ sub handle_fasta {
 	my $header = $id . " " . $seq_obj->description;
 	my $seq = $seq_obj->seq;
 	$seq =~ s/(.{60})/$1\n/g;
-	print ">$header\n$seq\n";
+	print $OUT ">$header\n$seq\n";
     }
-    close $fh;
+    close $IN;
 }
 
 #-----------------------------------------------------------------------------
