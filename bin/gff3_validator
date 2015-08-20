@@ -116,6 +116,7 @@ sub validate_gff3 {
   my %types;
   my %parents;
   my %derives;
+  my %relatives;
   my @stack;
   my $line = <$IN>;
   $line_count++;
@@ -149,6 +150,7 @@ sub validate_gff3 {
       }
       my ($seqid, $source, $type, $start, $end, $score, $strand,
 	  $phase, $att_text) = @columns;
+
       # Seqid Characters
       if ($seqid =~ /[^(a-zA-Z0-9\.:\^\*\$@!\+_\?\-\|)]/ ||
 	  $seqid =~ /\s/ ||
@@ -272,6 +274,8 @@ sub validate_gff3 {
 	  }
 	  my $id = $values[0];
 	  $types{$id} = $type;
+	  @{$data{$id}}{qw(seqid type start end)} =
+	    ($seqid, $type, $start, $end);
 	  #if (++$feature_ids{$id} > 1) {
 	  #    my $error_code = 'invalid_ID_attribute_not_unique';
 	  #    push @{$errors{$error_code}}, [$line_count, $line];
@@ -539,7 +543,7 @@ sub validate_gff3 {
     }
   }
 
-  # Validate relationships
+  # Validate relationships and part_of
   for my $kid_type (keys %parents) {
       for my $parent (keys %{$parents{$kid_type}}) {
 	  my $parent_type = $types{$parent};
