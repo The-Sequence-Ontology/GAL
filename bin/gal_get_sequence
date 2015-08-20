@@ -23,14 +23,31 @@ Description:
 
 Print a multi-fasta of the sequence for all selected features.
 
+Options:
+
+  --type, -t
+
+  Give a comma separated list of feature types (i.e. --type exon,CDS)
+  and the script will only print sequence for those feature types.
+
+  --translate, -a
+
+  Translate the sequence from nucleotides to amino acids.  Note that
+  this would only make sense for type CDS or mRNA.
+
+  --mature, -m
+
+  Print the mature (spliced) form of the feature sequence.  This will
+  work for any feature type that has a 'mature_seq' method.
+
 ";
 
 my ($help, $clean, $type, $translate, $mature);
-my $opt_success = GetOptions('help'   	 => \$help,
-			     'clean'  	 => \$clean,
-			     'type=s' 	 => \$type,
-			     'translate' => \$translate,
-			     'mature'    => \$mature,
+my $opt_success = GetOptions('help'   	   => \$help,
+			     'clean'   	   => \$clean,
+			     'type|t=s'    => \$type,
+			     'translate|a' => \$translate,
+			     'mature|m'    => \$mature,
 			     );
 
 if (! $opt_success) {
@@ -62,7 +79,15 @@ while (my $feature = $features->next) {
   my $feature_id = $feature->feature_id;
   my $sequence;
   if ($mature) {
-    $sequence = $feature->mature_seq;
+      if (! $feature->can('mature_seq')) {
+	  $feature->warn('no_mature_seq_method', join ' ',
+			 ($feature->type, $feature->feature_id)
+			 );
+	  $sequence = $feature->seq;
+      }
+      else {
+	  $sequence = $feature->mature_seq;
+      }
   }
   else {
     $sequence = $feature->seq;
