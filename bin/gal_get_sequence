@@ -1,0 +1,74 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+
+use FindBin;
+use lib "$FindBin::RealBin/../lib";
+
+use GAL::Annotation;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+gal_get_sequence feature.gff3 sequence.fasta
+
+Description:
+
+Print a multi-fasta of the sequence for all selected features.
+
+";
+
+my ($help, $clean, $type, $translate, $mature);
+my $opt_success = GetOptions('help'   	 => \$help,
+			     'clean'  	 => \$clean,
+			     'type=s' 	 => \$type,
+			     'translate' => \$translate,
+			     'mature'    => \$mature,
+			     );
+
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gal_getsequence --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
+
+my ($gff3, $fasta) = @ARGV;
+
+die $usage unless $fasta && $gff3;
+
+my $annotation = GAL::Annotation->new($gff3,
+				      $fasta);
+
+my $features = $annotation->features;
+
+if ($type) {
+  my @types = split /,/, $type;
+  $features = $features->search({type => \@types});
+}
+
+while (my $feature = $features->next) {
+  my $feature_id = $feature->feature_id;
+  my $sequence;
+  if ($mature) {
+    $sequence = $feature->mature_seq;
+  }
+  else {
+    $sequence = $feature->seq;
+  }
+  $sequence = $annotation->translate($sequence) if $translate;
+  $sequence = $annotation->wrap_text($sequence);
+  my $header = ">$feature_id";
+  print "$header\n$sequence\n";
+}
