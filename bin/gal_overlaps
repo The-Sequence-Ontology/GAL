@@ -1,0 +1,94 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+gal_overlaps --features feature.gff3 --type gene chr2:234730807
+
+Description:
+
+This script will take a genome annotation file and return the feature
+ID for features that overlap the given chromosomal coordinates.
+
+Options:
+
+  --features, -f genes.gff3
+
+      The GFF3 file for the gene models (Required).
+
+  --type, -t sequence_feature
+
+";
+
+my ($help, $gff_file, $type);
+
+my $opt_success = GetOptions('help'          => \$help,
+			     'features|f=s'  => \$gff_file,
+			     'type|t=s'      => \$type,
+			      );
+
+if (! $opt_success) {
+    print STDERR join ' : ', ('FATAL',
+                              'command_line_parse_error',
+                              'Use gff_tool --help to see correct usage');
+}
+
+if ($help) {
+ print $usage;
+ exit(0);
+}
+
+die "$usage\n\nFATAL : missing_gff3_file : GFF3 file required\n"   unless $gff_file;
+
+my $annotation = GAL::Annotation->new($gff_file);
+my $features = $annotation->features;
+
+for my $locus (@ARGV) {
+
+    print "$locus\t";
+
+    my ($seqid, $start, $end) = split /:|-/, shift;
+    
+    if (! $start) {
+	$start = 1;
+	$end   = 999999999;
+    }
+    $end   ||= $start;
+    
+    if (! $seqid) {
+	print STDERR join ' : ', ('FATAL',
+				  'missing_chromosomal_coordinates',
+				  'Use gff_tool --help to see correct usage');
+    }
+    
+# Define the search
+    my $bins = $annotation->get_feature_bins({seqid => $seqid,
+					      start => $start,
+					      end   => $end});
+    my %where = (bin   => {'-in' => $bins},
+		 start => {'<='  => $end},
+		 end   => {'>='  => $start},
+	);
+    $where{type} = $type if $type;
+    
+# Do the search and get an interator for all matching features
+    my $overlaps = $features->search(\%where);
+    
+# Iterate over the features
+    my %ids;
+    while (my $feature = $overlaps->next) {
+	$ids{$feature->feature_id}++;
+    }
+    print join ',', sort keys %ids;
+    print "\n";
+}
