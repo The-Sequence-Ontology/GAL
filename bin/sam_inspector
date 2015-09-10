@@ -253,7 +253,7 @@ my ($help, $summary, $qc, $FILTER, $bflag, $BFLAG, $clean, $vaast_clean,
     $region, $ill_rg, $sample_name, $bam_format, $fastq, $headers,
     $intervals, $OPTIONS, $TMPDIR, $print_flags);
 
-my $opt_success = GetOptions('help|h'        => \$help,
+my $opt_success = GetOptions('help'          => \$help,
 			     'summary|s'     => \$summary,
 			     'qc'            => \$qc,
 			     'filter|i=s'    => \$FILTER,
@@ -622,8 +622,8 @@ sub clean_file {
     $FILTER = '($a->{flag} & $UNMAPPED) && ($a->{map} != 0 || $a->{cigar} ne "*")';
 
     for my $file (@{$files}) {
-	my $iterator = make_iterator($file, $region);
 	my $fh = print_fh_out();
+	my $iterator = make_iterator($file, $region, undef, $fh);
 	while (my $a = &{$iterator}) {
 	    print_alignment($a, $fh);
 	}
@@ -659,8 +659,8 @@ sub vaast_clean {
 	       '$a->{map} < 20'); # Mapping quality < 20
 
     for my $file (@{$files}) {
-	my $iterator = make_iterator($file, $region, 'options');
 	my $fh = get_fh_out();
+	my $iterator = make_iterator($file, $region, 'options', $fh);
 	while (my $a = &{$iterator}) {
 	    print_alignment($a, $fh);
 	}
@@ -720,11 +720,11 @@ sub add_illumina_readgroup {
     for my $file (@{$files}) {
       $sample_name ||= $file;
       $sample_name =~ s/\.(sam|bam)$//;
-	my $iterator = make_iterator($file, $region, 'options');
-	my $counter = make_counter(1);
 	my $temp_file = $TMPDIR . $file . '.tmp';
 	open(my $TEMP, '>', $temp_file) or
 	    die "FATAL : cant_open_file_for_reading : $temp_file\n";
+	my $iterator = make_iterator($file, $region, 'options', $TEMP);
+	my $counter = make_counter(1);
 	my %rgs;
 	while (my $a = &{$iterator}) {
 	    my $qname = $a->{qname};
@@ -837,8 +837,8 @@ sub print_file {
     my $files = shift;
 
     for my $file (@{$files}) {
-	my $iterator = make_iterator($file, $region);
 	my $fh = get_fh_out();
+	my $iterator = make_iterator($file, $region, undef, $fh);
 	while (my $a = &{$iterator}) {
 	    print_alignment($a, $fh);
 	}
@@ -866,7 +866,7 @@ sub print_fastq {
 
 sub make_iterator {
 
-    my ($file, $region, $options) = @_;
+    my ($file, $region, $options, $fh) = @_;
 
     if ($region) {
 	`samtools index $file` unless -e ($file . 'bai');
@@ -889,7 +889,7 @@ sub make_iterator {
 		chomp $line;
 		if ($line =~/^@/) {
 		    if ($headers) {
-			print "$line\n";
+			print $fh "$line\n";
 		    }
 		    my ($head_tag, @pairs) = split /\t+/, $line;
 		    $head_tag =~ s/^\@//;
