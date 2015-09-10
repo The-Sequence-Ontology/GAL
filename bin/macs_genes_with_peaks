@@ -1,0 +1,215 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+macs_genes2peaks --range 10000,15000 --format text --region chr1:123456-7890123 \
+                 --genes significant_genes.txt feature.gff3 macs_summits.gff3
+
+Description:
+
+This script will find genes that have summits within a given distance
+of the transcripts TSS and TTS.
+
+Options:
+
+  --range, -r [5000,1000]
+
+    Provide two positive integers.  The first value will provide the
+    distance 5' of a transcript's TSS and the second value will
+    provide a distance 3' of a transcript's TTS.  Any gene that
+    contains MACs summits within this range will be printed along with
+    the the summit ID, locus, and distance from summit start to TSS or TTS.
+
+  --format, -f [gff3]|text
+
+    The format in which to print the output.  Value can be one of gff3
+    (the default) or text.
+
+  --region chr1:123456-7890123
+
+    Provide a region (in chr:start-end format) and the script will
+    only operate on this region.
+
+  --genes
+
+    Provide a list of genes (one gene ID per line) and limit the
+    analysis to only those genes.
+
+";
+
+$| = 1;
+
+my $COMMAND_LINE = join ' ', $0, @ARGV;
+
+my ($help, $range, $format, $region, $gene_list);
+
+my $opt_success = GetOptions('help|h'     => \$help,
+			     'range|r=s'  => \$range,
+			     'format|f=s' => \$format,
+			     'region=s'   => \$region,
+			     'genes|g=s'  => \$gene_list,
+    );
+
+die $usage unless $opt_success;
+if ($help) {
+  print $usage;
+  exit(0);
+}
+
+$range ||= '10000,15000';
+my ($fp_distance, $tp_distance) = split /,/, $range;
+
+$format ||= 'gff3';
+
+my ($gff_file, $macs_file) = @ARGV;
+
+die "$usage\n\nFATAL : missing_gff3_file : GFF3 file required\n"        unless $gff_file;
+die "$usage\n\nFATAL : missing_macs_file : MACS summit file required\n" unless $macs_file;
+
+print "# $COMMAND_LINE\n";
+
+my %query;
+
+if ($region) {
+    my ($seqid, $start, $end) = split /:|-/, $region;
+    $query{seqid} = $seqid           if $seqid;
+    $query{start} = {'<=', $end}     if $end;
+    $query{end}   = {'>=', $start}   if $start;
+}
+
+my %GENE_IDs;
+if ($gene_list) {
+    die "$usage\n\nFATAL : file_does_not_exist : $gene_list\n" unless -e $gene_list;
+    open(my $IN, '<', $gene_list) or
+	die "$usage\n\nFATAL : cant_open_file_for_reading : $gene_list\n";
+    my @ids = (<$IN>);
+    chomp @ids;
+    @ids = map {/^(\S+)/} @ids;
+    %GENE_IDs = map {$_ => 1} @ids;
+}
+
+my $macs  = GAL::Annotation->new($macs_file)->features;
+
+$query{type} = 'gene';
+my $genes = GAL::Annotation->new($gff_file)->features->search(\%query);
+
+if ($format eq 'text') {
+    # RNU4ATAC 2:122288456-122288585 no NR_023343.1 2:122288651-122288652|HumanFB_Caper_peak_164 195
+    print join "\t", qw(GeneSymbol GeneLocus OnList TranscriptID Summit Distance2TSS Distance2TTS);
+    print "\n";
+}
+
+GENE:
+    while (my $gene = $genes->next) {
+	print STDERR $gene->locus . "\n";
+	my $transcripts = $gene->transcripts;
+	my %our_summits;
+      TRANSCRIPT:
+	while (my $transcript = $transcripts->next) {
+	    my $seqid = $transcript->seqid;
+	    my $strand = $transcript->strand;
+	    my $tss = $transcript->my_start;
+	    my $tts = $transcript->my_end;
+	    my $t_feature_id = $transcript->feature_id;
+	    my ($range_start, $range_end);
+	    if ($transcript->strand eq '+') {
+		$range_start = $tss - $fp_distance;
+		$range_end   = $tts + $tp_distance;
+	    }
+	    else {
+		$range_start = $tss + $fp_distance;
+		$range_end   = $tts - $tp_distance;
+	    }
+	    my $summits = $macs->search({seqid  => $seqid,
+					 start  => {'<=', $range_end},
+					 end    => {'>=', $range_start}});
+	    
+	    next TRANSCRIPT unless $summits->count > 0;
+
+	    my $my_summits;
+	    while (my $summit = $summits->next) {
+		my $summit_locus = $summit->locus;
+		my $summit_id    = $summit->feature_id;
+		my $tss_summit_distance = ($transcript->strand eq '+' ? 
+					   $summit->start - $tss  :
+					   $tss - $summit->start);
+		my $tts_summit_distance = ($transcript->strand eq '+' ? 
+					   $summit->start - $tts  :
+					   $tts - $summit->start);
+		my $summit_locus_id = "$summit_locus|$summit_id";
+		my %parts;
+		if ($tss_summit_distance < 0) {
+		    $parts{'5_prime_intergenic'}++;
+		}
+		if ($tts_summit_distance > 0) {
+		    $parts{'3_prime_intergenic'}++;
+		}
+		$transcript->infer_introns;
+		my @overlaps = grep {$_->start <= $summit->end && $_->end >= $summit->start} $transcript->children;
+		map {$parts{$_->type}++} @overlaps;
+		my $parts_text = join ',', keys %parts;
+
+		$our_summits{$t_feature_id}{$summit_locus_id} =
+		    [$tss_summit_distance, $tts_summit_distance, $parts_text];
+	    }
+	}
+	next GENE unless scalar keys %our_summits;
+	
+	if ($format =~ /^t/) {
+	    print_text($gene, \%our_summits);
+	}
+	else {
+	    print_gff3($gene, \%our_summits);
+	}
+
+}
+
+#-----------------------------------------------------------------------------
+#------------------------------- SUBROUTINES ---------------------------------
+#-----------------------------------------------------------------------------
+
+sub print_gff3 {
+
+    my ($gene, $summits) = @_;
+
+    my $summit_pragma = 'summits=';
+    for my $trns (keys %{$summits}) {
+	$summit_pragma .= $trns;
+	for my $summit (keys %{$summits->{$trns}}) {
+	    my $summit_distances = join '|', @{$summits->{$trns}{$summit}};
+	    $summit_pragma .= " $summit(" . $summit_distances . ')';
+	}
+	$summit_pragma .= ',';
+    }
+    $summit_pragma =~ s/,$//;
+    print $gene->to_gff3;
+    print "$summit_pragma;\n" ;
+}
+
+#-----------------------------------------------------------------------------
+
+sub print_text {
+
+    my ($gene, $summits) = @_;
+
+    my $on_list = $GENE_IDs{$gene->feature_id} ? 'yes' : 'no';
+
+    for my $trns (keys %{$summits}) {
+	for my $summit (keys %{$summits->{$trns}}) {
+	    my @data = @{$summits->{$trns}{$summit}};
+	    print join "\t", ($gene->feature_id, $gene->locus, $gene->strand, $on_list, $trns, $summit, @data);
+	    print "\n";
+	}
+    }
+}

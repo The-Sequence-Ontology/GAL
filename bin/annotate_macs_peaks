@@ -1,0 +1,191 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use GAL::Annotation;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+
+my $usage = "
+
+Synopsis:
+
+annotate_macs_peaks macs_summits.gff3 genes.gff3
+
+Description:
+
+This script will find the nearest gene for each MACS hit and print
+various annotations.
+
+Options:
+
+  --genes, -g <gene_id.txt>
+
+    A list of genes (such as those significant by an RNASeq DE
+    analysis) that will be annotated in the output file.
+
+";
+
+my ($help, $gene_list);
+
+my $opt_success = GetOptions('help|h'    => \$help,
+			     'genes|g=s' => \$gene_list,
+			      );
+
+die $usage unless $opt_success;
+if ($help) {
+  print $usage;
+  exit(0);
+}
+
+my ($macs_file, $gff_file) = @ARGV;
+
+die "$usage\n\nFATAL : missing_macs_file : MACS summit file required\n" unless $macs_file;
+die "$usage\n\nFATAL : missing_gff3_file : GFF3 file required\n"        unless $gff_file;
+
+# Set up the annotation objects
+my $macs  = GAL::Annotation->new($macs_file)->features;
+my $genes = GAL::Annotation->new($gff_file)->features;
+
+# Read the list of genes to highlight
+my %GENE_IDs;
+if ($gene_list) {
+    die "$usage\n\nFATAL : file_does_not_exist : $gene_list\n" unless -e $gene_list;
+    open(my $IN, '<', $gene_list) or
+        die "$usage\n\nFATAL : cant_open_file_for_reading : $gene_list\n";
+    my @ids = (<$IN>);
+    chomp @ids;
+    @ids = map {/^(\S+)/} @ids;
+    %GENE_IDs = map {$_ => 1} @ids;
+}
+
+print '#';
+print join "\t", qw(summit_id summit_locus fp_onlist
+		  fp_gene_id fp_gene_distance fp_strand
+		  fp_parts_text tp_onlist tp_gene_id
+		  tp_gene_distance tp_strand tp_parts_text);
+
+print "\n";
+
+
+# Do the search and get an interator for all matching summits
+while (my $summit = $macs->next) {
+
+    # Get summit details
+    my $summit_locus = $summit->locus;
+    my $summit_id    = $summit->feature_id;
+
+    # Get closest gene that is 5' of or overlaps the summit
+    my $five_prime_genes = $genes->search({type  => 'gene',
+					   seqid => $summit->seqid,
+					   start   => {'<=', $summit->end}},
+					  {order_by => { -desc => 'end' }},
+	);
+    my $fp_gene = $five_prime_genes->next;
+
+    # Get 5' gene details if it exists
+    my ($fp_gene_id, $fp_strand, $fp_gene_distance, $fp_onlist, $fp_parts_text) = 
+	qw(. . . . .);
+    if (defined $fp_gene) {
+	$fp_gene->infer_introns if defined $fp_gene;
+	$fp_gene_id       = defined $fp_gene ? $fp_gene->feature_id           : 'N/A';
+	$fp_strand = $fp_gene->strand;
+	$fp_gene_distance = defined $fp_gene ? $summit->start - $fp_gene->end : 'N/A';
+	$fp_onlist = exists $GENE_IDs{$fp_gene_id} ? 'yes' : 'no';
+
+	# Get overlapping parts
+	my %fp_parts;
+	if ($fp_gene->end < $summit->start) {
+	    if ($fp_strand eq '+') {
+		$fp_parts{'downstream'}++;
+	    }
+	    else {
+		$fp_parts{'upstream'}++;
+	    }
+	}
+	else {
+	    my @fp_children;
+	    $fp_gene->get_recursive_children(\@fp_children);
+	    my @fp_overlaps = grep {($_->start <= $summit->end &&
+				     $_->end   >= $summit->start)} @fp_children;
+	    map {$fp_parts{$_->type}++} @fp_overlaps;
+	    
+	}
+	$fp_parts_text = join ',', sort(keys(%fp_parts));
+    }
+    
+    # Get closest gene that is 3' of or overlaps the summit
+    my $three_prime_genes = $genes->search({type  => 'gene',
+					    seqid => $summit->seqid,
+					    end   => {'>=', $summit->start}},
+					   {order_by => { -asc => 'start' }},
+	);
+    
+    # Get 3' gene details if it exists
+    my $tp_gene = $three_prime_genes->next;
+    my ($tp_gene_id, $tp_strand, $tp_gene_distance, $tp_onlist, $tp_parts_text) = 
+	qw(. . . . .);
+    if (defined $tp_gene) {
+	$tp_gene->infer_introns if defined $tp_gene;;
+	$tp_gene_id       = defined $tp_gene ? $tp_gene->feature_id           : 'N/A';
+	$tp_strand = $tp_gene->strand;
+	$tp_gene_distance = defined $tp_gene ? $summit->end - $tp_gene->start : 'N/A';
+	$tp_onlist = exists $GENE_IDs{$tp_gene_id} ? 'yes' : 'no';
+    
+	# Get 3' gene details if it exists
+	my %tp_parts;
+	if ($tp_gene->start > $summit->end) {
+	    if ($tp_strand eq '+') {
+		$tp_parts{'upstream'}++;
+	    }
+	    else {
+		$tp_parts{'downstream'}++;
+	    }
+	}
+	else {
+	    my @tp_children;
+	    $tp_gene->get_recursive_children(\@tp_children);
+	    my @tp_overlaps = grep {($_->start <= $summit->end &&
+				     $_->end   >= $summit->start)} @tp_children;
+	    map {$tp_parts{$_->type}++} @tp_overlaps;
+	}
+	$tp_parts_text = join ',', sort(keys(%tp_parts));
+    }
+
+    print join "\t", ($summit_id, $summit_locus, $fp_onlist,
+		      $fp_gene_id, $fp_gene_distance, $fp_strand,
+		      $fp_parts_text, $tp_onlist, $tp_gene_id,
+		      $tp_gene_distance, $tp_strand, $tp_parts_text);
+
+    print "\n";
+    print '';
+}
+
+# # Get the feature ID
+# my $mrna_id = $mrna->feature_id;
+# # Get all the exons for this mRNA
+# my $exons = $mrna->exons;
+# my $e_count = $exons->count;
+# my ($e_length, $e_gc);
+# # Iterate over each exon
+# while (my $exon = $exons->next) {
+#   $e_length += $exon->length;
+#   $e_gc     += $exon->gc_content;
+# }
+# print join "\t", int($e_length/$e_count), $e_gc/$e_count;
+# print "\n";
+# # Introns don't exist in the dataset, so GAL
+# # will infer them on the fly.
+# my $introns = $mrna->introns;
+# my $i_count = $introns->count;
+# my ($i_length, $i_gc);
+# while (my $intron = $introns->next) {
+#   $i_length += $intron->length;
+#   $i_gc     += $intron->gc_content;
+# }
+# print $i_length ? join("\t", int($i_length/$i_count), '',
+# 			 $i_gc/$i_count) : "\t\t";
+# print "\n";
