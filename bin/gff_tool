@@ -1306,9 +1306,10 @@ sub validate {
 
   my $files = shift;
 
+  my %valid_so_terms;
   my ($so_data) = parse_so_file();
-  #map {$valid_so_terms{$_}++;$valid_so_terms{$so_data->{map}{$_}}++}
-  #  keys %{$so_data->{terms}};
+  # map {$valid_so_terms{$_}++;$valid_so_terms{$so_data->{map}{$_}}++}
+  #     keys %{$so_data->{terms}};
 
     for my $file (@{$files}) {
 	warn "Validating: $file\n";
@@ -1318,7 +1319,7 @@ sub validate {
 	my $line_count;
 	my %pragmas;
 	my %errors;
-	my %valid_so_terms;
+	# my %valid_so_terms;
 	my $gff_version;
 	my $gvf_version;
 	my %feature_ids;
@@ -1378,9 +1379,9 @@ sub validate {
 		}
 		else {
 		    if (! $valid_so_terms{sequence_feature}{$type}) {
-			my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
-			push @{$errors{$error_code}}, [$line_count, $line];
-			warn "WARNING : $error_code : $line\n";
+			# my $error_code = 'invalid_type_column_must_be_SO_term_or_ID';
+			# push @{$errors{$error_code}}, [$line_count, $line];
+			# warn "WARNING : $error_code : $line\n";
 		    }
 		}
 		# Start
@@ -1464,11 +1465,14 @@ sub validate {
 			    warn "WARNING : $error_code : ($all_ids) $line\n";
 			}
 			my $id = $values[0];
-			if (++$feature_ids{$id} > 1) {
-			    my $error_code = 'invalid_ID_attribute_not_unique';
-			    push @{$errors{$error_code}}, [$line_count, $line];
-			    warn "WARNING : $error_code : ($id) $line\n";
-			}
+
+			# 
+			# if (++$feature_ids{$id} > 1) {
+			#     my $error_code = 'invalid_ID_attribute_not_unique';
+			#     push @{$errors{$error_code}}, [$line_count, $line];
+			#     warn "WARNING : $error_code : ($id) $line\n";
+			# }
+
 		    }
 		    # Name
 		    elsif ($key eq 'Name') {
@@ -3101,21 +3105,27 @@ sub calc_titv {
 sub gvf_stats {
 
     my $files = shift;
-    my ($count, $score, $score_count, $score30p, $ti, $tv, $het, $hom);
+    my ($count, $nc_count, $score, $score_count, $score30p, $ti, $tv, $het, $hom);
 
     $meta_no = 1;
     $| = 1;
 
-    print join "\t", qw(File Count 1stQrt_Score Median_Score 3rdQrt_Score %Q>30 Het/Hom Ti/Tv);
+    print join "\t", qw(File Count No-calls 1stQrt_Score Median_Score 3rdQrt_Score %Q>30 Het/Hom Ti/Tv);
     print "\n";
     for my $file (@files) {
 	my $IN = fh_in($file);
 	my $stat = Statistics::Descriptive::Full->new();
-	($count, $score, $score_count, $score30p, $ti, $tv, $het, $hom) = ();
+	($count, $nc_count, $score, $score30p, $ti, $tv, $het, $hom) = (0,0,0,0,0,0,0,0);
+	$score_count = 0;
+      FEATURE:
 	while (my $f = next_feature_hash($IN)) {
-	    next unless $f->{type} eq 'SNV';
+	    next FEATURE unless $f->{type} eq 'SNV';
 	    my $a = $f->{attributes};
-	    next unless ref $a->{Variant_seq} eq 'ARRAY';
+	    next FEATURE unless ref $a->{Variant_seq} eq 'ARRAY';
+	    unless (grep {/[^\^]/} @{$a->{Variant_seq}}) {
+		$nc_count++;
+		next FEATURE;
+	    }
 	    next unless ref $a->{Reference_seq} eq 'ARRAY';
 	    $count++;
 	    if ($f->{score} =~ /\d+/) {
@@ -3232,7 +3242,7 @@ sub gvf_stats {
 	my $het_hom_ratio = $hom ? sprintf("%.3f",$het/$hom)              : '.';
 	my $pct_het       = $hom ? sprintf("%.3f",$het/($het + $hom)*100) : '.';
 	my $ti_tv_ratio   = $tv  ? sprintf("%.3f",$ti/$tv)                : '.';
-	print join "\t", ($file, $count, $scoreQ1, $scoreQ2, $scoreQ3, $score30p, $het_hom_ratio, $ti_tv_ratio);
+	print join "\t", ($file, $count, $nc_count, $scoreQ1, $scoreQ2, $scoreQ3, $score30p, $het_hom_ratio, $ti_tv_ratio);
 	print "\n";
     }
     exit;
