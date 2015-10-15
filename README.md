@@ -60,7 +60,7 @@ iterate over feature objects.
 
 # CONSTRUCTOR #
 
-New Annotation objects are created by the class method new. Arguments
+New Annotation objects are created by the class method `new`. Arguments
 should be passed to the constructor as a list (or reference) of key
 value pairs. All attributes of the Annotation object can be set in the
 call to new, but reasonable defaults will be used where ever possilbe
@@ -110,71 +110,78 @@ appropriate attributes:
     to their sequence. Access to the sequence in provided by
     Bio::DB::Fasta.
 
-new
-           Title   : new
-           Usage   : GAL::Annotation->new();
-           Function: Creates a GAL::Annotation object;
-           Returns : A GAL::Annotation object
-           Args    : A list of key value pairs for the attributes specified above.
+### new ###
+
+       Title   : new
+       Usage   : GAL::Annotation->new();
+       Function: Creates a GAL::Annotation object;
+       Returns : A GAL::Annotation object
+       Args    : A list of key value pairs for the attributes specified above.
 
 # ATTRIBUTES #
 
 All attributes can be supplied as parameters to the GAL::Annotation
 constructor as a list (or referenece) of key value pairs.
 
-  parser
-         Title   : parser
-         Usage   : $parser = $self->parser();
-         Function: Create or return a parser object.
-         Returns : A GAL::Parser::subclass object.
-         Args    : (class => gal_parser_subclass)
-                   See GAL::Parser and its subclasses for more arguments.
-         Notes   : The parser object is created as a singleton, but it
-                   can be changed by passing new arguments to a call to
-                   parser.
+### parser ###
 
-  storage
-          Title   : storage
-          Usage   : $storage = $self->storage();
-          Function: Create or return a storage object.
-          Returns : A GAL::Storage::subclass object.
-          Args    : (class => gal_storage_subclass)
-                    See GAL::Storage and its subclasses for more arguments.
-          Notes   : The storage object is created as a singleton and can not be
-                    destroyed or recreated after being created.
+     Title   : parser
+     Usage   : $parser = $self->parser();
+     Function: Create or return a parser object.
+     Returns : A GAL::Parser::subclass object.
+     Args    : (class => gal_parser_subclass)
+               See GAL::Parser and its subclasses for more arguments.
+     Notes   : The parser object is created as a singleton, but it
+               can be changed by passing new arguments to a call to
+               parser.
 
-  fasta
-        The fasta attribute is provided by GAL::Base, see that module for
-        more details.
+### storage ###
+
+    Title   : storage
+    Usage   : $storage = $self->storage();
+    Function: Create or return a storage object.
+    Returns : A GAL::Storage::subclass object.
+    Args    : (class => gal_storage_subclass)
+              See GAL::Storage and its subclasses for more arguments.
+    Notes   : The storage object is created as a singleton and can not be
+              destroyed or recreated after being created.
+
+### fasta ###
+
+    The fasta attribute is provided by GAL::Base, see that module for
+    more details.
 
 # METHODS #
 
-  features
-          Title   : features
-          Usage   : $self->features();
-          Function: Return a GAL::Schema::Result::Feature object (a
-                    DBIx::Class::ResultSet for all features).
-          Returns : A GAL::Schema::Result::Feature object
-          Args    : N/A
+### features ###
 
-  schema
-          Title   : schema
-          Usage   : $self->schema();
-          Function: Create and/or return the DBIx::Class::Schema object
-          Returns : DBIx::Class::Schema object.
-          Args    : N/A - Arguments are provided by the GAL::Storage object.
+    Title   : features
+    Usage   : $self->features();
+    Function: Return a GAL::Schema::Result::Feature object (a
+              DBIx::Class::ResultSet for all features).
+    Returns : A GAL::Schema::Result::Feature object
+    Args    : N/A
 
-  load_files
-         Title   : load_files
-         Usage   : $a = $self->load_files();
-         Function: Parse and store all of the features in a file. If a single
-                   file is given as an argument and if there are gff[3] and
-                   sqlite versions of that files base name then time stamps
-                   are compared and the database is only (re)loaded if the
-                   GFF3 file is newer.
-         Returns : N/A
-         Args    : A list of files.
-         Notes   : Default
+### schema ###
+
+    Title   : schema
+    Usage   : $self->schema();
+    Function: Create and/or return the DBIx::Class::Schema object
+    Returns : DBIx::Class::Schema object.
+    Args    : N/A - Arguments are provided by the GAL::Storage object.
+
+### load_files ###
+
+    Title   : load_files
+    Usage   : $a = $self->load_files();
+    Function: Parse and store all of the features in a file. If a single
+              file is given as an argument and if there are gff[3] and
+              sqlite versions of that files base name then time stamps
+              are compared and the database is only (re)loaded if the
+              GFF3 file is newer.
+    Returns : N/A
+    Args    : A list of files.
+    Notes   : Default
 
 # DIAGNOSTICS #
 
