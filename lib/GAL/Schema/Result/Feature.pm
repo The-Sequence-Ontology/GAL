@@ -594,7 +594,7 @@ sub get_feature_bins {
 
 =cut
 
-sub to_gff3f_recursive {shift->as_gff3_recursive(@_)}
+sub to_gff3_recursive {shift->as_gff3_recursive(@_)}
 
 sub as_gff3_recursive {
 
