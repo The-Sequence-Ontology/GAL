@@ -1,6 +1,6 @@
-#NAME
-
 GAL::Annotation - Genome Annotation Library
+
+![GAL](https://github.com/The-Sequence-Ontology/GAL/blob/master/gal-image.jpg)
 
 #VERSION
 
