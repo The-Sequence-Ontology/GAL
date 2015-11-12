@@ -1,42 +1,50 @@
-# NAME #
+#NAME
 
 GAL::Annotation - Genome Annotation Library
 
-# VERSION #
+#VERSION
 
 This document describes GAL::Annotation version 0.01
 
-# SYNOPSIS #
+#SYNOPSIS
 
-    use GAL::Annotation;
+```perl 
+use GAL::Annotation;
 
-    # Assuming defaults (GFF3 parser and SQLite storage)
-    my $annot = GAL::Annotation->new(qw(file.gff file.fasta);
-    my $features = $annot->features;
+# Assuming defaults (GFF3 parser and SQLite storage)
+my $annot = GAL::Annotation->new(qw(file.gff file.fasta);
+my $features = $annot->features;
 
-    # Otherwise be explicit about everything.
-    my %feat_store_args = (class    => 'SQLite',
-                           database => '/path/to/file.gff'
-                          );
-    my $feat_store = GAL::Annotation->new(storage => \%feat_store_args,
-                                          fasta   => '/path/to/file.fa');
-    $feat_store->load_files($feature_file);
-    my $features = $feat_store->schema->resultset('Feature');
+# Otherwise be explicit about everything.
+my %feat_store_args = (
+    class    => 'SQLite',
+    database => '/path/to/file.gff'
+);
+my $feat_store = GAL::Annotation->new(
+    storage => \%feat_store_args,
+    fasta   => '/path/to/file.fa'
+);
 
-    # Either way, once you have features - get to work.
-    my $mrnas = $features->search({type => 'mRNA'});
-    while (my $mrna = $mrnas->next) {
-      print $mrna->feature_id . "\n";
-      my $CDSs = $mrna->CDSs;
-      while (my $CDS = $CDSs->next) {
-        print join "\n", ($CDS->start,
-                          $CDS->end,
-                          $CDS->seq,
-                         );
-      }
+$feat_store->load_files($feature_file);
+my $features = $feat_store->schema->resultset('Feature');
+
+# Either way, once you have features - get to work.
+my $mrnas = $features->search( {type => 'mRNA'} );
+while (my $mrna = $mrnas->next) {
+    print $mrna->feature_id . "\n";
+    my $CDSs = $mrna->CDSs;
+    while (my $CDS = $CDSs->next) {
+        print join "\n", (
+            $CDS->start,
+            $CDS->end,
+            $CDS->seq,
+        );
     }
+}    
 
-# DESCRIPTION #
+```
+
+#DESCRIPTION
 
 The Genome Annotation Library (GAL) is a collection of modules that
 strive to make working with genome annotations simple, intuitive and
@@ -58,7 +66,7 @@ list). Schema objects are provided by DBIx::Class and a familiarity
 with that package is necessary to fully understand how to query and
 iterate over feature objects.
 
-# CONSTRUCTOR #
+#CONSTRUCTOR
 
 New Annotation objects are created by the class method `new`. Arguments
 should be passed to the constructor as a list (or reference) of key
@@ -67,8 +75,10 @@ call to new, but reasonable defaults will be used where ever possilbe
 to keep object creation simple. An simple example of object creation
 would look like this:
 
-    my $feat_store = GAL::Annotation->new($gff_file);
-    my $feat_store = GAL::Annotation->new($gff_file, $fasta_file);
+```perl
+my $feat_store = GAL::Annotation->new($gff_file);
+my $feat_store = GAL::Annotation->new($gff_file, $fasta_file);
+```
 
 The resulting object would use a GFF3 parser and SQLite storage by
 default The first example would not have access to feature sequence,
@@ -76,13 +86,16 @@ the second one would.
 
 A more complex object creation might look like this:
 
-    my $feat_store = GAL::Annotation->new(parser  => {class => gff3},
-                                          storage => {class => mysql,
-                                                      dsn   => 'dbi:mysql:database'
-                                                      user  => 'me',
-                                                      password => 'secret'
-                                          fasta   =>  '/path/to/fasta/files/'
-                                          );
+```perl
+my $feat_store = GAL::Annotation->new(
+    parser  => { class => gff3 },
+    storage => {
+        class    => mysql,
+        dsn      => 'dbi:mysql:database' user => 'me',
+        password => 'secret' fasta => '/path/to/fasta/files/'
+    }
+);
+```
 
 The constructor recognizes the following parameters which will set the
 appropriate attributes:
@@ -198,15 +211,27 @@ variables.
 
 Modules in GAL/lib use the following modules:
 
-Bio::DB::Fasta Carp DBD::SQLite DBI List::Util Scalar::Util
-Set::IntSpan::Fast Statistics::Descriptive Text::RecordParser
+* Bio::DB::Fasta 
+* Carp 
+* DBD::SQLite 
+* DBI 
+* List::Util 
+* Scalar::Util
+* Set::IntSpan::Fast Statistics::Descriptive 
+* Text::RecordParser
 
 Some script in GAL/bin and/or GAL/lib/GAL/t use the following
 modules:
 
-Data::Dumper FileHandle Getopt::Long IO::Prompt List::MoreUtils
-TAP::Harness Test::More Test::Pod::Coverage URI::Escape
-XML::LibXML::Reader
+* Data::Dumper 
+* FileHandle Getopt::Long 
+* IO::Prompt 
+* List::MoreUtils
+* TAP::Harness 
+* Test::More 
+* Test::Pod::Coverage 
+* URI::Escape
+* XML::LibXML::Reader
 
 # INCOMPATIBILITIES #
 
