@@ -15,29 +15,17 @@ use GAL::Annotation;
 my $annot = GAL::Annotation->new(qw(file.gff file.fasta);
 my $features = $annot->features;
 
-# Otherwise be explicit about everything.
-my %feat_store_args = (
-    class    => 'SQLite',
-    database => '/path/to/file.gff'
-);
-my $feat_store = GAL::Annotation->new(
-    storage => \%feat_store_args,
-    fasta   => '/path/to/file.fa'
-);
-
-$feat_store->load_files($feature_file);
-my $features = $feat_store->schema->resultset('Feature');
-
 # Either way, once you have features - get to work.
 my $mrnas = $features->search( {type => 'mRNA'} );
 while (my $mrna = $mrnas->next) {
     print $mrna->feature_id . "\n";
-    my $CDSs = $mrna->CDSs;
-    while (my $CDS = $CDSs->next) {
+    # Introns don't exist in the GFF3 file so infer them
+    my $intons = $mrna->introns;
+    while (my $intron = $introns->next) {
         print join "\n", (
-            $CDS->start,
-            $CDS->end,
-            $CDS->seq,
+            $intron->start,
+            $intron->end,
+            $intron->seq,
         );
     }
 }    
