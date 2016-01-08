@@ -199,16 +199,54 @@ sub mRNAs {
 
  Title   : is_coding
  Usage   : $is_coding = $self->is_coding
- Function: Return true if this gene has mRNA
+ Function: Return true if this gene has mRNA - this function will be
+           deprecated in favor of has_mRNA
  Returns : 1 or undef
  Args    : None
 
 =cut
 
 sub is_coding {
+    my $self = shift;
+    return 1 if ($self->has_mRNA || $self->has_CDS);
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 has_mRNA
+
+ Title   : has_mRNA
+ Usage   : $has_mRNA = $self->has_mRNA
+ Function: Return true if this gene has any mRNA
+ Returns : 1 or undef
+ Args    : None
+
+=cut
+
+sub has_mRNA {
 
   my $self = shift;
   return 1 if grep {$_->type eq 'mRNA'} $self->children(undef, {distinct => 1})->all;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 has_CDS
+
+ Title   : has_CDS
+ Usage   : $has_CDS = $self->has_CDS
+ Function: Return true if this gene has and CDS children
+ Returns : 1 or undef
+ Args    : None
+
+=cut
+
+sub has_CDS {
+
+  my $self = shift;
+  my @all_children;
+  $self->get_recursive_children(\@all_children);
+  return 1 if grep {$_->type eq 'CDS'} @all_children;
 }
 
 #-----------------------------------------------------------------------------
