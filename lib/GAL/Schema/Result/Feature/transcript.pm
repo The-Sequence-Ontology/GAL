@@ -86,6 +86,25 @@ sub exons {
 
 #-----------------------------------------------------------------------------
 
+=head2 has_CDS
+
+ Title   : has_CDS
+ Usage   : $has_CDS = $self->has_CDS
+ Function: Return true if this transcript has any CDS children
+ Returns : 1 or undef
+ Args    : None
+
+=cut
+
+sub has_CDS {
+  my $self = shift;
+  my @all_children;
+  $self->get_recursive_children(\@all_children);
+  return 1 if grep {$_->type eq 'CDS'} @all_children;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 introns
 
  Title   : introns
