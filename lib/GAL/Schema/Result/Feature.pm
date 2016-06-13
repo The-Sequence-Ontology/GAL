@@ -389,7 +389,32 @@ sub gc_content {
 
   my $seq = $self->seq;
   my $length = length $seq;
-  my $gc = $seq =~ tr/GC/GC/;
+  my $gc = $seq =~ tr/GCgc/GCgc/;
+  my $gc_ratio = $gc / $length;
+  return $gc_ratio;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 gc_content_noAm
+
+ Title   : gc_content_noAm
+ Usage   : $self->gc_content_noAm
+ Function: Returns the ratio of the count of G or C nts over the
+	   sequence length, but excluding the IUPAC ambiguity codes
+	   for which the GC status can not be determined.
+ Returns : A fractional value from 0 to 1
+ Args    : None
+
+=cut
+
+sub gc_content_noAm {
+  my $self = shift;
+  my $seq = $self->seq;
+  my $length = length $seq;
+  my $ambiguous_bases = $seq =~ tr/NRYKMBDHVnrykmbdhv/NRYKMBDHVnrykmbdhv/;
+  $length -= $ambiguous_bases;
+  my $gc = $seq =~ tr/GCSgcs/GCSgcs/;
   my $gc_ratio = $gc / $length;
   return $gc_ratio;
 }
