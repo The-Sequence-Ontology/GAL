@@ -61,6 +61,8 @@ my $data = parse_data(@files);
 my $stats = get_stats($data, @files);
 print_stats($stats);
 
+exit(0);
+
 #-----------------------------------------------------------------------------
 #----------------------------------- SUBS ------------------------------------
 #-----------------------------------------------------------------------------
@@ -90,6 +92,7 @@ sub parse_data {
 	    else {
 		$datum = pop @line_data;
 	    }
+	    next unless $datum =~ /-?\d*\.?\d+/;
 	    push @{$data{$file}{data}}, $datum;
 	}
 	if ($footer) {
