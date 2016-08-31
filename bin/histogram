@@ -106,6 +106,8 @@ else {
     print_histogram($histogram);
 }
 
+exit 0;
+
 #-----------------------------------------------------------------------------
 #----------------------------------- SUBS ------------------------------------
 #-----------------------------------------------------------------------------
@@ -126,20 +128,23 @@ sub parse_data {
 		#This looks like it would allow evaluation of multiple columns
 		#from multiple files, but that is prevented at the begining of
 		#the script with a die.
+	      COL:
 		for my $col (@cols) {
-			while (<$IN>) {
-				my @line_data = split;
-				my $datum;
-				$datum = $line_data[$col];
-				push @{$data[$index]}, $datum;
-				$min ||= $datum;
-				$max ||= $datum;
-				$min = $datum if $datum < $min;
-				$max = $datum if $datum > $max;
-			}
-			#Reposition the file pointer to the start of the file
-			seek($IN, 0, 0);
-			$index++ if scalar @cols > 1;
+		  LINE:
+		    while (<$IN>) {
+			my @line_data = split;
+			my $datum;
+			$datum = $line_data[$col];
+			next unless $datum =~ /-?\d*\.?\d+/;
+			push @{$data[$index]}, $datum;
+			$min ||= $datum;
+			$max ||= $datum;
+			$min = $datum if $datum < $min;
+			$max = $datum if $datum > $max;
+		    }
+		    #Reposition the file pointer to the start of the file
+		    seek($IN, 0, 0);
+		    $index++ if scalar @cols > 1;
 		}
 		$index++;
 	}
