@@ -112,14 +112,18 @@ sub get_stats {
 		$stat_hash{$file}{order}      = $$data{$file}{order};
 		$stat_hash{$file}{mean}       = $stat->mean();
 		$stat_hash{$file}{trm_mean}   = $stat->trimmed_mean(0.1, 0.1);
+		$stat_hash{$file}{min}        = $stat->min();
+		$stat_hash{$file}{q1}         = $stat->quantile(1);
 		$stat_hash{$file}{median}     = $stat->median();
+		$stat_hash{$file}{q3}         = $stat->quantile(3);
+		$stat_hash{$file}{max}        = $stat->max();
+		$stat_hash{$file}{iqr}        = ($stat_hash{$file}{q3} -
+						 $stat_hash{$file}{q1});
 		$stat_hash{$file}{mode}       = $stat->mode();
 		$stat_hash{$file}{variance}   = $stat->variance();
 		$stat_hash{$file}{std_dev}    = $stat->standard_deviation();
 		$stat_hash{$file}{count}      = $stat->count();
 		$stat_hash{$file}{sum}        = $stat->sum();
-		$stat_hash{$file}{min}        = $stat->min();
-		$stat_hash{$file}{max}        = $stat->max();
 	}
 	return \%stat_hash;
 }
@@ -132,8 +136,8 @@ sub print_stats {
 		    keys %$stats);
 	print "\n";
 
-	my @stat_types = qw(mean trm_mean median mode std_dev variance 
-			    count sum min max);
+	my @stat_types = qw(mean trm_mean min q1 median q3 max iqr mode std_dev variance 
+			    count sum);
 
 	for my $stat_type (@stat_types) {
 		print "$stat_type\t";

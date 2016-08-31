@@ -54,17 +54,29 @@ Options:
 
     Print every line in file 2 regardless of an ID match in file 1.
 
+  --compare, -c 0,2,5:1,2,7
+
+    Only print the line if the columns to compare are NOT equal.
+    Columns to compare are given as two comma separated lists with the
+    two lists separated by a colon. The lists of column(s) must each
+    of equal length (i.e. if three columns are given before the colon,
+    then three columns must be given after the colon) and consist of
+    0-based integer indeces of columns.
+
 ";
 
-my ($help, $col1, $col2, $split, $pcol1, $pcol2, $print_uniq, $right_outer_join);
-my $opt_success = GetOptions('help'      => \$help,
-			     'col1=s'    => \$col1,
-			     'col2=s'    => \$col2,
-			     'split|s=s' => \$split,
-			     'pcol1=s'   => \$pcol1,
-			     'pcol2=s'   => \$pcol2,
-			     'uniq|u'    => \$print_uniq,
+my ($help, $col1, $col2, $split, $pcol1, $pcol2, $print_uniq,
+    $right_outer_join, $compare);
+
+my $opt_success = GetOptions('help'      	=> \$help,
+			     'col1=s'    	=> \$col1,
+			     'col2=s'    	=> \$col2,
+			     'split|s=s' 	=> \$split,
+			     'pcol1=s'   	=> \$pcol1,
+			     'pcol2=s'   	=> \$pcol2,
+			     'uniq|u'    	=> \$print_uniq,
 			     'right_outer_join' => \$right_outer_join,
+			     'compare|c=s'      => \$compare,
 			      );
 
 die $usage if ! $opt_success;
@@ -90,6 +102,18 @@ my @pcols1;
 my @pcols2;
 @pcols2 = split /,/, $pcol2 if defined $pcol2;
 
+my (@compare1, @compare2);
+
+if ($compare) {
+  my ($compare1_txt, $compare2_txt) = split /:/, $compare;
+  @compare1 = split /,/, $compare1_txt;
+  @compare2 = split /,/, $compare2_txt;
+  if (scalar @compare1 ne scalar @compare1) {
+    print STDERR "FATAL : unequal_compare_lists : $compare\n";
+    die $usage;
+  }
+}
+
 my $index = parse_file(\@cols1, $file1);
 
 open (my $IN, '<', $file2) or die "Can't open $file2 for reading\n$!\n";
@@ -114,6 +138,13 @@ while (<$IN>) {
 
       SET:
 	for my $columns1 (@{$column1_set}) {
+
+	  if ($compare) {
+	    my $txt1 = join ':', @{$columns1}[@compare1];
+	    my $txt2 = join ':', @columns2[@compare2];
+	    next LINE if $txt1 eq $txt2;
+	  }
+
 	  my @print_columns1 = @pcols1 ? @{$columns1}[@pcols1] : @{$columns1};
 	  my $output = join "\t", (@print_columns1, @print_columns2);
 	  next SET if $print_uniq && $uniq{$output}++;

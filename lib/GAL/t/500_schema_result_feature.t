@@ -78,6 +78,11 @@ while (my $feature = $features->next) {
   ok(my $gc = $feature->gc_content,
      '$feature->gc_content');
   ok($gc >= 0 && $gc <= 1, '$gc >= 0 && $gc <= 1');
+  ok(int($gc * 1e5) == 38588, 'int($gc * 1e5) == 38588') if $count == 3;
+  ok(my $gc_am = $feature->gc_content_noAm,
+     '$feature->gc_content_noAm');
+  ok($gc_am >= 0 && $gc <= 1, '$gc_am >= 0 && $gc <= 1');
+  ok(int($gc_am * 1e5) == 39663, 'int($gc_am * 1e5) == 39663') if $count == 3;
   ok(my $genomic_seq = $feature->genomic_seq,
      '$feature->genomic_seq');
   if ($strand eq '-') {

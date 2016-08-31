@@ -60,6 +60,18 @@ sub method_list {
   return GAL::List::Numeric->new(list => \@values);
 }
 
+sub longest {
+  my $self = shift;
+  my ($longest) = sort {$b->length <=> $a->length} $self->all;
+  return $longest;
+}
+
+sub shortest {
+  my $self = shift;
+  my ($shortest) = sort {$a->length <=> $b->length} $self->all;
+  return $shortest;
+}
+
 #sub search_large_list {
 #
 #  my ($self, $column, $type, $list) = @_;
