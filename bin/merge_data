@@ -114,7 +114,7 @@ if ($compare) {
   }
 }
 
-my $index = parse_file(\@cols1, $file1);
+my ($index, $column1_count) = parse_file(\@cols1, $file1);
 
 open (my $IN, '<', $file2) or die "Can't open $file2 for reading\n$!\n";
 
@@ -132,7 +132,8 @@ while (<$IN>) {
 	my $column1_set = $index->{$key};
 	if (! $column1_set) {
 	  my @tmp;
-	  map {push @tmp, ''} (0 ..  $#pcols1);
+	  my $column1_idx = @pcols1 ? $#pcols1 : $column1_count - 1;
+	  map {push @tmp, '.'} (0 ..  $column1_idx);
 	  $column1_set = [\@tmp];
 	}
 
@@ -166,12 +167,14 @@ sub parse_file {
 
 	open (my $IN, '<', $file1) or die "Can't open $file1 for reading\n$!\n";
 
+	my $column1_count;
 	my %index_hash;
 	while (<$IN>) {
 		chomp;
 		my @columns1 = split /$split/, $_;
 		my $key = join ':', @columns1[@{$cols1}];
 		push @{$index_hash{$key}}, \@columns1;
+		$column1_count = scalar @columns1;
 	}
-	return \%index_hash;
+	return \%index_hash, $column1_count;
 }
