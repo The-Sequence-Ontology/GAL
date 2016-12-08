@@ -7,6 +7,9 @@ use Statistics::Descriptive::Discrete;
 use Text::Graph;
 use Text::Graph::DataSet;
 use File::Temp qw(tempfile);
+use File::Spec;
+# use Devel::Size qw(size total_size);
+# use IO::Compress::Gzip qw(gzip $GzipError);
 
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
@@ -139,6 +142,14 @@ Options:
       Print a comma separated list of bit flag values (as words) for
       each alignment.
 
+  --estimate_read_count 100000,.25
+
+    Estimate the number of reads based on file size and line size from
+    reading the top of the file. Provide 2 comma separated values.
+    The first value is the number of lines to sample, and the second
+    value if the compression ratio of BAM to SAM.  The second value is
+    optional.
+
 Code:
 
 The --filter option takes a block of perl code and the read is SKIPPED
@@ -251,26 +262,28 @@ XE	Number of supporting seeds
 
 my ($help, $summary, $qc, $FILTER, $bflag, $BFLAG, $clean, $vaast_clean,
     $region, $ill_rg, $sample_name, $bam_format, $fastq, $headers,
-    $intervals, $OPTIONS, $TMPDIR, $print_flags);
+    $intervals, $OPTIONS, $TMPDIR, $print_flags, $estimate_read_count);
 
-my $opt_success = GetOptions('help'          => \$help,
-			     'summary|s'     => \$summary,
-			     'qc'            => \$qc,
-			     'filter|i=s'    => \$FILTER,
-			     'FLAG|F=i'      => \$BFLAG,
-			     'flag|f=i'      => \$bflag,
-			     'clean|c'       => \$clean,
-			     'vaast_clean|a' => \$vaast_clean,
-			     'regions|g=s'   => \$region,
-			     'ill_rg|r'      => \$ill_rg,
-			     'sample|p=s'    => \$sample_name,
-			     'bam|b'         => \$bam_format,
-			     'fastq|q'       => \$fastq,
-			     'headers|h'     => \$headers,
-			     'intervals|v'   => \$intervals,
-			     'options|o'     => \$OPTIONS,
-			     'tmpdir|t=s'    => \$TMPDIR,
-			     'print_flags'   => \$print_flags,
+my $opt_success = GetOptions(
+			     'help|h'                 =>  \$help,
+			     'summary|s'              =>  \$summary,
+			     'qc'                     =>  \$qc,
+			     'filter|i=s'             =>  \$FILTER,
+			     'FLAG|F=i'               =>  \$BFLAG,
+			     'flag|f=i'               =>  \$bflag,
+			     'clean|c'                =>  \$clean,
+			     'vaast_clean|a'          =>  \$vaast_clean,
+			     'regions|g=s'            =>  \$region,
+			     'ill_rg|r'               =>  \$ill_rg,
+			     'sample|p=s'             =>  \$sample_name,
+			     'bam|b'                  =>  \$bam_format,
+			     'fastq|q'                =>  \$fastq,
+			     'headers'                =>  \$headers,
+			     'intervals|v'            =>  \$intervals,
+			     'options|o'              =>  \$OPTIONS,
+			     'tmpdir|t=s'             =>  \$TMPDIR,
+			     'print_flags'            =>  \$print_flags,
+			     'estimate_read_count=s'  =>  \$estimate_read_count,
 			     );
 
 if (! $opt_success) {
@@ -343,6 +356,9 @@ elsif ($fastq) {
 }
 elsif ($print_flags) {
     print_flags(\@files);
+}
+elsif ($estimate_read_count) {
+    estimate_read_count($estimate_read_count, \@files);
 }
 else {
     print_file(\@files);
@@ -713,6 +729,73 @@ sub print_flags {
 
 #-----------------------------------------------------------------------------
 
+sub estimate_read_count {
+
+	my ($data, $files) = @_;
+
+	my ($line_count, $compression) = split /,/, $data;
+	$line_count  ||= 100000;
+	$compression ||= 0.25;
+
+        print '#';
+	print join("\t", qw(Filename SM_ID File_Size Est_Read_Length
+			    Median_Line_Length Est_Read_Count
+			    Total_Seq_Length Hsap_WGS_Depth));
+	print "\n";
+
+	for my $file (@{$files}) {
+		my $iterator = make_iterator($file);
+		my $read_lengths  = Statistics::Descriptive::Discrete->new();
+		my $line_lengths = Statistics::Descriptive::Discrete->new();
+		my $count = 0;
+		# my $line_data;
+		while (my $a = &{$iterator}) {
+                        next if $count++ < $line_count;
+			last if $count++ > $line_count * 2;
+			$read_lengths->add_data($a->{length}) if $a->{length};
+
+			my $line =
+			  join("\t", @{$a}{qw(cigar flag isize
+			 		      length map mpos mrnm
+			 		      pos qname qual rname
+			 		      seq)}, @{$a->{opt}});
+			my $line_length = length($line);
+			# $line_data .= "$line\n";
+			$line_lengths->add_data($line_length);
+			print '';
+		}
+                my $SM_ID = ref $HEADERS{RG} eq 'ARRAY' ? $HEADERS{RG}[0]{SM} : '';
+		# my $compressed_data;
+		# gzip(\$line_data, \$compressed_data)
+		#   or die "FATAL : gzip failed : $GzipError\n";
+		# my $data_size = size($line_data);
+		# my $compressed_size = size($compressed_data);
+		# my $compression = $compressed_size / $data_size;
+
+		my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$fsize,
+		    $atime,$mtime,$ctime,$blksize,$blocks)
+		  = stat($file);
+		my $esize = $fsize / $compression;
+		my $median_read_length = $read_lengths->count ? $read_lengths->median : 0;
+		my $median_line_length = $line_lengths->count ? $line_lengths->median : 0;
+		my $read_count = $median_line_length ? sprintf("%.0f", $esize / $median_line_length) : 0;
+		my $total_seq_length = sprintf("%.0f", $read_count * $median_read_length);
+		my $three_gig_coverage = sprintf("%.2f", $total_seq_length / 3_000_000_000);
+		my ($volume,$directories,$filename) = File::Spec->splitpath($file);
+
+		print join("\t", ($filename, $SM_ID, $fsize, $median_read_length,
+				  $median_line_length, $read_count,
+				  $total_seq_length,
+				  $three_gig_coverage));
+
+		print "\n";
+	}
+}
+
+
+
+#-----------------------------------------------------------------------------
+
 sub add_illumina_readgroup {
 
     my $files = shift;
@@ -868,6 +951,7 @@ sub make_iterator {
 
     my ($file, $region, $options, $fh) = @_;
 
+    $region ||= '';
     if ($region) {
 	`samtools index $file` unless -e ($file . 'bai');
     }
