@@ -197,7 +197,7 @@ Options:
 
       Pass in a file with IDs and remove sequences with these IDs.
 
-  --swap_ids
+  --map_ids
 
       Pass in a file with two columns of IDs and map the IDs in the
       fasta headers from the first column of the ID file to the second
@@ -235,7 +235,7 @@ my ($summary, $chunks, $split, $break, $eval_code, $eval_all,
     $comp_seq, $rev_comp, $uniq, $uniq_sub, $shuffle_order,
     $shuffle_seq, $shuffle_codon, $shuffle_pick, $select_file,
     $remove_file, $print, $mRNAseq, $EST, $trim_maker_utr, $table,
-    $swap_ids, $fix_prot, $subseq, $tile, $filter_shorter,
+    $map_ids, $fix_prot, $subseq, $tile, $filter_shorter,
     $filter_longer,$mask_fasta);
 
 GetOptions('summary'          => \$summary,
@@ -277,7 +277,7 @@ GetOptions('summary'          => \$summary,
 	   'fix_prot'         => \$fix_prot,
 	   'mRNAseq'          => \$mRNAseq,
 	   'EST'              => \$EST,
-	   'swap_ids=s'       => \$swap_ids,
+	   'map_ids=s'        => \$map_ids,
 	   'subseq=s'         => \$subseq,
 	   'tile=s'           => \$tile,
 	   'filter_shorter=i' => \$filter_shorter,
@@ -338,7 +338,7 @@ $print++ unless grep {$_} ($chunks,
 			   $select_file,
 			   $mRNAseq,
 			   $EST,
-			   $swap_ids,
+			   $map_ids,
 			   $subseq,
 			   $tile,
 			   $filter_shorter,
@@ -400,7 +400,7 @@ shuffle_codon()             if $shuffle_codon;
 shuffle_pick($shuffle_pick) if $shuffle_pick;
 remove_ids($remove_file)    if $remove_file;
 select_ids($select_file)    if $select_file;
-swap_ids($swap_ids)         if $swap_ids;
+map_ids($map_ids)           if $map_ids;
 subseq($file, $subseq)      if $subseq;
 fix_prot()                  if $fix_prot;
 print_seq()                 if $print;
@@ -1449,7 +1449,7 @@ sub shuffle {
 
 #-----------------------------------------------------------------------------
 #
-#  --swap_ids
+#  --map_ids
 #
 #      Pass in a file with two columns of IDs and map the IDs in the
 #      fasta headers from the first column of the ID file to the second
@@ -1459,7 +1459,7 @@ sub shuffle {
 #
 #-----------------------------------------------------------------------------
 
-sub swap_ids {
+sub map_ids {
 
     my $id_file = shift;
     open (my $IN, '<', $id_file) or

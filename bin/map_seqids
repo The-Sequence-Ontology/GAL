@@ -40,14 +40,23 @@ open (my $GFF, '<', $gff_file) or
   handle_message('FATAL', 'cant_open_file_for_reading',  $gff_file);
 
 my %map;
-while (<$MAP>) {
-  my ($old, $new) = split /\s+/, $_;
-  next if /^(\#|\s)/;
+LINE:
+while (my $line = <$MAP>) {
+  chomp $line;
+  next LINE if $line =~ /^(\#|\s)/;
+  my ($old, $new) = split /\s+/, $line;
   $map{$old} = $new;
 }
 
-while (<$GFF>) {
-  my @fields = split /\t/, $_;
+ROW:
+while (my $line = <$GFF>) {
+
+  if ($line =~ /^\#/) {
+          print $line;
+          next ROW;
+  }
+  chomp $line;
+  my @fields = split /\t/, $line;
   $fields[0] = exists $map{$fields[0]} ? $map{$fields[0]} : $fields[0];
   print join "\t", @fields;
   print "\n";

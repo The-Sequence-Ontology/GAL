@@ -584,7 +584,7 @@ sub parse_so_file {
   $so_file = shift;
 
   $so_file ||= $ENV{SO_OBO};
-  $so_file ||= 'curl -s http://www.sequenceontology.org/resources/obo_files/current_release.obo |';
+  $so_file ||= 'curl -sL http://purl.obolibrary.org/obo/so.obo |';
   open (my $IN, $so_file) or die "FATAL, cant_open_file, $so_file\n";
 
 
