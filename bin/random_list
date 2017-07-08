@@ -37,12 +37,20 @@ Options:
     that given number of values from the top of the shuffled list.
     Default is to print the entire shuffled list.
 
+  --prob_emit, -e 1e-3
+
+    Emit lines with the given probability.  For example if you supply
+    a value of 1e-3 each line will have a 1/1000 chance of being
+    printed and thus over a large number of lines you should print
+    about 1 line for every 1000 lines.
+
 ";
 
-my ($help, $permute, $pick);
-my $opt_success = GetOptions('help'      => \$help,
-			     'permute=i' => \$permute,
-			     'pick=i'    => \$pick,
+my ($help, $permute, $pick, $prob_emit);
+my $opt_success = GetOptions('help'          => \$help,
+			     'permute=i'     => \$permute,
+			     'pick=i'        => \$pick,
+			     'prob_emit|e=s' => \$prob_emit,
 			      );
 
 die $usage if $help || ! $opt_success;
@@ -60,21 +68,55 @@ else {
 	open ($IN, '<', $file) or die "Can't open $file for reading:\n$!\n";
 }
 
-my @list = <$IN>;
-chomp @list;
+if ($prob_emit) {
+    print_prob_emit($IN, $prob_emit);
+}
+else {
+    shuffle($IN, $permute, $pick)
+}
 
-$pick ||= scalar @list;
-$pick = $pick > scalar @list ? scalar @list : $pick;
+exit(0);
 
-for (1 .. $permute) {
+#-----------------------------------------------------------------------------
+#----------------------------------- SUBS ------------------------------------
+#-----------------------------------------------------------------------------
+
+sub shuffle {
+
+    my ($IN, $permute, $pick) = @_;
+
+    my @list = <$IN>;
+    chomp @list;
+
+    $pick ||= scalar @list;
+    $pick = $pick > scalar @list ? scalar @list : $pick;
+    
+    for (1 .. $permute) {
 	#Fisher-Yates Shuffle
 	my $n = scalar @list;
 	while ($n > 1) {
-
-		my $k = int rand($n--);
-		($list[$n], $list[$k]) = ($list[$k], $list[$n]);
+	    
+	    my $k = int rand($n--);
+	    ($list[$n], $list[$k]) = ($list[$k], $list[$n]);
 	}
-
+	
 	print join "\n", @list[0 .. $pick - 1];
 	print "\n";
+    }
 }
+
+#-----------------------------------------------------------------------------
+
+sub print_prob_emit {
+
+    my ($IN, $prob_emit) = @_;
+
+    $prob_emit =1 if $prob_emit > 1;
+    my $rand_max = int(1/$prob_emit);
+
+    while (<$IN>) {
+	print if int(rand($rand_max)) == ($rand_max - 1);
+    }
+}
+
+#-----------------------------------------------------------------------------

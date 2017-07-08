@@ -1,0 +1,144 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+
+#-----------------------------------------------------------------------------
+#----------------------------------- MAIN ------------------------------------
+#-----------------------------------------------------------------------------
+my $usage = "
+
+Synopsis:
+
+text_tool --join_rows data.txt
+cat data.txt | text_tool --join_rows
+
+Description:
+
+Do stuff to text files.  This script is a Swiss Army Knife of
+functions for manipulating text files.
+
+Options:
+
+  --join_rows, -j <,>
+
+    Join all of the rows in a file using the supplied separator.
+
+  --transpose, -t
+
+    Not yet implimented. Transpose rows and columns. First column becomes first row etc. If
+    data is not symmetrical then NULL values will be added as needed.
+
+  --shuffle, -s
+
+    Not yet implimented. 
+
+  --pick, -p
+
+    Not yet implimented. 
+
+  --trim_rows
+
+    Not yet implimented. 
+
+  --trim_trailing_rows
+
+    Not yet implimented. 
+
+  --collapse_empty_colums
+
+    Not yet implimented. 
+
+  --trim_trailing_columns
+
+    Not yet implimented. 
+
+  --add_null_value
+
+    Not yet implimented. 
+
+  --reverse_rows
+
+    Not yet implimented. 
+
+  --reverse_columns
+
+    Not yet implimented. 
+
+  --header
+
+    Not yet implimented. 
+
+  --body
+
+    Not yet implimented. 
+
+  --columns
+
+    Not yet implimented. 
+
+  --reorder_columns
+
+    Not yet implimented. 
+
+  --sort
+
+    Not yet implimented. 
+
+";
+
+
+my ($help, $join_rows);
+my $opt_success = GetOptions('help'          => \$help,
+			     'join_rows|j=s' => \$join_rows,
+			     );
+
+die $usage if $help || ! $opt_success;
+
+my $file = shift;
+
+die $usage unless $file || (! -t STDIN);
+
+if ($join_rows) {
+    join_rows($file, $join_rows);
+}
+else {
+    my $command_line = join ' ', $0, @ARGV;
+    die "FATAL : no_valid_function_called : $command_line\n";
+}
+
+exit 0;
+
+#-----------------------------------------------------------------------------
+#-------------------------------- SUBROUTINES --------------------------------
+#-----------------------------------------------------------------------------
+
+sub join_rows {
+
+    my ($file, $join_rows) = @_;
+
+    my $fh = get_fh($file);
+    
+    my @rows = (<$fh>);
+    chomp @rows;
+    print join $join_rows, @rows;
+    print "\n";
+}
+
+
+#-----------------------------------------------------------------------------
+
+sub get_fh {
+
+    my $file = shift;
+
+    my $IN;
+    if (! -t STDIN) {
+	open ($IN, "<&=STDIN") or die "FATAL : cant_open_stdin : $!\n";
+    }
+    else {
+	open ($IN, '<', $file) or die "FATAL : cant_open_file_for_reading : $file\n";
+    }
+    return $IN;
+}
+
