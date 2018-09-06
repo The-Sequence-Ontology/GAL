@@ -1,3 +1,4 @@
+
 package GAL::Schema::Result::Attribute;
 use base qw/DBIx::Class/;
 
@@ -47,7 +48,7 @@ __PACKAGE__->load_components(qw/Core/);
 __PACKAGE__->table('attribute');
 __PACKAGE__->add_columns(qw/ feature_idx att_key att_value /);
 #__PACKAGE__->set_primary_key('attribute_id');
-__PACKAGE__->belongs_to(features => 'GAL::Schema::Result::Feature', 'feature_idx');
+__PACKAGE__->belongs_to(features => 'GAL::Schema::Result::Feature', { 'foreign.feature_idx' => 'self.feature_idx' });
 
 #-----------------------------------------------------------------------------
 

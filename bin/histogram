@@ -155,6 +155,7 @@ sub build_bin {
 	my ($data_min, $data_max, $bin_auto, $bin_range, $bin_file) = @_;
 
 	my @bin;
+	my $step;
 	if ($bin_file) {
 		open (my $BIN, '<', $bin_file) or die "Can't open $bin_file for reading:\n$!\n";
 		while (<$BIN>) {
@@ -163,9 +164,19 @@ sub build_bin {
 			push @bin, $datum;
 		}
 		push @bin, $data_max if $bin[-1] < $data_max;
+		my @steps;
+		my $previous = $bin[0];
+		for my $i (1 .. $#bin) {
+		    push @steps, $previous - $bin[$i];
+		    $previous = $bin[$i];
+		}
+		my $step_sum;
+		map {$step_sum += $_} @steps;
+		$step = $step_sum / scalar @steps;
 	}
 	elsif ($bin_range) {
-		my ($bin_min, $bin_max, $step) = split'\s+', $bin_range;
+	    my ($bin_min, $bin_max);
+		($bin_min, $bin_max, $step) = split'\s+', $bin_range;
 		unless (defined $bin_min  &&
 			defined $bin_max  &&
 			defined $step &&
@@ -181,7 +192,8 @@ sub build_bin {
 		push @bin, $data_max if float_lt($bin[-1], $data_max, $accuracy);
 	}
 	elsif($bin_range_log) {
-		my ($bin_min, $bin_max, $step, $base) = split '\s+', $bin_range_log;
+	    my ($bin_min, $bin_max, $base);
+		($bin_min, $bin_max, $step, $base) = split '\s+', $bin_range_log;
 		unless (defined $bin_min  &&
 			defined $bin_max  &&
 			defined $step &&
@@ -199,12 +211,20 @@ sub build_bin {
 	}
 	else {
 		my $i;
-		my $step = ($data_max - $data_min) / $bin_auto;
+		$step = ($data_max - $data_min) / $bin_auto;
 		for ($i = $data_min; $i < $data_max; $i += $step) {
 			push @bin, $i;
 		}
 		$bin_range = "$data_min $data_max $step";
 	}
+
+	my $step_sd = $step;
+	$step_sd = $step_sd =~ /\./ ? $step_sd : $step_sd . '.';
+	$step_sd =~ s/.*\.//;
+	$step_sd = length($step_sd);
+	
+	map {$_ = sprintf "%.${step_sd}f", $_} @bin;
+	
 	return \@bin;
 }
 #-----------------------------------------------------------------------------
