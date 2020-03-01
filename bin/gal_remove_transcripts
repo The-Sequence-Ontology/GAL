@@ -9,6 +9,8 @@ use lib "$FindBin::RealBin/../lib";
 
 use GAL::Annotation;
 
+$| = 1;
+
 #-----------------------------------------------------------------------------
 #----------------------------------- MAIN ------------------------------------
 #-----------------------------------------------------------------------------
@@ -17,20 +19,31 @@ my $usage = "
 
 Synopsis:
 
-gal_remove_transcripts feature.gff3
+gal_remove_transcripts --exclude_ids trns_exclude_ids_remove.txt feature.gff3
 
 Description:
 
 This script will remove a set of transcripts from a GFF3 dataset based
 on a input list of IDs.
 
+Options:
+
+  --exclude_ids, -i
+
+    A text file with a list of transcript IDs to remove.  One ID per
+    line.
+
+  --type, -t
+
+    Require a particular type of transcript.  This can be a comma
+    separated list.
 ";
 
-my ($help, $ids);
+my ($help, $exclude_ids, $type);
 
-my $opt_success = GetOptions('help|h'  => \$help,
-			     'ids|i=s' => \$ids,
-			      );
+my $opt_success = GetOptions('help|h'   => \$help,
+			     'exclude_ids|i=s'  => \$exclude_ids,
+			     'type|t=s' => \$type);
 
 die $usage unless $opt_success;
 if ($help) {
@@ -38,6 +51,10 @@ if ($help) {
   exit(0);
 }
 
+$type ||= '';
+
+my %types;
+map {$types{$_}++} split /,/, $type;
 
 my ($gff3_file) = @ARGV;
 
@@ -47,16 +64,16 @@ my $annotation = GAL::Annotation->new($gff3_file);
 
 my $features = $annotation->features;
 
-my @ids;
-if (-r $ids) {
-  open(my $IN, '<', $ids) or die "FATAL : cant_open_id_file : $ids\n";
-  @ids = (<$IN>);
+my @exclude_ids;
+if (-r $exclude_ids) {
+  open(my $IN, '<', $exclude_ids) or die "FATAL : cant_open_id_file : $exclude_ids\n";
+  @exclude_ids = (<$IN>);
 }
 else {
-  @ids = split /,/, $ids;
+  @exclude_ids = split /,/, $exclude_ids;
 }
-chomp @ids;
-my %ids = map {$_ => 1} @ids;
+chomp @exclude_ids;
+my %exclude_ids = map {$_ => 1} @exclude_ids;
 
 if ($gff3_file =~ /\.gff3$/) {
   my $meta_data = `grep -P '^\#' $gff3_file`;
@@ -68,8 +85,8 @@ if ($gff3_file =~ /\.gff3$/) {
 # Do the search and get an interator for all matching features
 my $genes = $features->search({type => 'gene'});
 
-my $id_count = scalar @ids;
-print "# Transcripts whose IDs were found in the ID file $ids ($id_count total IDs) were removed by GAL/bin/examples/gal_remove_transcripts " . `date`;
+my $id_count = scalar @exclude_ids;
+print "# Transcripts whose IDs were found in the ID file $exclude_ids ($id_count total IDs) were removed by GAL/bin/examples/gal_remove_transcripts " . `date`;
 
 my $skip_count;
 # Iterate over the genes;
@@ -78,15 +95,24 @@ while (my $gene = $genes->next) {
   my @transcripts = $gene->transcripts;
   my @keep;
   while (my $transcript = shift @transcripts) {
-    if (exists $ids{$transcript->feature_id}) {
-      $annotation->info('skipping_transcript', $transcript->feature_id);
+    if (exists $exclude_ids{$transcript->feature_id}) {
+      $annotation->info('skipping_transcript_on_id', $transcript->feature_id);
+      $skip_count++;
+    }
+    elsif ($type && ! $types{$transcript->type}) {
+      $annotation->info('skipping_transcript_on_type',
+			join(" ", $transcript->feature_id,
+			     $transcript->type));
       $skip_count++;
     }
     else {
       push @keep, $transcript;
     }
   }
-  next GENE unless scalar @keep;
+  if (! scalar @keep) {
+      $annotation->info('skipping_gene_no_remaining_transcripts', $gene->feature_id);
+      next GENE;
+  }
   print $gene->to_gff3;
   print "\n";
   for my $transcript (@keep) {
