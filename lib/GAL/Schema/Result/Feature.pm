@@ -64,13 +64,15 @@ map {$FEATURE_MAP{$_} = 'transcript'}
   GAL::Schema::Result::Feature::get_transcript_types();
 
 map {$FEATURE_MAP{$_} = lc $_}  qw(gene
-				     transcript
-				     mRNA
-				     exon
-				     intron
-				     three_prime_UTR
-				     five_prime_UTR
-				   );
+                                   snRNA_gene
+                                   snoRNA_gene
+                                   transcript
+                                   mRNA
+                                   exon
+                                   intron
+                                   three_prime_UTR
+                                   five_prime_UTR
+                                 );
 
 # Eventually get this from SO at runtime.
 my @sequence_alterations = qw(copy_number_variation deletion indel
@@ -88,6 +90,7 @@ my @sequence_alterations = qw(copy_number_variation deletion indel
 			      T_to_A_transversion T_to_G_transversion
 			      complex_substitution sequence_length_variation
 			      simple_sequence_length_variation translocation);
+
 map {$FEATURE_MAP{$_} = 'sequence_alteration'} @sequence_alterations;
 
 # The ! to make it sort before any letters

@@ -150,6 +150,11 @@ Options:
     value if the compression ratio of BAM to SAM.  The second value is
     optional.
 
+  --print_sm
+
+    Print the SM tag from the \@RG header.  This is the sample name as
+    described in the BAM header.
+
 Code:
 
 The --filter option takes a block of perl code and the read is SKIPPED
@@ -260,9 +265,10 @@ XE	Number of supporting seeds
 ";
 
 
-my ($help, $summary, $qc, $FILTER, $bflag, $BFLAG, $clean, $vaast_clean,
-    $region, $ill_rg, $sample_name, $bam_format, $fastq, $headers,
-    $intervals, $OPTIONS, $TMPDIR, $print_flags, $estimate_read_count);
+my ($help, $summary, $qc, $FILTER, $bflag, $BFLAG, $clean,
+    $vaast_clean, $region, $ill_rg, $sample_name, $bam_format, $fastq,
+    $headers, $intervals, $OPTIONS, $TMPDIR, $print_flags, $print_sm,
+    $estimate_read_count);
 
 my $opt_success = GetOptions(
 			     'help|h'                 =>  \$help,
@@ -283,6 +289,7 @@ my $opt_success = GetOptions(
 			     'options|o'              =>  \$OPTIONS,
 			     'tmpdir|t=s'             =>  \$TMPDIR,
 			     'print_flags'            =>  \$print_flags,
+			     'print_sm'               =>  \$print_sm,
 			     'estimate_read_count=s'  =>  \$estimate_read_count,
 			     );
 
@@ -340,28 +347,31 @@ if ($vaast_clean) {                                             # Filters Fail I
 
 # Run appropriate functions
 if ($summary) {
-    build_summary(\@files);
+  build_summary(\@files);
 }
 if ($qc) {
-    build_qc(\@files);
+  build_qc(\@files);
 }
 elsif ($ill_rg) {
-    add_illumina_readgroup(\@files);
+  add_illumina_readgroup(\@files);
 }
 elsif ($intervals) {
-    calc_intervals(\@files);
+  calc_intervals(\@files);
 }
 elsif ($fastq) {
-    print_fastq(\@files);
+  print_fastq(\@files);
 }
 elsif ($print_flags) {
-    print_flags(\@files);
+  print_flags(\@files);
 }
 elsif ($estimate_read_count) {
-    estimate_read_count($estimate_read_count, \@files);
+  estimate_read_count($estimate_read_count, \@files);
+}
+elsif ($print_sm) {
+  print_sm(\@files);
 }
 else {
-    print_file(\@files);
+  print_file(\@files);
 }
 
 #-----------------------------------------------------------------------------
@@ -369,233 +379,233 @@ else {
 #-----------------------------------------------------------------------------
 
 sub build_summary {
-
-    my $files = shift;
-
-    my %sets;
-    my $isizes  = Statistics::Descriptive::Discrete->new();
-    my $lengths = Statistics::Descriptive::Discrete->new();
-    my $best_hits  = Statistics::Descriptive::Discrete->new();
-    my $mismatches = Statistics::Descriptive::Discrete->new();
-
-    my $count;
-    my %mapped_length;
-    my $unmapped_length;
-    my %raw_flags;
-    my %flags;
-    my %qnames;
-    my %rnames;
-    my %mapqs;
-
-    my $bar_graph = Text::Graph->new('Bar', maxlen => 50, showval => 1);
-
-    for my $file (@{$files}) {
-	my $iterator = make_iterator($file, $region, 'options');
-
-	while (my $a = &{$iterator}) {
-	    $count++;
-	    my ($qname, $flag, $rname, $pos, $mapq, $cigar, $mrnm,
-		$mpos, $isize, $seq, $qual, $opt)
-		=
-		@{$a}{qw(qname flag rname pos map cigar mrnm mpos
-			 isize seq qual opt)};
-
-	    $qnames{$qname}++;
-	    $raw_flags{$flag}++;
-	    ($flag & $PAIRED)        && $flags{paired}++;
-	    ($flag & $PAIR_MAPPED)   && $flags{pair_mapped}++;
-	    ($flag & $UNMAPPED)      && $flags{unmapped}++;
-	    ($flag & $MATE_UNMAPPED) && $flags{mate_unmapped}++;
-	    ($flag & $REVERSE)       && $flags{reverse}++;
-	    ($flag & $MATE_REVERSE)  && $flags{mate_reverse}++;
-	    ($flag & $FIRST_READ)    && $flags{first_read}++;
-	    ($flag & $SECOND_READ)   && $flags{second_read}++;
-	    ($flag & $NOT_PRIMARY)   && $flags{not_primary}++;
-	    ($flag & $FAILS)	     && $flags{fails}++;
-	    ($flag & $DUPLICATE)     && $flags{duplicate}++;
-
-	    $mapped_length{$rname} += $a->{length} unless ($flag & $UNMAPPED);
-	    $mapped_length{$rname} += $a->{length} if ($flag & $PAIR_MAPPED);
-
-	    $rnames{$rname}++;
-	    $sets{$rname} ||= Set::IntSpan::Fast->new();
-	    $sets{$rname}->add_range($pos, $pos + $a->{length} - 1) if $pos;
-	    $sets{$rname}->add_range($mpos, $mpos + $a->{length} - 1) if $mpos;
-	    $mapqs{$mapq}++;
-	    $isizes->add_data(abs($isize)) if $isize;
-	    $lengths->add_data($a->{length}) if $a->{length};
-	    $best_hits->add_data($a->{opt}{X0}{value})  if $a->{opt}{X0}{value};
-	    $mismatches->add_data($a->{opt}{XM}{value}) if $a->{opt}{XM}{value};
-
-	}
+  
+  my $files = shift;
+  
+  my %sets;
+  my $isizes  = Statistics::Descriptive::Discrete->new();
+  my $lengths = Statistics::Descriptive::Discrete->new();
+  my $best_hits  = Statistics::Descriptive::Discrete->new();
+  my $mismatches = Statistics::Descriptive::Discrete->new();
+  
+  my $count;
+  my %mapped_length;
+  my $unmapped_length;
+  my %raw_flags;
+  my %flags;
+  my %qnames;
+  my %rnames;
+  my %mapqs;
+  
+  my $bar_graph = Text::Graph->new('Bar', maxlen => 50, showval => 1);
+  
+  for my $file (@{$files}) {
+    my $iterator = make_iterator($file, $region, 'options');
+    
+    while (my $a = &{$iterator}) {
+      $count++;
+      my ($qname, $flag, $rname, $pos, $mapq, $cigar, $mrnm,
+	  $mpos, $isize, $seq, $qual, $opt)
+	=
+	  @{$a}{qw(qname flag rname pos map cigar mrnm mpos
+		   isize seq qual opt)};
+      
+      $qnames{$qname}++;
+      $raw_flags{$flag}++;
+      ($flag & $PAIRED)        && $flags{paired}++;
+      ($flag & $PAIR_MAPPED)   && $flags{pair_mapped}++;
+      ($flag & $UNMAPPED)      && $flags{unmapped}++;
+      ($flag & $MATE_UNMAPPED) && $flags{mate_unmapped}++;
+      ($flag & $REVERSE)       && $flags{reverse}++;
+      ($flag & $MATE_REVERSE)  && $flags{mate_reverse}++;
+      ($flag & $FIRST_READ)    && $flags{first_read}++;
+      ($flag & $SECOND_READ)   && $flags{second_read}++;
+      ($flag & $NOT_PRIMARY)   && $flags{not_primary}++;
+      ($flag & $FAILS)	     && $flags{fails}++;
+      ($flag & $DUPLICATE)     && $flags{duplicate}++;
+      
+      $mapped_length{$rname} += $a->{length} unless ($flag & $UNMAPPED);
+      $mapped_length{$rname} += $a->{length} if ($flag & $PAIR_MAPPED);
+      
+      $rnames{$rname}++;
+      $sets{$rname} ||= Set::IntSpan::Fast->new();
+      $sets{$rname}->add_range($pos, $pos + $a->{length} - 1) if $pos;
+      $sets{$rname}->add_range($mpos, $mpos + $a->{length} - 1) if $mpos;
+      $mapqs{$mapq}++;
+      $isizes->add_data(abs($isize)) if $isize;
+      $lengths->add_data($a->{length}) if $a->{length};
+      $best_hits->add_data($a->{opt}{X0}{value})  if $a->{opt}{X0}{value};
+      $mismatches->add_data($a->{opt}{XM}{value}) if $a->{opt}{XM}{value};
+      
     }
-    my %coverage;
-    for my $rname (keys %sets) {
-	my $iter = $sets{$rname}->iterate_runs();
-	while (my ( $start, $end ) = $iter->()) {
-	    $coverage{$rname} += ($end - $start + 1);
-	}
+  }
+  my %coverage;
+  for my $rname (keys %sets) {
+    my $iter = $sets{$rname}->iterate_runs();
+    while (my ( $start, $end ) = $iter->()) {
+      $coverage{$rname} += ($end - $start + 1);
     }
-    my $total_coverage;
-    map {$total_coverage += $_} values %coverage;
-
-    my $total_mapped_length;
-    map {$total_mapped_length += $_} values %mapped_length;
-
-    my %depth;
-    for my $rname (keys %mapped_length) {
-	$depth{$rname} = $coverage{$rname} / $mapped_length{$rname};
-    }
-
-    print "TOTAL ALIGNMENTS:  $count\n\n";
-
-    print "TOTAL LENGTH:  " . $lengths->sum . "\n";
-    print "MAPPED LENGTH:  $total_mapped_length\n";
-    print "MEAN   LENGTH:  " . sprintf("%.2f", $lengths->mean) . "\n";
-    print "MEDIAN LENGTH:  " . $lengths->median . "\n\n";
-
-    print "QNAMES:  " . (scalar keys(%qnames)) . "\n\n";
-
-    print "RNAMES:\n";
-    print $bar_graph->to_string(\%rnames,
-				sort =>
-				sub {sort {my ($x) = ($a =~ /(\d+)/) || 99;
-					   my ($y) = ($b =~ /(\d+)/) || 99;
-					   $x <=> $y || $a cmp $b} @_});
-    print "\n";
-
-    print "Coverage:\n";
-    print $bar_graph->to_string(\%coverage,
-				sort =>
-				sub {sort {my ($x) = ($a =~ /(\d+)/) || 99;
-					   my ($y) = ($b =~ /(\d+)/) || 99;
-					   $x <=> $y || $a cmp $b} @_});
-    print "\n";
-
-    print "Mapped Length:\n";
-    print $bar_graph->to_string(\%mapped_length,
-				sort =>
-				sub {sort {my ($x) = ($a =~ /(\d+)/) || 99;
-					   my ($y) = ($b =~ /(\d+)/) || 99;
-					   $x <=> $y || $a cmp $b} @_});
-    print "\n";
-
-    print "Depth of Coverage:\n";
-    print $bar_graph->to_string(\%depth,
-				sort =>
-				sub {sort {my ($x) = ($a =~ /(\d+)/) || 99;
-					   my ($y) = ($b =~ /(\d+)/) || 99;
-					   $x <=> $y || $a cmp $b} @_});
-    print "\n";
-
-    print "TOTAL COVERAGE:  $total_coverage\n\n";
-    print "AVERAGE DEPTH COVERAGE:  " . sprintf("%.2f", $total_mapped_length / $total_coverage) . "\n\n";
-
-    print "MEAN    INSERT SIZE:  " . sprintf("%.2f", $isizes->mean) . "\n";
-    print "TR_MEAN INSERT SIZE:  " . sprintf("%.2f", $isizes->trimmed_mean(0.1,0.1)) . "\n";
-    print "MIN     INSERT SIZE:  " . $isizes->min . "\n\n";
-    print "1ST Q   INSERT SIZE:  " . $isizes->quantile(1) . "\n";
-    print "MEDIAN  INSERT SIZE:  " . $isizes->median . "\n";
-    print "3RD Q   INSERT SIZE:  " . $isizes->quantile(3) . "\n";
-    print "STDEV   INSERT SIZE:  " . $isizes->standard_deviation() . "\n";
-    print "MAX     INSERT SIZE:  " . $isizes->max . "\n\n";
-    print "INSERT_SIZE:\n";
-    my @is_bins;
-    my $is_max = $isizes->median * 3;
-    my $step = abs(int(($isizes->quantile(3)/2 - $isizes->quantile(1)*2)/10));
-    for (my $bin = $isizes->quantile(1)/2; $bin <= $isizes->quantile(3)*2; $bin += $step) {push @is_bins, $bin};
-    print $bar_graph->to_string($isizes->frequency_distribution_ref(\@is_bins), sort => sub {sort {$a <=> $b} @_});
-    print "\n\n";
-
-
-    print "MEAN    BEST HITS:  " . sprintf("%.2f", $best_hits->mean) . "\n";
-    print "TR_MEAN BEST HITS:  " . sprintf("%.2f", $best_hits->trimmed_mean(0.1,0.1)) . "\n";
-    print "MIN     BEST HITS:  " . $best_hits->min . "\n";
-    print "1ST Q   BEST HITS:  " . $best_hits->quantile(1) . "\n";
-    print "MEDIAN  BEST HITS:  " . $best_hits->median . "\n";
-    print "3RD Q   BEST HITS:  " . $best_hits->quantile(3) . "\n";
-    print "STDEV   BEST HITS:  " . $best_hits->standard_deviation() . "\n";
-    print "MAX     BEST HITS:  " . $best_hits->max . "\n";
-    print "BEST HITS:\n";
-    print $bar_graph->to_string($best_hits->frequency_distribution_ref([(1..10)]), sort => sub {sort {$a <=> $b} @_});
-    print "\n\n";
-
-    print "MEAN    MISMATCHES:  " . sprintf("%.2f", $mismatches->mean) . "\n";
-    print "TR_MEAN MISMATCHES:  " . sprintf("%.2f", $mismatches->trimmed_mean(0.1,0.1)) . "\n";
-    print "MIN     MISMATCHES:  " . $mismatches->min . "\n\n";
-    print "1ST Q   MISMATCHES:  " . $mismatches->quantile(1) . "\n";
-    print "MEDIAN  MISMATCHES:  " . $mismatches->median . "\n";
-    print "3RD Q   MISMATCHES:  " . $mismatches->quantile(3) . "\n";
-    print "STDEV   MISMATCHES:  " . $mismatches->standard_deviation() . "\n";
-    print "MAX     MISMATCHES:  " . $mismatches->max . "\n\n";
-    print "MISMATCHES:\n";
-    print $bar_graph->to_string($mismatches->frequency_distribution_ref([(0..20)]), sort => sub {sort {$a <=> $b} @_});
-    print "\n\n";
-
-    print "FLAGS:\n";
-    print $bar_graph->to_string(\%flags, [qw(paired pair_mapped
-					     unmapped mate_unmapped
-					     reverse mate_reverse
-					     first_read second_read
-					     not_primary fails
-					     duplicate)]);
-
-    print "\n\n";
-    print "MAPQ:\n";
-    print $bar_graph->to_string(\%mapqs, sort => sub {sort {$a <=> $b} @_});
-    print "\n\n";
-    print '';
+  }
+  my $total_coverage;
+  map {$total_coverage += $_} values %coverage;
+  
+  my $total_mapped_length;
+  map {$total_mapped_length += $_} values %mapped_length;
+  
+  my %depth;
+  for my $rname (keys %mapped_length) {
+    $depth{$rname} = $coverage{$rname} / $mapped_length{$rname};
+  }
+  
+  print "TOTAL ALIGNMENTS:  $count\n\n";
+  
+  print "TOTAL LENGTH:  " . $lengths->sum . "\n";
+  print "MAPPED LENGTH:  $total_mapped_length\n";
+  print "MEAN   LENGTH:  " . sprintf("%.2f", $lengths->mean) . "\n";
+  print "MEDIAN LENGTH:  " . $lengths->median . "\n\n";
+  
+  print "QNAMES:  " . (scalar keys(%qnames)) . "\n\n";
+  
+  print "RNAMES:\n";
+  print $bar_graph->to_string(\%rnames,
+			      sort =>
+			      sub {sort {my ($x) = ($a =~ /(\d+)/) || 99;
+					 my ($y) = ($b =~ /(\d+)/) || 99;
+					 $x <=> $y || $a cmp $b} @_});
+  print "\n";
+  
+  print "Coverage:\n";
+  print $bar_graph->to_string(\%coverage,
+			      sort =>
+			      sub {sort {my ($x) = ($a =~ /(\d+)/) || 99;
+					 my ($y) = ($b =~ /(\d+)/) || 99;
+					 $x <=> $y || $a cmp $b} @_});
+  print "\n";
+  
+  print "Mapped Length:\n";
+  print $bar_graph->to_string(\%mapped_length,
+			      sort =>
+			      sub {sort {my ($x) = ($a =~ /(\d+)/) || 99;
+					 my ($y) = ($b =~ /(\d+)/) || 99;
+					 $x <=> $y || $a cmp $b} @_});
+  print "\n";
+  
+  print "Depth of Coverage:\n";
+  print $bar_graph->to_string(\%depth,
+			      sort =>
+			      sub {sort {my ($x) = ($a =~ /(\d+)/) || 99;
+					 my ($y) = ($b =~ /(\d+)/) || 99;
+					 $x <=> $y || $a cmp $b} @_});
+  print "\n";
+  
+  print "TOTAL COVERAGE:  $total_coverage\n\n";
+  print "AVERAGE DEPTH COVERAGE:  " . sprintf("%.2f", $total_mapped_length / $total_coverage) . "\n\n";
+  
+  print "MEAN    INSERT SIZE:  " . sprintf("%.2f", $isizes->mean) . "\n";
+  print "TR_MEAN INSERT SIZE:  " . sprintf("%.2f", $isizes->trimmed_mean(0.1,0.1)) . "\n";
+  print "MIN     INSERT SIZE:  " . $isizes->min . "\n\n";
+  print "1ST Q   INSERT SIZE:  " . $isizes->quantile(1) . "\n";
+  print "MEDIAN  INSERT SIZE:  " . $isizes->median . "\n";
+  print "3RD Q   INSERT SIZE:  " . $isizes->quantile(3) . "\n";
+  print "STDEV   INSERT SIZE:  " . $isizes->standard_deviation() . "\n";
+  print "MAX     INSERT SIZE:  " . $isizes->max . "\n\n";
+  print "INSERT_SIZE:\n";
+  my @is_bins;
+  my $is_max = $isizes->median * 3;
+  my $step = abs(int(($isizes->quantile(3)/2 - $isizes->quantile(1)*2)/10));
+  for (my $bin = $isizes->quantile(1)/2; $bin <= $isizes->quantile(3)*2; $bin += $step) {push @is_bins, $bin};
+  print $bar_graph->to_string($isizes->frequency_distribution_ref(\@is_bins), sort => sub {sort {$a <=> $b} @_});
+  print "\n\n";
+  
+  
+  print "MEAN    BEST HITS:  " . sprintf("%.2f", $best_hits->mean) . "\n";
+  print "TR_MEAN BEST HITS:  " . sprintf("%.2f", $best_hits->trimmed_mean(0.1,0.1)) . "\n";
+  print "MIN     BEST HITS:  " . $best_hits->min . "\n";
+  print "1ST Q   BEST HITS:  " . $best_hits->quantile(1) . "\n";
+  print "MEDIAN  BEST HITS:  " . $best_hits->median . "\n";
+  print "3RD Q   BEST HITS:  " . $best_hits->quantile(3) . "\n";
+  print "STDEV   BEST HITS:  " . $best_hits->standard_deviation() . "\n";
+  print "MAX     BEST HITS:  " . $best_hits->max . "\n";
+  print "BEST HITS:\n";
+  print $bar_graph->to_string($best_hits->frequency_distribution_ref([(1..10)]), sort => sub {sort {$a <=> $b} @_});
+  print "\n\n";
+  
+  print "MEAN    MISMATCHES:  " . sprintf("%.2f", $mismatches->mean) . "\n";
+  print "TR_MEAN MISMATCHES:  " . sprintf("%.2f", $mismatches->trimmed_mean(0.1,0.1)) . "\n";
+  print "MIN     MISMATCHES:  " . $mismatches->min . "\n\n";
+  print "1ST Q   MISMATCHES:  " . $mismatches->quantile(1) . "\n";
+  print "MEDIAN  MISMATCHES:  " . $mismatches->median . "\n";
+  print "3RD Q   MISMATCHES:  " . $mismatches->quantile(3) . "\n";
+  print "STDEV   MISMATCHES:  " . $mismatches->standard_deviation() . "\n";
+  print "MAX     MISMATCHES:  " . $mismatches->max . "\n\n";
+  print "MISMATCHES:\n";
+  print $bar_graph->to_string($mismatches->frequency_distribution_ref([(0..20)]), sort => sub {sort {$a <=> $b} @_});
+  print "\n\n";
+  
+  print "FLAGS:\n";
+  print $bar_graph->to_string(\%flags, [qw(paired pair_mapped
+					   unmapped mate_unmapped
+					   reverse mate_reverse
+					   first_read second_read
+					   not_primary fails
+					   duplicate)]);
+  
+  print "\n\n";
+  print "MAPQ:\n";
+  print $bar_graph->to_string(\%mapqs, sort => sub {sort {$a <=> $b} @_});
+  print "\n\n";
+  print '';
 }
 
 #-----------------------------------------------------------------------------
 
 sub build_qc {
-
-    my $files = shift;
-
-    my %sets;
-    my $isizes  = Statistics::Descriptive::Discrete->new();
-    my $best_hits  = Statistics::Descriptive::Discrete->new();
-
-    my $count;
-    my %raw_flags;
-    my %flags;
-    my %qnames;
-    my %rnames;
-    my %mapqs;
-
-    for my $file (@{$files}) {
-	my $iterator = make_iterator($file, $region, 'options');
-
-	while (my $a = &{$iterator}) {
-	    $count++;
-	    my ($qname, $flag, $rname, $pos, $mapq, $cigar, $mrnm,
-		$mpos, $isize, $seq, $qual, $opt)
-		=
-		@{$a}{qw(qname flag rname pos map cigar mrnm mpos
-			 isize seq qual opt)};
-
-	    $qnames{$qname}++;
-	    $raw_flags{$flag}++;
-	    ($flag & $PAIRED)        && $flags{paired}++;
-	    ($flag & $PAIR_MAPPED)   && $flags{pair_mapped}++;
-	    ($flag & $UNMAPPED)      && $flags{unmapped}++;
-	    ($flag & $MATE_UNMAPPED) && $flags{mate_unmapped}++;
-	    ($flag & $REVERSE)       && $flags{reverse}++;
-	    ($flag & $MATE_REVERSE)  && $flags{mate_reverse}++;
-	    ($flag & $FIRST_READ)    && $flags{first_read}++;
-	    ($flag & $SECOND_READ)   && $flags{second_read}++;
-	    ($flag & $NOT_PRIMARY)   && $flags{not_primary}++;
-	    ($flag & $FAILS)	     && $flags{fails}++;
-	    ($flag & $DUPLICATE)     && $flags{duplicate}++;
-
-	    $rnames{$rname}++;
-	    $mapqs{$mapq}++;
-	}
+  
+  my $files = shift;
+  
+  my %sets;
+  my $isizes  = Statistics::Descriptive::Discrete->new();
+  my $best_hits  = Statistics::Descriptive::Discrete->new();
+  
+  my $count;
+  my %raw_flags;
+  my %flags;
+  my %qnames;
+  my %rnames;
+  my %mapqs;
+  
+  for my $file (@{$files}) {
+    my $iterator = make_iterator($file, $region, 'options');
+    
+    while (my $a = &{$iterator}) {
+      $count++;
+      my ($qname, $flag, $rname, $pos, $mapq, $cigar, $mrnm,
+	  $mpos, $isize, $seq, $qual, $opt)
+	=
+	  @{$a}{qw(qname flag rname pos map cigar mrnm mpos
+		   isize seq qual opt)};
+      
+      $qnames{$qname}++;
+      $raw_flags{$flag}++;
+      ($flag & $PAIRED)        && $flags{paired}++;
+      ($flag & $PAIR_MAPPED)   && $flags{pair_mapped}++;
+      ($flag & $UNMAPPED)      && $flags{unmapped}++;
+      ($flag & $MATE_UNMAPPED) && $flags{mate_unmapped}++;
+      ($flag & $REVERSE)       && $flags{reverse}++;
+      ($flag & $MATE_REVERSE)  && $flags{mate_reverse}++;
+      ($flag & $FIRST_READ)    && $flags{first_read}++;
+      ($flag & $SECOND_READ)   && $flags{second_read}++;
+      ($flag & $NOT_PRIMARY)   && $flags{not_primary}++;
+      ($flag & $FAILS)	     && $flags{fails}++;
+      ($flag & $DUPLICATE)     && $flags{duplicate}++;
+      
+      $rnames{$rname}++;
+      $mapqs{$mapq}++;
     }
-    print "TOTAL ALIGNMENTS:  $count\n\n";
-    print "QNAMES:  " . (scalar keys(%qnames)) . "\n\n";
-
+  }
+  print "TOTAL ALIGNMENTS:  $count\n\n";
+  print "QNAMES:  " . (scalar keys(%qnames)) . "\n\n";
+  
 }
 
 #-----------------------------------------------------------------------------
@@ -625,9 +635,9 @@ sub fails_filter {
     my ($f, $F);
     $f = ! ($a->{flag} & $bflag) if $bflag;
     $F =   ($a->{flag} & $BFLAG) if $BFLAG;
-
+    
     return $eval_value || $f || $F;
-}
+  }
 
 #-----------------------------------------------------------------------------
 
@@ -638,13 +648,13 @@ sub clean_file {
     $FILTER = '($a->{flag} & $UNMAPPED) && ($a->{map} != 0 || $a->{cigar} ne "*")';
 
     for my $file (@{$files}) {
-	my $fh = print_fh_out();
-	my $iterator = make_iterator($file, $region, undef, $fh);
-	while (my $a = &{$iterator}) {
-	    print_alignment($a, $fh);
-	}
+      my $fh = print_fh_out();
+      my $iterator = make_iterator($file, $region, undef, $fh);
+      while (my $a = &{$iterator}) {
+	print_alignment($a, $fh);
+      }
     }
-}
+  }
 
 #-----------------------------------------------------------------------------
 
@@ -737,7 +747,7 @@ sub estimate_read_count {
 	$line_count  ||= 100000;
 	$compression ||= 0.25;
 
-        print '#';
+	print '#';
 	print join("\t", qw(Filename SM_ID File_Size Est_Read_Length
 			    Median_Line_Length Est_Read_Count
 			    Total_Seq_Length Hsap_WGS_Depth));
@@ -750,21 +760,21 @@ sub estimate_read_count {
 		my $count = 0;
 		# my $line_data;
 		while (my $a = &{$iterator}) {
-                        next if $count++ < $line_count;
+			next if $count++ < $line_count;
 			last if $count++ > $line_count * 2;
 			$read_lengths->add_data($a->{length}) if $a->{length};
 
 			my $line =
 			  join("\t", @{$a}{qw(cigar flag isize
-			 		      length map mpos mrnm
-			 		      pos qname qual rname
-			 		      seq)}, @{$a->{opt}});
+					      length map mpos mrnm
+					      pos qname qual rname
+					      seq)}, @{$a->{opt}});
 			my $line_length = length($line);
 			# $line_data .= "$line\n";
 			$line_lengths->add_data($line_length);
 			print '';
 		}
-                my $SM_ID = ref $HEADERS{RG} eq 'ARRAY' ? $HEADERS{RG}[0]{SM} : '';
+		my $SM_ID = ref $HEADERS{RG} eq 'ARRAY' ? $HEADERS{RG}[0]{SM} : '';
 		# my $compressed_data;
 		# gzip(\$line_data, \$compressed_data)
 		#   or die "FATAL : gzip failed : $GzipError\n";
@@ -866,28 +876,45 @@ sub calc_intervals {
 
 sub print_headers {
 
-    my ($headers, $fh) = @_;
-
-    $fh || open($fh, '>-') or die "FATAL : cant_open_stdout_for_writing : STDOUT";
-
-    # $HEADERS{$head_tag}{$key} = $value;
-
-    my %order = (HD => 1,
-		 SQ => 2,
-		 RG => 3,
-		 CO => 4);
-
-    for my $tag (sort {($order{$a} || 99) <=> ($order{$b} || 99)} keys %HEADERS) {
-	my $lines = $HEADERS{$tag};
-	for my $line (@{$lines}) {
-	    print $fh "\@$tag";
-	    for my $key (keys %{$line}) {
-		my $value = $line->{$key};
-		print $fh "\t$key:$value";
-	    }
-	    print $fh "\n";
-	}
+  my ($headers, $fh) = @_;
+  
+  $fh || open($fh, '>-') or die "FATAL : cant_open_stdout_for_writing : STDOUT";
+  
+  # $HEADERS{$head_tag}{$key} = $value;
+  
+  my %order = (HD => 1,
+	       SQ => 2,
+	       RG => 3,
+	       CO => 4);
+  
+  for my $tag (sort {($order{$a} || 99) <=> ($order{$b} || 99)} keys %HEADERS) {
+    my $lines = $HEADERS{$tag};
+    for my $line (@{$lines}) {
+      print $fh "\@$tag";
+      for my $key (keys %{$line}) {
+	my $value = $line->{$key};
+	print $fh "\t$key:$value";
+      }
+      print $fh "\n";
     }
+  }
+}
+  
+#-----------------------------------------------------------------------------
+
+sub print_sm {
+
+  my ($files) = @_;
+
+  print join("\t", qw(Filename SM_ID));
+  print "\n";
+  
+  for my $file (@{$files}) {
+    my $iterator = make_iterator($file);
+    my $a = &{$iterator};
+    my $SM_ID = ref $HEADERS{RG} eq 'ARRAY' ? $HEADERS{RG}[0]{SM} : '';
+    print "$file\t$SM_ID\n";
+  }
 }
 
 #-----------------------------------------------------------------------------
