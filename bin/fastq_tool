@@ -486,7 +486,7 @@ sub make_read_iterator {
     else {
 	my $mode = '<';
 	if ($file =~ /\.gz$/) {
-	    $ mode = '-|';
+	    $mode = '-|';
 	    $file = "gunzip < $file";
 	}
 	open ($IN, $mode, $file) or die "Can't open $file for reading:\n$!\n";

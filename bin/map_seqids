@@ -15,8 +15,10 @@ map_seqids map_file.txt feature_file.gff3
 Description:
 
 Map the seqids in a GFF3 file to new values.  For example, you want to
-map a GFF3 file that uses NCBI RefSeq contig accessions (NC_000001) to UCSC
-style chromosome names (chr1).
+map a GFF3 file that uses NCBI RefSeq contig accessions (NC_000001) to
+UCSC style chromosome names (chr1).  The map file should have to
+tab-delimited columns with the old seqid in the first column and the
+new seqid in the second column.
 
 ";
 
