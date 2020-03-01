@@ -50,16 +50,19 @@ Options:
 
   --html, -h
 
-    Open a browser to an HTML page summary of HGNC information for each gene.
+    Open a browser to an HTML page summary of HGNC information for
+    each gene.  Not implimented yet.
 
   --cards, -d
 
-    Open a browser to Gene Cards page for the first gene in the list.
+    Open a browser to Gene Cards page for the first gene in the
+    list. Not implimented yet.
 
   --open, -o
 
     Provide the name of a browser to view HTML based output and the
-    script will exit by opening the browser with the data loaded.
+    script will exit by opening the browser with the data loaded. Not
+    implimented yet.
 
 ";
 

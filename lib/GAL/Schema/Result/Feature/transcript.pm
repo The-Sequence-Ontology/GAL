@@ -303,7 +303,7 @@ sub length {
 
  Title   : coordinate_map
  Usage   : $map = $self->coordinate_map
- Function: Get the coordinate map the which has the structure:
+ Function: Get the coordinate map which has the structure:
 	   $coordinate_map{genome2me}{$genomic_position}    = $transcript_position;
 	   $coordinate_map{me2genome}{$transcript_position} = $genomic_position;
 	   And thus can be used to map feature to genomic coordinates and vice versa.
@@ -321,7 +321,7 @@ sub coordinate_map {
     my @exons = $self->exons;
     my ($transcript_position, $increment);
     if ($strand eq '-') {
-      $transcript_position = $length - 1;
+      $transcript_position = $length; # - 1;
       $increment = -1;
     }
     else {

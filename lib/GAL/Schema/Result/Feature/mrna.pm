@@ -150,11 +150,58 @@ sub protein_seq {
 
 #-----------------------------------------------------------------------------
 
-=head2 map2CDS
+=head2 cds_coordinate_map
 
- Title   : map2CDS
- Usage   : @CDS_coordinates = $self->map2CDS(@genomic_coordinates);
-	   ($CDS_coordinate) = $self->map2CDS($genomic_coordinate);
+ Title   : cds_coordinate_map
+ Usage   : $map = $self->cds_coordinate_map
+ Function: Get the coordinate map which has the structure:
+	   $cds_coordinate_map{transcript2cds}{$transcript_position} = $cds_position;
+	   $cds_coordinate_map{cds2transcript}{$cds_position} = $transcript_position;
+	   And thus can be used to map CDS to unspliced transcript coordinates
+           and vice versa.
+ Returns : A hash or reference of the above map.
+ Args    : None
+
+=cut
+
+sub cds_coordinate_map {
+  my $self = shift;
+  if (! $self->{cds_coordinate_map}) {
+    my $strand = $self->strand;
+    my $length = $self->CDS_length;
+    my %cds_coordinate_map;
+    my @cdss = $self->CDSs;
+    my ($cds_pos, $increment);
+    if ($strand eq '-') {
+      $cds_pos = $length; # - 1;
+      $increment = -1;
+    }
+    else {
+      $cds_pos = 1;
+      $increment = 1;
+    }
+    for my $cds (@cdss) {
+      my $start = $cds->start;
+      my $end   = $cds->end;
+      for my $cds_genomic_pos ($start .. $end) {
+	  my ($mrna_pos) = $self->genome2me($cds_genomic_pos);
+	  $cds_coordinate_map{transcript2cds}{$mrna_pos} = $cds_pos;
+	  $cds_coordinate_map{cds2transcript}{$cds_pos} = $mrna_pos;
+	  $cds_pos += $increment;
+      }
+    }
+    $self->{cds_coordinate_map} = \%cds_coordinate_map;
+  }
+  return wantarray ? %{$self->{cds_coordinate_map}} : $self->{cds_coordinate_map};
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 genome2cds
+
+ Title   : genome2cds
+ Usage   : @CDS_coordinates = $self->genome2cds(@genomic_coordinates);
+	   ($CDS_coordinate) = $self->genome2cds($genomic_coordinate);
  Function: Transform genomic coordinates to CDS coordinates.
  Returns : An array(ref) of integers or an empty list if the genomic
 	   coordinates given do not overlap the CDS of this mRNA.
@@ -162,32 +209,102 @@ sub protein_seq {
 
 =cut
 
-sub map2CDS {
+sub genome2cds {
 
-  my ($self, @coordinates) = @_;
+    my ($self, @coordinates) = @_;
 
-  my ($CDS_start) = $self->genome2me($self->CDS_start);
-  my ($CDS_end)   = $self->genome2me($self->CDS_end);
+    my ($CDS_start) = $self->genome2me($self->CDS_start);
+    my ($CDS_end)   = $self->genome2me($self->CDS_end);
 
-  my @CDS_coordinates = $self->genome2me(@coordinates);
-  for my $coordinate (@CDS_coordinates) {
-    if ($coordinate && $coordinate >= $CDS_start && $coordinate <= $CDS_end) {
-      $coordinate = $coordinate - $CDS_start + 1;
+    my @CDS_coordinates = $self->genome2me(@coordinates);
+    for my $coordinate (@CDS_coordinates) {
+	if ($coordinate && $coordinate >= $CDS_start && $coordinate <= $CDS_end) {
+	    $coordinate = $coordinate - $CDS_start + 1;
+	}
+	else {
+	    $coordinate = undef;
+	}
     }
-    else {
-      $coordinate = undef;
-    }
-  }
 
-  return wantarray ? @CDS_coordinates : \@CDS_coordinates;
+    return wantarray ? @CDS_coordinates : \@CDS_coordinates;
 }
 
 #-----------------------------------------------------------------------------
 
-=head2 map2protein
+=head2 cds2mrna
 
- Title   : map2protein
- Usage   : @protein_coordinates = $self->map2protein(@genomic_coordinates);
+ Title   : cds2mrna
+ Usage   : @mrna_coordinates = $self->cds2mrna(@cds_coordinates);
+	   ($mrna_coordinate) = $self->cds2mrna($cds_coordinate);
+ Function: Transform CDS coordinates to mRNA (transcript) coordinates.
+ Returns : An array(ref) of integers.
+ Args    : An array of integers
+
+=cut
+
+sub cds2mrna {
+
+#   my ($self, @coordinates) = @_;
+# 
+#   my $mrna_start  = $self->start;
+# 
+#   my ($CDS_start) = $self->genome2me($self->CDS_start);
+#   my ($CDS_end)   = $self->genome2me($self->CDS_end);
+#  
+#   my @CDS_coordinates = $self->genome2me(@coordinates);
+#   for my $coordinate (@CDS_coordinates) {
+#     if ($coordinate && $coordinate >= $CDS_start && $coordinate <= $CDS_end) {
+#       $coordinate = $coordinate - $CDS_start + 1;
+#     }
+#     else {
+#       $coordinate = undef;
+#     }
+#   }
+# 
+#   return wantarray ? @CDS_coordinates : \@CDS_coordinates;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 cds2genome
+
+ Title   : cds2genome
+ Usage   : @genomic_coordinates = $self->cds2genome(@cds_coordinates);
+	   ($genomic_coordinate) = $self->cds2genome($cds_coordinate);
+ Function: Transform CDS coordinates to genomic coordinates.
+ Returns : An array(ref) of integers.
+ Args    : An array of integers
+
+=cut
+
+sub cds2genome {
+
+   my ($self, @coordinates) = @_;
+
+   my $mrna_start  = $self->start;
+ 
+   my ($CDS_start) = $self->genome2me($self->CDS_start);
+   my ($CDS_end)   = $self->genome2me($self->CDS_end);
+ 
+#   my @CDS_coordinates = $self->genome2me(@coordinates);
+#   for my $coordinate (@CDS_coordinates) {
+#     if ($coordinate && $coordinate >= $CDS_start && $coordinate <= $CDS_end) {
+#       $coordinate = $coordinate - $CDS_start + 1;
+#     }
+#     else {
+#       $coordinate = undef;
+#     }
+#   }
+# 
+#   return wantarray ? @CDS_coordinates : \@CDS_coordinates;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 genome2protein
+
+ Title   : genome2protein
+ Usage   : @protein_coordinates = $self->genome2protein(@genomic_coordinates);
  Function: Transform genomic coordinates to protein sequence coordinates.
 	   Note that 3 genomic coordinates will return the same protein
 	   coordinate if they fall in the same codon.
@@ -197,14 +314,40 @@ sub map2CDS {
 
 =cut
 
-sub map2protein {
+sub genome2protein {
 
   my ($self, @coordinates) = @_;
 
-  my @protein_coordinates = $self->map2CDS(@coordinates);
+  my @protein_coordinates = $self->genome2cds(@coordinates);
   map {$_ = int(($_ - 1) / 3) + 1 if $_} @protein_coordinates;
 
   return wantarray ? @protein_coordinates : \@protein_coordinates;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 protein2genome
+
+ Title   : protein2genome
+ Usage   : @genomic_coordinates = $self->protein2genome(@protein_coordinates);
+ Function: Transform protein coordinates to genomic coordinates.
+	   Note that 3 genomic coordinates will be returned for each protein coordinate.
+	   coordinate if they fall in the same codon.  
+ Returns : An array(ref) of arrayrefs each containing 3 integers
+           corresponding to the genomic coordinates of the three codon
+           locations for the given protein coordinate.
+ Args    : An array of integers
+
+=cut
+
+sub protein2genome {
+
+#   my ($self, @coordinates) = @_;
+# 
+#   my @protein_coordinates = $self->genome2cds(@coordinates);
+#   map {$_ = int(($_ - 1) / 3) + 1 if $_} @protein_coordinates;
+# 
+#   return wantarray ? @protein_coordinates : \@protein_coordinates;
 }
 
 #-----------------------------------------------------------------------------
@@ -266,6 +409,7 @@ sub CDS_length {
   my $self = shift;
   my $CDS_length;
   map {$CDS_length += $_->genomic_length} $self->CDSs;
+  $CDS_length ||= 0;
   return $CDS_length;
 }
 
@@ -310,7 +454,7 @@ sub phase_at_location {
 		   2 => 2,
 		   0 => 1,
 		  );
-  my ($CDS_location) = $self->map2CDS($location);
+  my ($CDS_location) = $self->genome2cds($location);
   return undef unless $CDS_location;
   my $modulus = $CDS_location % 3;
   return $mod2phase{$modulus};
@@ -337,7 +481,7 @@ sub frame_at_location {
 		   2 => 1,
 		   0 => 2,
 		  );
-  my ($CDS_location) = $self->map2CDS($location);
+  my ($CDS_location) = $self->genome2cds($location);
   return undef unless $CDS_location;
   my $modulus = $CDS_location % 3;
   my $frame = $mod2frame{$modulus};
@@ -364,7 +508,7 @@ sub codon_at_location {
   my ($self, $location) = @_;
 
   my $CDS_sequence = $self->CDS_seq;
-  my ($CDS_location) = $self->map2CDS($location);
+  my ($CDS_location) = $self->genome2cds($location);
   return undef unless $CDS_location;
   my $frame = $self->frame_at_location($location);
   my $codon_start = $CDS_location - $frame;
@@ -691,6 +835,26 @@ sub five_prime_UTR_seq {
 
 #-----------------------------------------------------------------------------
 
+=head2 five_prime_UTR_length
+
+ Title   : five_prime_UTR_length
+ Usage   : $seq = $self->five_prime_UTR_length
+ Function: Get the transcripts spliced five_prime_UTR length.
+ Returns : An integer
+ Args    : None
+
+=cut
+
+sub five_prime_UTR_length {
+  my $self = shift;
+  my $five_prime_UTR_length;
+  map {$five_prime_UTR_length += $_->length} $self->five_prime_UTRs->all;
+  $five_prime_UTR_length ||= 0;
+  return $five_prime_UTR_length;
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 three_prime_UTR_seq_genomic
 
  Title   : three_prime_UTR_seq_genomic
@@ -730,6 +894,26 @@ sub three_prime_UTR_seq {
       $self->annotation->revcomp($three_prime_UTR_seq);
   }
   return $three_prime_UTR_seq;
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 three_prime_UTR_length
+
+ Title   : three_prime_UTR_length
+ Usage   : $seq = $self->three_prime_UTR_length
+ Function: Get the transcripts spliced three_prime_UTR length.
+ Returns : An integer
+ Args    : None
+
+=cut
+
+sub three_prime_UTR_length {
+  my $self = shift;
+  my $three_prime_UTR_length;
+  map {$three_prime_UTR_length += $_->length} $self->three_prime_UTRs->all;
+  $three_prime_UTR_length ||= 0;
+  return $three_prime_UTR_length;
 }
 
 #-----------------------------------------------------------------------------
