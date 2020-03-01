@@ -1454,16 +1454,11 @@ sub get_transcript_types {
 
     my $self = shift;
 
-    my @transcripts = qw(EST
-			 RNase_MRP_RNA
-			 RNase_P_RNA
-			 SRP_RNA
-			 SRP_RNA_primary_transcript
-			 Y_RNA
+    my @transcripts = qw(
 			 aberrant_processed_transcript
 			 alternatively_spliced_transcript
-			 antisense_RNA
 			 antisense_primary_transcript
+			 antisense_RNA
 			 capped_mRNA
 			 capped_primary_transcript
 			 class_II_RNA
@@ -1477,10 +1472,21 @@ sub get_transcript_types {
 			 edited_transcript_by_A_to_I_substitution
 			 enhancerRNA
 			 enzymatic_RNA
+                         EST
 			 exemplar_mRNA
 			 guide_RNA
+			 lincRNA
 			 lnc_RNA
+			 mature_transcript
+			 mature_transcript_region
+			 mini_exon_donor_RNA
+			 miRNA
+			 miRNA_primary_transcript
+			 monocistronic_mRNA
+			 monocistronic_primary_transcript
+			 monocistronic_transcript
 			 mRNA
+			 mRNA                     
 			 mRNA_recoded_by_codon_redefinition
 			 mRNA_recoded_by_translational_bypass
 			 mRNA_region
@@ -1489,15 +1495,8 @@ sub get_transcript_types {
 			 mRNA_with_minus_2_frameshift
 			 mRNA_with_plus_1_frameshift
 			 mRNA_with_plus_2_frameshift
-			 mature_transcript
-			 mature_transcript_region
-			 miRNA_primary_transcript
-			 mini_exon_donor_RNA
-			 monocistronic_mRNA
-			 monocistronic_primary_transcript
-			 monocistronic_transcript
-			 ncRNA
 			 nc_primary_transcript
+			 ncRNA
 			 piRNA
 			 polyadenylated_mRNA
 			 polycistronic_mRNA
@@ -1509,38 +1508,45 @@ sub get_transcript_types {
 			 processed_transcript
 			 protein_coding_primary_transcript
 			 pseudogenic_transcript
-			 rRNA
-			 rRNA_cleavage_RNA
-			 rRNA_primary_transcript
 			 rasiRNA
 			 recoded_mRNA
 			 regional_centromere_outer_repeat_transcript
 			 riboswitch
 			 ribozyme
+			 RNA
+			 RNase_MRP_RNA
+			 RNase_P_RNA
+			 rRNA
+			 rRNA_cleavage_RNA
+			 rRNA_primary_transcript
 			 scRNA
 			 scRNA_primary_transcript
 			 siRNA
 			 small_regulatory_ncRNA
-			 snRNA
-			 snRNA_primary_transcript
 			 snoRNA
 			 snoRNA_primary_transcript
+			 snRNA
+			 snRNA_primary_transcript
 			 spliced_leader_RNA
+			 SRP_RNA
+			 SRP_RNA_primary_transcript
 			 stRNA
-			 tRNA
-			 tRNA_primary_transcript
 			 tasiRNA
 			 tasiRNA_primary_transcript
 			 telomerase_RNA
 			 tmRNA_primary_transcript
-			 trans_spliced_mRNA
-			 trans_spliced_transcript
 			 transcript
 			 transcript_bound_by_nucleic_acid
 			 transcript_bound_by_protein
 			 transcript_region
 			 transcript_with_translational_frameshift
+			 trans_spliced_mRNA
+			 trans_spliced_transcript
+			 tRNA
+			 tRNA_primary_transcript
 			 vault_RNA
+			 Y_RNA
+
   );
   return wantarray ? @transcripts : \@transcripts;
 }
