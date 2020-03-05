@@ -291,7 +291,7 @@ sub mature_seq {
 
 sub length {
   my $self = shift;
-  my $length;
+  my $length = 0;
   map {$length += $_->length} $self->exons;
   $self->warn('transcript_has_no_exons', $self->feature_id) unless $length;
   return $length;

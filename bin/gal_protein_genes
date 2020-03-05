@@ -31,11 +31,15 @@ Options:
 
   --no_start, -a
 
-    Filter transcripts that do not have an AUG start codon. 
+    Filter transcripts that do not have an AUG start codon.
 
   --no_stop, -o
 
     Filter transcripts that do not have a canonical stop codon.
+
+  --clean, -c
+
+    Apply all the above filters with --internal_stops = 0.
 
   --verbose, -v
 
@@ -43,19 +47,29 @@ Options:
 
 ";
 
+my $CL = join ' ', $0, @ARGV;
+chomp $CL;
+
 my ($help, $clean, $verbose, $internal_stops, $no_start, $no_stop);
 
 my $opt_success = GetOptions('help|h'             => \$help,
-			     'internal_stops|i=i' => \$internal_stops,
-			     'no_start|a'         => \$no_start,
-			     'no_stop|o'          => \$no_stop,
-			     'verbose|v'          => \$verbose,
-			      );
+                             'clean|c'            => \$clean,
+                             'internal_stops|i=i' => \$internal_stops,
+                             'no_start|a'         => \$no_start,
+                             'no_stop|o'          => \$no_stop,
+                             'verbose|v'          => \$verbose,
+                              );
 
 if (! $opt_success) {
     print STDERR join ' : ', ('FATAL',
                               'command_line_parse_error',
                               'Use gal_protein_genes --help to see correct usage');
+}
+
+if ($clean) {
+        $internal_stops = 0;
+        $no_start++;
+        $no_stop++;
 }
 
 if ($help) {
@@ -68,73 +82,86 @@ my ($gff3, $fasta) = @ARGV;
 die $usage unless $fasta && $gff3;
 
 my $annotation = GAL::Annotation->new($gff3,
-				      $fasta);
+                                      $fasta);
 
 my $features = $annotation->features;
 
 my $genes = $features->search({type => 'gene'});
+
+if ($gff3 =~ /\.gff3?$/) {
+        my $meta_data = `grep -P '^\#' $gff3 | grep -vP '^\#\#\#'`;
+        chomp $meta_data;
+        print $meta_data;
+        print "\n";
+}
+
+print "# Command='$CL'\n";
+
+
 GENE:
 while (my $gene = $genes->next) {
-    unless ($gene->is_coding) {
-	$gene->warn('gene_has_no_mRNA',
-		    'Skipping ' . $gene->feature_id);
-	    next GENE;
-    }
-  my $mrnas = $gene->mRNAs;
-  if ($clean) {
-    my $gene_text = $gene->to_gff3 . "\n";
-    my $gene_flag;
-  MRNA:
-    while (my $mrna = $mrnas->next) {
-      my $mrna_id = $mrna->feature_id;
-      
-      my $prot_seq = $mrna->protein_seq;
-      my $stop_count = $prot_seq =~ tr/\*/\*/;
+        unless ($gene->is_coding) {
+                $gene->warn('gene_has_no_mRNA',
+                            'Skipping ' . $gene->feature_id);
+                next GENE;
+        }
+        my $mrnas = $gene->mRNAs;
+        my $gene_text = $gene->to_gff3 . "\n";
+        my $gene_flag;
 
-      my $skip;
-      # Internal Stops
-      if (defined $internal_stops && $stop_count > $internal_stops) {
-	  $mrna->warn('protein_has_internal_stops',
-		      "Stops=$stop_count " . $mrna->feature_id);
-	  $skip++;
-      }
+        if (defined $internal_stops || $no_start || $no_stop) {
 
-      # No Start
-      if ($no_start && $mrna->start_codon ne 'ATG') {
-	$mrna->warn('mRNA_has_no_start_codon',
-		    $mrna->feature_id);
-	$skip++;
-      }
+              MRNA:
+                while (my $mrna = $mrnas->next) {
+                        my $mrna_id = $mrna->feature_id;
 
-      # No Stop
-      if ($no_start && $mrna->start_codon !~ /^(TAG|TGA|TAA)$/) {
-	$mrna->warn('mRNA_has_no_stop_codon',
-		    $mrna->feature_id);
-	$skip++;
-      }
+                        my $prot_seq = $mrna->protein_seq;
+                        my $stop_count = $prot_seq =~ tr/\*/\*/;
 
-      if ($skip) {
-	  if ($verbose) {
-	      print STDERR "mRNA Sequence:\n";
-	      print STDERR $mrna->CDS_seq;
-	      print STDERR "\n";
-	      print STDERR "Protein Sequence:\n";
-	      print STDERR $mrna->protein_seq;
-	      print STDERR "\n";
-	  }
-	  next MRNA;
-      }
+                        my $skip;
+                        # Internal Stops
+                        if (defined $internal_stops && $stop_count > $internal_stops) {
+                                $mrna->warn('protein_has_internal_stops',
+                                            "Stops=$stop_count " . $mrna->feature_id);
+                                $skip++;
+                        }
 
-      print $gene_text unless $gene_flag++;
-      print join "\n", $mrna->to_gff3_recursive;
-      print "\n";
-    }
-    $gene->warn('gene_has_no_valid_protiens',
-		'Skipping ' . $gene->feature_id)
-      unless $gene_flag;
-  }
-  else {
-    print join "\n", $gene->to_gff3_recursive;
-    print "\n";
-  }
+                        # No Start
+                        if ($no_start && $mrna->start_codon ne 'ATG') {
+                                $mrna->warn('mRNA_has_no_start_codon',
+                                            $mrna->feature_id);
+                                $skip++;
+                        }
+
+                        # No Stop
+                        if ($no_start && $mrna->stop_codon !~ /^(TAG|TGA|TAA)$/) {
+                                $mrna->warn('mRNA_has_no_stop_codon',
+                                            $mrna->feature_id);
+                                $skip++;
+                        }
+
+                        if ($skip) {
+                                if ($verbose) {
+                                        print STDERR "mRNA Sequence:\n";
+                                        print STDERR $mrna->CDS_seq;
+                                        print STDERR "\n";
+                                        print STDERR "Protein Sequence:\n";
+                                        print STDERR $mrna->protein_seq;
+                                        print STDERR "\n";
+                                }
+                                next MRNA;
+                        }
+
+                        print $gene_text unless $gene_flag++;
+                        print join "\n", $mrna->to_gff3_recursive;
+                        print "\n";
+                }
+                $gene->warn('gene_has_no_valid_protiens',
+                            'Skipping ' . $gene->feature_id)
+                  unless $gene_flag;
+        }
+        else {
+                print join "\n", $gene->to_gff3_recursive;
+                print "\n";
+        }
 }

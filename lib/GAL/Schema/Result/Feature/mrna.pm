@@ -376,6 +376,48 @@ sub codon_at_location {
 
 #-----------------------------------------------------------------------------
 
+=head2 start_codon
+
+ Title   : start_codon
+ Usage   : $seq = $mrna->start_codon;
+ Function: Get the sequence of the start codon (first three nts in CDS).
+ Returns : A 3 nt string
+ Args    : None
+
+=cut
+
+sub start_codon {
+  my $self = shift;
+
+  my $CDS_sequence = $self->CDS_seq;
+  my $codon = substr($CDS_sequence, 0, 3);
+  return $codon;
+
+}
+
+#-----------------------------------------------------------------------------
+
+=head2 stop_codon
+
+ Title   : stop_codon
+ Usage   : $seq = $mrna->stop_codon;
+ Function: Get the sequence of the stop codon (last three nts in CDS).
+ Returns : A 3 nt string
+ Args    : None
+
+=cut
+
+sub stop_codon {
+  my $self = shift;
+
+  my $CDS_sequence = $self->CDS_seq;
+  my $codon = substr($CDS_sequence, -3);
+  return $codon;
+
+}
+
+#-----------------------------------------------------------------------------
+
 =head2 translation_start
 
  Title   : translation_start
