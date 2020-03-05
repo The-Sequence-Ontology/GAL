@@ -16,7 +16,7 @@ my $harness = TAP::Harness->new( \%args );
 
 my @tests = ('../lib/GAL/t/001_annotation.t',
 	     '../lib/GAL/t/001_base.t',
-	     '../lib/GAL/t/001_index.t',
+	     # '../lib/GAL/t/001_index.t',
 	     '../lib/GAL/t/001_pod_coverage.t',
 	     '../lib/GAL/t/001_test_template.t',
 	     '../lib/GAL/t/200_parser.t',
@@ -69,7 +69,7 @@ my @tests = ('../lib/GAL/t/001_annotation.t',
 	     '../lib/GAL/t/600_list.t',
 	     '../lib/GAL/t/600_list_categorical.t',
 	     '../lib/GAL/t/600_list_numeric.t',
-	     '../lib/GAL/t/700_interval_span.t',
+	     # '../lib/GAL/t/700_interval_span.t',
 	     '../bin/t/add_reference_seq.t',
 	     '../bin/t/annotation_summary.t',
 	     '../bin/t/build_genes.t',
@@ -91,7 +91,7 @@ my @tests = ('../lib/GAL/t/001_annotation.t',
 	     '../bin/t/sam_inspector.t',
 	     '../bin/t/ucsc2gff.t',
 	     '../bin/t/ucsc_gtf2gff3.t',
-	     '../bin/t/variant_classifier.t',
+	     # '../bin/t/variant_classifier.t',
 	    );
 
 $harness->runtests(@tests);

@@ -3742,7 +3742,7 @@ sub to_gff3 {
 sub parse_so_file {
 
     $SO_FILE ||= $ENV{SO_OBO};
-    $so_file ||= 'curl -sL http://purl.obolibrary.org/obo/so.obo |';
+    $SO_FILE ||= 'curl -sL http://purl.obolibrary.org/obo/so.obo |';
     open (my $IN, $SO_FILE) or die "FATAL : cant_open_file : $SO_FILE\n";
 
     my $text = join '', (<$IN>);

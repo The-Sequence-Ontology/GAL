@@ -147,7 +147,9 @@ while (<$IN>) {
 	  }
 
 	  my @print_columns1 = @pcols1 ? @{$columns1}[@pcols1] : @{$columns1};
-	  my $output = join "\t", (@print_columns1, @print_columns2);
+	  my @output_values = (@print_columns1, @print_columns2);
+	  map {$_ = '' unless defined $_} @output_values;
+	  my $output = join "\t", @output_values;
 	  next SET if $print_uniq && $uniq{$output}++;
 	  print "$output\n";
 	  print '';
