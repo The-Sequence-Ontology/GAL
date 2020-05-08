@@ -19,7 +19,7 @@ Description:
 This script will take knownGene or refGene tables from UCSC and build
 GFF files from them.  The GFF file will not contain gene features
 because these are not available from the UCSC GTF (but see the
---build_genes option below).  To create a valid GFF3 that contain
+--add_genes option below).  To create a valid GFF3 that contain
 genes, pass the output from this program into build_genes.
 
 Options:
