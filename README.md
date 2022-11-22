@@ -38,7 +38,7 @@ This document describes GAL::Annotation version 0.01
 
 # DESCRIPTION #
 
-The Genome Annotation Library (GAL) is a collection of modules that
+The Genome Annotation Library (GAL) is a collection of Perl modules that
 strive to make working with genome annotations simple, intuitive and
 fast. Users of GAL first create an annotation object which in turn
 will contain Parser, Storage and Schema objects. The parser allows
