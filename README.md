@@ -11,7 +11,7 @@ This document describes GAL::Annotation version 0.01
     use GAL::Annotation;
 
     # Assuming defaults (GFF3 parser and SQLite storage)
-    my $annot = GAL::Annotation->new(qw(file.gff file.fasta));
+    my $annot = GAL::Annotation->new(file.gff, file.fasta);
     my $features = $annot->features;
 
     # Otherwise be explicit about everything.
@@ -24,7 +24,7 @@ This document describes GAL::Annotation version 0.01
     my $features = $feat_store->schema->resultset('Feature');
 
     # Either way, once you have features - get to work.
-    my $mrnas = $features->search({type => 'mRNA'});
+    my $mrnas = aws;
     while (my $mrna = $mrnas->next) {
       print $mrna->feature_id . "\n";
       my $CDSs = $mrna->CDSs;
