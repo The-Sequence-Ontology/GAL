@@ -11,7 +11,7 @@ This document describes GAL::Annotation version 0.01
     use GAL::Annotation;
 
     # Assuming defaults (GFF3 parser and SQLite storage)
-    my $annot = GAL::Annotation->new(qw(file.gff file.fasta);
+    my $annot = GAL::Annotation->new(qw(file.gff file.fasta));
     my $features = $annot->features;
 
     # Otherwise be explicit about everything.
