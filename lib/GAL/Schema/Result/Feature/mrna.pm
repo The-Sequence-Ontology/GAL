@@ -6,7 +6,7 @@ use base qw(GAL::Schema::Result::Feature::transcript);
 
 =head1 NAME
 
-GAL::Schema::Result::Feature::mrna - A mRNA object for the GAL Library 
+GAL::Schema::Result::Feature::mrna - A mRNA object for the GAL Library
 
 =head1 VERSION
 
@@ -16,22 +16,22 @@ This document describes GAL::Schema::Result::Feature::mrna version 0.2.0
 
     use GAL::Annotation;
     my $feat_store = GAL::Annotation->new(storage => $feat_store_args,
-					  parser  => $parser_args,
-					  fasta   => $fasta_args,
-					 );
+                                          parser  => $parser_args,
+                                          fasta   => $fasta_args,
+                                         );
 
     $feat_store->load_files(files => $feature_file,
-			    mode  => 'overwrite',
-			    );
+                            mode  => 'overwrite',
+                            );
 
     my $features = $feat_store->schema->resultset('Feature');
 
     my $mrnas = $features->search({type => 'mRNA'});
-	
+
 =head1 DESCRIPTION
 
 <GAL::Schema::Result::Feature::mrna> provides a <GAL::Schema::Result::Feature>
-subclass for mRNA specific behavior. mRNA, messenger RNA is the intermediate 
+subclass for mRNA specific behavior. mRNA, messenger RNA is the intermediate
 molecule between DNA and protein. It includes UTR and coding sequences, but not
 introns.
 
@@ -60,12 +60,12 @@ sub CDSs {
   }
   else {
       my $sort_order = ($self->strand eq '-' ?
-			{'-desc' => 'end'}   :
-			{'-asc'  => 'start'});
+                        {'-desc' => 'end'}   :
+                        {'-asc'  => 'start'});
 
       my $CDSs = $self->children({type => 'CDS'},
-				  {order_by => $sort_order,
-				   distinct => 1});
+                                  {order_by => $sort_order,
+                                   distinct => 1});
       return $CDSs;
   }
 }
@@ -77,7 +77,7 @@ sub CDSs {
  Title   : CDS_seq_genomic
  Usage   : $seq = $self->CDS_seq_genomic
  Function: Return the genomic sequence (on the plus strand of the genome) of
-	   the full CDS for this mRNA.
+           the full CDS for this mRNA.
  Returns : A DNA sequence
  Args    : None
 
@@ -104,8 +104,8 @@ sub CDS_seq_genomic {
 
  Title   : CDS_seq
  Usage   : $seq = $self->CDS_seq
- Function: Return the genomic sequence (on the coding direction) 
-	of the full CDS for this mRNA.
+ Function: Return the genomic sequence (on the coding direction)
+        of the full CDS for this mRNA.
  Returns : A DNA sequence
  Args    : None
 
@@ -155,9 +155,9 @@ sub protein_seq {
  Title   : cds_coordinate_map
  Usage   : $map = $self->cds_coordinate_map
  Function: Get the coordinate map which has the structure:
-	   $cds_coordinate_map{transcript2cds}{$transcript_position} = $cds_position;
-	   $cds_coordinate_map{cds2transcript}{$cds_position} = $transcript_position;
-	   And thus can be used to map CDS to unspliced transcript coordinates
+           $cds_coordinate_map{transcript2cds}{$transcript_position} = $cds_position;
+           $cds_coordinate_map{cds2transcript}{$cds_position} = $transcript_position;
+           And thus can be used to map CDS to unspliced transcript coordinates
            and vice versa.
  Returns : A hash or reference of the above map.
  Args    : None
@@ -184,10 +184,10 @@ sub cds_coordinate_map {
       my $start = $cds->start;
       my $end   = $cds->end;
       for my $cds_genomic_pos ($start .. $end) {
-	  my ($mrna_pos) = $self->genome2me($cds_genomic_pos);
-	  $cds_coordinate_map{transcript2cds}{$mrna_pos} = $cds_pos;
-	  $cds_coordinate_map{cds2transcript}{$cds_pos} = $mrna_pos;
-	  $cds_pos += $increment;
+          my ($mrna_pos) = $self->genome2me($cds_genomic_pos);
+          $cds_coordinate_map{transcript2cds}{$mrna_pos} = $cds_pos;
+          $cds_coordinate_map{cds2transcript}{$cds_pos} = $mrna_pos;
+          $cds_pos += $increment;
       }
     }
     $self->{cds_coordinate_map} = \%cds_coordinate_map;
@@ -201,10 +201,10 @@ sub cds_coordinate_map {
 
  Title   : genome2cds
  Usage   : @CDS_coordinates = $self->genome2cds(@genomic_coordinates);
-	   ($CDS_coordinate) = $self->genome2cds($genomic_coordinate);
+           ($CDS_coordinate) = $self->genome2cds($genomic_coordinate);
  Function: Transform genomic coordinates to CDS coordinates.
  Returns : An array(ref) of integers or an empty list if the genomic
-	   coordinates given do not overlap the CDS of this mRNA.
+           coordinates given do not overlap the CDS of this mRNA.
  Args    : An array of integers
 
 =cut
@@ -218,12 +218,12 @@ sub genome2cds {
 
     my @CDS_coordinates = $self->genome2me(@coordinates);
     for my $coordinate (@CDS_coordinates) {
-	if ($coordinate && $coordinate >= $CDS_start && $coordinate <= $CDS_end) {
-	    $coordinate = $coordinate - $CDS_start + 1;
-	}
-	else {
-	    $coordinate = undef;
-	}
+        if ($coordinate && $coordinate >= $CDS_start && $coordinate <= $CDS_end) {
+            $coordinate = $coordinate - $CDS_start + 1;
+        }
+        else {
+            $coordinate = undef;
+        }
     }
 
     return wantarray ? @CDS_coordinates : \@CDS_coordinates;
@@ -235,7 +235,7 @@ sub genome2cds {
 
  Title   : cds2mrna
  Usage   : @mrna_coordinates = $self->cds2mrna(@cds_coordinates);
-	   ($mrna_coordinate) = $self->cds2mrna($cds_coordinate);
+           ($mrna_coordinate) = $self->cds2mrna($cds_coordinate);
  Function: Transform CDS coordinates to mRNA (transcript) coordinates.
  Returns : An array(ref) of integers.
  Args    : An array of integers
@@ -244,24 +244,20 @@ sub genome2cds {
 
 sub cds2mrna {
 
-#   my ($self, @coordinates) = @_;
-# 
-#   my $mrna_start  = $self->start;
-# 
-#   my ($CDS_start) = $self->genome2me($self->CDS_start);
-#   my ($CDS_end)   = $self->genome2me($self->CDS_end);
-#  
-#   my @CDS_coordinates = $self->genome2me(@coordinates);
-#   for my $coordinate (@CDS_coordinates) {
-#     if ($coordinate && $coordinate >= $CDS_start && $coordinate <= $CDS_end) {
-#       $coordinate = $coordinate - $CDS_start + 1;
-#     }
-#     else {
-#       $coordinate = undef;
-#     }
-#   }
-# 
-#   return wantarray ? @CDS_coordinates : \@CDS_coordinates;
+    my ($self, @coordinates) = @_;
+
+    my $mrna_length  = $self->length;
+
+    my ($CDS_start) = $self->genome2me($self->CDS_start);
+
+    my @CDS_coordinates;
+    for my $coordinate (@coordinates) {
+            $coordinate = $coordinate + $CDS_start - 1;
+            push @CDS_coordinates, $coordinate;
+            print '';
+    }
+
+    return wantarray ? @CDS_coordinates : \@CDS_coordinates;
 }
 
 #-----------------------------------------------------------------------------
@@ -270,7 +266,7 @@ sub cds2mrna {
 
  Title   : cds2genome
  Usage   : @genomic_coordinates = $self->cds2genome(@cds_coordinates);
-	   ($genomic_coordinate) = $self->cds2genome($cds_coordinate);
+           ($genomic_coordinate) = $self->cds2genome($cds_coordinate);
  Function: Transform CDS coordinates to genomic coordinates.
  Returns : An array(ref) of integers.
  Args    : An array of integers
@@ -279,24 +275,11 @@ sub cds2mrna {
 
 sub cds2genome {
 
-   my ($self, @coordinates) = @_;
+    my ($self, @coordinates) = @_;
 
-   my $mrna_start  = $self->start;
- 
-   my ($CDS_start) = $self->genome2me($self->CDS_start);
-   my ($CDS_end)   = $self->genome2me($self->CDS_end);
- 
-#   my @CDS_coordinates = $self->genome2me(@coordinates);
-#   for my $coordinate (@CDS_coordinates) {
-#     if ($coordinate && $coordinate >= $CDS_start && $coordinate <= $CDS_end) {
-#       $coordinate = $coordinate - $CDS_start + 1;
-#     }
-#     else {
-#       $coordinate = undef;
-#     }
-#   }
-# 
-#   return wantarray ? @CDS_coordinates : \@CDS_coordinates;
+    my @genomic_coordinates = $self->me2genome($self->cds2mrna(@coordinates));
+
+    return wantarray ? @genomic_coordinates : \@genomic_coordinates;
 }
 
 #-----------------------------------------------------------------------------
@@ -306,10 +289,10 @@ sub cds2genome {
  Title   : genome2protein
  Usage   : @protein_coordinates = $self->genome2protein(@genomic_coordinates);
  Function: Transform genomic coordinates to protein sequence coordinates.
-	   Note that 3 genomic coordinates will return the same protein
-	   coordinate if they fall in the same codon.
+           Note that 3 genomic coordinates will return the same protein
+           coordinate if they fall in the same codon.
  Returns : An array(ref) of integers or an empty list if the genomic
-	   coordinates given do not overlap the protein (CDS) of this mRNA.
+           coordinates given do not overlap the protein (CDS) of this mRNA.
  Args    : An array of integers
 
 =cut
@@ -318,10 +301,10 @@ sub genome2protein {
 
   my ($self, @coordinates) = @_;
 
-  my @protein_coordinates = $self->genome2cds(@coordinates);
-  map {$_ = int(($_ - 1) / 3) + 1 if $_} @protein_coordinates;
-
-  return wantarray ? @protein_coordinates : \@protein_coordinates;
+  # my @protein_coordinates = $self->genome2cds(@coordinates);
+  # map {$_ = int(($_ - 1) / 3) + 1 if $_} @protein_coordinates;
+  #
+  # return wantarray ? @protein_coordinates : \@protein_coordinates;
 }
 
 #-----------------------------------------------------------------------------
@@ -331,8 +314,8 @@ sub genome2protein {
  Title   : protein2genome
  Usage   : @genomic_coordinates = $self->protein2genome(@protein_coordinates);
  Function: Transform protein coordinates to genomic coordinates.
-	   Note that 3 genomic coordinates will be returned for each protein coordinate.
-	   coordinate if they fall in the same codon.  
+           Note that 3 genomic coordinates will be returned for each protein coordinate.
+           coordinate if they fall in the same codon.
  Returns : An array(ref) of arrayrefs each containing 3 integers
            corresponding to the genomic coordinates of the three codon
            locations for the given protein coordinate.
@@ -343,10 +326,10 @@ sub genome2protein {
 sub protein2genome {
 
 #   my ($self, @coordinates) = @_;
-# 
+#
 #   my @protein_coordinates = $self->genome2cds(@coordinates);
 #   map {$_ = int(($_ - 1) / 3) + 1 if $_} @protein_coordinates;
-# 
+#
 #   return wantarray ? @protein_coordinates : \@protein_coordinates;
 }
 
@@ -420,8 +403,8 @@ sub CDS_length {
  Title   : protein_length
  Usage   : $length = $self->protein_length
  Function: Return the length of the protein for this mRNA. If the CDS length
-	   is not divisible by three this method will truncate the integral
-	   portion of the protein length.
+           is not divisible by three this method will truncate the integral
+           portion of the protein length.
  Returns : An integer
  Args    : None
 
@@ -439,8 +422,8 @@ sub protein_length {
  Title   : phase_at_location
  Usage   : $phase = $self->phase_at_location($genomic_coordinate)
  Function: Return the phase (how many nts 3' does the next codon begin) for
-	   a given genomic coordinate or undef if the coordinate does not overlap
-	   the CDS of this mRNA.
+           a given genomic coordinate or undef if the coordinate does not overlap
+           the CDS of this mRNA.
  Returns : An integer
  Args    : An integer (genomic coordinate).
 
@@ -451,9 +434,9 @@ sub phase_at_location {
   my ($self, $location) = @_;
 
   my %mod2phase = (1 => 0,
-		   2 => 2,
-		   0 => 1,
-		  );
+                   2 => 2,
+                   0 => 1,
+                  );
   my ($CDS_location) = $self->genome2cds($location);
   return undef unless $CDS_location;
   my $modulus = $CDS_location % 3;
@@ -467,8 +450,8 @@ sub phase_at_location {
  Title   : frame_at_location
  Usage   : $frame = $self->frame_at_location($genomic_coordinate);
  Function: Return the reading frame (what position within a codon) for a given
-	   genomic coordinate or undef if the coordinate does not overlap
-	   the CDS of this mRNA.
+           genomic coordinate or undef if the coordinate does not overlap
+           the CDS of this mRNA.
  Returns : An integer
  Args    : An integer
 
@@ -478,9 +461,9 @@ sub frame_at_location {
 
   my ($self, $location) = @_;
   my %mod2frame = (1 => 0,
-		   2 => 1,
-		   0 => 2,
-		  );
+                   2 => 1,
+                   0 => 2,
+                  );
   my ($CDS_location) = $self->genome2cds($location);
   return undef unless $CDS_location;
   my $modulus = $CDS_location % 3;
@@ -494,10 +477,10 @@ sub frame_at_location {
 
  Title   : codon_at_location
  Usage   : $codon = $self->codon_at_location($genomic_coordinate);
-	   ($codon, $frame) = $self->codon_at_location
+           ($codon, $frame) = $self->codon_at_location
  Function: Return the codon (and frame in list context) that overlaps a given
-	   genomic coordinate.  Returns undef in the genomic coordinate does
-	   not overlap a complete codon.
+           genomic coordinate.  Returns undef in the genomic coordinate does
+           not overlap a complete codon.
  Returns : An scalar string and in list context also returns an integer.
  Args    : An integer
 
@@ -577,8 +560,8 @@ sub translation_start {
 
   my $strand = $self->strand;
   my $sort_sub = ($strand eq '-'            ?
-		  sub {$b->start <=> $a->start} :
-		  sub {$a->start <=> $b->start});
+                  sub {$b->start <=> $a->start} :
+                  sub {$a->start <=> $b->start});
 
   my ($first_CDS) = sort $sort_sub $self->CDSs;
   return $first_CDS->my_start;
@@ -601,8 +584,8 @@ sub translation_end {
 
   my $strand = $self->strand;
   my $sort_sub = ($strand eq '-'            ?
-		  sub {$a->start <=> $b->start} :
-		  sub {$b->start <=> $a->start});
+                  sub {$a->start <=> $b->start} :
+                  sub {$b->start <=> $a->start});
 
   my ($last_CDS) = sort $sort_sub $self->CDSs;
   return $last_CDS->my_end;
@@ -628,12 +611,12 @@ sub five_prime_UTRs {
   }
   else {
       my $sort_order = ($self->strand eq '-' ?
-			{'-desc' => 'end'}   :
-			{'-asc'  => 'start'});
+                        {'-desc' => 'end'}   :
+                        {'-asc'  => 'start'});
 
       my $five_prime_UTRs = $self->children({type => 'five_prime_UTR'},
-					    {order_by => $sort_order,
-					     distinct => 1});
+                                            {order_by => $sort_order,
+                                             distinct => 1});
       return $five_prime_UTRs;
   }
 }
@@ -658,12 +641,12 @@ sub three_prime_UTRs {
   }
   else {
     my $sort_order = ($self->strand eq '-' ?
-		      {'-desc' => 'end'}   :
-		      {'-asc'  => 'start'});
+                      {'-desc' => 'end'}   :
+                      {'-asc'  => 'start'});
 
     my $three_prime_UTRs = $self->children({type => 'three_prime_UTR'},
-					   {order_by => $sort_order,
-					    distinct => 1});
+                                           {order_by => $sort_order,
+                                            distinct => 1});
     return $three_prime_UTRs;
   }
 }
@@ -684,14 +667,14 @@ sub infer_five_prime_UTR {
   my ($self, $five_prime_UTR) = @_;
 
   $five_prime_UTR ||= $self->children({type => 'five_prime_UTR'},
-				      {order_by => { -asc => 'start' },
-				       distinct => 1});
+                                      {order_by => { -asc => 'start' },
+                                       distinct => 1});
 
 
   my $strand = $self->strand;
   my $sort_sub = ($strand eq '-'            ?
-		  sub {$b->start <=> $a->start} :
-		  sub {$a->start <=> $b->start});
+                  sub {$b->start <=> $a->start} :
+                  sub {$a->start <=> $b->start});
 
   my $translation_start = $self->translation_start;
 
@@ -708,11 +691,11 @@ sub infer_five_prime_UTR {
   }
 
   my %template = (seqid  => $self->seqid,
-		  source => $self->source,
-		  type   => 'five_prime_UTR',
-		  score  => '.',
-		  strand => $strand,
-		  phase  => '.',
+                  source => $self->source,
+                  type   => 'five_prime_UTR',
+                  score  => '.',
+                  strand => $strand,
+                  phase  => '.',
  );
 
   my $parent_id = $self->feature_id;
@@ -723,21 +706,21 @@ sub infer_five_prime_UTR {
     my ($start, $end) = @{$coordinate_pair};
     if ($strand eq '-') {
       $start = $translation_start + 1
-	if $start <= $translation_start;
+        if $start <= $translation_start;
     }
     else {
       $end = $translation_start - 1
-	if $end >= $translation_start;
+        if $end >= $translation_start;
     }
     my $feature_id = $parent_id . ':five_prime_UTR:';
     $feature_id .= sprintf("%03d", $count++);
     my @attrbs = ({att_key    => 'ID',
-		   att_value  => $feature_id},
-		  {att_key    => 'Parent',
-		   att_value  => $parent_id},
-		 );
+                   att_value  => $feature_id},
+                  {att_key    => 'Parent',
+                   att_value  => $parent_id},
+                 );
     my @rels = {parent => $parent_id,
-		child  => $feature_id};
+                child  => $feature_id};
 
     my %five_prime_UTR = %template;
     @five_prime_UTR{qw(feature_id start end attributes my_parents)} =
@@ -766,14 +749,14 @@ sub infer_three_prime_UTR {
   my ($self, $three_prime_UTRs) = @_;
 
   $three_prime_UTRs ||= $self->children({type => 'three_prime_UTR'},
-				       {order_by => { -asc => 'start' },
-					distinct => 1});
+                                       {order_by => { -asc => 'start' },
+                                        distinct => 1});
 
 
   my $strand = $self->strand;
   my $sort_sub = ($strand eq '-'            ?
-		  sub {$a->start <=> $b->start} :
-		  sub {$b->start <=> $a->start});
+                  sub {$a->start <=> $b->start} :
+                  sub {$b->start <=> $a->start});
 
   my $translation_end = $self->translation_end;
 
@@ -790,11 +773,11 @@ sub infer_three_prime_UTR {
   }
 
   my %template = (seqid  => $self->seqid,
-		  source => $self->source,
-		  type   => 'three_prime_UTR',
-		  score  => '.',
-		  strand => $strand,
-		  phase  => '.',
+                  source => $self->source,
+                  type   => 'three_prime_UTR',
+                  score  => '.',
+                  strand => $strand,
+                  phase  => '.',
  );
 
   my $parent_id = $self->feature_id;
@@ -805,21 +788,21 @@ sub infer_three_prime_UTR {
     my ($start, $end) = @{$coordinate_pair};
     if ($strand eq '-') {
       $end = $translation_end - 1
-	if $end >= $translation_end;
+        if $end >= $translation_end;
     }
     else {
       $start = $translation_end + 1
-	if $start <= $translation_end;
+        if $start <= $translation_end;
     }
     my $feature_id = $parent_id . ':three_prime_UTR:';
     $feature_id .= sprintf("%03d", $count++);
     my @attrbs = ({att_key    => 'ID',
-		   att_value  => $feature_id},
-		  {att_key    => 'Parent',
-		   att_value  => $parent_id},
-		 );
+                   att_value  => $feature_id},
+                  {att_key    => 'Parent',
+                   att_value  => $parent_id},
+                 );
     my @rels = {parent => $parent_id,
-		child  => $feature_id};
+                child  => $feature_id};
 
     my %three_prime_UTR = %template;
     @three_prime_UTR{qw(feature_id start end attributes my_parents)} =

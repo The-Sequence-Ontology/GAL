@@ -319,6 +319,7 @@ sub coordinate_map {
     my $length = $self->length;
     my %coordinate_map;
     my @exons = $self->exons;
+    @exons = sort {$a->start <=> $b->start} @exons; # Critical bug fix 1/2/23 to map building
     my ($transcript_position, $increment);
     if ($strand eq '-') {
       $transcript_position = $length; # - 1;
