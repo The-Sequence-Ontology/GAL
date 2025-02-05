@@ -3,7 +3,9 @@ use strict;
 use warnings;
 use Getopt::Long;
 
-use lib '/uufs/chpc.utah.edu/common/HIPAA/u0129786/GAL/lib';
+use FindBin;
+use lib "$FindBin::RealBin/../lib";
+
 use GAL::Annotation;
 
 #-----------------------------------------------------------------------------
@@ -150,11 +152,10 @@ while (my $line = <$IN>) {
           $alt = substr($ref, 0, 1);
   }
   # # HGVS Deletion/Insertion (MNV)
-  elsif ($hgvs =~ /^c\.(\d+(_\d+))delins[ACGT]+$/) {
+  elsif ($hgvs =~ /^c\.(\d+(_\d+)?)delins[ACGT]+$/) {
           # c.3_4delinsTT
           # c.161_162delinsAA
           # c.266_270delinsCTT
-          # c.435_439+2delinsAG
           # c.659_661delinsTG
           # c.1433_1444delinsC
           # c.1454delinsTGT
@@ -162,7 +163,6 @@ while (my $line = <$IN>) {
           # c.2611_2612delinsTG
           # c.2662_2666delins21
           # c.2766_2773delinsTGCC
-          # c.2774_2788delinsC-
           # c.3003_3008delinsGC
           my $hgvs_copy = $hgvs;
           $hgvs_copy =~ s/^c\.//;
@@ -174,6 +174,7 @@ while (my $line = <$IN>) {
           #         next LINE;
           # }
           my ($cds_start, $cds_end) = split /_/, $cds_pos;
+          $cds_end ||= $cds_start;
           my ($genomic_start) = $trns->cds2genome($cds_start);
           my ($genomic_end) = $trns->cds2genome($cds_end);
           $genomic_end ||= $genomic_start;
@@ -223,7 +224,6 @@ while (my $line = <$IN>) {
           # c.337dup
           # c.518_521dup
           # c.582dup
-          # c.755+1_755+2dup
           # c.838_839dup
           # c.903dup
           my $hgvs_copy = $hgvs;
@@ -242,7 +242,7 @@ while (my $line = <$IN>) {
           $alt = $ref . $alt;
           print '';
   }
-  # HGVS Splice
+  # HGVS Splice SNV
   elsif ($hgvs =~ /^c\.\d+[+\-]\d+[ACGT]>[ACGT]/) {
           # c.81+1G>A
           # c.387+1G>A
@@ -282,6 +282,21 @@ while (my $line = <$IN>) {
   }
   # HGVS WTF
   else {
+          # Some examples of complex or mis formatted HGVS annotations
+          # that this script won't parse
+          # c.388–17_391del
+          # c.435_439+2delinsAG
+          # c.438_439+2del
+          # c.755+1_755+2dup
+          # c.1393_1395+2del
+          # c.2458+1del
+          # c.2662_2666delins21
+          # c.2682+1dup
+          # c.2774_2788delinsC-
+          # c.3203del
+          # c.3218_3221dup
+          # c.3243dup
+
           warn "WARN : cant_parse_hgvs : $hgvs\n";
           next LINE;
   }
